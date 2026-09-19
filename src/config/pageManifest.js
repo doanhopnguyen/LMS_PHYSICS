@@ -1,0 +1,20 @@
+export const pageManifest = [
+  { file: 'dashboard.html', component: 'DashboardPage', layout: 'AppShell' },
+  { file: 'course_detail.html', component: 'CourseDetailPage', layout: 'AppShell' },
+  { file: 'exam_practice_center.html', component: 'ExamPracticePage', layout: 'AppShell' },
+  { file: 'exam_results.html', component: 'ExamResultsPage', layout: 'AppShell' },
+  { file: 'lab_report_rubric.html', component: 'LabReportPage', layout: 'AppShell' },
+  { file: 'learning_results.html', component: 'LearningResultsPage', layout: 'AppShell' },
+  { file: 'library.html', component: 'LibraryPage', layout: 'AppShell' },
+  { file: 'my_courses.html', component: 'MyCoursesPage', layout: 'AppShell' },
+  { file: 'notifications_help.html', component: 'NotificationsPage', layout: 'AppShell' },
+  { file: 'profile_settings.html', component: 'ProfileSettingsPage', layout: 'AppShell' },
+  { file: 'virtual_lab.html', component: 'VirtualLabPage', layout: 'AppShell' },
+  { file: 'voice_citations.html', component: 'VoiceCitationsPage', layout: 'AppShell' },
+  { file: '3d_workspace.html', component: 'WorkspacePage', layout: 'ImmersiveShell' },
+  { file: 'ai_tutor.html', component: 'AiTutorPage', layout: 'AppShell' },
+  { file: 'document_viewer.html', component: 'DocumentViewerPage', layout: 'ImmersiveShell' },
+  { file: 'exam_session.html', component: 'ExamSessionPage', layout: 'ImmersiveShell' },
+  { file: 'interactive_lesson.html', component: 'InteractiveLessonPage', layout: 'AppShell' },
+  { file: 'mobile_experience.html', component: 'MobileExperiencePage', layout: 'ImmersiveShell' }
+];

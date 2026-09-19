@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Làm bài kiểm tra | PTIT Physics 1</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration Script -->
+<script src="js/tailwind-config.js"></script>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md h-full flex flex-col antialiased select-none">
+<!-- Focus Mode Exam Top Navigation Header (Suppresses Global SideNav as per Task-Focused Journey) -->
+<header class="sticky top-0 z-40 h-[72px] flex items-center justify-between px-6 w-full bg-surface-container-lowest border-b border-[#E2E8F0] shadow-sm">
+<!-- Left: Brand Identity & Exam Info -->
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3 pr-4 border-r border-[#E2E8F0]">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm font-bold tracking-tight shadow-sm">
+          P
+        </div>
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-primary tracking-tight leading-tight">
+            PTIT Physics 1
+          </div>
+<div class="font-label-sm text-label-sm text-on-surface-variant font-medium">
+            Học viện Công nghệ Bưu chính Viễn thông
+          </div>
+</div>
+</div>
+<!-- Exam Metadata Title -->
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FEE2E2] text-primary">
+            BAS1201
+          </span>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface">
+            Bài kiểm tra Động lực học chất điểm
+          </h1>
+</div>
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface-variant">
+<span>Học phần: Vật lý đại cương 1</span>
+<span>•</span>
+<span>Mã ca thi: <strong class="font-semibold text-on-surface">EX-2024-K23-04</strong></span>
+</div>
+</div>
+</div>
+<!-- Center/Right: Timer, Cloud Sync Status, User & Submit -->
+<div class="flex items-center gap-4">
+<!-- Digital Countdown Timer Badge -->
+<div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-[#FEF2F2] border border-primary/20 shadow-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="alarm">alarm</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[10px]">Thời gian còn lại</span>
+<span class="font-mono text-[17px] font-bold text-primary tracking-wider leading-none" id="exam-timer">
+            32:45
+          </span>
+</div>
+</div>
+<!-- Cloud Sync Pulse Status -->
+<div class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#DCFCE7] border border-[#BBF7D0] text-[#15803D]">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-tertiary"></span>
+</span>
+<span class="font-label-md text-label-md font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="cloud_done">cloud_done</span>
+          Đã đồng bộ máy chủ PTIT Cloud
+        </span>
+</div>
+<!-- Student Identification -->
+<div class="hidden md:flex items-center gap-2.5 pl-3 pr-1 py-1 border-l border-[#E2E8F0]">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-body-md border border-[#CBD5E1]">
+          A
+        </div>
+<div class="text-left">
+<div class="font-body-md-medium text-body-md-medium text-on-surface leading-tight">
+            Nguyễn Văn A - B23DCCN001
+          </div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">
+            Phòng thi máy ảo: LAB-402
+          </div>
+</div>
+</div>
+<!-- Submit Exam Button -->
+<button class="flex items-center gap-1.5 bg-primary hover:bg-[#7a0009] active:scale-95 text-on-primary px-4 py-2 rounded-lg font-body-md-medium text-body-md-medium shadow-sm transition-all duration-150" onclick="openSubmitModal()">
+<span class="material-symbols-outlined text-[18px]" data-icon="task_alt">task_alt</span>
+<span>Nộp bài</span>
+</button>
+</div>
+</header>
+<!-- Main Working Content Workspace Grid (2 Columns: Workspace 70% + Navigator 300px) -->
+<main class="flex-1 max-w-[1440px] w-full mx-auto px-4 md:px-6 py-5 flex flex-col lg:flex-row gap-6 overflow-hidden">
+<!-- Left Column: Focus Exam Question Sheet (Fluid flex-1) -->
+<div class="flex-1 flex flex-col h-full bg-surface-container-lowest rounded-xl border border-[#E2E8F0] shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
+<!-- Question Progress Bar Header -->
+<div class="px-6 py-3.5 bg-surface-bright border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Câu 14</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant">/ 30 câu hỏi</span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#eff4ff] text-[#1d4ed8] border border-[#dbeafe]">
+            Động lực học chất điểm
+          </span>
+</div>
+<div class="flex items-center gap-4">
+<!-- Mini Progress Indicator -->
+<div class="flex items-center gap-2">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Tiến độ ca thi:</span>
+<div class="w-32 h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
+<div class="bg-primary h-full rounded-full transition-all duration-300" style="width: 60%;"></div>
+</div>
+<span class="text-label-md font-label-md font-bold text-primary">60%</span>
+</div>
+<!-- Flag Toggle Button -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#CBD5E1] bg-surface-container-lowest text-on-surface-variant hover:bg-[#FEF3C7] hover:text-[#B45309] hover:border-[#FCD34D] transition-colors duration-150" id="flag-btn" onclick="toggleFlag()">
+<span class="material-symbols-outlined text-[18px] text-[#B45309]" data-icon="bookmark">bookmark</span>
+<span class="font-label-md text-label-md">Đánh dấu xem lại</span>
+</button>
+</div>
+</div>
+<!-- Question Scrollable Body -->
+<div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+<!-- Question Meta Badges & Weight -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-0.5 rounded text-[11px] font-semibold bg-[#DCFCE7] text-[#15803D]">
+              Mức độ: Vận dụng
+            </span>
+<span class="px-2.5 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant">
+              Mã câu: PHY1-Q1482
+            </span>
+</div>
+<div class="text-body-sm font-body-sm text-on-surface-variant">
+            Điểm: <span class="font-bold text-primary">0.33 điểm</span>
+</div>
+</div>
+<!-- Question Prompt Text -->
+<div class="space-y-4">
+<p class="font-body-lg text-body-lg text-on-surface leading-relaxed">
+            Một vật có khối lượng <span class="math-font text-primary font-bold">m = 2.5 kg</span> trượt không vận tốc đầu từ đỉnh một mặt phẳng nghiêng góc 
+            <span class="math-font text-primary font-bold">α = 30°</span> so với phương nằm ngang. Hệ số ma sát trượt giữa vật và mặt dốc là 
+            <span class="math-font text-primary font-bold">μ = 0.1</span>. Cho gia tốc trọng trường <span class="math-font text-primary font-bold">g = 9.8 m/s<sup>2</sup></span>.
+          </p>
+<p class="font-body-md-medium text-body-md-medium text-on-surface">
+            Hỏi gia tốc chuyển động <span class="math-font font-bold">a</span> của vật dọc theo chiều trượt của mặt phẳng nghiêng có giá trị xấp xỉ bằng bao nhiêu?
+          </p>
+</div>
+<!-- Technical Schematic Diagram Container -->
+<div class="p-4 rounded-xl bg-surface-bright border border-[#E2E8F0] flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="w-full md:w-1/2 flex flex-col items-center justify-center p-3 bg-surface-container-lowest rounded-lg border border-[#E2E8F0]">
+<!-- Responsive Physics Vector Diagram SVG -->
+<svg class="w-full max-w-[280px] h-auto text-on-surface" viewbox="0 0 320 180">
+<!-- Inclined Plane Wedge -->
+<polygon fill="#eff4ff" points="30,150 280,150 280,30" stroke="#94a3b8" stroke-width="2"></polygon>
+<!-- Angle arc -->
+<path d="M 65 150 A 35 35 0 0 0 60 135" fill="none" stroke="#B91C1C" stroke-width="2"></path>
+<text class="font-label-sm" fill="#B91C1C" font-size="11" font-weight="bold" x="75" y="142">α = 30°</text>
+<!-- Sliding Box -->
+<g transform="translate(160,85) rotate(-30)">
+<rect fill="#fff" height="30" rx="2" stroke="#93000b" stroke-width="2.5" width="48" x="-24" y="-20"></rect>
+<text fill="#93000b" font-size="11" font-weight="bold" x="-12" y="0">m</text>
+<!-- Vectors -->
+<!-- Gravity P (vertical down) -->
+<line marker-end="url(#arrow)" stroke="#475569" stroke-width="2" x1="0" x2="18" y1="-5" y2="45"></line>
+<!-- Normal Force N (perpendicular up) -->
+<line marker-end="url(#arrow)" stroke="#0284c7" stroke-width="2" x1="0" x2="0" y1="-5" y2="-40"></line>
+<!-- Friction Force F_ms (backwards along surface) -->
+<line marker-end="url(#arrow)" stroke="#d97706" stroke-width="2" x1="-24" x2="-55" y1="10" y2="10"></line>
+<!-- Motion vector a -->
+<line marker-end="url(#arrow)" stroke="#15803D" stroke-dasharray="3,2" stroke-width="2.5" x1="24" x2="65" y1="10" y2="10"></line>
+</g>
+<!-- SVG Arrow Marker Definitions -->
+<defs>
+<marker id="arrow" markerheight="6" markerwidth="6" orient="auto-start-reverse" refx="5" refy="5" viewbox="0 0 10 10">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"></path>
+</marker>
+</defs>
+<text fill="#15803D" font-size="11" font-weight="bold" x="210" y="55">Chiều chuyển động (+)</text>
+</svg>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-2">Hình 1.4: Phân tích các lực tác dụng lên vật trên mặt nghiêng</span>
+</div>
+<!-- Academic Formula Highlight Callout -->
+<div class="w-full md:w-1/2 p-4 rounded-xl bg-[#FEF2F2] border-l-4 border-primary">
+<div class="flex items-center gap-2 font-headline-sm text-[13px] font-bold text-primary mb-1.5">
+<span class="material-symbols-outlined text-[16px]" data-icon="functions">functions</span>
+              Phương trình động lực học (Định luật II Newton)
+            </div>
+<div class="font-mono text-[13px] text-on-surface bg-surface-container-lowest p-2.5 rounded border border-primary/20 leading-relaxed overflow-x-auto">
+<div>Σ F⃗ = m × a⃗</div>
+<div class="text-primary font-bold mt-1">a = g × (sinα - μ × cosα)</div>
+</div>
+<div class="text-[11px] font-label-sm text-on-surface-variant mt-2 italic">
+              * Gợi ý: Chiếu phương trình véc tơ lên trục Ox song song với mặt phẳng dốc hướng xuống.
+            </div>
+</div>
+</div>
+<!-- 4 Multiple Choice Options (Cards Grid) -->
+<div class="space-y-3 pt-2">
+<div class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+            Lựa chọn một đáp án đúng:
+          </div>
+<!-- Option A (Unselected) -->
+<label class="group relative flex items-center justify-between p-4 rounded-xl border border-[#CBD5E1] bg-surface-container-lowest hover:bg-[#F8FAFC] hover:border-primary/40 cursor-pointer transition-all duration-150">
+<div class="flex items-center gap-3.5">
+<div class="w-8 h-8 rounded-full border border-[#CBD5E1] bg-surface-bright flex items-center justify-center text-body-md-medium font-bold text-on-surface group-hover:border-primary/50">
+                A
+              </div>
+<span class="font-body-md text-body-md text-on-surface">
+<span class="math-font font-bold">a ≈ 4.90 m/s<sup>2</sup></span>
+</span>
+</div>
+<input class="w-5 h-5 text-primary border-[#CBD5E1] focus:ring-primary" name="physics-q14" type="radio" value="A"/>
+</label>
+<!-- Option B (Unselected) -->
+<label class="group relative flex items-center justify-between p-4 rounded-xl border border-[#CBD5E1] bg-surface-container-lowest hover:bg-[#F8FAFC] hover:border-primary/40 cursor-pointer transition-all duration-150">
+<div class="flex items-center gap-3.5">
+<div class="w-8 h-8 rounded-full border border-[#CBD5E1] bg-surface-bright flex items-center justify-center text-body-md-medium font-bold text-on-surface group-hover:border-primary/50">
+                B
+              </div>
+<span class="font-body-md text-body-md text-on-surface">
+<span class="math-font font-bold">a ≈ 3.65 m/s<sup>2</sup></span>
+</span>
+</div>
+<input class="w-5 h-5 text-primary border-[#CBD5E1] focus:ring-primary" name="physics-q14" type="radio" value="B"/>
+</label>
+<!-- Option C (Selected - Active Brand Highlight) -->
+<label class="group relative flex items-center justify-between p-4 rounded-xl border-2 border-primary bg-[#FEF2F2] shadow-xs cursor-pointer transition-all duration-150">
+<div class="flex items-center gap-3.5">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-body-md-medium font-bold shadow-xs">
+                C
+              </div>
+<div>
+<span class="font-body-md-medium text-body-md-medium text-primary">
+<span class="math-font font-bold">a ≈ 4.05 m/s<sup>2</sup></span>
+</span>
+<span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary">
+                  Đã lưu lúc 09:28
+                </span>
+</div>
+</div>
+<div class="flex items-center">
+<input checked="" class="w-5 h-5 text-primary border-primary focus:ring-primary" name="physics-q14" type="radio" value="C"/>
+</div>
+</label>
+<!-- Option D (Unselected) -->
+<label class="group relative flex items-center justify-between p-4 rounded-xl border border-[#CBD5E1] bg-surface-container-lowest hover:bg-[#F8FAFC] hover:border-primary/40 cursor-pointer transition-all duration-150">
+<div class="flex items-center gap-3.5">
+<div class="w-8 h-8 rounded-full border border-[#CBD5E1] bg-surface-bright flex items-center justify-center text-body-md-medium font-bold text-on-surface group-hover:border-primary/50">
+                D
+              </div>
+<span class="font-body-md text-body-md text-on-surface">
+<span class="math-font font-bold">a ≈ 5.25 m/s<sup>2</sup></span>
+</span>
+</div>
+<input class="w-5 h-5 text-primary border-[#CBD5E1] focus:ring-primary" name="physics-q14" type="radio" value="D"/>
+</label>
+</div>
+</div>
+<!-- Question Action Bottom Bar (Sticky Docked Inside Left Pane) -->
+<div class="p-4 bg-surface-container-lowest border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-3">
+<!-- Back Navigation -->
+<button class="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#CBD5E1] bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-body-md-medium text-body-md-medium transition-colors duration-150">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_back">arrow_back</span>
+<span>Câu trước</span>
+</button>
+<!-- Center Actions: Clear & Draft Save -->
+<div class="flex items-center gap-2">
+<button class="px-3 py-2 text-body-sm font-body-sm text-on-surface-variant hover:text-error transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="restart_alt">restart_alt</span>
+<span>Xóa lựa chọn</span>
+</button>
+<button class="px-3 py-2 text-body-sm font-body-sm text-[#15803D] bg-[#DCFCE7] hover:bg-[#BBF7D0] rounded-lg transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
+<span>Lưu câu trả lời</span>
+</button>
+</div>
+<!-- Next Question Navigation -->
+<button class="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-primary hover:bg-[#7a0009] text-on-primary font-body-md-medium text-body-md-medium shadow-sm active:scale-95 transition-all duration-150">
+<span>Câu tiếp theo</span>
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Right Column: Question Navigator & Session Stats (Width 300px desktop) -->
+<aside class="w-full lg:w-[320px] flex flex-col gap-4">
+<!-- Main Question Matrix Navigator Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-[#E2E8F0] shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-4.5 flex flex-col">
+<!-- Navigator Header -->
+<div class="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="grid_view">grid_view</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Danh sách câu hỏi</h2>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">
+            30 câu
+          </span>
+</div>
+<!-- Legend / State Definitions -->
+<div class="grid grid-cols-2 gap-2 py-3 border-b border-[#E2E8F0] text-[11px] font-label-sm">
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded bg-surface-container text-on-surface flex items-center justify-center font-bold text-[9px] border border-[#CBD5E1]">✓</span>
+<span class="text-on-surface-variant">Đã làm (18)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded bg-surface-container-lowest border border-[#CBD5E1]"></span>
+<span class="text-on-surface-variant">Chưa làm (12)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded bg-[#FEF2F2] border-2 border-primary"></span>
+<span class="text-on-surface-variant">Đang chọn</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded bg-[#FEF3C7] border border-[#FCD34D] flex items-center justify-center text-[#B45309]">⚑</span>
+<span class="text-on-surface-variant">Gắn cờ (2)</span>
+</div>
+</div>
+<!-- Interactive 30-Question Grid -->
+<div class="py-3">
+<div class="grid grid-cols-5 gap-2 max-h-[290px] overflow-y-auto custom-scrollbar pr-1">
+<!-- Questions 1 to 13 (Done) -->
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">1</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">2</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">3</button>
+<!-- Q4 Flagged and done -->
+<button class="relative h-9 rounded-lg bg-[#FEF3C7] text-[#B45309] border border-[#FCD34D] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">
+              4
+              <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-secondary-fixed-dim"></span>
+</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">5</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">6</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">7</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">8</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">9</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">10</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">11</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">12</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">13</button>
+<!-- Q14 (Current / Active Selected) -->
+<button class="h-9 rounded-lg bg-[#FEF2F2] text-primary border-2 border-primary font-label-md text-label-md font-bold flex items-center justify-center shadow-xs ring-2 ring-primary/20">
+              14
+            </button>
+<!-- Q15 Flagged for review -->
+<button class="relative h-9 rounded-lg bg-[#FEF3C7] text-[#B45309] border border-[#FCD34D] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">
+              15
+              <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-secondary-fixed-dim"></span>
+</button>
+<!-- Questions 16 to 30 (Remaining / Not completed) -->
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">16</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">17</button>
+<button class="h-9 rounded-lg bg-surface-container text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-bold flex items-center justify-center hover:border-primary transition-colors">18</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">19</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">20</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">21</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">22</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">23</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">24</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">25</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">26</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">27</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">28</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">29</button>
+<button class="h-9 rounded-lg bg-surface-container-lowest text-on-surface border border-[#CBD5E1] font-label-md text-label-md font-medium hover:border-primary transition-colors">30</button>
+</div>
+</div>
+<!-- Status Summary Stats Block -->
+<div class="mt-2 pt-3 border-t border-[#E2E8F0] space-y-2">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Đã trả lời:</span>
+<span class="font-bold text-[#15803D]">18 / 30 câu</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Chưa trả lời:</span>
+<span class="font-bold text-error">12 câu</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Cần xem lại:</span>
+<span class="font-bold text-[#B45309]">2 câu (Câu 4, 15)</span>
+</div>
+</div>
+</div>
+<!-- Shortcut & Exam Integrity Guidelines Card -->
+<div class="bg-surface-bright rounded-xl border border-[#E2E8F0] p-4 text-body-sm font-body-sm space-y-3">
+<div class="flex items-center gap-2 text-on-surface font-headline-sm text-headline-sm font-bold">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="keyboard">keyboard</span>
+<span>Phím tắt hỗ trợ</span>
+</div>
+<div class="space-y-1.5 text-on-surface-variant text-[12px]">
+<div class="flex items-center justify-between">
+<span>Chọn đáp án A - D:</span>
+<span class="font-mono bg-surface-container-lowest px-1.5 py-0.5 rounded border border-[#CBD5E1] text-on-surface font-semibold">1, 2, 3, 4</span>
+</div>
+<div class="flex items-center justify-between">
+<span>Câu tiếp / Câu trước:</span>
+<span class="font-mono bg-surface-container-lowest px-1.5 py-0.5 rounded border border-[#CBD5E1] text-on-surface font-semibold">← / →</span>
+</div>
+<div class="flex items-center justify-between">
+<span>Gắn cờ xem lại:</span>
+<span class="font-mono bg-surface-container-lowest px-1.5 py-0.5 rounded border border-[#CBD5E1] text-on-surface font-semibold">F</span>
+</div>
+</div>
+<div class="pt-2 border-t border-[#E2E8F0] flex items-center gap-2 text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="security">security</span>
+<span>Hệ thống ghi nhận mọi hành vi rời khỏi tab thi.</span>
+</div>
+</div>
+</aside>
+</main>
+<!-- Desktop Footer (Suppresses Sidebar, docked full-width) -->
+<footer class="w-full py-3 px-6 flex flex-col md:flex-row justify-between items-center text-body-sm font-body-sm text-on-surface-variant bg-surface-container-lowest border-t border-[#E2E8F0]">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Hệ thống Khảo thí Vật lý PTIT Cloud v3.4.2 • Phiên làm việc bảo mật ID: <strong>SES-83921</strong></span>
+</div>
+<div class="flex items-center gap-4 mt-2 md:mt-0 text-label-md font-label-md">
+<span>© 2024 Học viện Công nghệ Bưu chính Viễn thông (PTIT). All rights reserved.</span>
+<a class="hover:text-primary transition-colors" href="#">Quy chế thi</a>
+<a class="hover:text-primary transition-colors" href="#">Hỗ trợ kỹ thuật</a>
+</div>
+</footer>
+<!-- Submission Confirmation Modal Dialog (Hidden by default) -->
+<div class="fixed inset-0 z-50 hidden flex items-center justify-center bg-inverse-surface/50 backdrop-blur-sm p-4" id="submit-modal">
+<div class="bg-surface-container-lowest rounded-2xl border border-[#CBD5E1] shadow-2xl max-w-md w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+<!-- Modal Header -->
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-[#FEF2F2] text-primary flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-[28px]" data-icon="help_outline">help_outline</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Xác nhận nộp bài thi?</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Kỳ thi: Động lực học chất điểm (BAS1201)</p>
+</div>
+</div>
+<!-- Warning Box on Unfinished Questions -->
+<div class="p-4 rounded-xl bg-[#FEF3C7] border border-[#FCD34D] text-[#B45309] space-y-2">
+<div class="flex items-center gap-2 font-bold text-body-md-medium">
+<span class="material-symbols-outlined text-[20px]" data-icon="warning">warning</span>
+<span>Bạn vẫn còn câu hỏi chưa hoàn thành!</span>
+</div>
+<div class="text-body-sm space-y-1 pl-7">
+<p>• Số câu đã làm: <strong>18 / 30 câu</strong></p>
+<p class="text-error font-semibold">• Còn <strong>12 câu</strong> chưa chọn đáp án.</p>
+<p>• Có <strong>2 câu</strong> đang được đánh dấu xem lại.</p>
+<p>• Thời gian làm bài còn lại: <strong class="text-primary font-mono">32 phút 45 giây</strong>.</p>
+</div>
+</div>
+<p class="text-body-sm text-on-surface-variant text-center">
+        Sau khi nộp, bạn sẽ không thể chỉnh sửa đáp án và hệ thống sẽ tự động tính điểm theo thang 10.
+      </p>
+<!-- Action Buttons -->
+<div class="flex items-center justify-end gap-3 pt-2">
+<button class="px-4 py-2.5 rounded-lg border border-[#CBD5E1] bg-surface-container-lowest hover:bg-[#F1F5F9] text-on-surface font-body-md-medium text-body-md-medium transition-colors" onclick="closeSubmitModal()">
+          Tiếp tục làm bài
+        </button>
+<button class="px-5 py-2.5 rounded-lg bg-primary hover:bg-[#7a0009] text-on-primary font-body-md-medium text-body-md-medium shadow-sm transition-all active:scale-95 flex items-center gap-1.5" onclick="confirmSubmission()">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle">check_circle</span>
+<span>Nộp bài ngay</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Interactive Logic Script -->
+<script>
+    // Countdown Timer logic
+    let totalSeconds = 32 * 60 + 45;
+    const timerElement = document.getElementById('exam-timer');
+
+    setInterval(() => {
+      if (totalSeconds > 0) {
+        totalSeconds--;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        timerElement.textContent = 
+          String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+      }
+    }, 1000);
+
+    // Modal Handlers
+    function openSubmitModal() {
+      document.getElementById('submit-modal').classList.remove('hidden');
+    }
+
+    function closeSubmitModal() {
+      document.getElementById('submit-modal').classList.add('hidden');
+    }
+
+    function confirmSubmission() {
+      alert("Bài thi đã được ghi nhận và nộp thành công lên máy chủ PTIT Cloud!");
+      closeSubmitModal();
+    }
+
+    // Flag toggle indicator
+    let isFlagged = false;
+    function toggleFlag() {
+      isFlagged = !isFlagged;
+      const btn = document.getElementById('flag-btn');
+      if (isFlagged) {
+        btn.classList.add('bg-[#FEF3C7]', 'border-[#FCD34D]', 'text-[#B45309]');
+        btn.querySelector('span:last-child').textContent = "Đã gắn cờ";
+      } else {
+        btn.classList.remove('bg-[#FEF3C7]', 'border-[#FCD34D]', 'text-[#B45309]');
+        btn.querySelector('span:last-child').textContent = "Đánh dấu xem lại";
+      }
+    }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body></html>

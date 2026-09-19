@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PAGE 09 — TRÌNH XEM TÀI LIỆU SỐ TÍCH HỢP AI | PTIT Physics 1</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Be Vietnam Pro Typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS 3 via CDN with container & forms plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration verbatim -->
+<script src="js/tailwind-config.js"></script>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-surface font-body-md text-on-surface h-full flex flex-col overflow-hidden antialiased select-none">
+<!-- ==================== TOP NAVIGATION / SYSTEM HEADER ==================== -->
+<header class="sticky top-0 z-40 h-[72px] flex items-center justify-between px-gutter w-full bg-surface-container-lowest border-b border-surface-variant shadow-sm flex-shrink-0">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-bold shadow-sm">
+<span class="text-label-md font-label-md tracking-wider">PTIT</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm font-bold text-primary tracking-tight leading-none">PTIT Physics 1</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-medium mt-1">Hệ thống học tập thông minh</span>
+</div>
+</div>
+<!-- Quick Search Bar on Left (from Shared Components TopNavBar spec) -->
+<div class="hidden lg:flex items-center relative w-80">
+<span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-3 rounded-lg bg-surface-container-low border border-surface-variant text-body-sm font-body-sm focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-fixed" placeholder="Tìm công thức, bài giảng, khái niệm..." type="text"/>
+</div>
+</div>
+<!-- User & Course status -->
+<div class="flex items-center gap-4">
+<button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors duration-150" title="Thông báo" type="button">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span>
+</button>
+<div class="h-6 w-px bg-surface-variant"></div>
+<div class="flex items-center gap-3 pl-1">
+<div class="w-9 h-9 rounded-full bg-surface-container-high text-primary flex items-center justify-center font-bold text-label-md font-label-md border border-surface-variant shadow-sm">
+          A
+        </div>
+<div class="hidden sm:flex flex-col text-left">
+<span class="text-label-md font-label-md text-on-surface font-semibold">Nguyễn Văn A - B23DCCN001</span>
+<span class="text-label-sm font-label-sm text-tertiary font-medium">Khóa D23 • CNTT 01</span>
+</div>
+</div>
+</div>
+</header>
+<!-- ==================== 1. DOCUMENT VIEWER TOOLBAR (56px) ==================== -->
+<nav aria-label="Thanh công cụ trình đọc" class="h-14 bg-surface-container-lowest border-b border-surface-variant px-4 flex items-center justify-between gap-2 shadow-sm z-30 flex-shrink-0">
+<!-- Left: Return to Library & Document Title -->
+<div class="flex items-center gap-3 min-w-0 flex-1">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-surface-variant text-body-sm font-body-sm text-on-surface hover:bg-surface-container-low hover:text-primary transition-all duration-150 flex-shrink-0" href="/student/library">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="font-medium hidden sm:inline">Về Kho học liệu</span>
+</a>
+<div class="h-5 w-px bg-surface-variant hidden sm:block"></div>
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">menu_book</span>
+<h1 class="text-label-md font-label-md text-on-surface truncate font-bold" title="Giáo trình Vật lý đại cương 1 - PTIT (Tập 1: Cơ học) - Bản số hóa v2.1">
+          Giáo trình Vật lý đại cương 1 - PTIT (Tập 1: Cơ học) - Bản số hóa v2.1
+        </h1>
+<span class="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant uppercase tracking-wider flex-shrink-0">
+          CHƯƠNG 2
+        </span>
+</div>
+</div>
+<!-- Center: Page navigation & Zoom controls -->
+<div class="flex items-center gap-2 flex-shrink-0">
+<!-- Page Navigation controls -->
+<div class="flex items-center bg-surface-container-low rounded-lg p-0.5 border border-surface-variant">
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest transition-colors" id="btnPrevPage" title="Trang trước (Phím tắt: Trái)">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<div class="flex items-center px-2 text-body-sm font-body-sm text-on-surface gap-1">
+<input class="w-9 h-7 text-center font-medium bg-surface-container-lowest rounded border border-surface-variant p-0 text-body-sm font-body-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container" id="pageInput" type="text" value="45"/>
+<span class="text-on-surface-variant text-label-sm font-label-sm">/ 280</span>
+</div>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest transition-colors" id="btnNextPage" title="Trang sau (Phím tắt: Phải)">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+<div class="h-5 w-px bg-surface-variant hidden lg:block"></div>
+<!-- Zoom & Layout Controls -->
+<div class="hidden xl:flex items-center bg-surface-container-low rounded-lg p-0.5 border border-surface-variant">
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest transition-colors" id="btnZoomOut" title="Thu nhỏ">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="px-2 text-body-sm font-body-sm font-medium text-on-surface min-w-[50px] text-center" id="zoomLabel">100%</span>
+<button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-lowest transition-colors" id="btnZoomIn" title="Phóng to">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+<button class="hidden md:inline-flex p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors border border-transparent hover:border-surface-variant" id="btnFitWidth" title="Vừa chiều rộng trang">
+<span class="material-symbols-outlined text-[20px]">fit_screen</span>
+</button>
+<button class="hidden md:inline-flex p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors border border-transparent hover:border-surface-variant" id="btnRotate" title="Xoay trang 90°">
+<span class="material-symbols-outlined text-[20px]">rotate_right</span>
+</button>
+<button class="hidden sm:inline-flex p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors border border-transparent hover:border-surface-variant" id="btnSearchDoc" title="Tìm kiếm trong tài liệu">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</button>
+</div>
+<!-- Right: Print, Download & Prominent AI Button -->
+<div class="flex items-center gap-2 flex-shrink-0">
+<button class="hidden lg:inline-flex p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors" title="In tài liệu">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</button>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-surface-variant text-body-sm font-body-sm text-on-surface hover:bg-surface-container-low hover:text-primary transition-all duration-150">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span class="hidden md:inline font-medium">Tải PDF</span>
+</button>
+<!-- Prominent Red Action: Ask AI -->
+<button class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-primary-container hover:bg-primary text-on-primary font-medium text-body-sm font-body-sm shadow-sm transition-all duration-150 active:scale-95" id="toggleAiPanelBtn">
+<span class="material-symbols-outlined text-[18px] animate-pulse">smart_toy</span>
+<span class="font-semibold">Hỏi AI về tài liệu này</span>
+</button>
+</div>
+</nav>
+<!-- ==================== MAIN WORKSPACE CONTAINER ==================== -->
+<div class="flex-1 flex overflow-hidden relative">
+<!-- ==================== 2. LEFT COLUMN: TABLE OF CONTENTS (280px) ==================== -->
+<aside class="w-[280px] bg-surface-container-lowest border-r border-surface-variant flex flex-col flex-shrink-0 z-20 transition-all duration-200" id="tocSidebar">
+<!-- Tabs switch -->
+<div class="flex border-b border-surface-variant bg-surface-container-low/60 p-1 gap-1">
+<button class="flex-1 py-1.5 text-center text-label-md font-label-md rounded bg-surface-container-lowest text-primary shadow-sm font-bold flex items-center justify-center gap-1.5" id="tabTocBtn">
+<span class="material-symbols-outlined text-[16px]">format_list_bulleted</span>
+          Mục lục
+        </button>
+<button class="flex-1 py-1.5 text-center text-label-md font-label-md rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest/60 transition-colors flex items-center justify-center gap-1.5" id="tabBookmarksBtn">
+<span class="material-symbols-outlined text-[16px]">bookmark</span>
+          Ghi chú &amp; Dấu trang
+        </button>
+</div>
+<!-- Quick Chapter Search inside TOC -->
+<div class="p-2.5 border-b border-surface-variant">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-outline text-[16px]">filter_list</span>
+<input class="w-full h-8 pl-8 pr-2.5 rounded bg-surface border border-surface-variant text-label-sm font-label-sm focus:outline-none focus:border-primary-container" placeholder="Lọc chương mục..." type="text"/>
+</div>
+</div>
+<!-- Chapters Tree List -->
+<div class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
+<!-- Chương 1 -->
+<div class="rounded-lg border border-transparent hover:border-surface-variant">
+<button class="w-full flex items-center justify-between p-2 text-left rounded-lg hover:bg-surface-container-low text-on-surface transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+<span class="text-label-md font-label-md font-semibold truncate">Chương 1: Động học chất điểm</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline flex-shrink-0 pl-1">5-40</span>
+</button>
+</div>
+<!-- Chương 2 (Active/Expanded) -->
+<div class="rounded-lg bg-surface-container-low/70 border border-surface-variant overflow-hidden">
+<button class="w-full flex items-center justify-between p-2 text-left bg-surface-container-high/60 text-primary font-bold">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-primary text-[18px]">expand_more</span>
+<span class="text-label-md font-label-md font-bold truncate">Chương 2: Động lực học chất điểm</span>
+</div>
+<span class="text-label-sm font-label-sm text-primary flex-shrink-0 pl-1 font-semibold">41-95</span>
+</button>
+<!-- Nested Sub-sections -->
+<div class="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-primary ml-3 my-1">
+<a class="flex items-center justify-between px-2 py-1.5 text-body-sm font-body-sm text-on-surface-variant hover:text-primary rounded hover:bg-surface-container-lowest" href="#p41">
+<span class="truncate">2.1 Khái niệm về lực và khối lượng</span>
+<span class="text-label-sm font-label-sm text-outline">tr.41</span>
+</a>
+<!-- Active Sub-topic on Page 45 -->
+<a class="flex items-center justify-between px-2 py-1.5 text-body-sm font-body-sm font-semibold rounded bg-surface-container-lowest text-primary shadow-xs border-l-2 border-primary-container" href="#p45">
+<span class="truncate flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                2.2 Định luật II Newton
+              </span>
+<span class="text-label-sm font-label-sm font-bold text-primary-container">tr.45</span>
+</a>
+<a class="flex items-center justify-between px-2 py-1.5 text-body-sm font-body-sm text-on-surface-variant hover:text-primary rounded hover:bg-surface-container-lowest" href="#p52">
+<span class="truncate">2.3 Định luật III Newton</span>
+<span class="text-label-sm font-label-sm text-outline">tr.52</span>
+</a>
+<a class="flex items-center justify-between px-2 py-1.5 text-body-sm font-body-sm text-on-surface-variant hover:text-primary rounded hover:bg-surface-container-lowest" href="#p68">
+<span class="truncate">2.4 Các lực cơ học thường gặp</span>
+<span class="text-label-sm font-label-sm text-outline">tr.68</span>
+</a>
+<a class="flex items-center justify-between px-2 py-1.5 text-body-sm font-body-sm text-on-surface-variant hover:text-primary rounded hover:bg-surface-container-lowest" href="#p85">
+<span class="truncate">2.5 Phương trình chuyển động</span>
+<span class="text-label-sm font-label-sm text-outline">tr.85</span>
+</a>
+</div>
+</div>
+<!-- Chương 3 -->
+<div class="rounded-lg border border-transparent hover:border-surface-variant">
+<button class="w-full flex items-center justify-between p-2 text-left rounded-lg hover:bg-surface-container-low text-on-surface transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+<span class="text-label-md font-label-md font-semibold truncate">Chương 3: Công và Năng lượng</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline flex-shrink-0 pl-1">96-150</span>
+</button>
+</div>
+<!-- Chương 4 -->
+<div class="rounded-lg border border-transparent hover:border-surface-variant">
+<button class="w-full flex items-center justify-between p-2 text-left rounded-lg hover:bg-surface-container-low text-on-surface transition-colors">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+<span class="text-label-md font-label-md font-semibold truncate">Chương 4: Chuyển động vật rắn</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline flex-shrink-0 pl-1">151-210</span>
+</button>
+</div>
+</div>
+<!-- TOC Footer stats -->
+<div class="p-3 border-t border-surface-variant bg-surface-container-low text-label-sm font-label-sm text-on-surface-variant flex items-center justify-between">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+          Đã đọc 45/280 trang (16%)
+        </span>
+<span class="text-primary font-semibold">Tập 1</span>
+</div>
+</aside>
+<!-- ==================== 3. CENTRAL PDF DOCUMENT CANVAS ==================== -->
+<main class="flex-1 bg-surface-dim/40 overflow-y-auto overflow-x-hidden custom-scroll flex flex-col items-center p-4 md:p-8 relative">
+<!-- Floating Page Indicator Pill -->
+<div class="sticky top-2 z-10 px-3 py-1 rounded-full bg-inverse-surface/85 backdrop-blur text-inverse-on-surface text-label-sm font-label-sm shadow-md mb-4 flex items-center gap-2">
+<span>Trang hiện tại: <strong>45</strong> / 280</span>
+<span class="w-1 h-1 rounded-full bg-surface-variant"></span>
+<span class="text-secondary-fixed">Chương 2: Động lực học</span>
+</div>
+<!-- Realistic Digital Book Page Layout (A4 ratio mock) -->
+<div class="w-full max-w-[840px] bg-surface-container-lowest border border-surface-variant rounded shadow-xl p-8 sm:p-14 text-on-surface transition-transform duration-200" id="pdfPaperCanvas">
+<!-- Document Page Academic Header -->
+<header class="border-b border-surface-variant pb-3 mb-8 flex justify-between items-center text-label-sm font-label-sm text-outline uppercase tracking-wider">
+<span>Học viện Công nghệ Bưu chính Viễn thông • Khoa Cơ bản 1</span>
+<span class="text-primary font-semibold">Giáo trình Vật lý Đại cương 1</span>
+</header>
+<!-- Chapter & Section Heading -->
+<div class="mb-6">
+<div class="text-label-md font-label-md text-primary font-bold tracking-widest uppercase mb-1">
+            CHƯƠNG II — ĐỘNG LỰC HỌC CHẤT ĐIỂM
+          </div>
+<h2 class="text-headline-lg font-headline-lg font-bold text-on-surface tracking-tight">
+            Mục 2.2. Định luật II Newton (Định luật cơ bản của Cơ học cổ điển)
+          </h2>
+</div>
+<!-- Academic Content Body -->
+<div class="space-y-5 text-body-md font-body-md leading-relaxed text-on-surface">
+<p class="text-justify indent-6">
+            Trong phần trước, định luật I Newton đã chỉ ra rằng một chất điểm cô lập sẽ duy trì trạng thái đứng yên hoặc chuyển động thẳng đều. Bây giờ, chúng ta khảo sát trường hợp vật chịu tác dụng tương hỗ từ các vật thể xung quanh khiến vận tốc của nó thay đổi theo thời gian.
+          </p>
+<!-- Formal Definition Block -->
+<div class="p-4 rounded-lg bg-surface-container-low border-l-4 border-primary-container">
+<h3 class="text-label-md font-label-md font-bold text-primary mb-1 uppercase tracking-wide">Phát biểu định luật II:</h3>
+<p class="italic text-on-surface">
+              "Gia tốc mà một vật thu được tỉ lệ thuận với hợp lực tác dụng lên vật và tỉ lệ nghịch với khối lượng của vật đó. Hướng của gia tốc cùng hướng với hợp lực tác dụng."
+            </p>
+</div>
+<!-- HIGHLIGHTED SEGMENT WITH AI CITATION INTERACTION -->
+<div class="relative group my-4">
+<div class="p-3.5 bg-yellow-100/90 border border-secondary/30 rounded-lg text-on-surface transition-all">
+<div class="flex items-center justify-between pb-1 mb-1 border-b border-secondary/20">
+<span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase text-secondary tracking-wider">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+                  Đoạn trích học thuyết trọng tâm • Đã ghim vào Trợ giảng AI
+                </span>
+<span class="text-label-sm font-label-sm text-outline">Dòng 14 - 19</span>
+</div>
+<p class="text-justify font-serif text-[15px] leading-relaxed">
+                Biểu thức vi phân tổng quát của Định luật II Newton liên hệ giữa biến thiên động lượng của chất điểm đối với thời gian và tổng ngoại lực tác dụng: Đạo hàm bậc nhất của vectơ động lượng <strong>p⃗ = m.v⃗</strong> theo thời gian bằng tổng hợp lực <strong>F⃗</strong> tác dụng lên chất điểm.
+              </p>
+</div>
+<!-- Floating Citation Tag on the edge -->
+<button class="absolute -right-3 -top-3 w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-md hover:scale-110 transition-transform" title="Xem giải thích chi tiết bởi AI">
+<span class="material-symbols-outlined text-[18px]">smart_toy</span>
+</button>
+</div>
+<!-- Formula Callout Component (Design System spec) -->
+<div class="rounded-xl bg-[#FEF2F2] border-l-4 border-primary-container p-4 sm:p-5 my-6 shadow-xs">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-md font-label-md font-bold text-primary">Phương trình vi phân tổng quát (2.4)</span>
+<div class="flex items-center gap-2">
+<button class="text-outline hover:text-primary p-1 rounded" title="Sao chép biểu thức LaTeX">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="text-outline hover:text-primary p-1 rounded" title="Đánh dấu công thức trọng tâm">
+<span class="material-symbols-outlined text-[18px]">bookmark_add</span>
+</button>
+</div>
+</div>
+<!-- Mathematical rendering -->
+<div class="py-3 text-center overflow-x-auto">
+<div class="inline-block text-headline-md font-headline-md font-semibold text-primary tracking-wide font-mono px-4 py-2 bg-surface-container-lowest rounded-lg border border-outline-variant/60 shadow-xs">
+                \vec{F} = \frac{d\vec{p}}{dt} = \frac{d(m\vec{v})}{dt} = m \frac{d\vec{v}}{dt} + \vec{v}\frac{dm}{dt}
+              </div>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-2 text-center">
+              Khi khối lượng của vật không đổi (<span class="font-mono">m = const</span>, như trong cơ học phi tương đối tính), ta thu được dạng quen thuộc: 
+              <strong class="text-primary font-mono">\vec{F} = m.\vec{a}</strong>.
+            </p>
+</div>
+<!-- Physical diagram & Force Vector Illustration -->
+<div class="my-8 rounded-xl border border-surface-variant bg-surface p-5 text-center">
+<div class="max-w-md mx-auto h-48 bg-surface-container-lowest rounded-lg border border-surface-variant flex flex-col items-center justify-center relative p-4 shadow-inner">
+<!-- Schematic SVG diagram of forces on an inclined plane / block -->
+<svg class="w-full h-full max-h-40" viewbox="0 0 320 140">
+<!-- Surface -->
+<line stroke="#8F6F6C" stroke-dasharray="4,4" stroke-width="2" x1="20" x2="300" y1="110" y2="110"></line>
+<!-- Block -->
+<rect fill="#E6EEFF" height="50" rx="4" stroke="#005223" stroke-width="2" width="80" x="120" y="60"></rect>
+<text fill="#121C2A" font-family="Be Vietnam Pro" font-size="14" font-weight="bold" x="150" y="90">m</text>
+<!-- Vectors -->
+<!-- Force F (pulling) -->
+<line marker-end="url(#arrow-red)" stroke="#B91C1C" stroke-width="2.5" x1="160" x2="260" y1="85" y2="55"></line>
+<text fill="#B91C1C" font-family="Be Vietnam Pro" font-size="12" font-weight="bold" x="265" y="55">F⃗ (kéo)</text>
+<!-- Gravity P -->
+<line marker-end="url(#arrow-red)" stroke="#93000B" stroke-width="2" x1="160" x2="160" y1="85" y2="135"></line>
+<text fill="#93000B" font-family="Be Vietnam Pro" font-size="11" font-weight="bold" x="165" y="135">P⃗ = m.g⃗</text>
+<!-- Normal force N -->
+<line marker-end="url(#arrow-green)" stroke="#005223" stroke-width="2" x1="160" x2="160" y1="85" y2="20"></line>
+<text fill="#005223" font-family="Be Vietnam Pro" font-size="11" font-weight="bold" x="165" y="25">N⃗ (phản lực)</text>
+<!-- Friction F_ms -->
+<line marker-end="url(#arrow-gold)" stroke="#755B00" stroke-width="2" x1="120" x2="60" y1="110" y2="110"></line>
+<text fill="#755B00" font-family="Be Vietnam Pro" font-size="11" font-weight="bold" x="45" y="105">F⃗_ms</text>
+<defs>
+<marker id="arrow-red" markerheight="6" markerwidth="6" orient="auto-start-reverse" refx="5" refy="5" viewbox="0 0 10 10">
+<path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#B91C1C"></path>
+</marker>
+<marker id="arrow-green" markerheight="6" markerwidth="6" orient="auto-start-reverse" refx="5" refy="5" viewbox="0 0 10 10">
+<path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#005223"></path>
+</marker>
+<marker id="arrow-gold" markerheight="6" markerwidth="6" orient="auto-start-reverse" refx="5" refy="5" viewbox="0 0 10 10">
+<path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#755B00"></path>
+</marker>
+</defs>
+</svg>
+</div>
+<p class="text-label-sm font-label-sm text-outline mt-2 font-medium">
+              Hình 2.4: Sơ đồ phân tích các ngoại lực tác dụng lên chất điểm khối lượng <span class="italic">m</span> chuyển động trên mặt ngang.
+            </p>
+</div>
+<p class="text-justify indent-6">
+            Như minh họa ở Hình 2.4, nguyên lý độc lập tác dụng lực cho phép ta chiếu phương trình vector lên hai trục tọa độ Đề-các vuông góc Ox và Oy nhằm tìm quy luật chuyển động và các thành phần gia tốc tương ứng của vật.
+          </p>
+<!-- Academic Footnotes Section -->
+<footer class="border-t border-surface-variant/80 pt-4 mt-10 space-y-1 text-label-sm font-label-sm text-outline">
+<p><sup>[1]</sup> Isaac Newton, <em>Philosophiae Naturalis Principia Mathematica</em> (1687), Quyển I, Tiên đề 2.</p>
+<p><sup>[2]</sup> Trong hệ SI, đơn vị lực là Newton (N): 1 N = 1 kg·m/s².</p>
+</footer>
+</div>
+<!-- Academic Page Numbering at bottom of sheet -->
+<div class="mt-8 pt-4 border-t border-surface-variant flex justify-between items-center text-label-sm font-label-sm text-outline">
+<span>Giáo trình điện tử PTIT • Lưu hành nội bộ</span>
+<span class="font-bold text-on-surface text-[14px]">45</span>
+</div>
+</div>
+<!-- Quick Document Canvas Bottom Pager floating -->
+<div class="flex items-center gap-3 mt-6 mb-4">
+<button class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-surface-variant hover:border-primary text-body-sm font-body-sm font-medium flex items-center gap-2 shadow-xs transition-colors">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+          Trang trước (tr.44)
+        </button>
+<span class="text-label-sm font-label-sm text-outline">Cuộn chuột hoặc dùng phím mũi tên để lật trang</span>
+<button class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-surface-variant hover:border-primary text-body-sm font-body-sm font-medium flex items-center gap-2 shadow-xs transition-colors">
+          Trang sau (tr.46)
+          <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- ==================== 4. RIGHT COLUMN: SOCRATIC AI ASSISTANT (320px) ==================== -->
+<aside class="w-[320px] bg-surface-container-lowest border-l border-surface-variant flex flex-col flex-shrink-0 z-20 shadow-sm transition-all duration-200" id="aiAssistantSidebar">
+<!-- AI Header -->
+<div class="p-3.5 border-b border-surface-variant bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+</div>
+<div>
+<h2 class="text-label-md font-label-md font-bold text-on-surface flex items-center gap-1.5 leading-tight">
+              Trợ giảng AI Socratic
+              <span class="inline-block w-2 h-2 rounded-full bg-tertiary"></span>
+</h2>
+<span class="text-label-sm font-label-sm text-outline">Ngữ cảnh: Giáo trình Cơ học (Trang 45)</span>
+</div>
+</div>
+<button class="p-1 rounded text-outline hover:text-on-surface hover:bg-surface-container transition-colors" id="closeAiPanelBtn" title="Thu gọn bảng AI">
+<span class="material-symbols-outlined text-[20px]">keyboard_double_arrow_right</span>
+</button>
+</div>
+<!-- Dialogue & Context Message Feed -->
+<div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3.5">
+<!-- Welcome Prompt / Active Context -->
+<div class="p-3 rounded-xl bg-surface-container-low border border-surface-variant text-body-sm font-body-sm">
+<div class="flex items-center gap-1.5 text-primary font-bold text-label-sm font-label-sm mb-1.5">
+<span class="material-symbols-outlined text-[16px]">info</span>
+            Tôi đồng hành cùng bạn ở trang 45
+          </div>
+<p class="text-on-surface leading-relaxed text-[13px]">
+            Tôi có thể giải thích công thức toán học <strong>(2.4)</strong>, làm rõ đạo hàm động lượng hoặc gợi ý dạng bài tập tương tự trong đề thi PTIT.
+          </p>
+</div>
+<!-- Socratic Suggested Prompts Chip Cluster -->
+<div class="space-y-1.5">
+<div class="text-[11px] font-bold uppercase tracking-wider text-outline px-1">
+            Gợi ý câu hỏi thông minh
+          </div>
+<button class="w-full text-left p-2.5 rounded-lg border border-surface-variant bg-surface hover:bg-surface-container-low hover:border-primary text-body-sm font-body-sm text-on-surface transition-all flex items-start gap-2 group">
+<span class="material-symbols-outlined text-primary text-[18px] flex-shrink-0 mt-0.5 group-hover:translate-x-0.5 transition-transform">help_outline</span>
+<span class="text-[13px] leading-snug">Tóm tắt các định lý và điều kiện áp dụng trong mục 2.2</span>
+</button>
+<button class="w-full text-left p-2.5 rounded-lg border border-surface-variant bg-surface hover:bg-surface-container-low hover:border-primary text-body-sm font-body-sm text-on-surface transition-all flex items-start gap-2 group">
+<span class="material-symbols-outlined text-primary text-[18px] flex-shrink-0 mt-0.5 group-hover:translate-x-0.5 transition-transform">calculate</span>
+<span class="text-[13px] leading-snug">Chứng minh công thức vi phân (2.4) từ định nghĩa động lượng</span>
+</button>
+<button class="w-full text-left p-2.5 rounded-lg border border-surface-variant bg-surface hover:bg-surface-container-low hover:border-primary text-body-sm font-body-sm text-on-surface transition-all flex items-start gap-2 group">
+<span class="material-symbols-outlined text-primary text-[18px] flex-shrink-0 mt-0.5 group-hover:translate-x-0.5 transition-transform">quiz</span>
+<span class="text-[13px] leading-snug">Trích dẫn nguồn đề thi tương ứng của PTIT các năm trước</span>
+</button>
+</div>
+<!-- Sample Chat Exchange with Citation Link -->
+<div class="space-y-3 pt-2">
+<!-- Student question -->
+<div class="flex justify-end">
+<div class="max-w-[85%] bg-primary-container text-on-primary rounded-2xl rounded-tr-xs p-3 text-[13px] leading-relaxed shadow-xs">
+              Ý nghĩa vật lý của việc viết định luật II dưới dạng vi phân dP/dt là gì ạ?
+            </div>
+</div>
+<!-- AI Answer with citation -->
+<div class="flex items-start gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-high text-primary flex items-center justify-center text-[12px] flex-shrink-0 font-bold">
+              AI
+            </div>
+<div class="max-w-[90%] bg-surface rounded-2xl rounded-tl-xs p-3 border border-surface-variant text-[13px] leading-relaxed text-on-surface shadow-xs">
+<p class="mb-2">
+                Dạng vi phân <span class="font-mono font-bold text-primary">F⃗ = dp⃗/dt</span> tổng quát hơn dạng <span class="font-mono">F⃗ = m.a⃗</span> vì nó áp dụng được cho cả <strong>hệ có khối lượng biến thiên theo thời gian</strong> (như tên lửa phụt khí đốt, hoặc hạt chuyển động tương đối tính với vận tốc xấp xỉ ánh sáng).
+              </p>
+<!-- Direct Backlink Anchor to PDF highlight -->
+<div class="mt-2 pt-2 border-t border-surface-variant flex items-center justify-between">
+<a class="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline" href="#p45">
+<span class="material-symbols-outlined text-[14px]">link</span>
+                  Xem lại đoạn trích mục 2.2 (Trang 45)
+                </a>
+<span class="text-[10px] text-outline">Độ tin cậy: 99%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick AI Chat Input Box -->
+<div class="p-3 border-t border-surface-variant bg-surface-container-low">
+<div class="relative flex items-end bg-surface-container-lowest rounded-xl border border-surface-variant focus-within:border-primary-container focus-within:ring-2 focus-within:ring-primary-fixed">
+<textarea class="w-full resize-none border-0 bg-transparent py-2 pl-3 pr-10 text-body-sm font-body-sm focus:ring-0 placeholder:text-outline text-on-surface" placeholder="Hỏi câu hỏi về trang 45 hoặc công thức..." rows="2"></textarea>
+<button class="absolute right-2 bottom-2 p-1.5 rounded-lg bg-primary-container hover:bg-primary text-on-primary transition-colors disabled:opacity-50" title="Gửi câu hỏi cho AI">
+<span class="material-symbols-outlined text-[16px]">send</span>
+</button>
+</div>
+<div class="flex items-center justify-between mt-2 text-[11px] text-outline">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">verified</span>
+            Đối chiếu giáo trình PTIT v2.1
+          </span>
+<span>Phím tắt: Enter ↵</span>
+</div>
+</div>
+</aside>
+</div>
+<!-- ==================== DESKTOP FOOTER (from Shared Components JSON) ==================== -->
+<footer class="w-full py-2.5 px-gutter flex flex-col md:flex-row justify-between items-center text-body-sm font-body-sm text-on-surface-variant border-t border-surface-variant bg-surface-container-lowest flex-shrink-0 z-30">
+<div class="flex items-center gap-3 mb-1 md:mb-0">
+<span class="text-label-md font-label-md font-bold text-primary">PTIT Physics 1</span>
+<span class="text-outline hidden sm:inline">•</span>
+<span class="text-[12px]">© 2024 Học viện Công nghệ Bưu chính Viễn thông (PTIT). All rights reserved.</span>
+</div>
+<div class="flex items-center gap-5 text-[12px]">
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-150" href="#">Điều khoản sử dụng</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-150" href="#">Chính sách bảo mật</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-150" href="#">Hỗ trợ kỹ thuật</a>
+</div>
+</footer>
+<!-- ==================== MICRO-INTERACTION SCRIPT ==================== -->
+<script>
+    // Zoom control logic
+    let currentZoom = 100;
+    const zoomLabel = document.getElementById('zoomLabel');
+    const pdfCanvas = document.getElementById('pdfPaperCanvas');
+    const btnZoomIn = document.getElementById('btnZoomIn');
+    const btnZoomOut = document.getElementById('btnZoomOut');
+    const btnFitWidth = document.getElementById('btnFitWidth');
+
+    function updateZoom(newZoom) {
+      currentZoom = Math.min(Math.max(newZoom, 60), 160);
+      if (zoomLabel) zoomLabel.textContent = currentZoom + '%';
+      if (pdfCanvas) {
+        pdfCanvas.style.transform = `scale(${currentZoom / 100})`;
+        pdfCanvas.style.transformOrigin = 'top center';
+      }
+    }
+
+    if (btnZoomIn) {
+      btnZoomIn.addEventListener('click', () => updateZoom(currentZoom + 10));
+    }
+    if (btnZoomOut) {
+      btnZoomOut.addEventListener('click', () => updateZoom(currentZoom - 10));
+    }
+    if (btnFitWidth) {
+      btnFitWidth.addEventListener('click', () => updateZoom(100));
+    }
+
+    // Page navigation inputs
+    const pageInput = document.getElementById('pageInput');
+    const btnPrevPage = document.getElementById('btnPrevPage');
+    const btnNextPage = document.getElementById('btnNextPage');
+
+    if (btnPrevPage) {
+      btnPrevPage.addEventListener('click', () => {
+        let val = parseInt(pageInput.value, 10);
+        if (val > 1) pageInput.value = val - 1;
+      });
+    }
+
+    if (btnNextPage) {
+      btnNextPage.addEventListener('click', () => {
+        let val = parseInt(pageInput.value, 10);
+        if (val < 280) pageInput.value = val + 1;
+      });
+    }
+
+    // Toggle AI panel
+    const toggleAiBtn = document.getElementById('toggleAiPanelBtn');
+    const closeAiBtn = document.getElementById('closeAiPanelBtn');
+    const aiSidebar = document.getElementById('aiAssistantSidebar');
+
+    if (toggleAiBtn && aiSidebar) {
+      toggleAiBtn.addEventListener('click', () => {
+        aiSidebar.classList.toggle('hidden');
+      });
+    }
+    if (closeAiBtn && aiSidebar) {
+      closeAiBtn.addEventListener('click', () => {
+        aiSidebar.classList.add('hidden');
+      });
+    }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body></html>

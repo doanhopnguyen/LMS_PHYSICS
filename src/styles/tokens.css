@@ -1,0 +1,29 @@
+:root {
+  --ptit-primary: #b91c1c;
+  --ptit-primary-dark: #93000b;
+  --ptit-primary-soft: #fee2e2;
+  --ptit-surface: #f8f9ff;
+  --ptit-card: #ffffff;
+  --ptit-border: #e2e8f0;
+  --ptit-border-strong: #cbd5e1;
+  --ptit-text: #121c2a;
+  --ptit-text-muted: #64748b;
+  --ptit-success: #15803d;
+  --ptit-warning: #b45309;
+  /* Relative fallbacks; rendered components use ratios of their shorter edge. */
+  --ptit-radius-pill: 1.5em;
+  --ptit-radius-panel: 1.25rem;
+  --ptit-radius-control: 1em;
+  --ptit-radius-compact: 0.75em;
+}
+
+.app-shell-content {
+  min-width: 0;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}

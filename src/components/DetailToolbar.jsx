@@ -1,0 +1,11 @@
+import React from 'react';
+
+export function DetailToolbar({ title, subtitle, backHref = 'dashboard.html', backLabel = 'Quay lại', onBack, actions }) {
+  const backContent = <><span className="material-symbols-outlined text-base" aria-hidden="true">arrow_back</span><span className="hidden sm:inline">{backLabel}</span></>;
+  return <div className={`detail-toolbar-space ${actions ? 'has-actions' : ''}`}><header className={`app-header detail-toolbar ${actions ? 'has-actions' : ''}`} aria-label="Công cụ trang chi tiết">
+    {onBack ? <button type="button" onClick={onBack} className="detail-toolbar-back" aria-label={backLabel}>{backContent}</button> : <a href={backHref} className="detail-toolbar-back" aria-label={backLabel}>{backContent}</a>}
+    <span className="detail-toolbar-divider" />
+    <div className="detail-toolbar-info"><strong>{title}</strong>{subtitle && <span>{subtitle}</span>}</div>
+    {actions && <div className="detail-toolbar-actions">{actions}</div>}
+  </header></div>;
+}
