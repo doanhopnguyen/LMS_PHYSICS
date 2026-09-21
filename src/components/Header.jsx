@@ -44,9 +44,7 @@ export function Header({ onMenuClick }) {
             type="search"
             aria-label="Tìm kiếm"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[11px] font-mono text-[#64748B] bg-white border border-[#CBD5E1] rounded-full shadow-xs">
-            ⌘K
-          </kbd>
+          
         </div>
       </div>
 
