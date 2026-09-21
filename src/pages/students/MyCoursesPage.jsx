@@ -1,0 +1,86 @@
+import React from 'react';
+import { AppShell } from '../../components/AppShell.jsx';
+import { Button } from '../../components/Button.jsx';
+import { Card } from '../../components/Card.jsx';
+import { PageContainer } from '../../components/PageContainer.jsx';
+import { PageTitle } from '../../components/PageTitle.jsx';
+import { courses } from '../../data/lmsData.js';
+
+export function MyCoursesPage() {
+  return (
+    <AppShell
+      currentPage="my_courses.html"
+      title="Học phần của tôi · PTIT Physics 1"
+      breadcrumbs={['Học phần của tôi']}
+      current="Danh sách học phần"
+    >
+      <PageContainer>
+        <PageTitle
+          eyebrow="NĂM HỌC 2024-2025"
+          title="Học phần của tôi"
+          description="Tổng quan tiến độ các học phần bạn đang theo học."
+          actions={<Button icon="add">Tham gia học phần</Button>}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {courses.map((course) => (
+            <Card
+              key={course.code}
+              progress={course.progress}
+              status={course.progress === 100 ? 'Đã hoàn thành' : course.progress ? 'Đang học' : 'Chưa bắt đầu'}
+              className="hover:-translate-y-1 hover:shadow-md transition-all"
+            >
+              <div className="relative z-10 p-6 flex flex-col h-full">
+                <div className="flex items-start justify-between">
+                  <span
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${course.color === 'gold' ? 'bg-[#FEF3C7] text-[#B45309]' : course.color === 'green' ? 'bg-[#DCFCE7] text-[#15803D]' : 'bg-[#FEE2E2] text-primary'}`}
+                  >
+                    <span className="material-symbols-outlined text-2xl">{course.icon}</span>
+                  </span>
+                </div>
+                <div className="mt-5">
+                  <span className="text-label-md text-[#64748B]">
+                    {course.code} · {course.className}
+                  </span>
+                  <h2 className="text-headline-sm font-bold mt-1">{course.title}</h2>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-5 text-body-sm">
+                  <div className="p-3 rounded-lg bg-white/70 backdrop-blur-[1px]">
+                    <span className="text-[#64748B]">Bài học</span>
+                    <strong className="block text-body-md mt-1">{course.lessons}</strong>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white/70 backdrop-blur-[1px]">
+                    <span className="text-[#64748B]">Điểm TB</span>
+                    <strong className="block text-body-md mt-1">{course.score}/10</strong>
+                  </div>
+                </div>
+                <a href={course.code === 'BAS1201' ? 'course_detail.html' : '#'} className="mt-5">
+                  <Button className="w-full" variant={course.progress ? 'primary' : 'secondary'}>
+                    {course.progress ? 'Tiếp tục học' : 'Xem học phần'}
+                  </Button>
+                </a>
+              </div>
+            </Card>
+          ))}
+        </div>
+        <Card className="p-6">
+          <h2 className="text-headline-md font-bold">Lịch học tuần này</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+            {['Thứ 2 · 09:30', 'Thứ 4 · 14:00', 'Thứ 6 · 08:00'].map((time, index) => (
+              <div key={time} className="p-4 rounded-xl border border-[#E2E8F0] flex gap-3">
+                <span className="w-10 h-10 rounded-lg bg-[#FEE2E2] text-primary flex items-center justify-center">
+                  <span className="material-symbols-outlined">event</span>
+                </span>
+                <div>
+                  <strong className="text-body-md">
+                    {['Động lực học chất điểm', 'Thực hành Lab 3D', 'Ôn tập Chương 2'][index]}
+                  </strong>
+                  <p className="text-body-sm text-[#64748B] mt-1">{time} · Phòng A2-304</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </PageContainer>
+    </AppShell>
+  );
+}

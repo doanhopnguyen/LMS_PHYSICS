@@ -1,4 +1,5 @@
 export const pageManifest = [
+  { file: 'login.html', component: 'LoginPage', layout: 'Standalone' },
   { file: 'dashboard.html', component: 'DashboardPage', layout: 'AppShell' },
   { file: 'course_detail.html', component: 'CourseDetailPage', layout: 'AppShell' },
   { file: 'exam_practice_center.html', component: 'ExamPracticePage', layout: 'AppShell' },
@@ -16,5 +17,5 @@ export const pageManifest = [
   { file: 'document_viewer.html', component: 'DocumentViewerPage', layout: 'ImmersiveShell' },
   { file: 'exam_session.html', component: 'ExamSessionPage', layout: 'ImmersiveShell' },
   { file: 'interactive_lesson.html', component: 'InteractiveLessonPage', layout: 'AppShell' },
-  { file: 'mobile_experience.html', component: 'MobileExperiencePage', layout: 'ImmersiveShell' }
+  { file: 'mobile_experience.html', component: 'MobileExperiencePage', layout: 'ImmersiveShell' },
 ];

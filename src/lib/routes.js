@@ -1,4 +1,5 @@
 export const routeFiles = [
+  'login.html',
   'dashboard.html',
   'course_detail.html',
   'learning_module.html',
@@ -17,10 +18,11 @@ export const routeFiles = [
   'document_viewer.html',
   'exam_session.html',
   'interactive_lesson.html',
-  'mobile_experience.html'
+  'mobile_experience.html',
 ];
 
 export function getPageFile(pathname = window.location.pathname) {
   const file = pathname.split('/').filter(Boolean).pop();
+  if (!file || file === 'index.html') return 'login.html';
   return routeFiles.includes(file) ? file : 'dashboard.html';
 }

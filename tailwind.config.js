@@ -3,8 +3,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#93000b',
-        'primary-container': '#b91c1c',
+        primary: '#E52220',
+        'primary-container': '#E52220',
         'on-primary': '#ffffff',
         'on-surface': '#121c2a',
         'on-surface-variant': '#5b403d',

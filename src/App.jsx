@@ -1,27 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getPageFile } from './lib/routes.js';
-import { DashboardPage } from './pages/DashboardPage.jsx';
-import { CourseDetailPage } from './pages/CourseDetailPage.jsx';
-import { LearningModulePage } from './pages/LearningModulePage.jsx';
-import { ExamPracticePage } from './pages/ExamPracticePage.jsx';
-import { ExamResultsPage } from './pages/ExamResultsPage.jsx';
-import { LabReportPage } from './pages/LabReportPage.jsx';
-import { LearningResultsPage } from './pages/LearningResultsPage.jsx';
-import { LibraryPage } from './pages/LibraryPage.jsx';
-import { MyCoursesPage } from './pages/MyCoursesPage.jsx';
-import { NotificationsPage } from './pages/NotificationsPage.jsx';
-import { ProfileSettingsPage } from './pages/ProfileSettingsPage.jsx';
-import { VirtualLabPage } from './pages/VirtualLabPage.jsx';
-import { VoiceCitationsPage } from './pages/VoiceCitationsPage.jsx';
-import { WorkspacePage } from './pages/WorkspacePage.jsx';
-import { AiTutorPage } from './pages/AiTutorPage.jsx';
-import { DocumentViewerPage } from './pages/DocumentViewerPage.jsx';
-import { ExamSessionPage } from './pages/ExamSessionPage.jsx';
-import { InteractiveLessonPage } from './pages/InteractiveLessonPage.jsx';
-import { MobileExperiencePage } from './pages/MobileExperiencePage.jsx';
+import { LoginPage } from './pages/LoginPage.jsx';
+import { DashboardPage } from './pages/students/DashboardPage.jsx';
+import { CourseDetailPage } from './pages/students/CourseDetailPage.jsx';
+import { LearningModulePage } from './pages/students/LearningModulePage.jsx';
+import { ExamPracticePage } from './pages/students/ExamPracticePage.jsx';
+import { ExamResultsPage } from './pages/students/ExamResultsPage.jsx';
+import { LabReportPage } from './pages/students/LabReportPage.jsx';
+import { LearningResultsPage } from './pages/students/LearningResultsPage.jsx';
+import { LibraryPage } from './pages/students/LibraryPage.jsx';
+import { MyCoursesPage } from './pages/students/MyCoursesPage.jsx';
+import { NotificationsPage } from './pages/students/NotificationsPage.jsx';
+import { ProfileSettingsPage } from './pages/students/ProfileSettingsPage.jsx';
+import { VirtualLabPage } from './pages/students/VirtualLabPage.jsx';
+import { VoiceCitationsPage } from './pages/students/VoiceCitationsPage.jsx';
+import { WorkspacePage } from './pages/students/WorkspacePage.jsx';
+import { AiTutorPage } from './pages/students/AiTutorPage.jsx';
+import { DocumentViewerPage } from './pages/students/DocumentViewerPage.jsx';
+import { ExamSessionPage } from './pages/students/ExamSessionPage.jsx';
+import { InteractiveLessonPage } from './pages/students/InteractiveLessonPage.jsx';
+import { MobileExperiencePage } from './pages/students/MobileExperiencePage.jsx';
 
 const pageComponents = {
+  'login.html': LoginPage,
   'dashboard.html': DashboardPage,
   'course_detail.html': CourseDetailPage,
   'learning_module.html': LearningModulePage,
@@ -40,7 +42,7 @@ const pageComponents = {
   'document_viewer.html': DocumentViewerPage,
   'exam_session.html': ExamSessionPage,
   'interactive_lesson.html': InteractiveLessonPage,
-  'mobile_experience.html': MobileExperiencePage
+  'mobile_experience.html': MobileExperiencePage,
 };
 
 function App() {

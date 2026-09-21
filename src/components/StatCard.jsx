@@ -1,27 +1,63 @@
 import React from 'react';
-import { Card } from './Card.jsx';
+import { ProgressBar } from './ProgressBar.jsx';
+import { SparklineChart } from './DataCharts.jsx';
 
-export function StatCard({ label, value, detail, icon, tone = 'primary', progress }) {
-  const tones = {
-    primary: 'bg-[#FEE2E2] text-primary',
-    success: 'bg-[#DCFCE7] text-[#15803D]',
-    warning: 'bg-[#FEF3C7] text-[#B45309]',
-    neutral: 'bg-[#F1F5F9] text-[#475569]'
-  };
+export function StatCard({
+  label,
+  value,
+  detail,
+  icon,
+  tone = 'primary',
+  progress,
+  trend,
+  chart,
+  sideChart,
+  fillProgress,
+  accentColor,
+}) {
+  const palette = ['#0284c7', '#059669', '#7c3aed', '#db2777', '#b45309', '#4f46e5', '#0e7490'];
+  const seed = Array.from(label ?? '').reduce((hash, char) => (hash * 31 + char.codePointAt(0)) >>> 0, 0);
+  const accent = accentColor ?? palette[seed % palette.length];
+  const hasChart = chart || trend?.length || progress !== undefined;
 
   return (
-    <Card className="p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-body-md text-[#64748B]">{label}</span>
-        <span className={`w-8 h-8 rounded-full flex items-center justify-center ${tones[tone] ?? tones.primary}`}>
-          <span className="material-symbols-outlined text-lg">{icon}</span>
-        </span>
+    <section className="stat-card" style={{ '--stat-accent': accent }} aria-label={label}>
+      <div className="stat-card__ribbon">
+        {fillProgress !== undefined || progress !== undefined ? 'TIẾN ĐỘ' : 'THỐNG KÊ HỌC TẬP'}
       </div>
-      <div className="flex items-baseline gap-1.5 mb-1.5">
-        <span className="text-display-lg-mobile text-on-surface font-bold tracking-tight">{value}</span>
-        {detail && <span className="text-body-md text-[#64748B]">{detail}</span>}
+      <div className="stat-card__surface">
+        {fillProgress !== undefined ? (
+          <div
+            className="course-progress-card__fill"
+            style={{ '--course-progress': `${fillProgress}%` }}
+            aria-hidden="true"
+          />
+        ) : null}
+        <div className="stat-card__content">
+          <div className="stat-card__heading">
+            <h3>{label}</h3>
+            <span className="stat-card__icon" aria-hidden="true">
+              <span className="material-symbols-outlined text-lg">{icon}</span>
+            </span>
+          </div>
+          <div className="stat-card__metrics">
+            <div className="stat-card__value">
+              <span className="text-display-lg-mobile text-on-surface font-bold tracking-tight">{value}</span>
+              {detail && <span className="text-body-md text-[#64748B]">{detail}</span>}
+            </div>
+            {sideChart && <div className="stat-card__side-chart">{sideChart}</div>}
+          </div>
+          {hasChart ? (
+            <div className="stat-card__chart">
+              {chart ??
+                (trend?.length ? <SparklineChart data={trend} tone={tone} label={`Xu hướng ${label}`} /> : null)}
+              {!chart && !trend?.length && progress !== undefined ? (
+                <ProgressBar value={progress} tone={tone} compact />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
-      {progress !== undefined ? <div className="w-full h-2 bg-[#E2E8F0] rounded-full overflow-hidden"><div className="h-full rounded-full bg-primary-container" style={{ width: `${progress}%` }} /></div> : null}
-    </Card>
+    </section>
   );
 }

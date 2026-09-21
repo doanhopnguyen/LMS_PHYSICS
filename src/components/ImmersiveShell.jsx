@@ -5,7 +5,14 @@ import { Sidebar } from './Sidebar.jsx';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 import { navigate, routeFromLink } from '../lib/navigation.js';
 
-export function ImmersiveShell({ children, title, bodyClass = 'bg-[#090d16] text-white min-h-screen', topbar, showChatLauncher = true, showChrome = false }) {
+export function ImmersiveShell({
+  children,
+  title,
+  bodyClass = 'bg-[#090d16] text-white min-h-screen',
+  topbar,
+  showChatLauncher = true,
+  showChrome = false,
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   useDocumentMeta({ title, bodyClass });
 
@@ -15,19 +22,31 @@ export function ImmersiveShell({ children, title, bodyClass = 'bg-[#090d16] text
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, []);
 
-  return <div className="app-shell app-shell-white immersive-shell min-h-screen flex flex-col" onClick={(event) => {
-    const link = event.target.closest('a');
-    if (!link) return;
-    const target = routeFromLink(link);
-    if (target) {
-      event.preventDefault();
-      navigate(target);
-    }
-  }}>
-    {showChrome && <Header onMenuClick={() => setSidebarOpen((open) => !open)} />}
-    {showChrome && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
-    {showChrome && sidebarOpen && <button className="sidebar-backdrop" aria-label="Đóng thanh điều hướng" onClick={() => setSidebarOpen(false)} />}
-    <div className={`immersive-shell-content ${!showChrome ? 'immersive-shell-content-no-chrome' : ''} flex-1 min-h-0`}><div className="detail-toolbar-shell">{topbar}</div>{children}</div>
-    {showChatLauncher && <ChatLauncher />}
-  </div>;
+  return (
+    <div
+      className="app-shell app-shell-white immersive-shell min-h-screen flex flex-col"
+      onClick={(event) => {
+        const link = event.target.closest('a');
+        if (!link) return;
+        const target = routeFromLink(link);
+        if (target) {
+          event.preventDefault();
+          navigate(target);
+        }
+      }}
+    >
+      {showChrome && <Header onMenuClick={() => setSidebarOpen((open) => !open)} />}
+      {showChrome && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
+      {showChrome && sidebarOpen && (
+        <button className="sidebar-backdrop" aria-label="Đóng thanh điều hướng" onClick={() => setSidebarOpen(false)} />
+      )}
+      <div
+        className={`immersive-shell-content ${!showChrome ? 'immersive-shell-content-no-chrome' : ''} flex-1 min-h-0`}
+      >
+        <div className="detail-toolbar-shell">{topbar}</div>
+        {children}
+      </div>
+      {showChatLauncher && <ChatLauncher />}
+    </div>
+  );
 }

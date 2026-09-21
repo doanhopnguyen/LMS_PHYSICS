@@ -3,5 +3,43 @@ import { StatusBadge } from './StatusBadge.jsx';
 
 export function TaskList({ items }) {
   const [completed, setCompleted] = useState([]);
-  return <div className="space-y-2">{items.map((item) => { const done = completed.includes(item.title); return <div key={item.title} className={`p-3 rounded-xl border flex items-start justify-between gap-3 transition-colors ${done ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}><div className="flex items-start gap-2.5"><button aria-label={`Đánh dấu ${item.title}`} onClick={() => setCompleted((current) => done ? current.filter((value) => value !== item.title) : [...current, item.title])} className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center flex-shrink-0 ${done ? 'border-[#15803D] bg-[#15803D] text-white' : 'border-[#CBD5E1] bg-white'}`}>{done && <span className="material-symbols-outlined text-sm">check</span>}</button><div><h3 className={`text-body-md font-semibold ${done ? 'line-through text-[#64748B]' : 'text-on-surface'}`}>{item.title}</h3><p className="text-body-sm text-[#64748B] mt-0.5">{item.meta}</p><span className="flex items-center gap-1 mt-1.5 text-body-sm text-[#64748B]"><span className="material-symbols-outlined text-sm">{item.icon}</span>Hạn: {item.due}</span></div></div><StatusBadge tone={item.tone}>{item.status}</StatusBadge></div>; })}</div>;
+  return (
+    <div className="space-y-2">
+      {items.map((item) => {
+        const done = completed.includes(item.title);
+        return (
+          <div
+            key={item.title}
+            className={`p-3 rounded-xl border flex items-start justify-between gap-3 transition-colors ${done ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}
+          >
+            <div className="flex items-start gap-2.5">
+              <button
+                aria-label={`Đánh dấu ${item.title}`}
+                onClick={() =>
+                  setCompleted((current) =>
+                    done ? current.filter((value) => value !== item.title) : [...current, item.title]
+                  )
+                }
+                className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center flex-shrink-0 ${done ? 'border-[#15803D] bg-[#15803D] text-white' : 'border-[#CBD5E1] bg-white'}`}
+              >
+                {done && <span className="material-symbols-outlined text-sm">check</span>}
+              </button>
+              <div>
+                <h3
+                  className={`text-body-md font-semibold ${done ? 'line-through text-[#64748B]' : 'text-on-surface'}`}
+                >
+                  {item.title}
+                </h3>
+                <p className="text-body-sm text-[#64748B] mt-0.5">{item.meta}</p>
+                <span className="flex items-center gap-1 mt-1.5 text-body-sm text-[#64748B]">
+                  <span className="material-symbols-outlined text-sm">{item.icon}</span>Hạn: {item.due}
+                </span>
+              </div>
+            </div>
+            <StatusBadge tone={item.tone}>{item.status}</StatusBadge>
+          </div>
+        );
+      })}
+    </div>
+  );
 }

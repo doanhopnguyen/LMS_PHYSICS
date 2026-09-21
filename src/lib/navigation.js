@@ -10,7 +10,7 @@ export const navigationByLabel = [
   ['Phòng thí nghiệm 3D', 'virtual_lab.html'],
   ['Kết quả học tập', 'learning_results.html'],
   ['Trợ giúp', 'notifications_help.html'],
-  ['Cài đặt', 'profile_settings.html']
+  ['Cài đặt', 'profile_settings.html'],
 ];
 
 export function navigate(file) {

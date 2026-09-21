@@ -2,23 +2,49 @@ import { useEffect } from 'react';
 import { cornerRadius } from '../lib/cornerRadius.js';
 
 const selector = [
-  '[class*="rounded"]', 'button', 'input', 'select', 'textarea',
-  '.app-header', '.app-sidebar-drawer', '.app-footer', '.detail-toolbar-back',
-  '.detail-toolbar-actions > a', '.chat-launcher', '.chat-widget-panel',
-  '.chat-widget-avatar', '.chat-widget-message', '.chapter-outline', '.chapter-panel',
-  '.chapter-lesson-number', '.lesson-formula', '.lesson-question', '.lesson-experiment'
+  '[class*="rounded"]',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  '.app-header',
+  '.app-sidebar-drawer',
+  '.app-footer',
+  '.detail-toolbar-back',
+  '.detail-toolbar-actions > a',
+  '.chat-launcher',
+  '.chat-widget-panel',
+  '.chat-widget-avatar',
+  '.chat-widget-message',
+  '.chapter-outline',
+  '.chapter-panel',
+  '.chapter-lesson-number',
+  '.lesson-formula',
+  '.lesson-question',
+  '.lesson-experiment',
 ].join(',');
 
 function kindFor(element) {
-  if (element.matches('.floating-brand-mark, .floating-brand-mark *, .sidebar-backdrop, input[type="range"], input[type="checkbox"], input[type="radio"]')) return null;
+  if (
+    element.matches(
+      '.floating-brand-mark, .floating-brand-mark *, .sidebar-backdrop, input[type="range"], input[type="checkbox"], input[type="radio"]'
+    )
+  )
+    return null;
   if (element.classList.contains('app-header')) return 'header';
-  if (element.matches('.app-sidebar-drawer, .app-footer, .chat-widget-panel, .chapter-panel, .chapter-outline, textarea')) return 'panel';
+  if (
+    element.matches('.app-sidebar-drawer, .app-footer, .chat-widget-panel, .chapter-panel, .chapter-outline, textarea')
+  )
+    return 'panel';
   const { width, height } = element.getBoundingClientRect();
   if (!width || !height) return null;
-  const explicitlyRound = element.classList.contains('rounded-full') || element.matches('.chapter-lesson-number, .chat-launcher, .chat-widget-avatar, .chapter-close');
+  const explicitlyRound =
+    element.classList.contains('rounded-full') ||
+    element.matches('.chapter-lesson-number, .chat-launcher, .chat-widget-avatar, .chapter-close');
   if (explicitlyRound && Math.abs(width - height) < Math.min(width, height) * 0.15) return 'circle';
   // Multiline rows, large question cards and preview panels need gentler corners.
-  if (height <= 64 && (explicitlyRound || element.matches('button, input, select, a, .detail-toolbar-back'))) return 'control';
+  if (height <= 64 && (explicitlyRound || element.matches('button, input, select, a, .detail-toolbar-back')))
+    return 'control';
   return 'panel';
 }
 
@@ -56,7 +82,10 @@ export function useAdaptiveCorners() {
       });
       root.querySelectorAll(selector).forEach((element) => {
         if (!(element instanceof HTMLElement)) return;
-        if (!tracked.has(element)) { tracked.add(element); observer.observe(element); }
+        if (!tracked.has(element)) {
+          tracked.add(element);
+          observer.observe(element);
+        }
         update(element);
       });
     };
