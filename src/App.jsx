@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
-import { getPageFile } from './lib/routes.js';
+import { getCleanRoute, getPageFile } from './lib/routes.js';
 import { LoginPage } from './pages/LoginPage.jsx';
 import { DashboardPage } from './pages/students/DashboardPage.jsx';
 import { CourseDetailPage } from './pages/students/CourseDetailPage.jsx';
@@ -51,6 +51,11 @@ function App() {
   const [locationKey, setLocationKey] = useState(() => window.location.href);
 
   useEffect(() => {
+    const cleanPath = getCleanRoute();
+    if (cleanPath !== window.location.pathname) {
+      window.history.replaceState({}, '', `${cleanPath}${window.location.search}${window.location.hash}`);
+    }
+
     const onPopState = () => {
       setFile(getPageFile());
       setLocationKey(window.location.href);

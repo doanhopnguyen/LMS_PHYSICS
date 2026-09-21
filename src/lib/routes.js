@@ -22,7 +22,12 @@ export const routeFiles = [
 ];
 
 export function getPageFile(pathname = window.location.pathname) {
-  const file = pathname.split('/').filter(Boolean).pop();
-  if (!file || file === 'index.html') return 'login.html';
+  const route = pathname.split('/').filter(Boolean).pop();
+  if (!route || route === 'index.html') return 'login.html';
+  const file = route.endsWith('.html') ? route : `${route}.html`;
   return routeFiles.includes(file) ? file : 'dashboard.html';
+}
+
+export function getCleanRoute(path = window.location.pathname) {
+  return path.replace(/\.html(?=[/?#]|$)/, '');
 }

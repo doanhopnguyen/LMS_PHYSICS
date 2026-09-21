@@ -82,10 +82,10 @@ export function DashboardPage() {
                 Học kỳ 1 · Năm học 2024-2025
               </StatusBadge>
               <h1 className="text-headline-lg font-headline-lg font-bold tracking-tight">Xin chào, Nguyễn Văn A!</h1>
-              <p className="text-body-lg text-white/90 leading-relaxed">
+              {/* <p className="text-body-lg text-white/90 leading-relaxed">
                 {getSkyMessage(skyPeriod)} Tiếp tục hành trình khám phá môn Vật lý 1 cùng hệ thống học tập thông minh
                 PTIT. Bạn đã duy trì chuỗi học 5 ngày liên tiếp!
-              </p>
+              </p> */}
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <a
