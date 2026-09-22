@@ -19,6 +19,23 @@ export const routeFiles = [
   'exam_session.html',
   'interactive_lesson.html',
   'mobile_experience.html',
+  'lecturer_dashboard.html',
+  'lecturer_courses.html',
+  'lecturer_course_detail.html',
+  'lecturer_students.html',
+  'lecturer_student_detail.html',
+  'lecturer_materials.html',
+  'lecturer_question_bank.html',
+  'lecturer_assessments.html',
+  'lecturer_assessment_results.html',
+  'lecturer_attempt_detail.html',
+  'lecturer_grading.html',
+  'lecturer_labs.html',
+  'lecturer_lab_assignment_detail.html',
+  'lecturer_lab_submission_detail.html',
+  'lecturer_lab_grading.html',
+  'lecturer_ai_insights.html',
+  'lecturer_analytics.html',
 ];
 
 export function getPageFile(pathname = window.location.pathname) {

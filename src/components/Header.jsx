@@ -1,7 +1,14 @@
 import React from 'react';
 import { routeFromLink, navigate } from '../lib/navigation.js';
 
-export function Header({ onMenuClick }) {
+const defaultUser = {
+  name: 'Nguyễn Văn A',
+  role: 'Sinh viên',
+  detail: 'B23DCCN001',
+  initials: 'VA',
+};
+
+export function Header({ onMenuClick, user = defaultUser, homeHref = 'dashboard.html' }) {
   const handleLink = (event) => {
     const link = event.target.closest('a');
     const target = link && routeFromLink(link);
@@ -22,7 +29,7 @@ export function Header({ onMenuClick }) {
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
-        <a className="floating-brand" href="dashboard.html" aria-label="PTIT Physics 1 - Trang chủ">
+        <a className="floating-brand" href={homeHref} aria-label="PTIT Physics LMS - Trang chủ">
           <span className="floating-brand-mark">
             <img src="ptitwhite.png" alt="Logo PTIT" />
           </span>
@@ -40,7 +47,7 @@ export function Header({ onMenuClick }) {
           </span>
           <input
             className="w-full h-10 pl-11 pr-4 bg-surface-container-low border border-[#CBD5E1] rounded-full text-body-md text-on-surface placeholder:text-[#94A3B8] focus:bg-white focus:border-primary-container focus:outline-none focus:ring-2 focus:ring-[#FEE2E2] transition-all"
-            placeholder="Tìm kiếm bài học, tài liệu, công thức..."
+            placeholder={user.role === 'Giảng viên' ? 'Tìm học phần, sinh viên, học liệu...' : 'Tìm kiếm bài học, tài liệu, công thức...'}
             type="search"
             aria-label="Tìm kiếm"
           />
@@ -58,16 +65,16 @@ export function Header({ onMenuClick }) {
           <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary-container rounded-full ring-2 ring-[#E52220]" />
         </button>
         <div className="h-8 w-px bg-white/30 hidden sm:block" />
-        <button className="floating-profile" title="Mở hồ sơ sinh viên">
+        <button className="floating-profile" title={`Mở hồ sơ ${user.role.toLowerCase()}`}>
           <div className="w-9 h-9 rounded-full ring-2 ring-white/50 bg-white/15 flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
-            VA
+            {user.initials}
           </div>
           <div className="hidden sm:block text-left">
             <div className="flex items-center gap-2">
-              <span className="floating-profile-name text-body-md-medium leading-tight">Nguyễn Văn A</span>
-              <span className="floating-profile-role px-2 py-0.5 text-label-sm rounded-full">Sinh viên</span>
+              <span className="floating-profile-name text-body-md-medium leading-tight">{user.name}</span>
+              <span className="floating-profile-role px-2 py-0.5 text-label-sm rounded-full">{user.role}</span>
             </div>
-            <span className="floating-profile-id text-body-sm tracking-wide">B23DCCN001</span>
+            <span className="floating-profile-id text-body-sm tracking-wide">{user.detail}</span>
           </div>
         </button>
       </div>

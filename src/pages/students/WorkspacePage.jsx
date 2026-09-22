@@ -6,6 +6,7 @@ import { ImmersiveShell } from '../../components/ImmersiveShell.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 
 export function WorkspacePage() {
+  const previewMode = new URLSearchParams(window.location.search).get('mode') === 'lecturer-preview';
   const [running, setRunning] = useState(true);
   const [angle, setAngle] = useState(30);
   return (
@@ -15,15 +16,15 @@ export function WorkspacePage() {
       topbar={
         <DetailToolbar
           title="Khảo sát lực ma sát trên mặt phẳng nghiêng"
-          subtitle={`Bài TN 02 · ${running ? 'Đang chạy mô phỏng' : 'Đã tạm dừng'}`}
-          backHref="virtual_lab.html"
-          backLabel="Về thí nghiệm"
+          subtitle={`Bài TN 02 · ${previewMode ? 'Chế độ xem trước của giảng viên' : running ? 'Đang chạy mô phỏng' : 'Đã tạm dừng'}`}
+          backHref={previewMode ? 'lecturer_labs.html' : 'virtual_lab.html'}
+          backLabel={previewMode ? 'Về quản lý thí nghiệm' : 'Về thí nghiệm'}
           actions={
             <>
               <Button onClick={() => setRunning(!running)} icon={running ? 'pause' : 'play_arrow'}>
                 {running ? 'Tạm dừng' : 'Chạy'}
               </Button>
-              <a href="lab_report_rubric.html">Mở báo cáo</a>
+              {!previewMode && <a href="lab_report_rubric.html">Mở báo cáo</a>}
             </>
           }
         />
@@ -137,11 +138,13 @@ export function WorkspacePage() {
               <div className="text-3xl font-bold text-emerald-400 mt-2">98.2%</div>
               <p className="text-label-sm text-slate-400 mt-1">Sai số hệ thống ±0.02%</p>
             </Card>
-            <a href="lab_report_rubric.html" className="mt-auto">
-              <Button className="w-full" icon="article">
-                Mở báo cáo thực hành
-              </Button>
-            </a>
+            {!previewMode && (
+              <a href="lab_report_rubric.html" className="mt-auto">
+                <Button className="w-full" icon="article">
+                  Mở báo cáo thực hành
+                </Button>
+              </a>
+            )}
           </aside>
         </div>
         <div className="h-56 bg-[#0B1120] border-t border-[#1E293B] p-4 overflow-auto">

@@ -7,7 +7,7 @@ export function DataTable({ columns, rows, renderRow }) {
         <thead className="bg-[#F8FAFC] text-[#64748B]">
           <tr>
             {columns.map((column) => (
-              <th key={column} className="px-3 py-2.5 font-semibold whitespace-nowrap">
+              <th key={column} scope="col" className="px-3 py-2.5 font-semibold whitespace-nowrap">
                 {column}
               </th>
             ))}

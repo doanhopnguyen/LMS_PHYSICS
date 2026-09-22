@@ -19,6 +19,10 @@ export function AppShell({
   showChatLauncher = true,
   showChrome = true,
   toolbar,
+  user,
+  homeHref,
+  navigationItems,
+  utilityItems,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const detailPages = [
@@ -86,8 +90,18 @@ export function AppShell({
         }
       }}
     >
-      {chromeVisible && <Header onMenuClick={() => setSidebarOpen((open) => !open)} />}
-      {chromeVisible && <Sidebar currentPage={currentPage} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
+      {chromeVisible && (
+        <Header onMenuClick={() => setSidebarOpen((open) => !open)} user={user} homeHref={homeHref} />
+      )}
+      {chromeVisible && (
+        <Sidebar
+          currentPage={currentPage}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          items={navigationItems}
+          utilityItems={utilityItems}
+        />
+      )}
       {chromeVisible && sidebarOpen && (
         <button className="sidebar-backdrop" aria-label="Đóng thanh điều hướng" onClick={() => setSidebarOpen(false)} />
       )}
