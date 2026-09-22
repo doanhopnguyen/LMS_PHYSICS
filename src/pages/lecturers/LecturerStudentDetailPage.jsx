@@ -8,6 +8,7 @@ import { LecturerNotFoundState } from '../../components/LecturerNotFoundState.js
 import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { getAssignmentHistory, loadParticipantRecords } from '../../lib/participantState.js';
 import {
   studentChapterProgress,
   studentDifficultTopics,
@@ -38,6 +39,7 @@ export function LecturerStudentDetailPage() {
     );
   }
   const statusTone = student.status === 'Đang học' ? 'success' : student.status === 'Có bài quá hạn' ? 'primary' : 'warning';
+  const assignmentHistory = getAssignmentHistory(loadParticipantRecords(), student.id);
 
   return (
     <LecturerPageShell
@@ -89,6 +91,10 @@ export function LecturerStudentDetailPage() {
             </li>
           ))}
         </ol>
+      </Card>
+      <Card className="p-6">
+        <SectionHeader icon="manage_history" title="Lịch sử phân công" />
+        {assignmentHistory.length ? <ol className="divide-y divide-[#E2E8F0] pt-3">{assignmentHistory.map((item, index) => <li key={`${item.at}-${index}`} className="py-3 text-body-sm"><time className="font-semibold text-primary">{new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.at))}</time><p className="mt-1 font-semibold">{item.action}: {item.fromSessionId ? `${item.fromSessionId} → ` : ''}{item.toSessionId}</p><p className="mt-1 text-[#64748B]">{item.reason} · {item.by}</p></li>)}</ol> : <p className="pt-4 text-body-sm text-[#64748B]">Chưa có thay đổi phân công trong phiên frontend hiện tại.</p>}
       </Card>
     </LecturerPageShell>
   );

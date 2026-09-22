@@ -66,7 +66,11 @@ export function LecturerAttemptDetailPage() {
       >
         <LecturerNotFoundState
           message="Bài kiểm tra, lượt làm hoặc sinh viên tương ứng không tồn tại trong dữ liệu hiện tại."
-          backHref={requestedAssessment ? `lecturer_assessment_results.html?assessment=${assessment.id}` : 'lecturer_assessments.html'}
+          backHref={
+            requestedAssessment
+              ? `lecturer_assessment_results.html?assessment=${assessment.id}`
+              : 'lecturer_assessments.html'
+          }
           backLabel={requestedAssessment ? 'Quay lại kết quả' : 'Quay lại danh sách bài kiểm tra'}
         />
       </LecturerPageShell>
