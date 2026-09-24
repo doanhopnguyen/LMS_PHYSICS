@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useChatAutoScroll } from '../hooks/useChatAutoScroll.js';
 
 const initialMessages = [{ role: 'assistant', text: 'Bạn cần hỏi gì về bài học hoặc thí nghiệm này?' }];
 
@@ -6,6 +7,7 @@ export function ChatLauncher() {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
   const [messages, setMessages] = useState(initialMessages);
+  const messagesRef = useChatAutoScroll(messages, open);
 
   const send = () => {
     const question = value.trim();
@@ -39,7 +41,7 @@ export function ChatLauncher() {
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
-          <div className="chat-widget-messages">
+          <div className="chat-widget-messages" ref={messagesRef} role="log" aria-label="Tin nhắn trợ giảng AI" aria-live="polite">
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}

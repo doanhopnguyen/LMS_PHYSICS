@@ -63,12 +63,11 @@ function ExamSelection({ onStart }) {
         <PageTitle
           eyebrow="TRUNG TÂM KIỂM TRA"
           title="Chọn bài kiểm tra"
-          description="Chọn một bài kiểm tra để xem hướng dẫn và bắt đầu làm bài. Bạn sẽ không thể đổi bài sau khi phiên làm bài bắt đầu."
         />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-8 space-y-4">
             {examOptions.map((exam) => (
-              <button
+              <Card as="button"
                 key={exam.id}
                 onClick={() => setSelectedId(exam.id)}
                 className={`w-full text-left p-5 rounded-2xl border-2 transition-all ${selectedId === exam.id ? 'border-primary bg-[#FEF2F2] shadow-sm' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}
@@ -113,7 +112,7 @@ function ExamSelection({ onStart }) {
                     {selectedId === exam.id && <span className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </span>
                 </div>
-              </button>
+              </Card>
             ))}
           </div>
           <Card className="lg:col-span-4 p-6 lg:sticky lg:top-24">
@@ -140,10 +139,10 @@ function ExamSelection({ onStart }) {
                 <strong>{selected.id === 'practice' ? 'Không giới hạn' : '1 lần'}</strong>
               </div>
             </div>
-            <div className="mt-5 p-4 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] text-body-sm text-[#92400E]">
+            <Card as="div" className="mt-5 p-4 bg-[#FFFBEB] border-[#FDE68A] text-body-sm text-[#92400E]">
               <span className="material-symbols-outlined text-sm mr-1 align-middle">info</span>Hãy đảm bảo kết nối mạng
               ổn định trước khi bắt đầu.
-            </div>
+            </Card>
             <Button
               className="w-full mt-5"
               disabled={selected.status === 'Sắp mở'}
@@ -254,10 +253,10 @@ function RunningExam({ exam, onBack }) {
               </button>
             ))}
           </div>
-          <div className="mt-6 p-4 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] text-body-sm text-[#92400E]">
+          <Card as="div" className="mt-6 p-4 bg-[#FFFBEB] border-[#FDE68A] text-body-sm text-[#92400E]">
             <span className="material-symbols-outlined text-sm mr-1">info</span>Bạn có thể quay lại câu hỏi trước khi
             nộp bài.
-          </div>
+          </Card>
         </Card>
       </div>
       {submitted && (

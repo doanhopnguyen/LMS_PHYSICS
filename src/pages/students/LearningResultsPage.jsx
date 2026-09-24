@@ -83,14 +83,14 @@ export function LearningResultsPage() {
               ['auto_awesome', 'Phát huy điểm mạnh', 'Bạn có điểm cao ổn định ở chủ đề Động học.', 'success'],
               ['schedule', 'Duy trì nhịp học', 'Học 25 phút mỗi ngày để giữ chuỗi 5 ngày.', 'warning'],
             ].map(([icon, title, text, tone]) => (
-              <div
+              <Card as="div"
                 key={title}
-                className={`p-4 rounded-xl border ${tone === 'primary' ? 'bg-[#FEF2F2] border-[#FECACA]' : tone === 'success' ? 'bg-[#F0FDF4] border-[#86EFAC]' : 'bg-[#FFFBEB] border-[#FDE68A]'}`}
+                className={`p-4 border ${tone === 'primary' ? 'bg-[#FEF2F2] border-[#FECACA]' : tone === 'success' ? 'bg-[#F0FDF4] border-[#86EFAC]' : 'bg-[#FFFBEB] border-[#FDE68A]'}`}
               >
                 <span className="material-symbols-outlined text-primary">{icon}</span>
                 <h3 className="font-semibold mt-3">{title}</h3>
                 <p className="text-body-sm text-[#64748B] mt-1">{text}</p>
-              </div>
+              </Card>
             ))}
           </div>
         </Card>

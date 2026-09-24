@@ -1,14 +1,41 @@
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
-import React, { useState } from 'react';
-import { Button } from '../../components/Button.jsx';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '../../components/Card.jsx';
 import { ImmersiveShell } from '../../components/ImmersiveShell.jsx';
-import { Sidebar } from '../../components/Sidebar.jsx';
-import { StatusBadge } from '../../components/StatusBadge.jsx';
+
+const outline = [
+  { id: 'document-intro', label: 'Định luật II Newton', detail: 'Kiến thức trọng tâm', icon: 'menu_book' },
+  { id: 'document-formula', label: 'Công thức và đại lượng', detail: 'Mối liên hệ giữa lực và gia tốc', icon: 'functions' },
+  { id: 'document-example', label: 'Ví dụ minh họa', detail: 'Vận dụng công thức', icon: 'lightbulb' },
+  { id: 'document-steps', label: 'Các bước giải bài toán', detail: 'Phương pháp thực hiện', icon: 'checklist' },
+];
 
 export function DocumentViewerPage() {
   const [page, setPage] = useState(45);
   const [zoom, setZoom] = useState(100);
+  const [activeSection, setActiveSection] = useState(outline[0].id);
+  const [tocOpen, setTocOpen] = useState(false);
+  const reader = useRef(null);
+  const jumpTo = (id) => {
+    const target = document.getElementById(id);
+    if (target && reader.current) reader.current.scrollTo({ top: target.getBoundingClientRect().top - reader.current.getBoundingClientRect().top + reader.current.scrollTop - 24, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    setActiveSection(id);
+    setTocOpen(false);
+  };
+  useEffect(() => {
+    const container = reader.current;
+    if (!container) return;
+    const update = () => {
+      let current = outline[0].id;
+      for (const item of outline) {
+        if (document.getElementById(item.id)?.getBoundingClientRect().top <= container.getBoundingClientRect().top + 100) current = item.id;
+      }
+      if (container.scrollTop > 0 && container.scrollTop + container.clientHeight >= container.scrollHeight - 4) current = outline.at(-1).id;
+      setActiveSection(current);
+    };
+    container.addEventListener('scroll', update, { passive: true });
+    return () => container.removeEventListener('scroll', update);
+  }, []);
   return (
     <ImmersiveShell
       title="Trình đọc tài liệu · PTIT Physics 1"
@@ -62,37 +89,15 @@ export function DocumentViewerPage() {
         </>
       }
     >
-      <div className="flex h-[calc(100dvh-112px)] min-h-[600px]">
-        <Sidebar
-          variant="inline"
-          className="hidden lg:flex w-[280px] flex-col p-3 gap-2 overflow-y-auto"
-          ariaLabel="Mục lục tài liệu"
-        >
-          <div className="document-toc-sidebar__title">
-            <span className="material-symbols-outlined">format_list_bulleted</span>
-            <span>Mục lục tài liệu</span>
-          </div>
-          {[
-            'Chương 1: Động học chất điểm',
-            'Chương 2: Động lực học chất điểm',
-            '2.1 Khái niệm về lực và khối lượng',
-            '2.2 Định luật II Newton',
-            '2.3 Định luật III Newton',
-            '2.4 Các lực cơ học thường gặp',
-            'Chương 3: Công và Năng lượng',
-          ].map((item, index) => (
-            <button
-              key={item}
-              className={`text-left p-3 rounded-lg text-body-sm ${index === 3 ? 'bg-[#FEE2E2] text-primary font-semibold border-l-2 border-primary' : 'text-[#475569] hover:bg-[#F8FAFC]'}`}
-            >
-              {item}
-              <span className="block text-label-sm text-[#94A3B8] mt-1">
-                {index === 3 ? 'tr.45' : index < 2 ? '5-40' : 'tr.' + (41 + index * 7)}
-              </span>
-            </button>
-          ))}
-        </Sidebar>
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
+      <div className="document-reader">
+        <button type="button" className="document-outline-toggle" aria-expanded={tocOpen} aria-controls="document-outline" onClick={() => setTocOpen(!tocOpen)}><span className="material-symbols-outlined" aria-hidden="true">format_list_bulleted</span>Mục lục<span className="material-symbols-outlined" aria-hidden="true">{tocOpen ? 'expand_less' : 'expand_more'}</span></button>
+        <Card as="aside" id="document-outline" className={`document-outline ${tocOpen ? 'is-open' : ''}`} aria-label="Mục lục tài liệu">
+          <nav aria-label="Các phần trong trang tài liệu">{outline.map((item, index) => <button key={item.id} type="button" onClick={() => jumpTo(item.id)} aria-current={activeSection === item.id ? 'location' : undefined}>
+            <span className="document-outline__number">{String(index + 1).padStart(2, '0')}</span><span><strong>{item.label}</strong><small>{item.detail}</small></span><span className="material-symbols-outlined document-outline__arrow" aria-hidden="true">chevron_right</span>
+          </button>)}</nav>
+          <div className="document-outline__footer"><span className="material-symbols-outlined" aria-hidden="true">auto_stories</span><span>Trang <strong>{page}</strong> / 280</span></div>
+        </Card>
+        <main ref={reader} className="document-reader__content flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
           <article
             style={{ fontSize: `${zoom}%` }}
             className="w-full max-w-[840px] min-h-[1100px] bg-white border border-[#CBD5E1] shadow-xl p-8 md:p-14"
@@ -101,7 +106,7 @@ export function DocumentViewerPage() {
               <span>Học viện Công nghệ Bưu chính Viễn thông</span>
               <span className="text-primary">Giáo trình Vật lý đại cương 1</span>
             </div>
-            <div className="mt-8">
+            <div className="mt-8" id="document-intro">
               <div className="text-label-md text-primary font-bold tracking-widest">
                 CHƯƠNG II — ĐỘNG LỰC HỌC CHẤT ĐIỂM
               </div>
@@ -109,20 +114,20 @@ export function DocumentViewerPage() {
             </div>
             <div className="space-y-5 mt-8 text-body-lg leading-relaxed">
               <p>Định luật II Newton mô tả mối liên hệ giữa gia tốc của vật, khối lượng và hợp lực tác dụng lên vật.</p>
-              <div className="p-6 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-center font-mono text-2xl text-primary">
+              <Card as="div" id="document-formula" className="p-6 bg-[#F8FAFC] text-center font-mono text-2xl text-primary">
                 ΣF = m · a
-              </div>
+              </Card>
               <p>
                 Trong đó, ΣF là tổng hợp lực tác dụng, m là khối lượng và a là gia tốc của vật. Đây là phương trình cơ
                 bản để giải các bài toán động lực học.
               </p>
-              <Card className="p-5 bg-[#FEF2F2] border-[#FECACA]">
+              <Card id="document-example" className="p-5 bg-[#FEF2F2] border-[#FECACA]">
                 <h2 className="text-headline-sm font-bold text-primary">Ví dụ minh họa</h2>
                 <p className="text-body-md mt-2">
                   Một vật có khối lượng 2 kg chịu tác dụng của lực 10 N. Gia tốc của vật là a = 10 / 2 = 5 m/s².
                 </p>
               </Card>
-              <h2 className="text-headline-md font-bold">Các bước giải bài toán</h2>
+              <h2 id="document-steps" className="text-headline-md font-bold">Các bước giải bài toán</h2>
               <ol className="list-decimal pl-6 space-y-2">
                 <li>Chọn hệ quy chiếu và biểu diễn các lực.</li>
                 <li>Viết phương trình định luật II Newton theo từng phương.</li>

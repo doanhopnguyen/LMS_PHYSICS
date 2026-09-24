@@ -1,3 +1,4 @@
+import { PaginatedList } from "../../components/Pagination.jsx";
 import React from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -61,9 +62,9 @@ export function ExamPracticePage() {
             },
           ]}
         />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <PaginatedList className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {exams.map((exam) => (
-            <Card key={exam.title} className="p-6 flex flex-col">
+            <Card key={exam.title} variant="accent" className="p-6 flex flex-col">
               <div className="flex items-center justify-between">
                 <StatusBadge tone={exam.completed ? 'success' : 'neutral'}>
                   {exam.completed ? 'Đã hoàn thành' : 'Sẵn sàng'}
@@ -98,7 +99,7 @@ export function ExamPracticePage() {
               </Button>
             </Card>
           ))}
-        </div>
+        </PaginatedList>
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -111,13 +112,13 @@ export function ExamPracticePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
             {['Động học chất điểm', 'Động lực học chất điểm', 'Công và năng lượng'].map((chapter, index) => (
-              <div key={chapter} className="p-4 rounded-xl border border-[#E2E8F0]">
+              <Card as="div" key={chapter} className="p-4">
                 <div className="flex items-center justify-between">
                   <strong>{chapter}</strong>
                   <span className="text-body-sm text-primary">{[100, 68, 32][index]}%</span>
                 </div>
                 <ProgressBar value={[100, 68, 32][index]} className="mt-3" />
-              </div>
+              </Card>
             ))}
           </div>
         </Card>

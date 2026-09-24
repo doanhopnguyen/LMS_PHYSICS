@@ -54,14 +54,14 @@ export function ExamResultsPage() {
             </div>
             <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {results.map((item) => (
-                <div key={item.label} className="p-4 bg-white rounded-xl border border-[#E2E8F0]">
+                <Card as="div" key={item.label} className="p-4">
                   <span className="material-symbols-outlined text-primary">{item.icon}</span>
                   <span className="block text-body-sm text-[#64748B] mt-2">{item.label}</span>
                   <strong className="text-headline-sm block mt-1">
                     {item.value}
                     <small className="text-body-sm font-normal text-[#64748B]">{item.unit}</small>
                   </strong>
-                </div>
+                </Card>
               ))}
             </div>
           </div>

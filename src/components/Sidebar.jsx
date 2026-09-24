@@ -1,6 +1,6 @@
 import React from 'react';
 
-const navItems = [
+export const studentNavItems = [
   ['dashboard.html', 'dashboard', 'Tổng quan'],
   ['my_courses.html', 'menu_book', 'Học phần của tôi'],
   ['library.html', 'folder_open', 'Kho học liệu'],
@@ -8,10 +8,11 @@ const navItems = [
   ['exam_practice_center.html', 'fitness_center', 'Ôn luyện'],
   ['exam_session.html', 'quiz', 'Kiểm tra'],
   ['virtual_lab.html', 'science', 'Phòng thí nghiệm 3D'],
+  ['student_evidence.html', 'folder_shared', 'Minh chứng & báo cáo'],
   ['learning_results.html', 'insights', 'Kết quả học tập'],
 ];
 
-const footerItems = [
+export const studentFooterItems = [
   ['notifications_help.html', 'help', 'Trợ giúp'],
   ['profile_settings.html', 'settings', 'Cài đặt'],
 ];
@@ -24,6 +25,8 @@ export function Sidebar({
   className = '',
   children,
   ariaLabel,
+  items = studentNavItems,
+  utilityItems = studentFooterItems,
 }) {
   if (variant === 'inline') {
     return (
@@ -52,7 +55,7 @@ export function Sidebar({
         className="space-y-1.5 custom-scrollbar overflow-y-auto max-h-[calc(100vh-160px)] pr-1"
         aria-label="Điều hướng chính"
       >
-        {navItems.map(([file, icon, label, badge]) => (
+        {items.map(([file, icon, label, badge]) => (
           <a
             key={file}
             className={linkClass(file)}
@@ -75,7 +78,7 @@ export function Sidebar({
         ))}
       </nav>
       <nav className="space-y-1 border-t border-[#E2E8F0] pt-4" aria-label="Tiện ích">
-        {footerItems.map(([file, icon, label]) => (
+        {utilityItems.map(([file, icon, label]) => (
           <a
             key={file}
             className={linkClass(file)}

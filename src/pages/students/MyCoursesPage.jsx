@@ -1,4 +1,6 @@
+import { PaginatedList } from "../../components/Pagination.jsx";
 import React from 'react';
+import { readAcademicScope } from '../../lib/academicScope.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -7,6 +9,8 @@ import { PageTitle } from '../../components/PageTitle.jsx';
 import { courses } from '../../data/lmsData.js';
 
 export function MyCoursesPage() {
+  const { classId } = readAcademicScope();
+  const scopedCourses = courses.filter((course) => classId === 'ALL' || course.className === classId);
   return (
     <AppShell
       currentPage="my_courses.html"
@@ -16,13 +20,13 @@ export function MyCoursesPage() {
     >
       <PageContainer>
         <PageTitle
-          eyebrow="NĂM HỌC 2024-2025"
+          eyebrow="NĂM HỌC 2026–2027"
           title="Học phần của tôi"
           description="Tổng quan tiến độ các học phần bạn đang theo học."
           actions={<Button icon="add">Tham gia học phần</Button>}
         />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {courses.map((course) => (
+        <PaginatedList className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {scopedCourses.map((course) => (
             <Card
               key={course.code}
               progress={course.progress}
@@ -61,12 +65,12 @@ export function MyCoursesPage() {
               </div>
             </Card>
           ))}
-        </div>
+        </PaginatedList>
         <Card className="p-6">
           <h2 className="text-headline-md font-bold">Lịch học tuần này</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
             {['Thứ 2 · 09:30', 'Thứ 4 · 14:00', 'Thứ 6 · 08:00'].map((time, index) => (
-              <div key={time} className="p-4 rounded-xl border border-[#E2E8F0] flex gap-3">
+              <Card as="div" key={time} className="p-4 flex gap-3">
                 <span className="w-10 h-10 rounded-lg bg-[#FEE2E2] text-primary flex items-center justify-center">
                   <span className="material-symbols-outlined">event</span>
                 </span>
@@ -76,7 +80,7 @@ export function MyCoursesPage() {
                   </strong>
                   <p className="text-body-sm text-[#64748B] mt-1">{time} · Phòng A2-304</p>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </Card>

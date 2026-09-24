@@ -21,6 +21,30 @@ import { DocumentViewerPage } from './pages/students/DocumentViewerPage.jsx';
 import { ExamSessionPage } from './pages/students/ExamSessionPage.jsx';
 import { InteractiveLessonPage } from './pages/students/InteractiveLessonPage.jsx';
 import { MobileExperiencePage } from './pages/students/MobileExperiencePage.jsx';
+import { LecturerDashboardPage } from './pages/lecturers/LecturerDashboardPage.jsx';
+import { LecturerCoursesPage } from './pages/lecturers/LecturerCoursesPage.jsx';
+import { LecturerCourseDetailPage } from './pages/lecturers/LecturerCourseDetailPage.jsx';
+import { LecturerStudentsPage } from './pages/lecturers/LecturerStudentsPage.jsx';
+import { LecturerStudentDetailPage } from './pages/lecturers/LecturerStudentDetailPage.jsx';
+import { LecturerMaterialsPage } from './pages/lecturers/LecturerMaterialsPage.jsx';
+import { LecturerQuestionBankPage } from './pages/lecturers/LecturerQuestionBankPage.jsx';
+import { LecturerAssessmentsPage } from './pages/lecturers/LecturerAssessmentsPage.jsx';
+import { LecturerAssessmentResultsPage } from './pages/lecturers/LecturerAssessmentResultsPage.jsx';
+import { LecturerAttemptDetailPage } from './pages/lecturers/LecturerAttemptDetailPage.jsx';
+import { LecturerGradingPage } from './pages/lecturers/LecturerGradingPage.jsx';
+import { LecturerLabsPage } from './pages/lecturers/LecturerLabsPage.jsx';
+import { LecturerLabAssignmentDetailPage } from './pages/lecturers/LecturerLabAssignmentDetailPage.jsx';
+import { LecturerLabSubmissionDetailPage } from './pages/lecturers/LecturerLabSubmissionDetailPage.jsx';
+import { LecturerLabGradingPage } from './pages/lecturers/LecturerLabGradingPage.jsx';
+import { LecturerAiInsightsPage } from './pages/lecturers/LecturerAiInsightsPage.jsx';
+import { LecturerLearningAnalyticsPage } from './pages/lecturers/LecturerLearningAnalyticsPage.jsx';
+import { AdminAcademicsPage, AdminContentPage, AdminDashboardPage, AdminOperationsPage, AdminUsersPage } from './pages/admin/AdminPages.jsx';
+import { StudentEvidencePage } from './pages/students/StudentEvidencePage.jsx';
+import { LecturerClassOperationsPage } from './pages/lecturers/LecturerClassOperationsPage.jsx';
+import { AuthAccessPage } from './pages/AuthAccessPage.jsx';
+import { TAClassSupportPage, TADashboardPage, TAWorkQueuePage } from './pages/ta/TAPages.jsx';
+import { RoleAccessPage } from './pages/RoleAccessPage.jsx';
+import { canAccess, getDemoSession } from './lib/demoSession.js';
 
 const pageComponents = {
   'login.html': LoginPage,
@@ -43,6 +67,34 @@ const pageComponents = {
   'exam_session.html': ExamSessionPage,
   'interactive_lesson.html': InteractiveLessonPage,
   'mobile_experience.html': MobileExperiencePage,
+  'lecturer_dashboard.html': LecturerDashboardPage,
+  'lecturer_courses.html': LecturerCoursesPage,
+  'lecturer_course_detail.html': LecturerCourseDetailPage,
+  'lecturer_students.html': LecturerStudentsPage,
+  'lecturer_student_detail.html': LecturerStudentDetailPage,
+  'lecturer_materials.html': LecturerMaterialsPage,
+  'lecturer_question_bank.html': LecturerQuestionBankPage,
+  'lecturer_assessments.html': LecturerAssessmentsPage,
+  'lecturer_assessment_results.html': LecturerAssessmentResultsPage,
+  'lecturer_attempt_detail.html': LecturerAttemptDetailPage,
+  'lecturer_grading.html': LecturerGradingPage,
+  'lecturer_labs.html': LecturerLabsPage,
+  'lecturer_lab_assignment_detail.html': LecturerLabAssignmentDetailPage,
+  'lecturer_lab_submission_detail.html': LecturerLabSubmissionDetailPage,
+  'lecturer_lab_grading.html': LecturerLabGradingPage,
+  'lecturer_ai_insights.html': LecturerAiInsightsPage,
+  'lecturer_analytics.html': LecturerLearningAnalyticsPage,
+  'admin_dashboard.html': AdminDashboardPage,
+  'admin_users.html': AdminUsersPage,
+  'admin_academics.html': AdminAcademicsPage,
+  'admin_operations.html': AdminOperationsPage,
+  'ta_dashboard.html': TADashboardPage,
+  'ta_work_queue.html': TAWorkQueuePage,
+  'admin_content.html': AdminContentPage,
+  'student_evidence.html': StudentEvidencePage,
+  'lecturer_class_operations.html': LecturerClassOperationsPage,
+  'auth_access.html': AuthAccessPage,
+  'ta_class_support.html': TAClassSupportPage,
 };
 
 function App() {
@@ -64,7 +116,11 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const Page = pageComponents[file] ?? pageComponents['dashboard.html'];
+  const session = getDemoSession();
+  const Page = pageComponents[file] ?? pageComponents['login.html'];
+  if (!['login.html', 'auth_access.html'].includes(file) && (!session || !canAccess(session.role, file))) {
+    return <RoleAccessPage session={session} requestedPage={file} />;
+  }
   return <Page key={locationKey} />;
 }
 

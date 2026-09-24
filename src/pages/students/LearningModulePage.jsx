@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
 import { LessonContent } from '../../components/LessonContent.jsx';
+import { LessonVideo } from '../../components/LessonVideo.jsx';
 import { Button } from '../../components/Button.jsx';
 import { modules } from '../../data/lmsData.js';
 import { learningLessons } from '../../data/learningLessons.js';
@@ -85,7 +86,7 @@ export function LearningModulePage({ openInitialLesson = false }) {
                   aria-controls="chapter-lesson-panel"
                 >
                   <span className="chapter-lesson-number">{completed.includes(item.id) ? '✓' : index + 1}</span>
-                  <span>{item.title}</span>
+                  <span>{item.title}<small className="chapter-lesson-type">{item.type === 'VIDEO' ? 'Video bài giảng' : 'Bài đọc'}</small></span>
                 </button>
               ))}
             </nav>
@@ -111,6 +112,7 @@ export function LearningModulePage({ openInitialLesson = false }) {
                     <span className="material-symbols-outlined">close</span>
                   </button>
                 </div>
+                {lesson.type === 'VIDEO' && <LessonVideo key={lesson.id} lesson={lesson} />}
                 <LessonContent
                   key={lesson.id}
                   lesson={lesson}

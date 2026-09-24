@@ -207,6 +207,8 @@ export const learningLessons = Object.fromEntries(
     chapter,
     rows.map(([title, explanation, formula, example, question, answer], index) => ({
       id: `${chapter}-${index + 1}`,
+      type: index === 0 ? 'VIDEO' : 'TEXT',
+      video: index === 0 ? { src: '' } : undefined,
       title,
       explanation,
       formula,

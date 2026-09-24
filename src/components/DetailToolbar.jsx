@@ -1,4 +1,5 @@
 import React from 'react';
+import { PageHeaderSlot } from './PageHeaderContext.jsx';
 
 export function DetailToolbar({
   title,
@@ -32,6 +33,7 @@ export function DetailToolbar({
           </a>
         )}
         <span className="detail-toolbar-divider" />
+        <PageHeaderSlot />
         <div className="detail-toolbar-info">
           <strong>{title}</strong>
           {subtitle && <span>{subtitle}</span>}
