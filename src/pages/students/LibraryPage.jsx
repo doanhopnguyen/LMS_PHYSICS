@@ -5,6 +5,7 @@ import { Card } from '../../components/Card.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { ResourceCard } from '../../components/ResourceCard.jsx';
+import { PaginatedCollection } from '../../components/Pagination.jsx';
 import { resources } from '../../data/lmsData.js';
 
 export function LibraryPage() {
@@ -60,11 +61,11 @@ export function LibraryPage() {
             ))}
           </div>
         </Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {filtered.map((resource) => (
-            <ResourceCard key={resource.title} resource={resource} />
-          ))}
-        </div>
+        <PaginatedCollection items={filtered} resetKeys={[query]} pageSize={8}>
+          {(pageItems) => <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {pageItems.map((resource) => <ResourceCard key={resource.title} resource={resource} />)}
+          </div>}
+        </PaginatedCollection>
         {filtered.length === 0 && (
           <Card className="p-10 text-center">
             <span className="material-symbols-outlined text-4xl text-[#94A3B8]">search_off</span>

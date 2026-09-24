@@ -20,9 +20,13 @@ export function AiTutorPage() {
     },
   ]);
   const [value, setValue] = useState('');
+  const [topic, setTopic] = useState('TOPIC-FRICTION');
+  const [mode, setMode] = useState('TEXT');
+  const [ended, setEnded] = useState(false);
+  const [rated, setRated] = useState(null);
 
   const send = () => {
-    if (!value.trim()) return;
+    if (!value.trim() || ended) return;
     setMessages((current) => [
       ...current,
       { role: 'user', text: value },
@@ -57,6 +61,8 @@ export function AiTutorPage() {
                 onClick={() => {
                   setMessages([]);
                   setValue('');
+                  setEnded(false);
+                  setRated(null);
                 }}
               >
                 Chat mới
@@ -91,6 +97,14 @@ export function AiTutorPage() {
         </aside>
 
         <section className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-[#F8FAFC] shadow-sm">
+          <div className="flex flex-col gap-2 border-b border-[#E2E8F0] bg-white p-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-2 text-body-sm">
+              <span className="font-semibold text-[#475569]">Lớp D23CQCN01-B</span>
+              <select value={topic} onChange={(event) => setTopic(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"><option value="TOPIC-FRICTION">Lực ma sát</option><option value="TOPIC-NEWTON">Định luật Newton</option><option value="TOPIC-ENERGY">Công và năng lượng</option></select>
+              <select value={mode} onChange={(event) => setMode(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"><option value="TEXT">Trao đổi văn bản</option><option value="VOICE">Chế độ giọng nói</option></select>
+            </div>
+            <button type="button" onClick={() => setEnded(true)} disabled={ended} className="text-body-sm font-semibold text-primary disabled:text-[#94A3B8]">{ended ? 'Đã kết thúc phiên' : 'Kết thúc phiên'}</button>
+          </div>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
             {messages.map((message, index) => (
               <div
@@ -110,9 +124,7 @@ export function AiTutorPage() {
                   )}
                   <p className="text-body-md leading-relaxed">{message.text}</p>
                   {message.role === 'assistant' && (
-                    <div className="mt-3 rounded-xl border-l-4 border-primary bg-[#FEF2F2] px-3 py-2 text-body-sm text-[#475569]">
-                      <strong className="text-primary">Gợi ý:</strong> Xác định phản lực pháp tuyến trước khi thay số.
-                    </div>
+                    <><div className="mt-3 rounded-xl border-l-4 border-primary bg-[#FEF2F2] px-3 py-2 text-body-sm text-[#475569]"><strong className="text-primary">Gợi ý:</strong> Xác định phản lực pháp tuyến trước khi thay số.</div><div className="mt-3 flex items-center gap-2 text-label-sm text-[#64748B]"><span>Phản hồi hữu ích?</span><button onClick={() => setRated('UP')} className={`rounded-full px-2 py-1 ${rated === 'UP' ? 'bg-[#DCFCE7] text-[#15803D]' : 'hover:bg-[#F1F5F9]'}`} aria-label="Hữu ích">👍</button><button onClick={() => setRated('DOWN')} className={`rounded-full px-2 py-1 ${rated === 'DOWN' ? 'bg-[#FEE2E2] text-primary' : 'hover:bg-[#F1F5F9]'}`} aria-label="Chưa hữu ích">👎</button></div></>
                   )}
                 </div>
               </div>
@@ -130,6 +142,7 @@ export function AiTutorPage() {
             </div>
           </div>
           <div className="border-t border-[#E2E8F0] bg-white p-3 md:p-4">
+            {ended && <p className="mb-3 rounded-xl bg-[#F1F5F9] px-3 py-2 text-body-sm text-[#475569]">Phiên trao đổi đã kết thúc. Chọn “Chat mới” để bắt đầu phiên khác.</p>}
             <div className="flex items-end gap-2 rounded-2xl border border-[#CBD5E1] bg-[#F8FAFC] p-2 focus-within:border-primary focus-within:ring-2 focus-within:ring-[#FEE2E2]">
               <textarea
                 value={value}
@@ -141,11 +154,13 @@ export function AiTutorPage() {
                   }
                 }}
                 rows="1"
+                disabled={ended}
                 className="max-h-28 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-body-md focus:ring-0"
                 placeholder="Đặt câu hỏi cho trợ giảng AI..."
               />
               <button
                 onClick={send}
+                disabled={ended}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white hover:bg-[#C41E1A]"
                 aria-label="Gửi câu hỏi"
               >

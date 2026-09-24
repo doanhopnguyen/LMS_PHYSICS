@@ -8,6 +8,7 @@ import { ProgressBar } from '../../components/ProgressBar.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
+import { PaginatedCollection } from '../../components/Pagination.jsx';
 import {
   assessments as initialAssessments,
   assessmentStats,
@@ -1157,8 +1158,9 @@ export function LecturerAssessmentsPage() {
         {(activeStatus) => {
           const visible = baseFiltered.filter((item) => activeStatus === 'ALL' || item.status === activeStatus);
           return visible.length ? (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pt-5">
-              {visible.map((item) => {
+            <PaginatedCollection items={visible} resetKeys={[activeStatus, query, classFilter, statusFilter, chapterFilter]} pageSize={8}>
+              {(pageItems) => <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pt-5">
+              {pageItems.map((item) => {
                 const meta = assessmentStatusMeta[item.status];
                 return (
                   <Card key={item.id} className="p-5">
@@ -1278,7 +1280,8 @@ export function LecturerAssessmentsPage() {
                   </Card>
                 );
               })}
-            </div>
+            </div>}
+            </PaginatedCollection>
           ) : (
             <Card className="mt-5 p-10 text-center">
               <span className="material-symbols-outlined text-4xl text-[#94A3B8]">search_off</span>

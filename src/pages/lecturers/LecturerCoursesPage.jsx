@@ -4,6 +4,7 @@ import { Card } from '../../components/Card.jsx';
 import { LecturerPageShell } from '../../components/LecturerPageShell.jsx';
 import { ProgressBar } from '../../components/ProgressBar.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { PaginatedCollection } from '../../components/Pagination.jsx';
 import { lecturerCourses } from '../../data/lecturerData.js';
 
 export function LecturerCoursesPage() {
@@ -21,8 +22,9 @@ export function LecturerCoursesPage() {
         </div>
         <StatusBadge tone="success">Đang diễn ra</StatusBadge>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {lecturerCourses.map((course) => (
+      <PaginatedCollection items={lecturerCourses} pageSize={6}>
+        {(pageItems) => <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {pageItems.map((course) => (
           <Card key={course.id} className="p-5 flex flex-col hover:-translate-y-1 hover:shadow-md transition-all">
             <div className="flex items-start justify-between gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FEE2E2] text-primary">
@@ -49,7 +51,8 @@ export function LecturerCoursesPage() {
             </a>
           </Card>
         ))}
-      </div>
+      </div>}
+      </PaginatedCollection>
     </LecturerPageShell>
   );
 }

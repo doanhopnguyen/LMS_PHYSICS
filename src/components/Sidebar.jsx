@@ -8,6 +8,7 @@ export const studentNavItems = [
   ['exam_practice_center.html', 'fitness_center', 'Ôn luyện'],
   ['exam_session.html', 'quiz', 'Kiểm tra'],
   ['virtual_lab.html', 'science', 'Phòng thí nghiệm 3D'],
+  ['student_evidence.html', 'folder_shared', 'Minh chứng & báo cáo'],
   ['learning_results.html', 'insights', 'Kết quả học tập'],
 ];
 

@@ -10,6 +10,8 @@ import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
+import { usePagination } from '../../hooks/usePagination.js';
 import { labs } from '../../data/lmsData.js';
 import {
   aiActivityAggregates,
@@ -186,6 +188,7 @@ export function LecturerLearningAnalyticsPage() {
       }),
     [examFilter, labFilter, progressFilter, query, studentSummary]
   );
+  const studentPagination = usePagination(visibleStudents, [filters.classId, filters.range, filters.chapterId, query, progressFilter, examFilter, labFilter]);
   const reset = () => {
     setFilters(initialFilters);
     setQuery('');
@@ -401,6 +404,7 @@ export function LecturerLearningAnalyticsPage() {
                       </label>
                     </div>
                     {visibleStudents.length ? (
+                      <>
                       <DataTable
                         columns={[
                           'Mã sinh viên',
@@ -413,7 +417,7 @@ export function LecturerLearningAnalyticsPage() {
                           'Điểm Lab TB',
                           '',
                         ]}
-                        rows={visibleStudents}
+                        rows={studentPagination.pageItems}
                         renderRow={(student) => (
                           <tr className="border-t border-[#E2E8F0]">
                             <td className="px-3 py-3 font-mono">{student.id}</td>
@@ -442,6 +446,8 @@ export function LecturerLearningAnalyticsPage() {
                           </tr>
                         )}
                       />
+                      <Pagination currentPage={studentPagination.currentPage} pageSize={studentPagination.pageSize} totalItems={visibleStudents.length} onPageChange={studentPagination.setCurrentPage} onPageSizeChange={studentPagination.setPageSize} />
+                      </>
                     ) : (
                       <div className="py-10 text-center">
                         <h3 className="text-headline-sm font-bold">Không tìm thấy dữ liệu phù hợp</h3>

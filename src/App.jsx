@@ -38,6 +38,13 @@ import { LecturerLabSubmissionDetailPage } from './pages/lecturers/LecturerLabSu
 import { LecturerLabGradingPage } from './pages/lecturers/LecturerLabGradingPage.jsx';
 import { LecturerAiInsightsPage } from './pages/lecturers/LecturerAiInsightsPage.jsx';
 import { LecturerLearningAnalyticsPage } from './pages/lecturers/LecturerLearningAnalyticsPage.jsx';
+import { AdminAcademicsPage, AdminContentPage, AdminDashboardPage, AdminOperationsPage, AdminUsersPage } from './pages/admin/AdminPages.jsx';
+import { StudentEvidencePage } from './pages/students/StudentEvidencePage.jsx';
+import { LecturerClassOperationsPage } from './pages/lecturers/LecturerClassOperationsPage.jsx';
+import { AuthAccessPage } from './pages/AuthAccessPage.jsx';
+import { TAClassSupportPage, TADashboardPage, TAWorkQueuePage } from './pages/ta/TAPages.jsx';
+import { RoleAccessPage } from './pages/RoleAccessPage.jsx';
+import { canAccess, getDemoSession } from './lib/demoSession.js';
 
 const pageComponents = {
   'login.html': LoginPage,
@@ -77,6 +84,17 @@ const pageComponents = {
   'lecturer_lab_grading.html': LecturerLabGradingPage,
   'lecturer_ai_insights.html': LecturerAiInsightsPage,
   'lecturer_analytics.html': LecturerLearningAnalyticsPage,
+  'admin_dashboard.html': AdminDashboardPage,
+  'admin_users.html': AdminUsersPage,
+  'admin_academics.html': AdminAcademicsPage,
+  'admin_operations.html': AdminOperationsPage,
+  'ta_dashboard.html': TADashboardPage,
+  'ta_work_queue.html': TAWorkQueuePage,
+  'admin_content.html': AdminContentPage,
+  'student_evidence.html': StudentEvidencePage,
+  'lecturer_class_operations.html': LecturerClassOperationsPage,
+  'auth_access.html': AuthAccessPage,
+  'ta_class_support.html': TAClassSupportPage,
 };
 
 function App() {
@@ -93,7 +111,11 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const Page = pageComponents[file] ?? pageComponents['dashboard.html'];
+  const session = getDemoSession();
+  const Page = pageComponents[file] ?? pageComponents['login.html'];
+  if (!['login.html', 'auth_access.html'].includes(file) && (!session || !canAccess(session.role, file))) {
+    return <RoleAccessPage session={session} requestedPage={file} />;
+  }
   return <Page key={locationKey} />;
 }
 

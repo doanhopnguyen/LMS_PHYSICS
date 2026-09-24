@@ -1,5 +1,6 @@
 import React from 'react';
 import { routeFromLink, navigate } from '../lib/navigation.js';
+import { clearDemoSession } from '../lib/demoSession.js';
 
 const defaultUser = {
   name: 'Nguyễn Văn A',
@@ -16,6 +17,10 @@ export function Header({ onMenuClick, user = defaultUser, homeHref = 'dashboard.
       event.preventDefault();
       navigate(target);
     }
+  };
+  const logout = () => {
+    clearDemoSession();
+    navigate('login.html');
   };
 
   return (
@@ -76,6 +81,15 @@ export function Header({ onMenuClick, user = defaultUser, homeHref = 'dashboard.
             </div>
             <span className="floating-profile-id text-body-sm tracking-wide">{user.detail}</span>
           </div>
+        </button>
+        <button
+          type="button"
+          onClick={logout}
+          className="p-2 rounded-full text-white hover:bg-white/16 transition-colors"
+          title="Đăng xuất"
+          aria-label="Đăng xuất"
+        >
+          <span className="material-symbols-outlined text-2xl">logout</span>
         </button>
       </div>
     </header>

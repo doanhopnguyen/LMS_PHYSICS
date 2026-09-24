@@ -5,6 +5,8 @@ import { DataTable } from '../../components/DataTable.jsx';
 import { LecturerPageShell } from '../../components/LecturerPageShell.jsx';
 import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
+import { usePagination } from '../../hooks/usePagination.js';
 import {
   assessmentAttempts,
   assessments,
@@ -37,6 +39,7 @@ export function LecturerGradingPage() {
     [classFilter]
   );
   const adjustedCount = rows.filter((row) => row.adjustedScore !== null && row.adjustedScore !== undefined).length;
+  const pagination = usePagination(rows, [classFilter]);
 
   return (
     <LecturerPageShell
@@ -78,9 +81,10 @@ export function LecturerGradingPage() {
           </label>
         </div>
         {rows.length ? (
+          <>
           <DataTable
             columns={['Sinh viên', 'Bài đánh giá', 'Lớp', 'Thời gian nộp', 'Trạng thái', 'Điểm', 'Hành động']}
-            rows={rows}
+            rows={pagination.pageItems}
             renderRow={(row) => (
               <tr className="border-t border-[#E2E8F0]">
                 <td className="min-w-[170px] px-3 py-4"><strong>{row.student.name}</strong><span className="mt-1 block text-body-sm text-[#64748B]">{row.student.id}</span></td>
@@ -97,6 +101,8 @@ export function LecturerGradingPage() {
               </tr>
             )}
           />
+          <Pagination currentPage={pagination.currentPage} pageSize={pagination.pageSize} totalItems={rows.length} onPageChange={pagination.setCurrentPage} onPageSizeChange={pagination.setPageSize} />
+          </>
         ) : (
           <div className="py-10 text-center">
             <span className="material-symbols-outlined text-4xl text-[#94A3B8]" aria-hidden="true">inbox</span>

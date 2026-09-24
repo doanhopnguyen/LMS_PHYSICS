@@ -15,7 +15,7 @@ export function VirtualLabPage() {
       current="Danh sách thí nghiệm"
     >
       <PageContainer>
-        <PageTitle eyebrow="Phòng thí nghiệm 3D" actions={<Button icon="history">Lịch sử thí nghiệm</Button>} />
+        <PageTitle eyebrow="Phòng thí nghiệm 3D" actions={<a href="student_evidence.html"><Button icon="history">Minh chứng & báo cáo</Button></a>} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {labs.map((lab) => (

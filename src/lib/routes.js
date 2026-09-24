@@ -36,6 +36,17 @@ export const routeFiles = [
   'lecturer_lab_grading.html',
   'lecturer_ai_insights.html',
   'lecturer_analytics.html',
+  'admin_dashboard.html',
+  'admin_users.html',
+  'admin_academics.html',
+  'admin_operations.html',
+  'ta_dashboard.html',
+  'ta_work_queue.html',
+  'admin_content.html',
+  'student_evidence.html',
+  'lecturer_class_operations.html',
+  'auth_access.html',
+  'ta_class_support.html',
 ];
 
 export function getPageFile(pathname = window.location.pathname) {

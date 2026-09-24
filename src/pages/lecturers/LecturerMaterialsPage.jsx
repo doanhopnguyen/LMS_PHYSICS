@@ -5,6 +5,7 @@ import { LecturerPageShell } from '../../components/LecturerPageShell.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
+import { PaginatedCollection } from '../../components/Pagination.jsx';
 import {
   lecturerMaterials,
   materialChapterLabels,
@@ -207,8 +208,9 @@ export function LecturerMaterialsPage() {
         {(activeType) => {
           const visible = filteredByControls.filter((item) => activeType === 'ALL' || item.type === activeType);
           return visible.length ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pt-5">
-              {visible.map((item) => {
+            <PaginatedCollection items={visible} resetKeys={[activeType, query, chapter, status]} pageSize={9}>
+              {(pageItems) => <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pt-5">
+              {pageItems.map((item) => {
                 const statusMeta = materialStatusMeta[item.status];
                 return (
                   <Card key={item.id} className="p-5 flex min-w-0 flex-col hover:-translate-y-1 hover:shadow-md transition-all">
@@ -222,7 +224,8 @@ export function LecturerMaterialsPage() {
                   </Card>
                 );
               })}
-            </div>
+            </div>}
+            </PaginatedCollection>
           ) : (
             <Card className="mt-5 p-10 text-center"><span className="material-symbols-outlined text-4xl text-[#94A3B8]">search_off</span><h2 className="mt-3 text-headline-sm font-bold">Không tìm thấy học liệu</h2><p className="mt-1 text-body-md text-[#64748B]">Thử thay đổi từ khóa hoặc bộ lọc.</p><Button variant="secondary" className="mt-5" onClick={resetFilters}>Xóa bộ lọc</Button></Card>
           );
