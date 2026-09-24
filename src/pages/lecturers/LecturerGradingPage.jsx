@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
@@ -20,7 +21,7 @@ const formatDateTime = (value) =>
     : '—';
 
 export function LecturerGradingPage() {
-  const [classFilter, setClassFilter] = useState('ALL');
+  const [classFilter, setClassFilter] = useAcademicClass();
   const rows = useMemo(
     () =>
       assessmentAttempts
@@ -82,7 +83,7 @@ export function LecturerGradingPage() {
         </div>
         {rows.length ? (
           <>
-          <DataTable
+          <DataTable paginate={false}
             columns={['Sinh viên', 'Bài đánh giá', 'Lớp', 'Thời gian nộp', 'Trạng thái', 'Điểm', 'Hành động']}
             rows={pagination.pageItems}
             renderRow={(row) => (

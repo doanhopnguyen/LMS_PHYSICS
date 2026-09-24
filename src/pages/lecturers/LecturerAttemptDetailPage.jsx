@@ -211,14 +211,14 @@ export function LecturerAttemptDetailPage() {
                   {question.answers.map((answer) => {
                     const selected = selectedIds.includes(answer.id);
                     return (
-                      <div
+                      <Card as="div"
                         key={answer.id}
-                        className={`rounded-xl border p-3 text-body-sm ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : selected ? 'border-[#FECACA] bg-[#FEF2F2]' : 'border-[#E2E8F0]'}`}
+                        className={`border p-3 text-body-sm ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : selected ? 'border-[#FECACA] bg-[#FEF2F2]' : 'border-[#E2E8F0]'}`}
                       >
                         <span className="font-bold">{answer.id}.</span> {answer.content}
                         {selected && <span className="ml-2 font-semibold">— Sinh viên chọn</span>}
                         {answer.correct && <span className="ml-2 font-semibold text-[#15803D]">— Đáp án đúng</span>}
-                      </div>
+                      </Card>
                     );
                   })}
                 </div>
@@ -255,7 +255,7 @@ export function LecturerAttemptDetailPage() {
         <div className="mt-5 grid grid-cols-1 xl:grid-cols-2 gap-5">
           <Card className="p-5 md:p-6">
             <SectionHeader title="Điều chỉnh điểm" description="Điểm tự động luôn được giữ lại để đối chiếu." />
-            <div className="mt-4 rounded-xl bg-[#F8FAFC] p-4 text-body-sm">
+            <Card as="div" className="mt-4 bg-[#F8FAFC] p-4 text-body-sm">
               <p>
                 Điểm tự động: <strong>{formatNumber(attempt.autoScore)}</strong>
               </p>
@@ -264,7 +264,7 @@ export function LecturerAttemptDetailPage() {
                   Điểm sau điều chỉnh: <strong>{formatNumber(savedAdjustment)}</strong>
                 </p>
               )}
-            </div>
+            </Card>
             <label className="mt-4 block text-body-sm font-semibold">
               Điểm cuối cùng
               <input

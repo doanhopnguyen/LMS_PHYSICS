@@ -1,4 +1,6 @@
+import { PaginatedList } from "../../components/Pagination.jsx";
 import React, { useEffect, useMemo, useState } from 'react';
+import { useAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
@@ -158,13 +160,13 @@ function CloDistribution({ questions }) {
           const count = questions.filter((question) => question.clo === clo).length;
           const percent = questions.length ? Math.round((count / total) * 100) : 0;
           return (
-            <div key={clo} className="rounded-lg bg-[#F8FAFC] p-3">
+            <Card as="div" key={clo} className="bg-[#F8FAFC] p-3">
               <div className="flex justify-between text-body-sm">
                 <strong>{clo}</strong>
                 <span>{percent}%</span>
               </div>
               <ProgressBar value={percent} compact className="mt-2" />
-            </div>
+            </Card>
           );
         })}
       </div>
@@ -444,7 +446,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
               <MatrixTable matrix={data.matrix} onChange={updateMatrix} questions={lecturerQuestions} />
             </div>
             {matrixWarnings.length > 0 && (
-              <div className="mt-4 rounded-xl border border-[#FDE68A] bg-[#FFFBEB] p-4 text-body-sm text-[#B45309]">
+              <Card as="div" className="mt-4 border-[#FDE68A] bg-[#FFFBEB] p-4 text-body-sm text-[#B45309]">
                 <strong>Question Bank chưa đủ theo ma trận:</strong>
                 <ul className="mt-2 list-disc pl-5">
                   {matrixWarnings.map((warning) => (
@@ -457,7 +459,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                 >
                   Xem câu hỏi
                 </a>
-              </div>
+              </Card>
             )}
           </Card>
           <CloDistribution questions={selectedQuestions} />
@@ -570,14 +572,14 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
           <Card className="p-5 md:p-6">
             <h2 className="text-headline-sm font-bold">Câu hỏi trong đề</h2>
             {selectedQuestions.length ? (
-              <ol className="mt-4 space-y-3">
+              <PaginatedList as="ol" className="mt-4 space-y-3">
                 {data.questionIds.map((id, index) => {
                   const question = lecturerQuestions.find((item) => item.id === id);
                   if (!question) return null;
                   return (
-                    <li
+                    <Card as="li"
                       key={id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-[#E2E8F0] p-4"
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-4"
                     >
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FEE2E2] font-bold text-primary">
                         {index + 1}
@@ -623,10 +625,10 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                           Loại
                         </button>
                       </div>
-                    </li>
+                    </Card>
                   );
                 })}
-              </ol>
+              </PaginatedList>
             ) : (
               <p className="mt-4 text-body-sm text-[#64748B]">Chưa có câu hỏi nào trong đề.</p>
             )}
@@ -694,13 +696,13 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                 className="mt-2 w-full border border-[#CBD5E1] px-4"
               />
             </label>
-            <div className="rounded-xl bg-[#F8FAFC] p-4">
+            <Card as="div" className="bg-[#F8FAFC] p-4">
               <span className="text-body-sm text-[#64748B]">Chia đều điểm</span>
               <strong className="mt-1 block text-headline-sm">
                 Mỗi câu:{' '}
                 {totalQuestions ? (Number(data.totalScore) / totalQuestions).toFixed(2).replace(/\.00$/, '') : '0'} điểm
               </strong>
-            </div>
+            </Card>
           </div>
           <fieldset className="mt-6">
             <legend className="font-semibold">Tùy chọn hiển thị</legend>
@@ -780,7 +782,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
           </Card>
           <Card className="p-5 md:p-6">
             <h2 className="text-headline-sm font-bold">Danh sách câu hỏi</h2>
-            <ol className="mt-4 divide-y divide-[#E2E8F0]">
+            <PaginatedList as="ol" className="mt-4 divide-y divide-[#E2E8F0]">
               {data.questionIds.map((id, index) => {
                 const question = lecturerQuestions.find((item) => item.id === id);
                 return question ? (
@@ -800,7 +802,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                   </li>
                 ) : null;
               })}
-            </ol>
+            </PaginatedList>
           </Card>
         </div>
       )}
@@ -916,9 +918,9 @@ function AssessmentDetail({ assessment, onClose, onViewQuestion }) {
                   <MatrixTable matrix={assessment.matrix} questions={lecturerQuestions} readOnly />
                 </div>
               ) : tab === 'QUESTIONS' ? (
-                <ol className="space-y-3 pt-5">
+                <PaginatedList as="ol" className="space-y-3 pt-5">
                   {questions.map((question, index) => (
-                    <li key={question.id} className="flex gap-3 rounded-xl border border-[#E2E8F0] p-4">
+                    <Card as="li" key={question.id} className="flex gap-3 p-4">
                       <strong className="text-primary">{index + 1}.</strong>
                       <div className="flex-1">
                         <span className="font-mono text-label-md">{question.id}</span>
@@ -931,9 +933,9 @@ function AssessmentDetail({ assessment, onClose, onViewQuestion }) {
                       >
                         Xem
                       </button>
-                    </li>
+                    </Card>
                   ))}
-                </ol>
+                </PaginatedList>
               ) : (
                 <div className="pt-5">
                   <Card className="p-5">
@@ -967,7 +969,7 @@ function AssessmentDetail({ assessment, onClose, onViewQuestion }) {
 export function LecturerAssessmentsPage() {
   const [assessments, setAssessments] = useState(initialAssessments);
   const [query, setQuery] = useState('');
-  const [classFilter, setClassFilter] = useState('ALL');
+  const [classFilter, setClassFilter] = useAcademicClass();
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [chapterFilter, setChapterFilter] = useState('ALL');
   const [tabsKey, setTabsKey] = useState(0);
@@ -1163,7 +1165,7 @@ export function LecturerAssessmentsPage() {
               {pageItems.map((item) => {
                 const meta = assessmentStatusMeta[item.status];
                 return (
-                  <Card key={item.id} className="p-5">
+                  <Card key={item.id} variant="accent" className="p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-label-md font-bold text-primary">
@@ -1175,20 +1177,20 @@ export function LecturerAssessmentsPage() {
                       <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
                     </div>
                     <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-body-sm">
-                      <div className="rounded-lg bg-[#F8FAFC] p-3">
+                      <Card as="div" className="bg-[#F8FAFC] p-3">
                         <span className="text-[#64748B]">Câu hỏi</span>
                         <strong className="mt-1 block">{item.questionIds.length} câu</strong>
-                      </div>
-                      <div className="rounded-lg bg-[#F8FAFC] p-3">
+                      </Card>
+                      <Card as="div" className="bg-[#F8FAFC] p-3">
                         <span className="text-[#64748B]">Thời gian</span>
                         <strong className="mt-1 block">{item.duration} phút</strong>
-                      </div>
-                      <div className="rounded-lg bg-[#F8FAFC] p-3 col-span-2">
+                      </Card>
+                      <Card as="div" className="bg-[#F8FAFC] p-3 col-span-2">
                         <span className="text-[#64748B]">Lịch</span>
                         <strong className="mt-1 block">
                           {formatDateTime(item.startAt)} → {formatDateTime(item.endAt)}
                         </strong>
-                      </div>
+                      </Card>
                     </div>
                     <ProgressBar
                       value={item.totalStudents ? (item.completedCount / item.totalStudents) * 100 : 0}
@@ -1330,13 +1332,13 @@ function QuestionPreview({ question, onClose }) {
         </div>
         <div className="mt-5 space-y-2">
           {question.answers.map((answer) => (
-            <div
+            <Card as="div"
               key={answer.id}
-              className={`rounded-xl border p-3 ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}
+              className={`border p-3 ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}
             >
               <strong>{answer.id}.</strong> {answer.content}
               {answer.correct && <span className="ml-2 font-semibold text-[#15803D]">— Đáp án đúng</span>}
-            </div>
+            </Card>
           ))}
         </div>
         <div className="mt-6 flex justify-end">

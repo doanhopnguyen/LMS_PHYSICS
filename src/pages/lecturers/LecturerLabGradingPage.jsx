@@ -48,7 +48,7 @@ function EvidencePanel({ submission, assignment }) {
       <Card className="p-5">
         <SectionHeader title="Báo cáo thí nghiệm" />
         {report ? (
-          <div className="mt-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+          <Card as="div" className="mt-4 bg-[#F8FAFC] p-4">
             <div className="flex gap-3">
               <span className="material-symbols-outlined text-primary">picture_as_pdf</span>
               <div>
@@ -59,14 +59,14 @@ function EvidencePanel({ submission, assignment }) {
               </div>
             </div>
             <p className="mt-3 text-body-sm text-[#64748B]">Dữ liệu minh họa frontend; chưa có tệp hoặc URL thật.</p>
-          </div>
+          </Card>
         ) : (
           <p className="mt-4 text-body-sm text-[#64748B]">Chưa có tệp báo cáo.</p>
         )}
         {requiredMissing.length > 0 && (
-          <div className="mt-4 rounded-xl border border-[#FDE68A] bg-[#FEF3C7] p-3 text-body-sm text-[#B45309]">
+          <Card as="div" className="mt-4 border-[#FDE68A] bg-[#FEF3C7] p-3 text-body-sm text-[#B45309]">
             <strong>Minh chứng bắt buộc còn thiếu:</strong> {requiredMissing.join(', ')}
-          </div>
+          </Card>
         )}
       </Card>
       <Card className="p-5">
@@ -582,7 +582,7 @@ export function LecturerLabGradingPage() {
       <Card className="mt-5 p-5 md:p-6">
         <SectionHeader
           title="Lịch sử chấm điểm"
-          description="Các thao tác được ghi nhận trong dữ liệu frontend hiện tại."
+          
         />
         {result.history.length ? (
           <div className="mt-5">

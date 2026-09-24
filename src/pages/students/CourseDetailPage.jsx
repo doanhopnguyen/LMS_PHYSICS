@@ -46,16 +46,16 @@ export function CourseDetailPage() {
               <ProgressBar value={75} label="Tiến độ học phần" className="mt-4 max-w-xl text-[#64748B]" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-[#E2E8F0] bg-white p-3">
+              <Card as="div" className="p-3">
                 <span className="text-body-sm text-[#64748B]">Điểm hiện tại</span>
                 <strong className="mt-1 block text-headline-md">
                   8.5<span className="text-body-sm font-normal">/10</span>
                 </strong>
-              </div>
-              <div className="rounded-xl border border-[#E2E8F0] bg-white p-3">
+              </Card>
+              <Card as="div" className="p-3">
                 <span className="text-body-sm text-[#64748B]">Thời lượng</span>
                 <strong className="mt-1 block text-headline-md">3 tín chỉ</strong>
-              </div>
+              </Card>
             </div>
           </div>
         </Card>
@@ -67,10 +67,10 @@ export function CourseDetailPage() {
             </div>
             <div className="mt-4 space-y-2">
               {modules.map((module) => (
-                <a
+                <Card as="a"
                   key={module.number}
                   href={`learning_module.html?module=${module.number}`}
-                  className="group flex items-center gap-3 rounded-xl border border-[#E2E8F0] bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"
+                  className="group flex items-center gap-3 p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FEE2E2] font-bold text-primary">
                     {module.number}
@@ -90,16 +90,16 @@ export function CourseDetailPage() {
                   <span className="material-symbols-outlined text-[#94A3B8] transition-transform group-hover:translate-x-1 group-hover:text-primary">
                     arrow_forward
                   </span>
-                </a>
+                </Card>
               ))}
             </div>
           </Card>
           <div className="space-y-5 lg:col-span-4">
             <Card className="p-5">
               <h2 className="mb-3 text-headline-sm font-bold">Công thức trọng tâm</h2>
-              <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-4 text-center font-mono text-lg text-primary">
+              <Card as="div" className="border-[#FECACA] bg-[#FEF2F2] p-4 text-center font-mono text-lg text-primary">
                 F = m · a
-              </div>
+              </Card>
               <p className="mt-3 text-body-sm text-[#64748B]">Mở sổ tay công thức theo từng chương để ôn tập nhanh.</p>
               <a
                 href="document_viewer.html"
@@ -111,7 +111,7 @@ export function CourseDetailPage() {
             <Card className="p-5">
               <h2 className="mb-3 text-headline-sm font-bold">Lịch học sắp tới</h2>
               <div className="space-y-2">
-                <div className="flex gap-3 rounded-xl bg-[#FEF2F2] p-3">
+                <Card as="div" className="flex gap-3 bg-[#FEF2F2] p-3">
                   <span className="text-center font-bold text-primary">
                     24
                     <br />
@@ -121,8 +121,8 @@ export function CourseDetailPage() {
                     <strong className="text-body-md">Động lực học chất điểm</strong>
                     <p className="text-body-sm text-[#64748B]">09:30 · Phòng A2-304</p>
                   </div>
-                </div>
-                <div className="flex gap-3 rounded-xl bg-[#FFFBEB] p-3">
+                </Card>
+                <Card as="div" className="flex gap-3 bg-[#FFFBEB] p-3">
                   <span className="text-center font-bold text-[#B45309]">
                     26
                     <br />
@@ -132,7 +132,7 @@ export function CourseDetailPage() {
                     <strong className="text-body-md">Thực hành Lab 3D</strong>
                     <p className="text-body-sm text-[#64748B]">14:00 · Phòng máy 4</p>
                   </div>
-                </div>
+                </Card>
               </div>
             </Card>
           </div>

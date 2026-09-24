@@ -1,3 +1,4 @@
+import { Card } from '../components/Card.jsx';
 import React, { useState } from 'react';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 import { navigate } from '../lib/navigation.js';
@@ -49,8 +50,8 @@ export function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-            <p className="text-body-sm font-semibold text-[#475569]">Chế độ dựng giao diện · chọn vai trò để kiểm tra phân quyền</p>
+          <Card as="div" className="mt-5 bg-[#F8FAFC] p-4">
+            <p className="text-body-sm font-semibold text-[#475569]">Vai trò đăng nhập</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {Object.entries(demoRoles).map(([key, item]) => (
                 <button key={key} type="button" onClick={() => setRole(key)} className={`rounded-lg border px-3 py-2 text-left text-body-sm font-semibold transition-colors ${role === key ? 'border-primary bg-[#FEE2E2] text-primary' : 'border-[#CBD5E1] bg-white text-[#475569]'}`}>
@@ -58,7 +59,7 @@ export function LoginPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
 
           <div className="login-divider">
           </div>

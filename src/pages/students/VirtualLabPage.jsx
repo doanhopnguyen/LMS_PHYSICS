@@ -1,3 +1,4 @@
+import { PaginatedList } from "../../components/Pagination.jsx";
 import React from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -17,7 +18,7 @@ export function VirtualLabPage() {
       <PageContainer>
         <PageTitle eyebrow="Phòng thí nghiệm 3D" actions={<a href="student_evidence.html"><Button icon="history">Minh chứng & báo cáo</Button></a>} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <PaginatedList className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {labs.map((lab) => (
             <Card
               key={lab.title}
@@ -53,7 +54,7 @@ export function VirtualLabPage() {
               </div>
             </Card>
           ))}
-        </div>
+        </PaginatedList>
       </PageContainer>
     </AppShell>
   );

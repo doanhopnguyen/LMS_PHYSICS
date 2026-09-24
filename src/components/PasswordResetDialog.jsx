@@ -14,7 +14,7 @@ export function PasswordResetDialog({ student, onCancel, onConfirm }) {
           {student.email && <div className="sm:col-span-2"><dt className="text-body-sm text-[#64748B]">Email/tài khoản</dt><dd className="mt-1 font-semibold">{student.email}</dd></div>}
         </dl>
         <p className="mt-5 text-body-md">Bạn có chắc chắn muốn gửi yêu cầu reset mật khẩu cho sinh viên này?</p>
-        <p className="mt-3 rounded-xl border border-[#FDE68A] bg-[#FEF3C7] p-3 text-body-sm text-[#92400E]">Đây là dữ liệu mô phỏng frontend. Backend sẽ xử lý reset mật khẩu thực tế; giao diện không tạo hoặc lưu mật khẩu.</p>
+        <p className="mt-3 text-body-sm text-[#64748B]">Chế độ xem thử: chưa đặt lại mật khẩu.</p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onCancel}>Hủy</Button>
           <Button icon="lock_reset" onClick={() => onConfirm(student)}>Reset mật khẩu</Button>

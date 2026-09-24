@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { Pagination, PaginationContext } from './Pagination.jsx';
+import { usePagination } from '../hooks/usePagination.js';
 
-export function DataTable({ columns, rows, renderRow }) {
+export function DataTable({ columns, rows, renderRow, paginate = true }) {
+  const externalPagination = useContext(PaginationContext);
+  const identity = JSON.stringify(rows.map((row) => row.id ?? row));
+  const pagination = usePagination(rows, [identity]);
+  const managed = paginate && !externalPagination;
+  const visible = managed ? pagination.pageItems : rows;
   return (
+    <>
     <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
       <table className="w-full text-left text-body-sm">
         <thead className="bg-[#F8FAFC] text-[#64748B]">
@@ -14,11 +22,13 @@ export function DataTable({ columns, rows, renderRow }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <React.Fragment key={row.id ?? index}>{renderRow(row, index)}</React.Fragment>
+          {visible.map((row, index) => (
+            <React.Fragment key={row.id ?? index}>{renderRow(row, managed ? (pagination.currentPage - 1) * pagination.pageSize + index : index)}</React.Fragment>
           ))}
         </tbody>
       </table>
     </div>
+    {managed && rows.length > 10 && <Pagination currentPage={pagination.currentPage} pageSize={pagination.pageSize} totalItems={rows.length} onPageChange={pagination.setCurrentPage} onPageSizeChange={pagination.setPageSize} />}
+    </>
   );
 }

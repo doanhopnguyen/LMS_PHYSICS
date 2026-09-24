@@ -27,7 +27,7 @@ const selector = [
 function kindFor(element) {
   if (
     element.matches(
-      '.floating-brand-mark, .floating-brand-mark *, .sidebar-backdrop, input[type="range"], input[type="checkbox"], input[type="radio"]'
+      '.floating-brand-mark, .floating-brand-mark *, .sidebar-backdrop, .dashboard-calendar__event, input[type="range"], input[type="checkbox"], input[type="radio"]'
     )
   )
     return null;

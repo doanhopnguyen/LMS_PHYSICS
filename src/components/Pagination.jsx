@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { createContext, Children } from 'react';
 import { usePagination } from '../hooks/usePagination.js';
+export const PaginationContext = createContext(false);
 
 function pageNumbers(currentPage, totalPages) {
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -32,7 +33,7 @@ export function Pagination({ currentPage, pageSize, totalItems, onPageChange, on
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
               className="h-9 border border-[#CBD5E1] bg-white px-3"
             >
-              {[10, 20, 50].map((size) => <option key={size} value={size}>{size}</option>)}
+              {[...new Set([pageSize, 10, 20, 50])].sort((a, b) => a - b).map((size) => <option key={size} value={size}>{size}</option>)}
             </select>
           </label>
         )}
@@ -60,9 +61,17 @@ export function Pagination({ currentPage, pageSize, totalItems, onPageChange, on
 export function PaginatedCollection({ items, resetKeys = [], pageSize = 10, children }) {
   const pagination = usePagination(items, resetKeys, pageSize);
   return (
-    <>
+    <PaginationContext.Provider value={true}>
       {children(pagination.pageItems)}
       <Pagination currentPage={pagination.currentPage} pageSize={pagination.pageSize} totalItems={items.length} onPageChange={pagination.setCurrentPage} onPageSizeChange={pagination.setPageSize} />
-    </>
+    </PaginationContext.Provider>
   );
+}
+
+export function PaginatedList({ children, className = '', pageSize = 10, as: Component = 'div' }) {
+  const items = Children.toArray(children);
+  const identity = items.map((item) => item.key).join('|');
+  return <PaginatedCollection items={items} resetKeys={[identity]} pageSize={pageSize}>
+    {(pageItems) => <Component className={className}>{pageItems}</Component>}
+  </PaginatedCollection>;
 }

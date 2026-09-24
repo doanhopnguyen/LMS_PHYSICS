@@ -1,3 +1,4 @@
+import { PaginatedList } from "../../components/Pagination.jsx";
 import React, { useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -35,7 +36,7 @@ export function NotificationsPage() {
               <h2 className="text-headline-md font-bold">Thông báo mới</h2>
               <StatusBadge tone="primary">{items.filter((item) => item.unread).length} chưa đọc</StatusBadge>
             </div>
-            <div className="divide-y divide-[#E2E8F0]">
+            <PaginatedList className="divide-y divide-[#E2E8F0]">
               {items.map((item) => (
                 <button
                   key={item.title}
@@ -59,7 +60,7 @@ export function NotificationsPage() {
                   {item.unread && <span className="w-2.5 h-2.5 rounded-full bg-primary-container mt-2" />}
                 </button>
               ))}
-            </div>
+            </PaginatedList>
           </Card>
           <div className="lg:col-span-5 space-y-6">
             <Card className="p-6">

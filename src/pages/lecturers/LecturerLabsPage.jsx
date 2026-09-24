@@ -1,4 +1,6 @@
+import { PaginatedList } from "../../components/Pagination.jsx";
 import React, { useMemo, useState } from 'react';
+import { useAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
@@ -114,15 +116,15 @@ function LabDetailModal({ lab, assignments, onClose, onAssign }) {
             <div className="mt-3 space-y-2">
               {assigned.length ? (
                 assigned.map((item) => (
-                  <div
+                  <Card as="div"
                     key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] p-3"
+                    className="flex flex-wrap items-center justify-between gap-3 p-3"
                   >
                     <span>{item.classIds.join(', ')}</span>
                     <StatusBadge tone={labAssignmentStatusMeta[item.status].tone}>
                       {labAssignmentStatusMeta[item.status].label}
                     </StatusBadge>
-                  </div>
+                  </Card>
                 ))
               ) : (
                 <p className="text-body-sm text-[#64748B]">Chưa giao cho lớp nào.</p>
@@ -285,10 +287,10 @@ function AssignmentWizard({ lab, onCancel, onConfirm }) {
                   <option value="3">3 lần</option>
                 </select>
               </label>
-              <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+              <Card as="div" className="bg-[#F8FAFC] p-4">
                 <strong className="text-body-sm">Hình thức đánh giá</strong>
                 <p className="mt-1 text-body-sm text-[#64748B]">Đánh giá theo rubric mặc định của học phần.</p>
-              </div>
+              </Card>
             </div>
           </div>
         ) : (
@@ -305,10 +307,10 @@ function AssignmentWizard({ lab, onCancel, onConfirm }) {
                   form.attemptsAllowed === 'UNLIMITED' ? 'Không giới hạn' : `${form.attemptsAllowed} lần`,
                 ],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-xl bg-[#F8FAFC] p-4">
+                <Card as="div" key={label} className="bg-[#F8FAFC] p-4">
                   <dt className="text-[#64748B]">{label}</dt>
                   <dd className="mt-1 font-semibold">{value}</dd>
-                </div>
+                </Card>
               ))}
             </dl>
             <div>
@@ -350,7 +352,7 @@ export function LecturerLabsPage() {
   const [deleting, setDeleting] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [reportQuery, setReportQuery] = useState('');
-  const [reportClass, setReportClass] = useState('ALL');
+  const [reportClass, setReportClass] = useAcademicClass();
   const [reportLab, setReportLab] = useState('ALL');
   const [gradingFilter, setGradingFilter] = useState('ALL');
   const gradings = loadLabGradings();
@@ -449,7 +451,7 @@ export function LecturerLabsPage() {
           {(tab) => {
             if (tab === 'CATALOG')
               return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-5">
+                <PaginatedList className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-5">
                   {labCatalog.map((lab) => {
                     const related = assignments.filter((item) => item.labId === lab.id);
                     const ids = related.map((item) => item.id);
@@ -458,7 +460,7 @@ export function LecturerLabsPage() {
                     );
                     const students = labSubmissions.filter((item) => ids.includes(item.assignmentId)).length;
                     return (
-                      <Card key={lab.id} className="overflow-hidden">
+                      <Card key={lab.id} variant="accent" className="overflow-hidden">
                         <div
                           className={`h-32 bg-gradient-to-br ${lab.image === 'incline' ? 'from-[#E52220] to-[#F59E0B]' : lab.image === 'collision' ? 'from-[#1E3A8A] to-[#0F766E]' : lab.image === 'pendulum' ? 'from-[#334155] to-[#7C3AED]' : 'from-[#14532D] to-[#0F766E]'} flex items-center justify-center text-white`}
                         >
@@ -506,7 +508,7 @@ export function LecturerLabsPage() {
                       </Card>
                     );
                   })}
-                </div>
+                </PaginatedList>
               );
             if (tab === 'ASSIGNED')
               return (

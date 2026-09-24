@@ -67,10 +67,10 @@ export function LabReportPage() {
           </Card>
           <Card className="lg:col-span-4 p-6">
             <h2 className="text-headline-sm font-bold">Nhận xét giảng viên</h2>
-            <div className="mt-4 p-4 rounded-xl bg-[#F0FDF4] border border-[#86EFAC] text-body-md leading-relaxed">
+            <Card as="div" className="mt-4 p-4 bg-[#F0FDF4] border-[#86EFAC] text-body-md leading-relaxed">
               Số liệu được trình bày rõ ràng, sai số tính hợp lý. Bổ sung thêm phần giải thích nguyên nhân chênh lệch
               giữa giá trị thực nghiệm và lý thuyết.
-            </div>
+            </Card>
             <div className="mt-5 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[#FEE2E2] text-primary flex items-center justify-center font-bold">
                 MD

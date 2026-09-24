@@ -4,6 +4,7 @@ import { Header } from './Header.jsx';
 import { Sidebar } from './Sidebar.jsx';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 import { navigate, routeFromLink } from '../lib/navigation.js';
+import { PageHeaderProvider } from './PageHeaderContext.jsx';
 
 export function ImmersiveShell({
   children,
@@ -23,6 +24,7 @@ export function ImmersiveShell({
   }, []);
 
   return (
+    <PageHeaderProvider>
     <div
       className="app-shell app-shell-white immersive-shell min-h-screen flex flex-col"
       onClick={(event) => {
@@ -48,5 +50,6 @@ export function ImmersiveShell({
       </div>
       {showChatLauncher && <ChatLauncher />}
     </div>
+    </PageHeaderProvider>
   );
 }

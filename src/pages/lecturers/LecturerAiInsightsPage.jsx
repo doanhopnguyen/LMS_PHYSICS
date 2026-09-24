@@ -1,4 +1,6 @@
+import { PaginatedList } from "../../components/Pagination.jsx";
 import React, { useMemo, useState } from 'react';
+import { readAcademicScope, rememberAcademicClass } from '../../lib/academicScope.js';
 import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -45,7 +47,7 @@ function MaterialsList({ ids }) {
     <div className="space-y-3">
       {materials.length ? (
         materials.map((material) => (
-          <div key={material.id} className="rounded-xl border border-[#E2E8F0] p-4">
+          <Card as="div" key={material.id} className="p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <strong>{material.title}</strong>
@@ -64,7 +66,7 @@ function MaterialsList({ ids }) {
             >
               Xem học liệu →
             </a>
-          </div>
+          </Card>
         ))
       ) : (
         <p className="text-body-sm text-[#64748B]">Chưa có học liệu liên quan trong dữ liệu hiện tại.</p>
@@ -106,10 +108,10 @@ function TopicDetail({ topic, approvedMaterials, onClose }) {
               ['Có dẫn nguồn', formatPercent(citationRate)],
               ['Từ chối', formatPercent(refusalRate)],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-[#F8FAFC] p-4">
+              <Card as="div" key={label} className="bg-[#F8FAFC] p-4">
                 <span className="text-body-sm text-[#64748B]">{label}</span>
                 <strong className="mt-1 block text-headline-sm">{value}</strong>
-              </div>
+              </Card>
             ))}
           </div>
           <div>
@@ -141,7 +143,7 @@ function TopicDetail({ topic, approvedMaterials, onClose }) {
 export function LecturerAiInsightsPage() {
   const requestedChapter = new URLSearchParams(window.location.search).get('chapter');
   const initialFilters = {
-    classId: 'ALL',
+    classId: readAcademicScope().classId,
     range: '30D',
     chapterId: requestedChapter && questionChapterLabels[requestedChapter] ? requestedChapter : 'ALL',
     customStart: '2026-09-01',
@@ -187,7 +189,7 @@ export function LecturerAiInsightsPage() {
             Lớp học
             <select
               value={filters.classId}
-              onChange={(event) => setFilters({ ...filters, classId: event.target.value })}
+              onChange={(event) => { rememberAcademicClass(event.target.value); setFilters({ ...filters, classId: event.target.value }); }}
               className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
             >
               <option value="ALL">Tất cả lớp</option>
@@ -247,9 +249,6 @@ export function LecturerAiInsightsPage() {
             </label>
           </div>
         )}
-        <p className="mt-4 text-label-sm text-[#64748B]">
-          Dữ liệu minh họa frontend, chưa kết nối backend hoặc mô hình AI thật.
-        </p>
       </Card>
       {feedback && (
         <div
@@ -379,7 +378,7 @@ export function LecturerAiInsightsPage() {
                       </div>
                       <div>
                         <SectionHeader title="Chủ đề được quan tâm" description="Sắp xếp theo số lượt hỏi giảm dần." />
-                        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <PaginatedList className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {topics.map((topic) => (
                             <Card key={topic.id} className="p-5">
                               <div className="flex items-start justify-between gap-3">
@@ -415,7 +414,7 @@ export function LecturerAiInsightsPage() {
                               </Button>
                             </Card>
                           ))}
-                        </div>
+                        </PaginatedList>
                       </div>
                       <Card className="p-5">
                         <SectionHeader title="Thống kê phản hồi trợ giảng AI" />
@@ -427,10 +426,10 @@ export function LecturerAiInsightsPage() {
                             ['Lỗi hệ thống', filtered.reduce((sum, item) => sum + item.errorCount, 0)],
                             ['Đánh giá hữu ích', 'Chưa thu thập'],
                           ].map(([label, value]) => (
-                            <div key={label} className="rounded-xl bg-[#F8FAFC] p-4">
+                            <Card as="div" key={label} className="bg-[#F8FAFC] p-4">
                               <span className="text-body-sm text-[#64748B]">{label}</span>
                               <strong className="mt-1 block text-headline-sm">{value}</strong>
-                            </div>
+                            </Card>
                           ))}
                         </div>
                         <p className="mt-4 text-body-sm text-[#64748B]">
@@ -441,7 +440,7 @@ export function LecturerAiInsightsPage() {
                   );
                 if (tab === 'INSUFFICIENT')
                   return (
-                    <div className="space-y-4 pt-5">
+                    <PaginatedList className="space-y-4 pt-5">
                       {insufficientTopics.map((topic) => (
                         <Card key={topic.id} className="p-5">
                           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -476,7 +475,7 @@ export function LecturerAiInsightsPage() {
                           </div>
                         </Card>
                       ))}
-                    </div>
+                    </PaginatedList>
                   );
                 if (tab === 'SUGGESTIONS')
                   return (

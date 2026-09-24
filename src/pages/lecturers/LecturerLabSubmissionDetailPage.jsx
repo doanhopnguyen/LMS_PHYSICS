@@ -95,7 +95,7 @@ export function LecturerLabSubmissionDetailPage() {
         <Card className="p-5 md:p-6">
           <SectionHeader title="Báo cáo thí nghiệm" description="Metadata tệp do sinh viên nộp." />
           {submission.evidence.report ? (
-            <div className="mt-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+            <Card as="div" className="mt-4 bg-[#F8FAFC] p-4">
               <div className="flex items-start gap-3">
                 <span className="material-symbols-outlined text-primary">picture_as_pdf</span>
                 <div className="min-w-0">
@@ -112,7 +112,7 @@ export function LecturerLabSubmissionDetailPage() {
               <Button variant="secondary" className="mt-3" disabled>
                 Xem file
               </Button>
-            </div>
+            </Card>
           ) : (
             <p className="mt-4 text-body-sm text-[#64748B]">Chưa có tệp báo cáo.</p>
           )}
@@ -132,9 +132,9 @@ export function LecturerLabSubmissionDetailPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-[#CBD5E1] p-8 text-center text-body-sm text-[#64748B]">
+              <Card as="div" className="border-dashed border-[#CBD5E1] p-8 text-center text-body-sm text-[#64748B]">
                 Chưa có ảnh minh chứng.
-              </div>
+              </Card>
             )}
           </div>
         </Card>

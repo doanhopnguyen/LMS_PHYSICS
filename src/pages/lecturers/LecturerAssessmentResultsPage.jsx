@@ -94,10 +94,10 @@ function SummaryPanel({ assessment, rows, submittedAttempts, counts }) {
             ['Tỷ lệ hoàn thành', `${completion.toFixed(1)}%`],
             ['Tỷ lệ đạt ≥ 5', scores.length ? `${((passed / scores.length) * 100).toFixed(1)}%` : '—'],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4">
+            <Card as="div" key={label} className="bg-[#F8FAFC] p-4">
               <span className="text-body-sm text-[#64748B]">{label}</span>
               <strong className="mt-1 block text-headline-sm">{value}</strong>
-            </div>
+            </Card>
           ))}
         </div>
       </Card>
@@ -314,7 +314,7 @@ export function LecturerAssessmentResultsPage() {
                     </label>
                   </div>
                   {visibleRows.length ? (<>
-                    <DataTable
+                    <DataTable paginate={false}
                       columns={[
                         'Mã sinh viên',
                         'Họ và tên',
@@ -395,16 +395,16 @@ export function LecturerAssessmentResultsPage() {
                         .sort((a, b) => a.rate - b.rate)
                         .slice(0, 3)
                         .map((question) => (
-                          <div
+                          <Card as="div"
                             key={question.id}
-                            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E2E8F0] p-4"
+                            className="flex flex-wrap items-center justify-between gap-3 p-4"
                           >
                             <div>
                               <strong className="font-mono">{question.id}</strong>
                               <p className="mt-1 text-body-sm text-[#64748B]">{question.topic}</p>
                             </div>
                             <StatusBadge tone="warning">{(100 - question.rate).toFixed(1)}% trả lời sai</StatusBadge>
-                          </div>
+                          </Card>
                         ))}
                     </div>
                   </Card>

@@ -1,3 +1,4 @@
+import { Card } from '../../components/Card.jsx';
 import React from 'react';
 import { Button } from '../../components/Button.jsx';
 import { ImmersiveShell } from '../../components/ImmersiveShell.jsx';
@@ -33,15 +34,15 @@ export function MobileExperiencePage() {
             <span className="material-symbols-outlined text-[#64748B]">notifications</span>
           </header>
           <main className="p-4 space-y-4">
-            <section className="rounded-2xl p-4 bg-gradient-to-br from-[#800F0F] to-primary-container text-white">
+            <Card as="section" className="p-4 bg-gradient-to-br from-[#800F0F] to-primary-container text-white">
               <span className="text-label-sm text-red-100">HỌC KỲ 1 · 2024-2025</span>
               <h1 className="text-headline-sm font-bold mt-2">Xin chào, Nguyễn Văn A!</h1>
               <p className="text-body-sm text-white/80 mt-1">Bạn đã học 5 ngày liên tiếp.</p>
               <Button className="w-full mt-4 !bg-white !text-primary" icon="play_arrow">
                 Tiếp tục học
               </Button>
-            </section>
-            <section className="rounded-2xl bg-white p-4 border border-[#E2E8F0] shadow-sm">
+            </Card>
+            <Card as="section" className="p-4">
               <div className="flex items-center justify-between">
                 <span className="text-label-sm text-primary font-bold">ĐANG HỌC DỞ</span>
                 <span className="text-label-sm text-[#64748B]">75%</span>
@@ -49,7 +50,7 @@ export function MobileExperiencePage() {
               <h2 className="text-headline-sm font-bold mt-2">Các định luật Newton</h2>
               <p className="text-body-sm text-[#64748B] mt-1">Bài 4 · Động lực học chất điểm</p>
               <ProgressBar value={75} className="mt-4" compact />
-            </section>
+            </Card>
             <div className="grid grid-cols-2 gap-3">
               {[
                 ['68%', 'Tiến độ', 'trending_up'],
@@ -57,14 +58,14 @@ export function MobileExperiencePage() {
                 ['8.8', 'Điểm TB', 'emoji_events'],
                 ['2', 'Nhiệm vụ', 'assignment'],
               ].map(([value, label, icon]) => (
-                <div key={label} className="p-3 rounded-2xl bg-white border border-[#E2E8F0]">
+                <Card as="div" key={label} className="p-3">
                   <span className="material-symbols-outlined text-primary">{icon}</span>
                   <strong className="block text-headline-md mt-2">{value}</strong>
                   <span className="text-body-sm text-[#64748B]">{label}</span>
-                </div>
+                </Card>
               ))}
             </div>
-            <section className="rounded-2xl bg-white p-4 border border-[#E2E8F0]">
+            <Card as="section" className="p-4">
               <h2 className="text-headline-sm font-bold">Truy cập nhanh</h2>
               <div className="grid grid-cols-3 gap-2 mt-3">
                 {[
@@ -90,7 +91,7 @@ export function MobileExperiencePage() {
                   </a>
                 ))}
               </div>
-            </section>
+            </Card>
           </main>
           <nav className="sticky bottom-0 h-16 bg-white border-t border-[#E2E8F0] flex items-center justify-around text-[#64748B]">
             <a href="dashboard.html" className="flex flex-col items-center text-primary">

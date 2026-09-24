@@ -36,7 +36,7 @@ export function VoiceCitationsPage() {
               </div>
               <span className="material-symbols-outlined text-3xl text-red-300">graphic_eq</span>
             </div>
-            <div className="mt-10 h-28 flex items-center justify-center gap-1.5 px-6 rounded-xl bg-slate-900/70 border border-slate-700">
+            <Card as="div" className="mt-10 h-28 flex items-center justify-center gap-1.5 px-6 bg-slate-900/70 border-slate-700">
               {Array.from({ length: 32 }, (_, index) => (
                 <span
                   key={index}
@@ -44,7 +44,7 @@ export function VoiceCitationsPage() {
                   style={{ height: `${20 + ((index * 17) % 55)}%` }}
                 />
               ))}
-            </div>
+            </Card>
             <div className="flex flex-col items-center mt-8">
               <button
                 onClick={() => setRecording(!recording)}
@@ -56,7 +56,7 @@ export function VoiceCitationsPage() {
                 {recording ? 'Đang lắng nghe... Nhấn để dừng' : 'Nhấn để bắt đầu hỏi bằng giọng nói'}
               </span>
             </div>
-            <div className="mt-8 p-4 rounded-xl bg-slate-900/60 border border-slate-700">
+            <Card as="div" className="mt-8 p-4 bg-slate-900/60 border-slate-700">
               <div className="flex gap-3">
                 <span className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold">
                   VA
@@ -65,7 +65,7 @@ export function VoiceCitationsPage() {
                   “Tại sao lực ma sát lại phụ thuộc vào áp lực của vật lên mặt phẳng?”
                 </p>
               </div>
-            </div>
+            </Card>
           </Card>
           <div className="lg:col-span-5 space-y-6">
             <Card className="p-6">
@@ -77,7 +77,7 @@ export function VoiceCitationsPage() {
                 Lực ma sát trượt tỉ lệ với áp lực của vật lên mặt phẳng vì diện tích tiếp xúc vi mô tạo ra lực cản phụ
                 thuộc vào độ ép giữa hai bề mặt.
               </p>
-              <div className="mt-5 p-4 rounded-xl bg-[#FEF2F2] border-l-4 border-primary">
+              <Card as="div" className="mt-5 p-4 bg-[#FEF2F2] border-l-4 border-primary">
                 <div className="flex items-center gap-2 text-primary font-semibold text-body-sm">
                   <span className="material-symbols-outlined text-sm">menu_book</span>Nguồn tham khảo
                 </div>
@@ -87,7 +87,7 @@ export function VoiceCitationsPage() {
                 <a href="document_viewer.html" className="text-body-sm text-primary font-semibold mt-2 inline-block">
                   Mở trang trích dẫn →
                 </a>
-              </div>
+              </Card>
               <Button className="w-full mt-5" variant="secondary" icon="volume_up">
                 Nghe câu trả lời
               </Button>
@@ -97,11 +97,11 @@ export function VoiceCitationsPage() {
               <div className="space-y-3 mt-4">
                 {['Định luật II Newton · tr.45', 'Công của lực ma sát · tr.82', 'Bảo toàn động lượng · tr.103'].map(
                   (item) => (
-                    <div key={item} className="flex items-center gap-3 p-3 rounded-lg bg-[#F8FAFC]">
+                    <Card as="div" key={item} className="flex items-center gap-3 p-3 bg-[#F8FAFC]">
                       <span className="material-symbols-outlined text-primary">bookmark</span>
                       <span className="text-body-sm flex-1">{item}</span>
                       <span className="material-symbols-outlined text-[#94A3B8] text-sm">arrow_forward</span>
-                    </div>
+                    </Card>
                   )
                 )}
               </div>

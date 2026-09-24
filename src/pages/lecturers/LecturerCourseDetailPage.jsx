@@ -48,11 +48,11 @@ function OverviewTab({ course }) {
           <SectionHeader icon="event_upcoming" title="Nhiệm vụ sắp tới" />
           <div className="space-y-3 pt-5">
             {upcomingTasks.map(([icon, title, time, detail]) => (
-              <div key={title} className="flex items-start gap-3 rounded-xl border border-[#E2E8F0] p-4">
+              <Card as="div" key={title} className="flex items-start gap-3 p-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FEE2E2] text-primary"><span className="material-symbols-outlined">{icon}</span></span>
                 <div className="min-w-0 flex-1"><h3 className="font-semibold">{title}</h3><p className="mt-1 text-body-sm text-[#64748B]">{time} · {detail}</p></div>
                 <span className="material-symbols-outlined text-[#94A3B8]">chevron_right</span>
-              </div>
+              </Card>
             ))}
           </div>
         </Card>

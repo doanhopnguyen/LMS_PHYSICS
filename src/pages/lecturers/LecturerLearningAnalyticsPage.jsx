@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { readAcademicScope, rememberAcademicClass } from '../../lib/academicScope.js';
 import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -68,7 +69,7 @@ function ScoreDistribution({ scores }) {
 
 export function LecturerLearningAnalyticsPage() {
   const initialFilters = {
-    classId: 'ALL',
+    classId: readAcademicScope().classId,
     range: 'SEMESTER',
     chapterId: 'ALL',
     customStart: '2026-08-01',
@@ -249,7 +250,7 @@ export function LecturerLearningAnalyticsPage() {
             Lớp học
             <select
               value={filters.classId}
-              onChange={(event) => setFilters({ ...filters, classId: event.target.value })}
+              onChange={(event) => { rememberAcademicClass(event.target.value); setFilters({ ...filters, classId: event.target.value }); }}
               className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
             >
               <option value="ALL">Tất cả lớp</option>
@@ -405,7 +406,7 @@ export function LecturerLearningAnalyticsPage() {
                     </div>
                     {visibleStudents.length ? (
                       <>
-                      <DataTable
+                      <DataTable paginate={false}
                         columns={[
                           'Mã sinh viên',
                           'Họ tên',
@@ -469,7 +470,7 @@ export function LecturerLearningAnalyticsPage() {
                                 material.chapter === `CHAPTER_${id.replace('CH', '')}` || material.chapter === 'ALL'
                             ).length;
                             return (
-                              <div key={id} className="rounded-xl border border-[#E2E8F0] p-4">
+                              <Card as="div" key={id} className="p-4">
                                 <div className="flex justify-between gap-3">
                                   <strong>{label}</strong>
                                   <StatusBadge tone="neutral">Chưa có dữ liệu completion</StatusBadge>
@@ -477,7 +478,7 @@ export function LecturerLearningAnalyticsPage() {
                                 <p className="mt-2 text-body-sm text-[#64748B]">
                                   {materialCount} học liệu liên quan · chưa có mapping hoàn thành theo sinh viên.
                                 </p>
-                              </div>
+                              </Card>
                             );
                           })}
                         </div>
@@ -493,10 +494,10 @@ export function LecturerLearningAnalyticsPage() {
                             ['Cao nhất', formatValue(assessmentData.highest)],
                             ['Thấp nhất', formatValue(assessmentData.lowest)],
                           ].map(([label, value]) => (
-                            <div key={label} className="rounded-xl bg-[#F8FAFC] p-3">
+                            <Card as="div" key={label} className="bg-[#F8FAFC] p-3">
                               <span className="text-[#64748B]">{label}</span>
                               <strong className="mt-1 block">{value}</strong>
-                            </div>
+                            </Card>
                           ))}
                         </div>
                         <p className="mt-4 text-body-sm text-[#64748B]">
@@ -564,10 +565,10 @@ export function LecturerLearningAnalyticsPage() {
                                 ['Đã xác nhận', lab.confirmed],
                                 ['Điểm TB', formatValue(lab.average)],
                               ].map(([label, value]) => (
-                                <div key={label} className="rounded-lg bg-[#F8FAFC] p-3">
+                                <Card as="div" key={label} className="bg-[#F8FAFC] p-3">
                                   <span className="text-[#64748B]">{label}</span>
                                   <strong className="mt-1 block">{value}</strong>
-                                </div>
+                                </Card>
                               ))}
                             </div>
                             <a href="lecturer_labs.html">
@@ -620,9 +621,9 @@ export function LecturerLearningAnalyticsPage() {
                         />
                         <div className="mt-4 space-y-3">
                           {supportSignals.map((signal) => (
-                            <div
+                            <Card as="div"
                               key={`${signal.type}-${signal.title}`}
-                              className="rounded-xl border border-[#E2E8F0] p-4"
+                              className="p-4"
                             >
                               <StatusBadge tone="warning">{signal.type}</StatusBadge>
                               <h3 className="mt-2 font-bold">{signal.title}</h3>
@@ -636,7 +637,7 @@ export function LecturerLearningAnalyticsPage() {
                               >
                                 {signal.action} →
                               </a>
-                            </div>
+                            </Card>
                           ))}
                         </div>
                       </Card>
@@ -647,22 +648,22 @@ export function LecturerLearningAnalyticsPage() {
                         />
                         <div className="mt-4 space-y-3">
                           {worstChapter && (
-                            <div className="rounded-xl bg-[#FEF2F2] p-4 text-body-sm">
+                            <Card as="div" className="bg-[#FEF2F2] p-4 text-body-sm">
                               Nhiều lượt trả lời chưa chính xác ở {questionChapterLabels[worstChapter.id]}. Giảng viên
                               có thể xem lại câu hỏi và học liệu liên quan.
-                            </div>
+                            </Card>
                           )}
                           {mostIncompleteLab && mostIncompleteLab.assigned > mostIncompleteLab.submitted && (
-                            <div className="rounded-xl bg-[#FEF3C7] p-4 text-body-sm">
+                            <Card as="div" className="bg-[#FEF3C7] p-4 text-body-sm">
                               Có báo cáo {mostIncompleteLab.title} chưa được nộp. Giảng viên có thể kiểm tra tiến độ
                               thực hiện.
-                            </div>
+                            </Card>
                           )}
                           {topAI?.insufficient > 0 && (
-                            <div className="rounded-xl bg-[#F1F5F9] p-4 text-body-sm">
+                            <Card as="div" className="bg-[#F1F5F9] p-4 text-body-sm">
                               {topAI.name} có phản hồi thiếu căn cứ. Cần xem xét học liệu liên quan trước khi đưa ra
                               quyết định.
-                            </div>
+                            </Card>
                           )}
                         </div>
                         <div className="mt-5 flex flex-wrap gap-2">

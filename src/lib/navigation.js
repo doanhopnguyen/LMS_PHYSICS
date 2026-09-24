@@ -1,4 +1,5 @@
 import { routeFiles } from './routes.js';
+import { academicHref } from './academicScope.js';
 
 export const navigationByLabel = [
   ['Tổng quan', 'dashboard.html'],
@@ -14,7 +15,7 @@ export const navigationByLabel = [
 ];
 
 export function navigate(file) {
-  const next = `/${file}`;
+  const next = `/${academicHref(file)}`;
   if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== next) {
     window.history.pushState({}, '', next);
     window.dispatchEvent(new PopStateEvent('popstate'));

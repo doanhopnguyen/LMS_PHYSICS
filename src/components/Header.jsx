@@ -1,6 +1,7 @@
 import React from 'react';
 import { routeFromLink, navigate } from '../lib/navigation.js';
 import { clearDemoSession } from '../lib/demoSession.js';
+import { PageHeaderSlot } from './PageHeaderContext.jsx';
 
 const defaultUser = {
   name: 'Nguyễn Văn A',
@@ -45,6 +46,7 @@ export function Header({ onMenuClick, user = defaultUser, homeHref = 'dashboard.
         </a>
       </div>
 
+      <PageHeaderSlot />
       <div className="header-search-center hidden xl:block">
         <div className="header-search relative">
           <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8] text-xl">

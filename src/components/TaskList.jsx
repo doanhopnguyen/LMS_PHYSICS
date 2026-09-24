@@ -1,3 +1,4 @@
+import { Card } from './Card.jsx';
 import React, { useState } from 'react';
 import { StatusBadge } from './StatusBadge.jsx';
 
@@ -8,9 +9,9 @@ export function TaskList({ items }) {
       {items.map((item) => {
         const done = completed.includes(item.title);
         return (
-          <div
+          <Card as="div"
             key={item.title}
-            className={`p-3 rounded-xl border flex items-start justify-between gap-3 transition-colors ${done ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}
+            className={`p-3 border flex items-start justify-between gap-3 transition-colors ${done ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}
           >
             <div className="flex items-start gap-2.5">
               <button
@@ -37,7 +38,7 @@ export function TaskList({ items }) {
               </div>
             </div>
             <StatusBadge tone={item.tone}>{item.status}</StatusBadge>
-          </div>
+          </Card>
         );
       })}
     </div>

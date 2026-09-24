@@ -289,9 +289,6 @@ export function CountDotsChart({ value, unit = 'mục', groupSize = 1, color = '
           />
         ))}
       </div>
-      <span className="text-label-sm text-[#64748B]">
-        Mỗi chấm = {group} {unit}
-      </span>
     </div>
   );
 }

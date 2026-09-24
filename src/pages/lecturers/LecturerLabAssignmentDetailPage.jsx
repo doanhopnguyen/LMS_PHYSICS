@@ -57,7 +57,6 @@ export function LecturerLabAssignmentDetailPage() {
     }).filter(Boolean),
     [participants, submissions]
   );
-  const pagination = usePagination(visible, [query, statusFilter, classFilter]);
   const visible = useMemo(
     () =>
       students.filter((student) => {
@@ -70,6 +69,7 @@ export function LecturerLabAssignmentDetailPage() {
       }),
     [students, query, statusFilter, classFilter]
   );
+  const pagination = usePagination(visible, [query, statusFilter, classFilter]);
   const performed = submissions.length;
   const submitted = submissions.filter((item) => ['SUBMITTED', 'LATE'].includes(item.status)).length;
   const pending = submissions.filter(
@@ -185,7 +185,7 @@ export function LecturerLabAssignmentDetailPage() {
           </label>
         </div>
         {visible.length ? (<>
-          <DataTable
+          <DataTable paginate={false}
             columns={[
               'Mã sinh viên',
               'Họ tên',

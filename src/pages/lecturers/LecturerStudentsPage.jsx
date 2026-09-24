@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { readAcademicScope } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
@@ -13,6 +14,7 @@ import { lecturerStudents } from '../../data/lecturerData.js';
 const toneFor = (status) => status === 'Đang học' ? 'success' : status === 'Có bài quá hạn' ? 'primary' : 'warning';
 
 export function LecturerStudentsPage() {
+  const { classId } = readAcademicScope();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('Tất cả');
   const [sort, setSort] = useState('progress-desc');
@@ -23,11 +25,12 @@ export function LecturerStudentsPage() {
     const normalized = query.trim().toLocaleLowerCase('vi');
     const [field, direction] = sort.split('-');
     return lecturerStudents
+      .filter((student) => classId === 'ALL' || student.className === classId)
       .filter((student) => !normalized || `${student.id} ${student.name}`.toLocaleLowerCase('vi').includes(normalized))
       .filter((student) => status === 'Tất cả' || student.status === status)
       .sort((a, b) => (a[field] - b[field]) * (direction === 'asc' ? 1 : -1));
-  }, [query, sort, status]);
-  const pagination = usePagination(rows, [query, status, sort]);
+  }, [query, sort, status, classId]);
+  const pagination = usePagination(rows, [query, status, sort, classId]);
 
   return (
     <LecturerPageShell currentPage="lecturer_students.html" title="Sinh viên" eyebrow="D23CQCN01-B · BAS1201" description="Theo dõi dữ liệu học tập quan sát được của sinh viên trong các lớp đang phụ trách." actions={<Button variant="secondary" icon="download" disabled title="Chức năng xuất file chưa có trong phạm vi frontend demo">Xuất danh sách</Button>}>
@@ -38,7 +41,7 @@ export function LecturerStudentsPage() {
           <label className="text-body-sm font-semibold">Sắp xếp<select value={sort} onChange={(event) => setSort(event.target.value)} className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"><option value="progress-desc">Tiến độ: cao đến thấp</option><option value="progress-asc">Tiến độ: thấp đến cao</option><option value="score-desc">Điểm: cao đến thấp</option><option value="score-asc">Điểm: thấp đến cao</option></select></label>
         </div>
         <div className="mb-3 flex items-center justify-between gap-3 text-body-sm text-[#64748B]"><span>{rows.length} sinh viên</span><span>Dữ liệu cập nhật: 21/09/2026</span></div>
-        <DataTable
+        <DataTable paginate={false}
           columns={['Mã sinh viên', 'Họ và tên', 'Tiến độ', 'Điểm trung bình', 'Bài kiểm tra', 'Thí nghiệm', 'Trạng thái', 'Hành động']}
           rows={pagination.pageItems}
           renderRow={(row) => (
