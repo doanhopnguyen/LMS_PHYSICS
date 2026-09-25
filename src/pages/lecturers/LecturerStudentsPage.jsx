@@ -1,3 +1,4 @@
+import { formatPercent } from '../../lib/formatPercent.js';
 import React, { useMemo, useState } from 'react';
 import { readAcademicScope } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
@@ -48,7 +49,7 @@ export function LecturerStudentsPage() {
             <tr className="border-t border-[#E2E8F0]">
               <td className="px-3 py-4 font-semibold whitespace-nowrap">{row.id}</td>
               <td className="px-3 py-4 min-w-[150px]">{row.name}</td>
-              <td className="px-3 py-4 min-w-[150px]"><ProgressBar value={row.progress} compact /><span className="mt-1 block text-label-sm text-[#64748B]">{row.progress}%</span></td>
+              <td className="px-3 py-4 min-w-[150px]"><ProgressBar value={row.progress} compact /><span className="mt-1 block text-label-sm text-[#64748B]">{formatPercent(row.progress)}</span></td>
               <td className="px-3 py-4 font-bold">{row.score}/10</td>
               <td className="px-3 py-4 text-center">{row.exams}</td>
               <td className="px-3 py-4 text-center">{row.labs}</td>

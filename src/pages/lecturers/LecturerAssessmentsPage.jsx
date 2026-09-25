@@ -1,3 +1,4 @@
+import { formatPercent } from '../../lib/formatPercent.js';
 import { PaginatedList } from "../../components/Pagination.jsx";
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAcademicClass } from '../../lib/academicScope.js';
@@ -163,7 +164,7 @@ function CloDistribution({ questions }) {
             <Card as="div" key={clo} className="bg-[#F8FAFC] p-3">
               <div className="flex justify-between text-body-sm">
                 <strong>{clo}</strong>
-                <span>{percent}%</span>
+                <span>{formatPercent(percent)}</span>
               </div>
               <ProgressBar value={percent} compact className="mt-2" />
             </Card>

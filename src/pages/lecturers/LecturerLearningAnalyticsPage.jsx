@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { readAcademicScope, rememberAcademicClass } from '../../lib/academicScope.js';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { HorizontalBarChart } from '../../components/DataCharts.jsx';
@@ -39,10 +38,12 @@ import {
   getStudentLearningSummary,
 } from '../../lib/learningAnalytics.js';
 
+import { formatPercent } from '../../lib/formatPercent.js';
+
 const formatValue = (value, suffix = '') =>
   value === null || value === undefined
     ? 'Chưa có dữ liệu'
-    : `${Number(value).toFixed(1).replace(/\.0$/, '')}${suffix}`;
+    : suffix === '%' ? formatPercent(value) : `${Number(value).toFixed(1).replace(/\.0$/, '')}${suffix}`;
 
 function ScoreDistribution({ scores }) {
   const buckets = [
@@ -237,7 +238,6 @@ export function LecturerLearningAnalyticsPage() {
       eyebrow="LEARNING ANALYTICS"
       description="Theo dõi tiến độ, kết quả và mức độ hoàn thành học phần Vật lý đại cương 1"
     >
-      <Breadcrumbs items={['Giảng viên']} current="Phân tích kết quả học tập" />
       <Card className="mt-5 p-5 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <label className="text-body-sm font-semibold">
@@ -426,7 +426,7 @@ export function LecturerLearningAnalyticsPage() {
                             <td className="px-3 py-3 whitespace-nowrap">{student.className}</td>
                             <td className="min-w-[130px] px-3 py-3">
                               <ProgressBar value={student.progress} compact />
-                              <span className="text-label-sm text-[#64748B]">{student.progress}% tổng hợp</span>
+                              <span className="text-label-sm text-[#64748B]">{formatPercent(student.progress)} tổng hợp</span>
                             </td>
                             <td className="px-3 py-3">
                               {student.examCompleted}/{student.examAssigned}

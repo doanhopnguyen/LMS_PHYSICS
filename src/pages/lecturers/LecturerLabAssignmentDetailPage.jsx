@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
@@ -107,7 +106,6 @@ export function LecturerLabAssignmentDetailPage() {
       eyebrow="THEO DÕI THÍ NGHIỆM"
       description={`${assignment.classIds.join(', ')} · ${assignment.id}`}
     >
-      <Breadcrumbs items={['Thí nghiệm ảo 3D']} current={assignment.title} />
       <Card className="mt-5 p-5 md:p-6">
         {participantFeedback && <p className="mb-4 rounded-xl border border-[#86EFAC] bg-[#F0FDF4] p-3 text-body-sm text-[#15803D]" role="status">{participantFeedback}</p>}
         <div className="mb-4 flex justify-end"><Button icon="person_add" onClick={() => setParticipantDialog({ type: 'ADD' })}>Thêm sinh viên</Button></div>

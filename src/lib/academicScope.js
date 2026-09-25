@@ -29,14 +29,20 @@ export function readAcademicScope() {
     ? (role === 'STUDENT' || role === 'TA' ? ['D23CQCN01-B'] : ['D23CQCN01-B', 'D23CQCN02-B', 'D23CQCN03-B']) : [];
   const classId = classes.includes(params.get('class')) ? params.get('class') : 'ALL';
   const subjectId = ['BAS1201', 'BAS1202'].includes(params.get('subject')) ? params.get('subject') : 'BAS1201';
-  const page = window.location.pathname.split('/').pop();
-  return { semester, classId, subjectId, classes, available: semester === academicSemesters[0][0] && (academicPages[page] !== 'subject' || subjectId === 'BAS1201') };
+  const route = window.location.pathname.split('/').pop() || 'login';
+  const page = route.endsWith('.html') ? route : `${route}.html`;
+  // Shared subject resources are not tied to a semester. Detail pages retain
+  // their own context and must not be hidden by a parent list's filters.
+  const mode = academicPages[page];
+  const available = !mode || (mode === 'subject' ? subjectId === 'BAS1201' : semester === academicSemesters[0][0]);
+  return { semester, classId, subjectId, classes, available };
 }
 
 export function academicHref(file) {
   const url = new URL(file, window.location.origin);
   const page = url.pathname.split('/').pop();
-  if (!academicPages[page] && !page.includes('detail')) return file;
+  const scopedPage = page.endsWith('.html') ? page : `${page}.html`;
+  if (!academicPages[scopedPage] && !page.includes('detail') && !page.includes('results') && !page.includes('grading')) return file;
   const current = new URLSearchParams(window.location.search);
   for (const key of ['semester', 'class', 'subject']) {
     if (!url.searchParams.has(key) && current.has(key)) url.searchParams.set(key, current.get(key));

@@ -1,5 +1,5 @@
+import { formatPercent } from '../../lib/formatPercent.js';
 import React, { useMemo, useState } from 'react';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
@@ -91,8 +91,8 @@ function SummaryPanel({ assessment, rows, submittedAttempts, counts }) {
             ['Điểm trung bình', scores.length ? average.toFixed(1) : '—'],
             ['Điểm cao nhất', scores.length ? Math.max(...scores).toFixed(1) : '—'],
             ['Điểm thấp nhất', scores.length ? Math.min(...scores).toFixed(1) : '—'],
-            ['Tỷ lệ hoàn thành', `${completion.toFixed(1)}%`],
-            ['Tỷ lệ đạt ≥ 5', scores.length ? `${((passed / scores.length) * 100).toFixed(1)}%` : '—'],
+            ['Tỷ lệ hoàn thành', formatPercent(completion)],
+            ['Tỷ lệ đạt ≥ 5', scores.length ? formatPercent((passed / scores.length) * 100) : '—'],
           ].map(([label, value]) => (
             <Card as="div" key={label} className="bg-[#F8FAFC] p-4">
               <span className="text-body-sm text-[#64748B]">{label}</span>
@@ -208,7 +208,6 @@ export function LecturerAssessmentResultsPage() {
       eyebrow="THEO DÕI BÀI KIỂM TRA"
       description={`${assessment.classIds.join(', ')} · ${assessment.questionIds.length} câu · ${assessment.duration} phút · ${assessment.totalScore} điểm`}
     >
-      <Breadcrumbs items={['Bài tập & kiểm tra']} current={assessment.title} />
       <Card className="mt-5 p-5 md:p-6">
         {participantFeedback && <p className="mb-4 rounded-xl border border-[#86EFAC] bg-[#F0FDF4] p-3 text-body-sm text-[#15803D]" role="status">{participantFeedback}</p>}
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -384,7 +383,7 @@ export function LecturerAssessmentResultsPage() {
                         </td>
                         <td className="px-3 py-3">{row.correct}</td>
                         <td className="px-3 py-3">{row.incorrect}</td>
-                        <td className="px-3 py-3 font-semibold">{row.rate.toFixed(1)}%</td>
+                        <td className="px-3 py-3 font-semibold">{formatPercent(row.rate)}</td>
                       </tr>
                     )}
                   />
@@ -403,7 +402,7 @@ export function LecturerAssessmentResultsPage() {
                               <strong className="font-mono">{question.id}</strong>
                               <p className="mt-1 text-body-sm text-[#64748B]">{question.topic}</p>
                             </div>
-                            <StatusBadge tone="warning">{(100 - question.rate).toFixed(1)}% trả lời sai</StatusBadge>
+                            <StatusBadge tone="warning">{formatPercent(100 - question.rate)} trả lời sai</StatusBadge>
                           </Card>
                         ))}
                     </div>

@@ -1,0 +1,37 @@
+.row-action-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  background: #fff;
+  color: #64748b;
+}
+.row-action-trigger:hover, .row-action-trigger[aria-expanded='true'] { color: #c41e1a; border-color: #e52220; background: #fff1f2; }
+.row-action-menu {
+  position: fixed;
+  z-index: 1250;
+  width: 208px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 32px #0f172a24;
+  color: #334155;
+}
+.row-action-menu > button { display: block; width: 100%; padding: 10px 12px; border-radius: 8px; text-align: left; font: inherit; font-size: 13px; line-height: 20px; }
+.row-action-menu > button:hover, .row-action-menu > button:focus-visible { background: #f1f5f9; }
+.row-action-menu > button.is-danger { color: #c41e1a; }
+.row-action-menu > button.is-danger:hover { background: #fff1f2; }
+.row-action-trigger:focus-visible, .row-action-menu > button:focus-visible { outline: 2px solid #e52220; outline-offset: 1px; }
+.academic-filter-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+@media (max-width: 480px) {
+  .academic-filter-actions { width: 100%; justify-content: flex-end; }
+}

@@ -1,0 +1,110 @@
+/* Header dimensions and typography stay constant as page titles change. */
+.app-shell .app-header,
+.app-shell .app-header:has(.page-heading) {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px !important;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  flex-wrap: nowrap;
+}
+.app-shell > .app-header {
+  position: sticky;
+  left: auto;
+  transform: none;
+  margin: 0 auto;
+}
+.app-shell > .app-header + .app-shell-content,
+.app-shell:has(> .app-header) > .app-shell-content { padding-top: 0; }
+.app-header .page-heading .page-title__surface { flex-direction: row; align-items: center; min-width: 0; }
+.app-header .page-heading h1 { font-size: 18px; line-height: 24px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+.app-header .page-heading .page-title__eyebrow { font-size: 10px; line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.app-header .page-title__copy { min-width: 0; flex: 1; }
+.app-header .header-leading { gap: 8px; }
+.app-header .floating-actions { gap: 6px; }
+.app-header .floating-profile { max-width: 260px; min-width: 36px; }
+.app-header .floating-profile > .text-left { min-width: 0; }
+.app-header .floating-profile .text-left > div { gap: 6px; }
+.app-header .floating-profile-name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 18px; font-weight: 600; }
+.app-header .floating-profile-role { flex-shrink: 0; white-space: nowrap; font-size: 10px; line-height: 16px; font-weight: 400; }
+.app-header .floating-profile-id { display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; line-height: 16px; letter-spacing: normal; font-weight: 400; }
+.app-header .header-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: #fff;
+  border-radius: 50%;
+}
+.header-icon-button:hover { background: #ffffff29; }
+.header-back-button {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #ffffff55;
+  border-radius: 12px;
+  color: #fff;
+  background: #ffffff14;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.header-back-button:hover { background: #ffffff29; }
+.page-content-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.notification-bell { position: relative; }
+.notification-count { position: absolute; top: -1px; right: -2px; min-width: 17px; padding: 0 3px; height: 17px; border-radius: 10px; background: #fff; color: #c41e1a; font-size: 10px; line-height: 17px; font-weight: 600; text-align: center; }
+.notification-panel {
+  position: fixed;
+  z-index: 1200;
+  top: 76px;
+  right: max(16px, calc((100vw - 1400px) / 2));
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100dvh - 96px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 40px #0f172a26;
+  color: #334155;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.notification-panel-heading, .notification-panel-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; }
+.notification-panel-heading { border-bottom: 1px solid #e2e8f0; }
+.notification-panel-heading h2 { font-size: 16px; font-weight: 600; }
+.notification-panel-heading button, .notification-panel-tools button { color: #c41e1a; font-size: 12px; }
+.notification-panel-tools { padding-block: 10px; background: #f8fafc; color: #64748b; }
+.notification-panel button:disabled { opacity: .45; cursor: default; }
+.notification-panel button:focus-visible, .header-back-button:focus-visible, .header-icon-button:focus-visible { outline: 2px solid #fca5a5; outline-offset: 2px; }
+.notification-list { list-style: none; margin: 0; padding: 0; }
+.notification-list li + li { border-top: 1px solid #f1f5f9; }
+.notification-list li > button { display: flex; gap: 12px; width: 100%; padding: 16px; text-align: left; align-items: flex-start; }
+.notification-list li > button:hover { background: #f8fafc; }
+.notification-list .is-unread { background: #fff7f7; }
+.notification-list .material-symbols-outlined { flex-shrink: 0; font-size: 20px; color: #15803d; }
+.notification-title { display: block; font-weight: 400; overflow-wrap: anywhere; }
+.notification-list time { display: block; margin-top: 5px; color: #94a3b8; font-size: 11px; }
+.notification-dot { flex-shrink: 0; height: 7px; width: 7px; margin-top: 6px; margin-left: auto; border-radius: 50%; background: #e52220; }
+.notification-empty { padding: 32px 16px; text-align: center; color: #64748b; }
+.notification-empty > span { font-size: 32px; margin-bottom: 8px; color: #94a3b8; }
+@media (max-width: 1199px) {
+  .app-header .floating-profile > .text-left { display: none; }
+  .app-header:has(.page-heading) .floating-brand { display: none; }
+}
+@media (max-width: 640px) {
+  .app-shell .app-header, .app-shell .app-header:has(.page-heading) { gap: 6px; padding-inline: 10px !important; width: calc(100% - 16px); }
+  .app-header .header-leading { gap: 4px; }
+  .app-header .floating-actions { gap: 2px; }
+  .app-header .header-menu-button { width: 32px; height: 34px; }
+  .app-header .header-back-button { padding: 0 6px; font-size: 11px; }
+  .app-header .page-heading h1 { font-size: 16px; line-height: 22px; }
+  .app-header .page-heading .page-title__eyebrow { display: none; }
+  .page-content-actions > button { max-width: 100%; }
+}

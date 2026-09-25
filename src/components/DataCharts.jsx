@@ -1,3 +1,4 @@
+import { formatPercent } from '../lib/formatPercent.js';
 import React, { useId } from 'react';
 
 const chartColors = {
@@ -65,7 +66,7 @@ export function HorizontalBarChart({ items, label = 'Tiến độ theo chương'
           <div key={item.label}>
             <div className="mb-1.5 flex items-center justify-between gap-3 text-body-sm">
               <span className="text-[#475569]">{item.label}</span>
-              <strong style={{ color }}>{value}%</strong>
+              <strong style={{ color }}>{formatPercent(value)}</strong>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-[#E2E8F0]">
               <div
@@ -94,12 +95,12 @@ export function ColumnChart({ values, labels, label = 'Điểm theo tuần', col
         const height = Math.max(5, (value / max) * 100);
         return (
           <div key={`${labels[index]}-${index}`} className="flex h-full flex-1 flex-col items-center gap-2">
-            <span className="text-label-sm text-[#64748B]">{value}%</span>
+            <span className="text-label-sm text-[#64748B]">{formatPercent(value)}</span>
             <div className="flex w-full flex-1 items-end">
               <div
                 className="w-full rounded-t-lg transition-all duration-500 hover:opacity-80"
                 style={{ height: `${height}%`, backgroundColor: color }}
-                title={`${labels[index]}: ${value}%`}
+                title={`${labels[index]}: ${formatPercent(value)}`}
               />
             </div>
             <span className="text-label-sm text-[#94A3B8]">{labels[index]}</span>
@@ -128,7 +129,7 @@ export function ProgressFillList({ items, label = 'Tiến độ theo chương' }
             <div className="chapter-progress-fill" style={{ '--chapter-progress': `${value}%` }} aria-hidden="true" />
             <div className="relative z-10 flex items-center justify-between gap-4 p-3.5 text-body-sm">
               <span className="font-medium text-[#1F2937]">{item.label}</span>
-              <strong className="text-[#15803D]">{value}%</strong>
+              <strong className="text-[#15803D]">{formatPercent(value)}</strong>
             </div>
           </div>
         );
@@ -227,7 +228,7 @@ export function MiniColumnChart({
 }
 
 export function DonutChart({ value, label = 'Tỷ lệ hoàn thành', color = '#16a34a', size = 68, compact = false }) {
-  const progress = Math.round(Math.min(100, Math.max(0, Number(value) || 0)) * 10) / 10;
+  const progress = Math.min(100, Math.max(0, Number(value) || 0));
   const radius = 17;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (progress / 100) * circumference;
@@ -254,22 +255,22 @@ export function DonutChart({ value, label = 'Tỷ lệ hoàn thành', color = '#
         textAnchor="middle"
         transform="rotate(90 22 22)"
       >
-        {progress}%
+        {formatPercent(progress)}
       </text>
     </svg>
   );
 
   if (compact)
     return (
-      <span className="flex shrink-0" role="img" aria-label={`${label}: ${progress}%`}>
+      <span className="flex shrink-0" role="img" aria-label={`${label}: ${formatPercent(progress)}`}>
         {chart}
       </span>
     );
 
   return (
-    <div className="mt-2 flex items-center gap-3" role="img" aria-label={`${label}: ${progress}%`}>
+    <div className="mt-2 flex items-center gap-3" role="img" aria-label={`${label}: ${formatPercent(progress)}`}>
       {chart}
-      <span className="text-label-sm text-[#64748B]">{progress}% hoàn thành</span>
+      <span className="text-label-sm text-[#64748B]">{formatPercent(progress)} hoàn thành</span>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 export const routeFiles = [
   'login.html',
+  'account.html',
   'dashboard.html',
   'course_detail.html',
   'learning_module.html',
@@ -46,6 +47,8 @@ export const routeFiles = [
   'student_evidence.html',
   'lecturer_class_operations.html',
   'auth_access.html',
+  'register.html',
+  'reset_password.html',
   'ta_class_support.html',
 ];
 

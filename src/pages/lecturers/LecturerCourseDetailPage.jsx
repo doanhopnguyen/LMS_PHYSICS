@@ -1,5 +1,4 @@
 import React from 'react';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { CountDotsChart, DonutChart } from '../../components/DataCharts.jsx';
@@ -103,7 +102,6 @@ export function LecturerCourseDetailPage() {
 
   return (
     <LecturerPageShell currentPage="lecturer_courses.html" title={course.name} eyebrow={`${course.code} · ${course.className}`} description={`${course.students} sinh viên · Học kỳ 1 · 2026–2027`} actions={<><StatusBadge tone="success">Đang giảng dạy</StatusBadge><Button variant="secondary" icon="settings" disabled title="Chức năng cài đặt lớp chưa có trong phạm vi frontend demo">Cài đặt lớp</Button></>}>
-      <Breadcrumbs items={['Học phần & lớp học', course.name]} current={course.className} />
       <Card className="p-4 md:p-6">
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div><p className="text-label-md font-bold text-primary">{course.code}</p><h2 className="text-headline-md font-bold">{course.className}</h2><p className="mt-1 text-body-sm text-[#64748B]">{course.students} sinh viên</p></div>

@@ -1,14 +1,15 @@
 import { PaginatedList } from "../../components/Pagination.jsx";
-import React, { useState } from 'react';
+import React from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Card } from '../../components/Card.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
-import { notifications } from '../../data/lmsData.js';
+import { useNotifications } from '../../hooks/useNotifications.js';
+import { markNotificationsRead } from '../../lib/notifications.js';
 
 export function NotificationsPage() {
-  const [items, setItems] = useState(notifications);
+  const items = useNotifications();
   return (
     <AppShell
       currentPage="notifications_help.html"
@@ -23,7 +24,8 @@ export function NotificationsPage() {
           description="Cập nhật học tập, hướng dẫn sử dụng và các kênh liên hệ với đội ngũ PTIT Physics."
           actions={
             <button
-              onClick={() => setItems(items.map((item) => ({ ...item, unread: false })))}
+              onClick={() => markNotificationsRead()}
+              disabled={!items.some((item) => item.unread)}
               className="text-body-sm text-primary font-semibold hover:underline"
             >
               Đánh dấu đã đọc
@@ -36,26 +38,23 @@ export function NotificationsPage() {
               <h2 className="text-headline-md font-bold">Thông báo mới</h2>
               <StatusBadge tone="primary">{items.filter((item) => item.unread).length} chưa đọc</StatusBadge>
             </div>
+            {!items.length && <p className="py-8 text-center text-body-sm text-[#64748B]">Chưa có thông báo mới.</p>}
             <PaginatedList className="divide-y divide-[#E2E8F0]">
               {items.map((item) => (
                 <button
-                  key={item.title}
-                  onClick={() =>
-                    setItems(
-                      items.map((current) => (current.title === item.title ? { ...current, unread: false } : current))
-                    )
-                  }
+                  key={item.id}
+                  onClick={() => markNotificationsRead(item.id)}
                   className={`w-full text-left flex gap-4 py-5 ${item.unread ? 'bg-[#FFFBFB]' : ''}`}
                 >
                   <span
                     className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${item.tone === 'success' ? 'bg-[#DCFCE7] text-[#15803D]' : item.tone === 'primary' ? 'bg-[#FEE2E2] text-primary' : 'bg-[#F1F5F9] text-[#475569]'}`}
                   >
-                    <span className="material-symbols-outlined">{item.icon}</span>
+                    <span className="material-symbols-outlined">task_alt</span>
                   </span>
                   <span className="flex-1">
                     <strong className="text-body-md text-on-surface">{item.title}</strong>
                     <span className="block text-body-sm text-[#64748B] mt-1">{item.description}</span>
-                    <span className="block text-label-sm text-[#94A3B8] mt-2">{item.time}</span>
+                    <span className="block text-label-sm text-[#94A3B8] mt-2">{new Date(item.createdAt).toLocaleString('vi-VN')}</span>
                   </span>
                   {item.unread && <span className="w-2.5 h-2.5 rounded-full bg-primary-container mt-2" />}
                 </button>

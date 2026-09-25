@@ -24,7 +24,7 @@ export function setDemoSession(role) {
 }
 
 export function setAuthenticatedSession(user, profile = {}) {
-  const role = user?.role;
+  const role = user?.role === 'LECTURER' ? 'INSTRUCTOR' : user?.role;
   if (!demoRoles[role]) throw new Error('Vai trò tài khoản không được hỗ trợ.');
   const name = profile.fullName || user.username || demoRoles[role].name;
   const session = {
@@ -37,15 +37,18 @@ export function setAuthenticatedSession(user, profile = {}) {
     initials: name.split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase() || demoRoles[role].initials,
   };
   window.localStorage.setItem(key, JSON.stringify(session));
+  window.dispatchEvent(new Event('ptit-session-changed'));
   return { ...demoRoles[role], ...session };
 }
 
 export function clearDemoSession() {
   window.localStorage.removeItem(key);
+  window.dispatchEvent(new Event('ptit-session-changed'));
 }
 
 export function canAccess(role, file) {
-  if (['login.html', 'auth_access.html'].includes(file)) return true;
+  if (file === 'account.html') return Boolean(demoRoles[role]);
+  if (['login.html', 'auth_access.html', 'register.html', 'reset_password.html'].includes(file)) return true;
   if (role === 'STUDENT') return !file.startsWith('lecturer_') && !file.startsWith('admin_') && !file.startsWith('ta_');
   if (role === 'INSTRUCTOR') return file.startsWith('lecturer_');
   if (role === 'TA') return ['ta_dashboard.html', 'ta_work_queue.html', 'ta_class_support.html'].includes(file);

@@ -80,6 +80,7 @@ export async function apiRequest(path, options = {}) {
   if (response.status === 401 && auth && retry && await refreshAccessToken()) {
     return apiRequest(path, { ...options, retry: false });
   }
+  if (response.ok && options.responseType === 'blob') return response.blob();
   const payload = response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok) throw new ApiError(payload?.message || `Yêu cầu thất bại (${response.status}).`, { status: response.status, data: payload });
   return payload?.data ?? payload;

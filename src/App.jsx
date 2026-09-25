@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getCleanRoute, getPageFile } from './lib/routes.js';
 import { LoginPage } from './pages/LoginPage.jsx';
+import { AccountPage } from './pages/AccountPage.jsx';
+import { OperationsPage } from './pages/admin/OperationsPage.jsx';
+import { UsersPage } from './pages/admin/UsersPage.jsx';
 import { DashboardPage } from './pages/students/DashboardPage.jsx';
 import { CourseDetailPage } from './pages/students/CourseDetailPage.jsx';
 import { LearningModulePage } from './pages/students/LearningModulePage.jsx';
@@ -12,7 +15,6 @@ import { LearningResultsPage } from './pages/students/LearningResultsPage.jsx';
 import { LibraryPage } from './pages/students/LibraryPage.jsx';
 import { MyCoursesPage } from './pages/students/MyCoursesPage.jsx';
 import { NotificationsPage } from './pages/students/NotificationsPage.jsx';
-import { ProfileSettingsPage } from './pages/students/ProfileSettingsPage.jsx';
 import { VirtualLabPage } from './pages/students/VirtualLabPage.jsx';
 import { VoiceCitationsPage } from './pages/students/VoiceCitationsPage.jsx';
 import { WorkspacePage } from './pages/students/WorkspacePage.jsx';
@@ -38,10 +40,11 @@ import { LecturerLabSubmissionDetailPage } from './pages/lecturers/LecturerLabSu
 import { LecturerLabGradingPage } from './pages/lecturers/LecturerLabGradingPage.jsx';
 import { LecturerAiInsightsPage } from './pages/lecturers/LecturerAiInsightsPage.jsx';
 import { LecturerLearningAnalyticsPage } from './pages/lecturers/LecturerLearningAnalyticsPage.jsx';
-import { AdminAcademicsPage, AdminContentPage, AdminDashboardPage, AdminOperationsPage, AdminUsersPage } from './pages/admin/AdminPages.jsx';
+import { AdminAcademicsPage, AdminContentPage, AdminDashboardPage } from './pages/admin/AdminPages.jsx';
 import { StudentEvidencePage } from './pages/students/StudentEvidencePage.jsx';
 import { LecturerClassOperationsPage } from './pages/lecturers/LecturerClassOperationsPage.jsx';
-import { AuthAccessPage } from './pages/AuthAccessPage.jsx';
+import { RegisterPage } from './pages/RegisterPage.jsx';
+import { ResetPasswordPage } from './pages/ResetPasswordPage.jsx';
 import { TAClassSupportPage, TADashboardPage, TAWorkQueuePage } from './pages/ta/TAPages.jsx';
 import { RoleAccessPage } from './pages/RoleAccessPage.jsx';
 import { canAccess, getDemoSession } from './lib/demoSession.js';
@@ -58,7 +61,8 @@ const pageComponents = {
   'library.html': LibraryPage,
   'my_courses.html': MyCoursesPage,
   'notifications_help.html': NotificationsPage,
-  'profile_settings.html': ProfileSettingsPage,
+  'profile_settings.html': AccountPage,
+  'account.html': AccountPage,
   'virtual_lab.html': VirtualLabPage,
   'voice_citations.html': VoiceCitationsPage,
   '3d_workspace.html': WorkspacePage,
@@ -85,15 +89,17 @@ const pageComponents = {
   'lecturer_ai_insights.html': LecturerAiInsightsPage,
   'lecturer_analytics.html': LecturerLearningAnalyticsPage,
   'admin_dashboard.html': AdminDashboardPage,
-  'admin_users.html': AdminUsersPage,
+  'admin_users.html': UsersPage,
   'admin_academics.html': AdminAcademicsPage,
-  'admin_operations.html': AdminOperationsPage,
+  'admin_operations.html': OperationsPage,
   'ta_dashboard.html': TADashboardPage,
   'ta_work_queue.html': TAWorkQueuePage,
   'admin_content.html': AdminContentPage,
   'student_evidence.html': StudentEvidencePage,
   'lecturer_class_operations.html': LecturerClassOperationsPage,
-  'auth_access.html': AuthAccessPage,
+  'auth_access.html': ResetPasswordPage,
+  'register.html': RegisterPage,
+  'reset_password.html': ResetPasswordPage,
   'ta_class_support.html': TAClassSupportPage,
 };
 
@@ -105,7 +111,7 @@ function App() {
   useEffect(() => {
     const cleanPath = getCleanRoute();
     if (cleanPath !== window.location.pathname) {
-      window.history.replaceState({}, '', `${cleanPath}${window.location.search}${window.location.hash}`);
+      window.history.replaceState(window.history.state, '', `${cleanPath}${window.location.search}${window.location.hash}`);
     }
 
     const onPopState = () => {
@@ -118,7 +124,7 @@ function App() {
 
   const session = getDemoSession();
   const Page = pageComponents[file] ?? pageComponents['login.html'];
-  if (!['login.html', 'auth_access.html'].includes(file) && (!session || !canAccess(session.role, file))) {
+  if (!['login.html', 'auth_access.html', 'register.html', 'reset_password.html'].includes(file) && (!session || !canAccess(session.role, file))) {
     return <RoleAccessPage session={session} requestedPage={file} />;
   }
   return <Page key={locationKey} />;

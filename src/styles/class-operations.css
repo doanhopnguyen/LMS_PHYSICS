@@ -1,0 +1,60 @@
+.class-operations { display: grid; gap: 20px; min-width: 0; }
+.class-operations .class-operations__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 172px 164px;
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+}
+.class-operations__class, .class-operations__status { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.class-operations__status-button { width: 164px; white-space: nowrap; }
+.class-operations .class-operations__workspace { min-width: 0; padding: 0 20px; overflow: hidden; }
+.class-operations [role="tablist"] { min-height: 49px; }
+.class-operations [role="tab"] { flex-shrink: 0; }
+.class-operations .class-operations__toolbar { min-height: 88px; gap: 16px; padding: 16px 0; }
+.class-operations__toolbar > div:first-child { min-width: 0; }
+.class-operations__toolbar h2 { font-size: 16px; line-height: 24px; }
+.class-operations__toolbar > div:first-child > span { flex-shrink: 0; }
+.class-operations__actions { display: flex; justify-content: flex-end; align-items: center; flex: 0 0 290px; gap: 8px; min-height: 36px; }
+.class-operations__actions button { flex-shrink: 0; white-space: nowrap; }
+.class-operations__table {
+  height: 360px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  margin-top: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+.class-operations__table:focus-visible { outline: 2px solid #e52220; outline-offset: 2px; }
+.class-operations__table > div { overflow: visible; border: 0; border-radius: 0; }
+.class-operations__table table { table-layout: fixed; min-width: 760px; }
+.class-operations__table thead { position: sticky; top: 0; z-index: 1; background: #f8fafc; }
+.class-operations__table th, .class-operations__table td { padding: 12px 16px; vertical-align: middle; }
+.class-operations__table td { height: 72px; border-top: 1px solid #e2e8f0; overflow-wrap: anywhere; font-size: 13px; line-height: 20px; }
+.class-operations__table tbody tr:hover { background: #f8fafc; }
+.class-operations__table th:last-child, .class-operations__table td:last-child { width: 164px; }
+.class-operations__table--staff th:first-child { width: 52%; }
+.class-operations__table--students th:first-child { width: 26%; }
+.class-operations__table--students th:nth-child(3) { width: 140px; }
+.class-operations__table--staff th:last-child, .class-operations__table--staff td:last-child,
+.class-operations__table--students th:last-child, .class-operations__table--students td:last-child { text-align: right; }
+.class-operations__table td button { width: 132px; white-space: nowrap; font-size: 13px; }
+.class-operations__name { display: block; font-weight: 600; }
+.class-operations__identifier { display: block; margin-top: 3px; font-size: 12px; color: #64748b; }
+.class-operations__empty { padding: 48px 16px; text-align: center; font-size: 13px; color: #64748b; }
+.class-operations__footer { display: flex; justify-content: space-between; gap: 12px; min-height: 52px; align-items: center; color: #64748b; font-size: 12px; }
+@media (max-width: 767px) {
+  .class-operations .class-operations__summary { grid-template-columns: minmax(0, 1fr) 164px; gap: 16px; padding: 16px; }
+  .class-operations__class { grid-column: 1 / -1; }
+  .class-operations .class-operations__workspace { padding: 0 12px; }
+  .class-operations .class-operations__toolbar { flex-direction: column; align-items: stretch; justify-content: center; gap: 12px; min-height: 112px; }
+  .class-operations__actions { flex: none; min-height: 36px; }
+  .class-operations__table { height: 360px; }
+}
+@media (max-width: 359px) {
+  .class-operations .class-operations__summary { grid-template-columns: minmax(0, 1fr); }
+  .class-operations__status-button { justify-self: end; }
+  .class-operations__actions { gap: 6px; }
+  .class-operations__actions button { padding-inline: 10px; font-size: 12px; }
+}

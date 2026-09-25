@@ -22,7 +22,7 @@ export const lecturerNavigation = [
 ];
 
 // Chưa có trang Lecturer riêng cho thông báo/cài đặt; không hiển thị liên kết giả.
-export const lecturerUtilityNavigation = [];
+export const lecturerUtilityNavigation = [['account.html', 'manage_accounts', 'Tài khoản & bảo mật']];
 
 export const lecturerCourses = [
   {

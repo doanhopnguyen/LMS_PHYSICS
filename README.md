@@ -21,6 +21,8 @@ npm run build
 
 ## Kết nối backend API
 
+Các trang mới: `/lecturer_question_import` (Excel), `/lecturer_material_create` (Markdown/tệp), `/account` (hồ sơ và mật khẩu). Quản trị người dùng và cấu hình/nhật ký đã gọi API thật. Chi tiết phạm vi và các màn còn dùng dữ liệu mẫu: [docs/FEATURE_ALIGNMENT.md](docs/FEATURE_ALIGNMENT.md).
+
 Frontend gọi API theo đặc tả tại tiền tố `/api/v1`. Khi chạy phát triển, Vite proxy `/api` tới `http://localhost:8080`; có thể đổi bằng `VITE_API_PROXY_TARGET` trong `.env.local`. Với frontend triển khai riêng miền, đặt `VITE_API_BASE_URL` thành origin backend (không kèm dấu `/` cuối). Xem các biến mẫu trong `.env.example`.
 
 Lớp gọi API nằm ở `src/lib/apiClient.js`: tự gắn JWT Bearer, tự làm mới access token một lần khi nhận 401, và chuẩn hóa lỗi trả về từ API. Luồng đăng nhập, đăng ký, quên/đặt lại mật khẩu và đăng xuất đã sử dụng lớp này.

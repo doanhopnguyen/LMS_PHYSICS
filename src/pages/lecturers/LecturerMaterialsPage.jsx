@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
+import { MaterialCreateForm } from '../../components/MaterialCreateForm.jsx';
 import { LecturerPageShell } from '../../components/LecturerPageShell.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
@@ -43,6 +44,15 @@ function formatDate(value) {
   return new Intl.DateTimeFormat('vi-VN').format(new Date(`${value}T00:00:00`));
 }
 
+function MaterialCreateModal({ onClose }) {
+  return <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-3 md:p-6" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <section className="max-h-[calc(100dvh-24px)] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] shadow-xl" role="dialog" aria-modal="true" aria-labelledby="material-create-title">
+      <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white p-5 md:px-6"><h2 id="material-create-title" className="text-headline-md font-bold">Thêm học liệu</h2><button type="button" autoFocus onClick={onClose} aria-label="Đóng biểu mẫu" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"><span className="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <div className="px-4 pb-6 md:px-6"><MaterialCreateForm /></div>
+    </section>
+  </div>;
+}
+
 function MaterialFormModal({ material, onClose, onSave }) {
   const [form, setForm] = useState(() => material ? {
     ...material,
@@ -74,7 +84,7 @@ function MaterialFormModal({ material, onClose, onSave }) {
     <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-3 md:p-6" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="max-h-[calc(100dvh-24px)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-xl" role="dialog" aria-modal="true" aria-labelledby="material-form-title">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white p-5">
-          <div><p className="text-label-md font-bold text-primary">KHO HỌC LIỆU</p><h2 id="material-form-title" className="text-headline-md font-bold">{material ? 'Chỉnh sửa học liệu' : 'Thêm học liệu'}</h2></div>
+          <h2 id="material-form-title" className="text-headline-md font-bold">{material ? 'Chỉnh sửa học liệu' : 'Thêm học liệu'}</h2>
           <button type="button" onClick={onClose} aria-label="Đóng biểu mẫu" className="flex h-9 w-9 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"><span className="material-symbols-outlined">close</span></button>
         </div>
         <form onSubmit={submit} className="space-y-5 p-5 md:p-6">
@@ -231,7 +241,7 @@ export function LecturerMaterialsPage() {
           );
         }}
       </Tabs>
-      {formOpen && <MaterialFormModal material={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSave={saveMaterial} />}
+      {formOpen && (editing ? <MaterialFormModal material={editing} onClose={() => { setFormOpen(false); setEditing(null); }} onSave={saveMaterial} /> : <MaterialCreateModal onClose={() => setFormOpen(false)} />)}
       {viewing && <MaterialDetailModal material={viewing} onClose={() => setViewing(null)} />}
     </LecturerPageShell>
   );

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
 import { HorizontalBarChart, ProgressFillList } from '../../components/DataCharts.jsx';
@@ -49,7 +48,6 @@ export function LecturerStudentDetailPage() {
       description="Dữ liệu học tập quan sát được trong học phần Vật lý đại cương 1."
       actions={<StatusBadge tone={statusTone}>{student.status}</StatusBadge>}
     >
-      <Breadcrumbs items={['Sinh viên', student.className]} current={student.name} />
       <MetricGrid items={[
         { label: 'Tiến độ', value: `${student.progress}%`, detail: 'học phần', icon: 'trending_up', progress: student.progress },
         { label: 'Điểm trung bình', value: String(student.score), detail: '/10', icon: 'leaderboard' },

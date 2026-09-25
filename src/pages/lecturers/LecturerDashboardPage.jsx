@@ -1,3 +1,4 @@
+import { formatPercent } from '../../lib/formatPercent.js';
 import { DashboardOverview } from '../../components/DashboardOverview.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
@@ -127,7 +128,7 @@ export function LecturerDashboardPage() {
                 <ProgressBar value={course.progress} label="Tiến độ" className="mt-5 text-[#64748B]" />
                 <div className="mt-4 grid grid-cols-2 gap-3 text-body-sm">
                   <Card as="div" className="bg-[#F8FAFC] p-3"><span className="text-[#64748B]">Điểm trung bình</span><strong className="mt-1 block">{course.averageScore}/10</strong></Card>
-                  <Card as="div" className="bg-[#F8FAFC] p-3"><span className="text-[#64748B]">Hoàn thành Lab</span><strong className="mt-1 block">{course.labCompletion}%</strong></Card>
+                  <Card as="div" className="bg-[#F8FAFC] p-3"><span className="text-[#64748B]">Hoàn thành Lab</span><strong className="mt-1 block">{formatPercent(course.labCompletion)}</strong></Card>
                 </div>
                 <a href={`lecturer_course_detail.html?class=${course.className}`} className="mt-5 block"><Button variant="secondary" className="w-full">Xem lớp</Button></a>
               </Card>

@@ -11,10 +11,7 @@ export function DetailToolbar({
 }) {
   const backContent = (
     <>
-      <span className="material-symbols-outlined text-base" aria-hidden="true">
-        arrow_back
-      </span>
-      <span className="hidden sm:inline">{backLabel}</span>
+      <span>{backLabel}</span>
     </>
   );
   return (

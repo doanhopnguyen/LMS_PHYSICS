@@ -1,5 +1,4 @@
 import React from 'react';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { ColumnChart } from '../../components/DataCharts.jsx';
@@ -65,7 +64,6 @@ export function LecturerLabSubmissionDetailPage() {
         </a>
       }
     >
-      <Breadcrumbs items={['Thí nghiệm ảo 3D', assignment.title]} current={student.name} />
       {grading && (
         <Card className="mt-5 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">

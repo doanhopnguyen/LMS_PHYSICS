@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatPercentText } from '../lib/formatPercent.js';
 import { ProgressBar } from './ProgressBar.jsx';
 import { SparklineChart } from './DataCharts.jsx';
 
@@ -42,8 +43,8 @@ export function StatCard({
           </div>
           <div className="stat-card__metrics">
             <div className="stat-card__value">
-              <span className="text-display-lg-mobile text-on-surface font-bold tracking-tight">{value}</span>
-              {detail && <span className="text-body-md text-[#64748B]">{detail}</span>}
+              <span className="text-display-lg-mobile text-on-surface font-bold tracking-tight">{formatPercentText(value)}</span>
+              {detail && <span className="text-body-md text-[#64748B]">{formatPercentText(detail)}</span>}
             </div>
             {sideChart && <div className="stat-card__side-chart">{sideChart}</div>}
           </div>

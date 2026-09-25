@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { LecturerPageShell } from '../../components/LecturerPageShell.jsx';
@@ -108,7 +107,6 @@ export function LecturerAttemptDetailPage() {
       eyebrow="CHI TIẾT BÀI LÀM"
       description={`${student.id} · ${student.className} · ${assessment.title}`}
     >
-      <Breadcrumbs items={['Bài tập & kiểm tra', assessment.title]} current={student.name} />
       {feedback && (
         <div
           className="mt-5 rounded-xl border border-[#86EFAC] bg-[#DCFCE7] px-4 py-3 text-body-sm font-semibold text-[#15803D]"

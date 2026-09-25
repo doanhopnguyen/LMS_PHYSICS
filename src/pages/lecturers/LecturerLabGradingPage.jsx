@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
@@ -524,15 +523,7 @@ export function LecturerLabGradingPage() {
       title={lab.title}
       eyebrow="CHẤM BÁO CÁO THÍ NGHIỆM"
       description={`${student.name} · ${student.id} · ${student.className}`}
-      actions={
-        <a href="lecturer_labs.html">
-          <Button variant="secondary" icon="arrow_back">
-            Quay lại danh sách
-          </Button>
-        </a>
-      }
     >
-      <Breadcrumbs items={['Thí nghiệm 3D', 'Báo cáo sinh viên']} current="Chấm báo cáo" />
       {feedback && (
         <div
           className="mt-5 rounded-xl border border-[#86EFAC] bg-[#DCFCE7] px-4 py-3 text-body-sm font-semibold text-[#15803D]"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatPercent } from '../lib/formatPercent.js';
 
 export function Card({ children, className = '', as: Component = 'section', progress, status, contentClassName = '', variant = 'default', accentColor = '#e52220', style, ...props }) {
   if (progress !== undefined) {
@@ -14,7 +15,7 @@ export function Card({ children, className = '', as: Component = 'section', prog
             {state === 'complete' ? 'check_circle' : state === 'active' ? 'pending' : 'schedule'}
           </span>
           <span>{statusText}</span>
-          <strong>{percentage}%</strong>
+          <strong>{formatPercent(percentage)}</strong>
         </div>
       </Component>
     );

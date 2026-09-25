@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatPercent, formatPercentText } from '../lib/formatPercent.js';
 
 export function ProgressBar({ value = 0, className = '', color = '', label, tone = 'primary', compact = false }) {
   const progress = Math.min(100, Math.max(0, Number(value) || 0));
@@ -7,8 +8,8 @@ export function ProgressBar({ value = 0, className = '', color = '', label, tone
     <div className={className}>
       {label && (
         <div className="flex items-center justify-between text-body-sm mb-1.5">
-          <span>{label}</span>
-          <strong className="text-primary">{progress}%</strong>
+          <span>{formatPercentText(label)}</span>
+          <strong className="text-primary">{formatPercent(progress)}</strong>
         </div>
       )}
       <div

@@ -1,0 +1,139 @@
+/* Shared authoring surfaces: learning materials, question import and editor. */
+.authoring-form {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 6px 24px #0f172a05;
+}
+.authoring-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 26px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #edf0f4;
+}
+.authoring-heading > .material-symbols-outlined {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  color: #c41e1a;
+  background: #fff1f0;
+}
+.authoring-heading h2 { margin: 0; font-size: 18px; font-weight: 700; color: #1e293b; }
+.authoring-heading p, .authoring-template p, .authoring-actions p {
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.65;
+  font-weight: 400;
+}
+.authoring-tag {
+  margin-left: auto;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: #f1f5f9;
+  padding: 7px 12px;
+  font-size: 10px;
+  letter-spacing: .07em;
+  font-weight: 700;
+  color: #64748b;
+}
+.authoring-form label { color: #334155; font-size: 13px; font-weight: 600; min-width: 0; }
+.authoring-form :is(input:not([type='radio']):not([type='checkbox']), select, textarea) {
+  min-width: 0;
+  min-height: 46px;
+  border: 1px solid #dce2ea;
+  border-radius: 12px;
+  background-color: #fbfcfe;
+  color: #1e293b;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  transition: border-color 150ms, box-shadow 150ms, background-color 150ms;
+}
+.authoring-form select { padding-right: 30px; text-overflow: ellipsis; }
+.authoring-form textarea { resize: vertical; min-height: 110px; line-height: 1.8; }
+.authoring-form :is(input, textarea)::placeholder { color: #94a3b8; }
+.authoring-form :is(input, select, textarea):focus-visible {
+  outline: none;
+  border-color: #e52220;
+  box-shadow: 0 0 0 3px #fee2e2;
+  background-color: white;
+}
+.authoring-form :is(input, select, textarea):disabled,
+.authoring-form input[readonly] { background-color: #f1f5f9; color: #64748b; }
+.authoring-form [aria-invalid='true'] { border-color: #e52220; background-color: #fff7f7; }
+.authoring-form input[type='file'] {
+  padding: 25px 20px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+}
+.authoring-form input[type='file']::file-selector-button {
+  margin-right: 16px;
+  border: 1px solid #f3c5c3;
+  border-radius: 10px;
+  padding: 9px 15px;
+  background: #fff;
+  color: #c41e1a;
+  font: inherit;
+  cursor: pointer;
+}
+.authoring-form input[type='file']:hover { border-color: #e52220; }
+.authoring-template {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+.authoring-template strong { font-size: 14px; color: #334155; }
+.authoring-template button, .authoring-actions button { flex-shrink: 0; min-height: 42px; padding-inline: 20px; }
+.authoring-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding-top: 22px;
+  margin-top: 26px !important;
+  border-top: 1px solid #edf0f4;
+}
+.question-authoring { background: #f8fafc; }
+.authoring-actions:has(> button:only-child) { justify-content: flex-end; }
+.question-authoring > div:first-child { border-top: 3px solid #e52220; }
+.question-authoring .question-manual-fields > section {
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+.question-authoring h3 { font-size: 16px; }
+.question-authoring label:has(input[name='correct-answer']:checked) {
+  color: #15803d;
+}
+.question-authoring label:has(input[name='correct-answer']:checked) > span {
+  background: #dcfce7;
+  color: #15803d;
+}
+@media (max-width: 640px) {
+  .authoring-heading { align-items: flex-start; gap: 10px; }
+  .authoring-heading h2 { font-size: 16px; }
+  .authoring-tag { display: none; }
+  .authoring-actions { align-items: stretch; flex-direction: column; gap: 12px; }
+  .authoring-template { padding: 15px; }
+  .authoring-template button { width: 100%; }
+  .authoring-form input[type='file'] { padding: 16px 10px; font-size: 12px; }
+  .question-authoring .question-manual-fields > section { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .authoring-form :is(input, select, textarea) { transition: none; }
+}

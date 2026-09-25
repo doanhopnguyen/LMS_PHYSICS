@@ -1,7 +1,6 @@
 import { PaginatedList } from "../../components/Pagination.jsx";
 import React, { useMemo, useState } from 'react';
 import { readAcademicScope, rememberAcademicClass } from '../../lib/academicScope.js';
-import { Breadcrumbs } from '../../components/Breadcrumbs.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { HorizontalBarChart, LineChart } from '../../components/DataCharts.jsx';
@@ -38,7 +37,7 @@ const suggestionStatusMeta = {
   RESOLVED: { label: 'Đã xử lý', tone: 'success' },
   DISMISSED: { label: 'Không cần xử lý', tone: 'neutral' },
 };
-const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
+import { formatPercent } from '../../lib/formatPercent.js';
 const formatDate = (value) => new Intl.DateTimeFormat('vi-VN').format(new Date(`${value}T12:00:00`));
 
 function MaterialsList({ ids }) {
@@ -176,7 +175,6 @@ export function LecturerAiInsightsPage() {
       eyebrow="AI INSIGHTS"
       description="Theo dõi hoạt động học tập và cải tiến học liệu từ dữ liệu trợ giảng AI"
     >
-      <Breadcrumbs items={['Giảng viên']} current="Phân tích trợ giảng AI" />
       <Card className="mt-5 p-5 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <label className="text-body-sm font-semibold">

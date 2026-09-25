@@ -6,6 +6,7 @@ export const adminNavigation = [
   ['admin_academics.html', 'account_tree', 'Học kỳ & học phần'],
   ['admin_content.html', 'fact_check', 'Duyệt nội dung'],
   ['admin_operations.html', 'settings', 'Cấu hình & nhật ký'],
+  ['account.html', 'manage_accounts', 'Tài khoản & bảo mật'],
 ];
 
 export const adminMetrics = [

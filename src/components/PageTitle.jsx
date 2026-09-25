@@ -13,9 +13,9 @@ export function PageTitle({ eyebrow, title, description, actions, accentColor = 
           )}
           <h1 className="text-headline-lg font-headline-lg text-on-surface font-bold tracking-tight">{title || eyebrow}</h1>
         </div>
-        {actions && <div className="page-title__actions flex items-center gap-2 flex-wrap">{actions}</div>}
+        {!context?.target && actions && <div className="page-title__actions flex items-center gap-2 flex-wrap">{actions}</div>}
       </div>
     </div>
   );
-  return context?.target ? createPortal(content, context.target) : content;
+  return context?.target ? <>{createPortal(content, context.target)}{actions && <div className="page-content-actions" aria-label="Thao tác trang">{actions}</div>}</> : content;
 }

@@ -14,7 +14,7 @@ export function RoleAccessPage({ session }) {
         <h1 className="mt-2 text-headline-md font-bold">Vai trò {session ? demoRoles[session.role].label : 'hiện tại'} không có quyền mở trang này</h1>
         <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
           {session && <Button onClick={() => navigate(session.home)}>Về khu vực của tôi</Button>}
-          <Button variant="secondary" onClick={goLogin}>Đổi tài khoản demo</Button>
+          <Button variant="secondary" onClick={goLogin}>Đăng nhập tài khoản khác</Button>
         </div>
       </Card>
     </main>

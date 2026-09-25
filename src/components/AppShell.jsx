@@ -10,6 +10,7 @@ import { navigate, routeFromLink } from '../lib/navigation.js';
 import { PageHeaderProvider } from './PageHeaderContext.jsx';
 import { AcademicFilters } from './AcademicFilters.jsx';
 import { academicPages, readAcademicScope } from '../lib/academicScope.js';
+import { getPageFile } from '../lib/routes.js';
 
 export function AppShell({
   children,
@@ -27,8 +28,10 @@ export function AppShell({
   homeHref,
   navigationItems,
   utilityItems,
+  filterActions,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const actualPage = getPageFile();
   const detailPages = [
     'ai_tutor.html',
     'exam_results.html',
@@ -113,9 +116,9 @@ export function AppShell({
       <div
         className={`app-shell-content ${!chromeVisible ? 'app-shell-content-no-chrome' : ''} flex-1 ${contentClass}`}
       >
-        {toolbar ?? detailToolbar ?? (!chromeVisible && <DetailToolbar title={title} backHref={homeHref ?? 'dashboard.html'} />)}
-        <AcademicFilters page={currentPage} />
-        {academicPages[currentPage] && !readAcademicScope().available ? <main className="mx-auto w-full max-w-[1440px] p-6"><Card as="div" className="p-10 text-center" role="status"><h1 className="text-headline-sm font-bold">Chưa có dữ liệu trong phạm vi đã chọn</h1><p className="mt-2 text-[#64748B]">Chọn học kỳ hoặc môn học khác.</p></Card></main> : children}
+        {toolbar ?? detailToolbar ?? (!chromeVisible && <DetailToolbar title={title} backHref={actualPage === 'exam_results.html' ? 'exam_session.html' : homeHref ?? 'dashboard.html'} backLabel={actualPage === 'exam_results.html' ? 'Về danh sách bài kiểm tra' : 'Về trang chính'} />)}
+        <AcademicFilters page={actualPage} actions={filterActions} />
+        {academicPages[actualPage] && !readAcademicScope().available ? <main className="mx-auto w-full max-w-[1440px] p-6"><Card as="div" className="p-10 text-center" role="status"><h1 className="text-headline-sm font-bold">Chưa có dữ liệu trong phạm vi đã chọn</h1><p className="mt-2 text-[#64748B]">Chọn học kỳ hoặc môn học khác.</p></Card></main> : children}
       </div>
       {footer && <Footer />}
       {showChatLauncher && <ChatLauncher />}

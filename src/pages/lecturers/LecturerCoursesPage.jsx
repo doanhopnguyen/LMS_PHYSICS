@@ -1,3 +1,4 @@
+import { formatPercent } from '../../lib/formatPercent.js';
 import React from 'react';
 import { readAcademicScope } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
@@ -46,7 +47,7 @@ export function LecturerCoursesPage() {
               </Card>
               <Card as="div" className="bg-[#F8FAFC] p-3">
                 <span className="text-[#64748B]">Hoàn thành Lab</span>
-                <strong className="mt-1 block">{course.labCompletion}%</strong>
+                <strong className="mt-1 block">{formatPercent(course.labCompletion)}</strong>
               </Card>
             </div>
             <a href={`lecturer_course_detail.html?class=${course.className}`} className="mt-5">
