@@ -2,12 +2,33 @@ import { Card } from '../components/Card.jsx';
 import React, { useState } from 'react';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 import { navigate } from '../lib/navigation.js';
-import { demoRoles, setDemoSession } from '../lib/demoSession.js';
+import { demoRoles, setAuthenticatedSession, setDemoSession } from '../lib/demoSession.js';
+import { api, tokenStore } from '../lib/apiClient.js';
 
 export function LoginPage() {
   useDocumentMeta({ title: 'Đăng nhập · PTIT Physics', bodyClass: 'login-body' });
   const [role, setRole] = useState('STUDENT');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const enterDemo = () => navigate(setDemoSession(role).home);
+  const signIn = async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setError('');
+    setSubmitting(true);
+    try {
+      const tokens = await api.auth.signin({ username: form.get('studentId'), password: form.get('password') });
+      tokenStore.set(tokens);
+      const user = await api.users.me();
+      const session = setAuthenticatedSession(user);
+      navigate(session.home);
+    } catch (requestError) {
+      tokenStore.clear();
+      setError(requestError.message || 'Đăng nhập không thành công.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <main className="login-page">
@@ -24,10 +45,7 @@ export function LoginPage() {
         <section className="login-panel" aria-labelledby="login-title">
 
           <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              enterDemo();
-            }}
+            onSubmit={signIn}
           >
             <label htmlFor="student-id">Tên đăng nhập</label>
             <input
@@ -36,6 +54,7 @@ export function LoginPage() {
               type="text"
               autoComplete="username"
               placeholder="Nhập tên đăng nhập"
+              required
             />
             <label htmlFor="login-password">Mật khẩu</label>
             <input
@@ -44,10 +63,12 @@ export function LoginPage() {
               type="password"
               autoComplete="current-password"
               placeholder="Nhập mật khẩu"
+              required
             />
             <button className="login-submit" type="submit">
-              Đăng nhập
+              {submitting ? 'Đang đăng nhập…' : 'Đăng nhập'}
             </button>
+            {error && <p className="mt-3 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3 py-2 text-body-sm text-[#B91C1C]" role="alert">{error}</p>}
           </form>
 
           <Card as="div" className="mt-5 bg-[#F8FAFC] p-4">

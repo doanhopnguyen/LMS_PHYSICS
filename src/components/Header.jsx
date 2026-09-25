@@ -1,6 +1,7 @@
 import React from 'react';
 import { routeFromLink, navigate } from '../lib/navigation.js';
 import { clearDemoSession } from '../lib/demoSession.js';
+import { api, tokenStore } from '../lib/apiClient.js';
 import { PageHeaderSlot } from './PageHeaderContext.jsx';
 
 const defaultUser = {
@@ -20,6 +21,7 @@ export function Header({ onMenuClick, user = defaultUser, homeHref = 'dashboard.
     }
   };
   const logout = () => {
+    api.auth.logout().catch(() => undefined).finally(() => tokenStore.clear());
     clearDemoSession();
     navigate('login.html');
   };

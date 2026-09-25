@@ -19,6 +19,12 @@ Build production:
 npm run build
 ```
 
+## Kết nối backend API
+
+Frontend gọi API theo đặc tả tại tiền tố `/api/v1`. Khi chạy phát triển, Vite proxy `/api` tới `http://localhost:8080`; có thể đổi bằng `VITE_API_PROXY_TARGET` trong `.env.local`. Với frontend triển khai riêng miền, đặt `VITE_API_BASE_URL` thành origin backend (không kèm dấu `/` cuối). Xem các biến mẫu trong `.env.example`.
+
+Lớp gọi API nằm ở `src/lib/apiClient.js`: tự gắn JWT Bearer, tự làm mới access token một lần khi nhận 401, và chuẩn hóa lỗi trả về từ API. Luồng đăng nhập, đăng ký, quên/đặt lại mật khẩu và đăng xuất đã sử dụng lớp này.
+
 Các màn hình được ánh xạ theo các đường dẫn `.html` cũ, ví dụ `/dashboard.html`, `/library.html`, `/virtual_lab.html`.
 
 Khu vực giảng viên bắt đầu tại `/lecturer_dashboard.html`, với các trang quản lý học phần, sinh viên, học liệu, ngân hàng câu hỏi, đánh giá, chấm bài, thí nghiệm, AI Insights và phân tích học tập trong `src/pages/lecturers`.

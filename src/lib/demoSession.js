@@ -9,16 +9,35 @@ export const demoRoles = {
 
 export function getDemoSession() {
   try {
-    const role = window.localStorage.getItem(key);
-    return demoRoles[role] ? { role, ...demoRoles[role] } : null;
+    const stored = window.localStorage.getItem(key);
+    const session = stored?.startsWith('{') ? JSON.parse(stored) : { role: stored };
+    const base = demoRoles[session?.role];
+    return base ? { ...base, ...session } : null;
   } catch {
     return null;
   }
 }
 
 export function setDemoSession(role) {
-  window.localStorage.setItem(key, role);
+  window.localStorage.setItem(key, JSON.stringify({ role }));
   return { role, ...demoRoles[role] };
+}
+
+export function setAuthenticatedSession(user, profile = {}) {
+  const role = user?.role;
+  if (!demoRoles[role]) throw new Error('Vai trò tài khoản không được hỗ trợ.');
+  const name = profile.fullName || user.username || demoRoles[role].name;
+  const session = {
+    role,
+    userId: user.userId,
+    username: user.username,
+    email: user.email,
+    name,
+    detail: profile.studentCode || user.email || demoRoles[role].detail,
+    initials: name.split(/\s+/).filter(Boolean).slice(-2).map((part) => part[0]).join('').toUpperCase() || demoRoles[role].initials,
+  };
+  window.localStorage.setItem(key, JSON.stringify(session));
+  return { ...demoRoles[role], ...session };
 }
 
 export function clearDemoSession() {
