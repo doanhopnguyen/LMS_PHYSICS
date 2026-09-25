@@ -40,7 +40,9 @@ import { LecturerLabSubmissionDetailPage } from './pages/lecturers/LecturerLabSu
 import { LecturerLabGradingPage } from './pages/lecturers/LecturerLabGradingPage.jsx';
 import { LecturerAiInsightsPage } from './pages/lecturers/LecturerAiInsightsPage.jsx';
 import { LecturerLearningAnalyticsPage } from './pages/lecturers/LecturerLearningAnalyticsPage.jsx';
-import { AdminAcademicsPage, AdminContentPage, AdminDashboardPage } from './pages/admin/AdminPages.jsx';
+import { AdminDashboardPage } from './pages/admin/AdminPages.jsx';
+import { AdminAcademicsApiPage } from './pages/admin/AdminAcademicsApiPage.jsx';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage.jsx';
 import { StudentEvidencePage } from './pages/students/StudentEvidencePage.jsx';
 import { LecturerClassOperationsPage } from './pages/lecturers/LecturerClassOperationsPage.jsx';
 import { RegisterPage } from './pages/RegisterPage.jsx';
@@ -90,11 +92,11 @@ const pageComponents = {
   'lecturer_analytics.html': LecturerLearningAnalyticsPage,
   'admin_dashboard.html': AdminDashboardPage,
   'admin_users.html': UsersPage,
-  'admin_academics.html': AdminAcademicsPage,
+  'admin_academics.html': AdminAcademicsApiPage,
   'admin_operations.html': OperationsPage,
+  'admin_analytics.html': AdminAnalyticsPage,
   'ta_dashboard.html': TADashboardPage,
   'ta_work_queue.html': TAWorkQueuePage,
-  'admin_content.html': AdminContentPage,
   'student_evidence.html': StudentEvidencePage,
   'lecturer_class_operations.html': LecturerClassOperationsPage,
   'auth_access.html': ResetPasswordPage,

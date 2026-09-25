@@ -2,6 +2,85 @@
 
 Tài liệu này được tạo tự động từ OpenAPI đang chạy tại `http://localhost:8080/v3/api-docs`. Gồm **87 đường dẫn** và **110 thao tác API**.
 
+## Chỉ mục API theo quyền
+
+| Nhóm quyền              | Phạm vi API                                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| Chung                   | Xác thực, tài khoản cá nhân, tệp, môn học, học kỳ, chương mục, học liệu và thí nghiệm công khai |
+| Student                 | Lớp/tổng quan cá nhân, tiến độ, minh chứng, thi, nộp thí nghiệm và AI Tutor                     |
+| Lecturer (`INSTRUCTOR`) | Quản lý lớp, nội dung học tập, ngân hàng câu hỏi, đề thi, thí nghiệm và analytics               |
+| TA                      | Xem dữ liệu lớp/đề thi được phân công, chấm bài thí nghiệm                                      |
+| Admin                   | Toàn bộ quyền; thêm quản lý người dùng, log, cài đặt, môn học, học kỳ và tác vụ hệ thống        |
+
+### Quy ước response
+
+Phần lớn API trả về JSON:
+
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": {}
+}
+```
+
+`data` là kiểu dữ liệu được ghi trong từng endpoint. Các API phân trang trả `content`, `totalElements`, `totalPages`, `number`, `size`. Upload/nộp file dùng `multipart/form-data`.
+
+### API chung
+
+| Chức năng              | API                                                                                                     | Quyền                       | Request                                                         | Response `data`                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------- | ------------------------------------------- |
+| Đăng nhập/đăng ký      | `POST /users/signin`, `POST /users/signup`                                                              | Public                      | `{ "username": "...", "password": "..." }`; signup thêm `email` | `AuthResponseDTO`                           |
+| Refresh/reset mật khẩu | `POST /users/refresh`, `/forgot-password`, `/reset-password`                                            | Public                      | `refreshToken`; `email`; `token,newPassword`                    | Token mới hoặc `null`                       |
+| Tài khoản cá nhân      | `POST /users/logout`; `GET/PUT /users/me`; `PUT /users/me/password`; `GET/PUT /users/me/profile`        | Đăng nhập                   | DTO user/profile/password                                       | `UserResponseDTO`, `UserProfileDTO`, `null` |
+| Tệp                    | `GET /files/**`, `POST /files/upload`                                                                   | Đọc public/upload đăng nhập | multipart `file`                                                | Binary hoặc metadata file                   |
+| Danh mục               | `GET /semesters[/{id}]`, `GET /subjects[/{id}]`, `GET /subjects/{subjectId}/topics[/{topicId}]`         | Public                      | UUID path, query phân trang                                     | `SemesterDTO`, `SubjectDTO`, `TopicDTO`     |
+| Học liệu/thí nghiệm    | `GET /topics/{topicId}/materials[/{materialId}]`, `GET /experiments`, `GET /experiments/{experimentId}` | Public                      | UUID path, `subjectId` query                                    | `LearningMaterialDTO`, `ExperimentDTO`      |
+
+### API Student
+
+| Chức năng       | API                                                                                                                                                                                                                                                | Request                                           | Response `data`                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | -------------------------------- |
+| Học tập cá nhân | `GET /students/me/classes`, `GET /dashboard/me`, `GET/PUT /students/me/progress`, `GET /students/me/activity-logs`                                                                                                                                 | Query lớp/phân trang, `UpdateLearningProgressDTO` | Lớp, dashboard, tiến độ, nhật ký |
+| Minh chứng      | `GET /students/me/evidence`, `GET /students/{id}/evidence`                                                                                                                                                                                         | UUID `id`                                         | `EvidenceDTO[]`                  |
+| Thi             | `GET /exams/class/{classId}`, `GET /exams/{examId}`, `POST /exams/{examId}/attempts`, `POST /exams/attempts/{attemptId}/answers`, `PUT /exams/attempts/{attemptId}/submit`, `GET /exams/{examId}/my-attempt[s]`, `GET /exams/attempts/{attemptId}` | UUID path, `SubmitAnswerDTO`                      | `ExamDTO`, `ExamAttemptDTO`      |
+| Thí nghiệm      | `POST /experiments/assignments/{assignmentId}/submit`                                                                                                                                                                                              | multipart                                         | `null`                           |
+| AI Tutor        | `POST /ai-tutor/conversations`; `GET /ai-tutor/conversations/my`; `GET/POST /ai-tutor/conversations/{conversationId}/messages`; `PUT .../end`; `POST /ai-tutor/messages/{messageId}/feedback`                                                      | Conversation/message/feedback DTO                 | Hội thoại, tin nhắn hoặc `null`  |
+
+### API Lecturer / INSTRUCTOR
+
+Các API này cũng được `ADMIN` dùng; service tiếp tục kiểm tra quyền chủ lớp khi cần.
+
+| Chức năng         | API                                                                                                                                                                                         | Request                           | Response `data`                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------- |
+| Quản lý lớp       | `GET/POST /classes`, `GET/PUT /classes/{id}`, `PUT /classes/{id}/status`                                                                                                                    | Class DTO và UUID path            | `ClassDTO`, `Page<ClassDTO>`    |
+| Nhân sự/ghi danh  | `GET/POST /classes/{id}/staff`, `DELETE .../staff/{userId}`, `GET /classes/{id}/students`, `POST .../enroll-single`, `/enroll-bulk`, `PUT/DELETE .../students/{studentId}`                  | Staff/enrollment/status DTO       | Danh sách hoặc `null`           |
+| Quan sát lớp      | `GET /classes/{id}/activity-logs`, `/evidence`, `/progress`; `GET /dashboard/class/{id}`, `/dashboard/class/{id}/student/{studentId}`                                                       | UUID path                         | Log/evidence/progress/dashboard |
+| Analytics         | `GET /analytics/topic-difficulty`, `/question-quality`, `/ai-gaps`, `/material-effectiveness`                                                                                               | Query lọc                         | Mảng DTO analytics              |
+| Câu hỏi           | `GET/POST /questions`, `GET/PUT/DELETE /questions/{questionId}`, `GET /questions/import-excel/template`, `POST /questions/import-excel`                                                     | Question DTO hoặc multipart Excel | Question/page/import result     |
+| Nội dung          | `POST/PUT /subjects/{subjectId}/topics[/{topicId}]`; `POST/PUT/DELETE /topics/{topicId}/materials[/{materialId}]`; `PUT .../approve`                                                        | Topic DTO hoặc multipart          | Topic/material/null             |
+| Thí nghiệm/đề thi | `POST /experiments`, `POST /experiments/{id}/assign`, `POST /experiments/submissions/{id}/confirmation`; `POST /exams`, `POST /exams/{id}/questions`, `POST /exams/{id}/generate-questions` | DTO tương ứng                     | Experiment/assignment/exam/null |
+
+### API TA
+
+| Chức năng              | API                                                                              | Request                        | Response `data`        |
+| ---------------------- | -------------------------------------------------------------------------------- | ------------------------------ | ---------------------- |
+| Xem lớp được phân công | `GET /classes`, `/classes/{id}`, `/classes/{id}/staff`, `/classes/{id}/students` | Query/UUID path                | Class/staff/enrollment |
+| Xem đề và bài làm      | `GET /exams/class/{classId}`, `/exams/{examId}`, `/exams/attempts/{attemptId}`   | UUID path                      | Exam/attempt           |
+| Chấm bài thí nghiệm    | `POST /experiments/submissions/{submissionId}/scores`                            | `GradeExperimentSubmissionDTO` | `null`                 |
+
+### API Admin
+
+Admin có toàn quyền của các nhóm trên và các API riêng sau.
+
+| Chức năng         | API                                                                                                                                                                                    | Request                                                                                 | Response `data`         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------- | ----------------- |
+| Người dùng        | `GET /users/admin/users`; `POST /users/admin/create-user`; `GET/DELETE /users/{username}`; `GET /users/admin/users/{id}/profile`; `PUT /users/admin/users/{id}`; `PUT .../{id}/status` | Create `{username,email,password,role}`; update `{email,role}`; status `{status:"ACTIVE | LOCKED"}`               | User/profile/page |
+| Nhật ký           | `GET /admin/activity-logs`, `/admin/audit-logs`                                                                                                                                        | Filter + pagination                                                                     | Page log                |
+| Cài đặt           | `GET /admin/settings`, `GET/PUT /admin/settings/{key}`, `POST /admin/settings/bulk`                                                                                                    | Setting DTO                                                                             | System setting          |
+| Học kỳ/môn học    | `POST/PUT /semesters[/{id}]`, `PUT /semesters/{id}/set-current`; `POST/PUT /subjects[/{id}]`, `PUT /subjects/{id}/toggle-status`                                                       | Semester/subject DTO                                                                    | Semester/subject        |
+| Kiểm duyệt/tác vụ | `DELETE /subjects/{subjectId}/topics/{topicId}`, `PUT /questions/{id}/approve`, `POST /analytics/trigger`, `POST /dashboard/class/{id}/regenerate`                                     | UUID path                                                                               | null/question/dashboard |
+
 ## Cách gọi chung
 
 - Base URL: `http://localhost:8080`; mọi endpoint bên dưới đã gồm tiền tố `/api/v1`.
@@ -20,63 +99,62 @@ Lọc nhật ký hoạt động theo người dùng, loại hành động và kh
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `userId` | query | Không | string (uuid) | - |
-| `actionType` | query | Không | string | - |
-| `startDate` | query | Không | string (date-time) | - |
-| `endDate` | query | Không | string (date-time) | - |
-| `page` | query | Không | integer | Zero-based page index (0..N) |
-| `size` | query | Không | integer | The size of the page to be returned |
-| `sort` | query | Không | array | Sorting criteria in the format: property,(asc\\|desc). Default sort order is ascending. Multiple sort criteria are supported. |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu               | Mô tả                                           |
+| ------------ | ------ | -------: | ------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| `userId`     | query  |    Không | string (uuid)      | -                                               |
+| `actionType` | query  |    Không | string             | -                                               |
+| `startDate`  | query  |    Không | string (date-time) | -                                               |
+| `endDate`    | query  |    Không | string (date-time) | -                                               |
+| `page`       | query  |    Không | integer            | Zero-based page index (0..N)                    |
+| `size`       | query  |    Không | integer            | The size of the page to be returned             |
+| `sort`       | query  |    Không | array              | Sorting criteria in the format: property,(asc\\ | desc). Default sort order is ascending. Multiple sort criteria are supported. |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageActivityLog` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponsePageActivityLog` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -90,61 +168,60 @@ Lọc nhật ký kiểm toán thay đổi dữ liệu theo thực thể và ngư
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `entity` | query | Không | string | - |
-| `userId` | query | Không | string (uuid) | - |
-| `page` | query | Không | integer | Zero-based page index (0..N) |
-| `size` | query | Không | integer | The size of the page to be returned |
-| `sort` | query | Không | array | Sorting criteria in the format: property,(asc\\|desc). Default sort order is ascending. Multiple sort criteria are supported. |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả                                           |
+| -------- | ------ | -------: | ------------- | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| `entity` | query  |    Không | string        | -                                               |
+| `userId` | query  |    Không | string (uuid) | -                                               |
+| `page`   | query  |    Không | integer       | Zero-based page index (0..N)                    |
+| `size`   | query  |    Không | integer       | The size of the page to be returned             |
+| `sort`   | query  |    Không | array         | Sorting criteria in the format: property,(asc\\ | desc). Default sort order is ascending. Multiple sort criteria are supported. |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageAuditLog` |
+| HTTP | Ý nghĩa | Schema                    |
+| ---: | ------- | ------------------------- |
+|  200 | OK      | `ApiResponsePageAuditLog` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -158,23 +235,23 @@ Chỉ Admin được quyền truy cập.
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListSystemSetting` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponseListSystemSetting` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "settingKey":  "<string>",
-                 "settingValue":  "<string>",
-                 "description":  "<string>",
-                 "updatedBy":  "00000000-0000-0000-0000-000000000000",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "settingKey": "<string>",
+    "settingValue": "<string>",
+    "description": "<string>",
+    "updatedBy": "00000000-0000-0000-0000-000000000000",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -188,30 +265,29 @@ Chỉ Admin được quyền truy cập.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `key` | path | Có | string | - |
-
+| Tên   | Vị trí | Bắt buộc | Kiểu   | Mô tả |
+| ----- | ------ | -------: | ------ | ----- |
+| `key` | path   |       Có | string | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSystemSetting` |
+| HTTP | Ý nghĩa | Schema                     |
+| ---: | ------- | -------------------------- |
+|  200 | OK      | `ApiResponseSystemSetting` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "settingKey":  "<string>",
-                 "settingValue":  "<string>",
-                 "description":  "<string>",
-                 "updatedBy":  "00000000-0000-0000-0000-000000000000",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "settingKey": "<string>",
+    "settingValue": "<string>",
+    "description": "<string>",
+    "updatedBy": "00000000-0000-0000-0000-000000000000",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -225,10 +301,9 @@ Chỉ Admin được quyền truy cập.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `key` | path | Có | string | - |
-
+| Tên   | Vị trí | Bắt buộc | Kiểu   | Mô tả |
+| ----- | ------ | -------: | ------ | ----- |
+| `key` | path   |       Có | string | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -236,30 +311,30 @@ Schema: `UpdateSettingRequest`
 
 ```json
 {
-    "settingValue":  "<string>",
-    "description":  "<string>"
+  "settingValue": "<string>",
+  "description": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSystemSetting` |
+| HTTP | Ý nghĩa | Schema                     |
+| ---: | ------- | -------------------------- |
+|  200 | OK      | `ApiResponseSystemSetting` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "settingKey":  "<string>",
-                 "settingValue":  "<string>",
-                 "description":  "<string>",
-                 "updatedBy":  "00000000-0000-0000-0000-000000000000",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "settingKey": "<string>",
+    "settingValue": "<string>",
+    "description": "<string>",
+    "updatedBy": "00000000-0000-0000-0000-000000000000",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -277,31 +352,31 @@ Schema: `BulkUpdateSettingsRequest`
 
 ```json
 {
-    "settings":  {
-                     "key":  "<string>"
-                 }
+  "settings": {
+    "key": "<string>"
+  }
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListSystemSetting` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponseListSystemSetting` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "settingKey":  "<string>",
-                 "settingValue":  "<string>",
-                 "description":  "<string>",
-                 "updatedBy":  "00000000-0000-0000-0000-000000000000",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "settingKey": "<string>",
+    "settingValue": "<string>",
+    "description": "<string>",
+    "updatedBy": "00000000-0000-0000-0000-000000000000",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -319,34 +394,34 @@ Schema: `StartAiConversationDTO`
 
 ```json
 {
-    "classId":  "00000000-0000-0000-0000-000000000000",
-    "topicId":  "00000000-0000-0000-0000-000000000000",
-    "mode":  "TEXT"
+  "classId": "00000000-0000-0000-0000-000000000000",
+  "topicId": "00000000-0000-0000-0000-000000000000",
+  "mode": "TEXT"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseAiConversationDTO` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponseAiConversationDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "conversationId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "mode":  "TEXT",
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "endedAt":  "2026-09-24T10:00:00Z",
-                 "messageCount":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "conversationId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "mode": "TEXT",
+    "startedAt": "2026-09-24T10:00:00Z",
+    "endedAt": "2026-09-24T10:00:00Z",
+    "messageCount": 0
+  }
 }
 ```
 
@@ -360,33 +435,32 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `conversationId` | path | Có | string (uuid) | - |
-
+| Tên              | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---------------- | ------ | -------: | ------------- | ----- |
+| `conversationId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseAiConversationDTO` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponseAiConversationDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "conversationId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "mode":  "TEXT",
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "endedAt":  "2026-09-24T10:00:00Z",
-                 "messageCount":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "conversationId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "mode": "TEXT",
+    "startedAt": "2026-09-24T10:00:00Z",
+    "endedAt": "2026-09-24T10:00:00Z",
+    "messageCount": 0
+  }
 }
 ```
 
@@ -400,31 +474,30 @@ Xem lại toàn bộ trao đổi giữa sinh viên và trợ giảng AI.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `conversationId` | path | Có | string (uuid) | - |
-
+| Tên              | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---------------- | ------ | -------: | ------------- | ----- |
+| `conversationId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListAiMessageDTO` |
+| HTTP | Ý nghĩa | Schema                        |
+| ---: | ------- | ----------------------------- |
+|  200 | OK      | `ApiResponseListAiMessageDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "messageId":  "00000000-0000-0000-0000-000000000000",
-                 "conversationId":  "00000000-0000-0000-0000-000000000000",
-                 "sender":  "USER",
-                 "contentText":  "<string>",
-                 "audioUrl":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "messageId": "00000000-0000-0000-0000-000000000000",
+    "conversationId": "00000000-0000-0000-0000-000000000000",
+    "sender": "USER",
+    "contentText": "<string>",
+    "audioUrl": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -438,10 +511,9 @@ Nhận phản hồi gợi mở, gợi ý tư duy kèm trích dẫn tài liệu h
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `conversationId` | path | Có | string (uuid) | - |
-
+| Tên              | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---------------- | ------ | -------: | ------------- | ----- |
+| `conversationId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -449,30 +521,30 @@ Schema: `SendAiMessageDTO`
 
 ```json
 {
-    "content":  "<string>"
+  "content": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseAiMessageDTO` |
+| HTTP | Ý nghĩa | Schema                    |
+| ---: | ------- | ------------------------- |
+|  200 | OK      | `ApiResponseAiMessageDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "messageId":  "00000000-0000-0000-0000-000000000000",
-                 "conversationId":  "00000000-0000-0000-0000-000000000000",
-                 "sender":  "USER",
-                 "contentText":  "<string>",
-                 "audioUrl":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "messageId": "00000000-0000-0000-0000-000000000000",
+    "conversationId": "00000000-0000-0000-0000-000000000000",
+    "sender": "USER",
+    "contentText": "<string>",
+    "audioUrl": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -486,26 +558,26 @@ Xem danh sách các phiên thảo luận trợ giảng AI của sinh viên đang
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListAiConversationDTO` |
+| HTTP | Ý nghĩa | Schema                             |
+| ---: | ------- | ---------------------------------- |
+|  200 | OK      | `ApiResponseListAiConversationDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "conversationId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "mode":  "TEXT",
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "endedAt":  "2026-09-24T10:00:00Z",
-                 "messageCount":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "conversationId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "mode": "TEXT",
+    "startedAt": "2026-09-24T10:00:00Z",
+    "endedAt": "2026-09-24T10:00:00Z",
+    "messageCount": 0
+  }
 }
 ```
 
@@ -519,10 +591,9 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `messageId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `messageId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -530,24 +601,24 @@ Schema: `AiFeedbackDTO`
 
 ```json
 {
-    "rating":  0,
-    "comment":  "<string>"
+  "rating": 0,
+  "comment": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -561,34 +632,33 @@ Tổng hợp các chủ đề sinh viên hay bị AI từ chối giải đáp ho
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | query | Không | string (uuid) | - |
-| `period` | query | Không | string | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | query  |    Không | string (uuid) | -     |
+| `period`    | query  |    Không | string        | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListAiTopicGapDTO` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponseListAiTopicGapDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "gapId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "refusalCount":  0,
-                 "frequentQuerySample":  "<string>",
-                 "period":  "<string>",
-                 "generatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "gapId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "refusalCount": 0,
+    "frequentQuerySample": "<string>",
+    "period": "<string>",
+    "generatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -602,35 +672,34 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | query | Không | string (uuid) | - |
-| `topicId` | query | Không | string (uuid) | - |
-| `period` | query | Không | string | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | query  |    Không | string (uuid) | -     |
+| `topicId`   | query  |    Không | string (uuid) | -     |
+| `period`    | query  |    Không | string        | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListMaterialEffectivenessDTO` |
+| HTTP | Ý nghĩa | Schema                                    |
+| ---: | ------- | ----------------------------------------- |
+|  200 | OK      | `ApiResponseListMaterialEffectivenessDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "materialId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "period":  "<string>",
-                 "viewCount":  0,
-                 "avgTimeSpentSeconds":  0,
-                 "correlatedScoreImprovement":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "materialId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "period": "<string>",
+    "viewCount": 0,
+    "avgTimeSpentSeconds": 0,
+    "correlatedScoreImprovement": 0
+  }
 }
 ```
 
@@ -644,37 +713,36 @@ Tính tỉ lệ đúng, chỉ số phân biệt Discrimination Index và nhãn c
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | query | Không | string (uuid) | - |
-| `topicId` | query | Không | string (uuid) | - |
-| `minUsed` | query | Không | integer (int32) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu            | Mô tả |
+| ----------- | ------ | -------: | --------------- | ----- |
+| `subjectId` | query  |    Không | string (uuid)   | -     |
+| `topicId`   | query  |    Không | string (uuid)   | -     |
+| `minUsed`   | query  |    Không | integer (int32) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListQuestionQualityDTO` |
+| HTTP | Ý nghĩa | Schema                              |
+| ---: | ------- | ----------------------------------- |
+|  200 | OK      | `ApiResponseListQuestionQualityDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "questionId":  "00000000-0000-0000-0000-000000000000",
-                 "questionText":  "<string>",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "timesUsed":  0,
-                 "correctRate":  0,
-                 "discriminationIndex":  0,
-                 "avgTimeSeconds":  0,
-                 "qualityLabel":  "<string>",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "questionId": "00000000-0000-0000-0000-000000000000",
+    "questionText": "<string>",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "timesUsed": 0,
+    "correctRate": 0,
+    "discriminationIndex": 0,
+    "avgTimeSeconds": 0,
+    "qualityLabel": "<string>",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -688,37 +756,36 @@ Tính toán điểm trung bình, tỉ lệ sai sót và các phương án nhiễ
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `classId` | query | Không | string (uuid) | - |
-| `subjectId` | query | Không | string (uuid) | - |
-| `period` | query | Không | string | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `classId`   | query  |    Không | string (uuid) | -     |
+| `subjectId` | query  |    Không | string (uuid) | -     |
+| `period`    | query  |    Không | string        | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListTopicDifficultyDTO` |
+| HTTP | Ý nghĩa | Schema                              |
+| ---: | ------- | ----------------------------------- |
+|  200 | OK      | `ApiResponseListTopicDifficultyDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "statId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "avgScore":  0,
-                 "errorRate":  0,
-                 "commonWrongOptionsJson":  "<string>",
-                 "period":  "<string>",
-                 "generatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "statId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "avgScore": 0,
+    "errorRate": 0,
+    "commonWrongOptionsJson": "<string>",
+    "period": "<string>",
+    "generatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -736,15 +803,15 @@ Schema: `TriggerAggregationRequestDTO`
 
 ```json
 {
-    "period":  "<string>"
+  "period": "<string>"
 }
 ```
 
 ### Output
 
 | HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `-` |
+| ---: | ------- | ------ |
+|  200 | OK      | `-`    |
 
 ## `GET /api/v1/classes`
 
@@ -756,61 +823,60 @@ Lấy danh sách lớp học. Trả về theo phân quyền của người gọi
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | query | Không | string (uuid) | - |
-| `semesterId` | query | Không | string (uuid) | - |
-| `status` | query | Không | string: DRAFT, ACTIVE, COMPLETED, ARCHIVED | - |
-| `page` | query | Không | integer (int32) | - |
-| `size` | query | Không | integer (int32) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu                                       | Mô tả |
+| ------------ | ------ | -------: | ------------------------------------------ | ----- |
+| `subjectId`  | query  |    Không | string (uuid)                              | -     |
+| `semesterId` | query  |    Không | string (uuid)                              | -     |
+| `status`     | query  |    Không | string: DRAFT, ACTIVE, COMPLETED, ARCHIVED | -     |
+| `page`       | query  |    Không | integer (int32)                            | -     |
+| `size`       | query  |    Không | integer (int32)                            | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageClassDTO` |
+| HTTP | Ý nghĩa | Schema                    |
+| ---: | ------- | ------------------------- |
+|  200 | OK      | `ApiResponsePageClassDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -828,35 +894,35 @@ Schema: `CreateClassDTO`
 
 ```json
 {
-    "subjectId":  "00000000-0000-0000-0000-000000000000",
-    "semesterId":  "00000000-0000-0000-0000-000000000000",
-    "classCode":  "<string>",
-    "maxStudents":  0
+  "subjectId": "00000000-0000-0000-0000-000000000000",
+  "semesterId": "00000000-0000-0000-0000-000000000000",
+  "classCode": "<string>",
+  "maxStudents": 0
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseClassDTO` |
+| HTTP | Ý nghĩa | Schema                |
+| ---: | ------- | --------------------- |
+|  200 | OK      | `ApiResponseClassDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "classCode":  "<string>",
-                 "instructorId":  "00000000-0000-0000-0000-000000000000",
-                 "maxStudents":  0,
-                 "status":  "DRAFT",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "classCode": "<string>",
+    "instructorId": "00000000-0000-0000-0000-000000000000",
+    "maxStudents": 0,
+    "status": "DRAFT",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -870,32 +936,31 @@ Giảng viên theo dõi tỉ lệ xem video, đọc tài liệu của từng sin
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `classId` | path | Có | string (uuid) | - |
-
+| Tên       | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| --------- | ------ | -------: | ------------- | ----- |
+| `classId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListLearningProgressDTO` |
+| HTTP | Ý nghĩa | Schema                               |
+| ---: | ------- | ------------------------------------ |
+|  200 | OK      | `ApiResponseListLearningProgressDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "progressId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "status":  "NOT_STARTED",
-                 "progressPercent":  0,
-                 "lastAccessedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "progressId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "status": "NOT_STARTED",
+    "progressPercent": 0,
+    "lastAccessedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -909,33 +974,32 @@ Xem chi tiết một lớp học (Có kiểm tra quyền sở hữu).
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseClassDTO` |
+| HTTP | Ý nghĩa | Schema                |
+| ---: | ------- | --------------------- |
+|  200 | OK      | `ApiResponseClassDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "classCode":  "<string>",
-                 "instructorId":  "00000000-0000-0000-0000-000000000000",
-                 "maxStudents":  0,
-                 "status":  "DRAFT",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "classCode": "<string>",
+    "instructorId": "00000000-0000-0000-0000-000000000000",
+    "maxStudents": 0,
+    "status": "DRAFT",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -949,10 +1013,9 @@ Sửa mã lớp, số lượng SV tối đa. (Chỉ Admin hoặc chủ lớp)
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -960,33 +1023,33 @@ Schema: `UpdateClassDTO`
 
 ```json
 {
-    "classCode":  "<string>",
-    "maxStudents":  0
+  "classCode": "<string>",
+  "maxStudents": 0
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseClassDTO` |
+| HTTP | Ý nghĩa | Schema                |
+| ---: | ------- | --------------------- |
+|  200 | OK      | `ApiResponseClassDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "classCode":  "<string>",
-                 "instructorId":  "00000000-0000-0000-0000-000000000000",
-                 "maxStudents":  0,
-                 "status":  "DRAFT",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "classCode": "<string>",
+    "instructorId": "00000000-0000-0000-0000-000000000000",
+    "maxStudents": 0,
+    "status": "DRAFT",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -998,33 +1061,32 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListActivityLog` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseListActivityLog` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "logId":  "00000000-0000-0000-0000-000000000000",
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "actionType":  "<string>",
-                 "objectType":  "<string>",
-                 "objectId":  "00000000-0000-0000-0000-000000000000",
-                 "metadataJson":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "logId": "00000000-0000-0000-0000-000000000000",
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "actionType": "<string>",
+    "objectType": "<string>",
+    "objectId": "00000000-0000-0000-0000-000000000000",
+    "metadataJson": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -1038,10 +1100,9 @@ Thêm danh sách sinh viên vào lớp. Tối đa 500 sinh viên. (Chỉ Admin h
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -1049,23 +1110,23 @@ Schema: `BulkEnrollmentDTO`
 
 ```json
 {
-    "studentIds":  "00000000-0000-0000-0000-000000000000"
+  "studentIds": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -1079,10 +1140,9 @@ Thêm 1 sinh viên vào lớp. (Chỉ Admin hoặc chủ lớp)
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -1090,23 +1150,23 @@ Schema: `SingleEnrollmentDTO`
 
 ```json
 {
-    "studentId":  "00000000-0000-0000-0000-000000000000"
+  "studentId": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -1120,32 +1180,31 @@ Giảng viên / Quản trị viên xem toàn bộ minh chứng thực hành thí
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListEvidenceDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseListEvidenceDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "evidenceId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "sourceType":  "EXPERIMENT",
-                 "sourceId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "fileUrl":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "evidenceId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "sourceType": "EXPERIMENT",
+    "sourceId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "fileUrl": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -1159,30 +1218,29 @@ Lấy danh sách Giảng viên/Trợ giảng được phân công vào lớp.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListClassStaffDTO` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponseListClassStaffDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "username":  "<string>",
-                 "fullName":  "<string>",
-                 "email":  "<string>",
-                 "roleInClass":  "INSTRUCTOR"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "username": "<string>",
+    "fullName": "<string>",
+    "email": "<string>",
+    "roleInClass": "INSTRUCTOR"
+  }
 }
 ```
 
@@ -1196,10 +1254,9 @@ Thêm một Giảng viên/Trợ giảng vào lớp. (Chỉ Admin hoặc chủ l�
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -1207,24 +1264,24 @@ Schema: `AssignStaffDTO`
 
 ```json
 {
-    "userId":  "00000000-0000-0000-0000-000000000000",
-    "roleInClass":  "INSTRUCTOR"
+  "userId": "00000000-0000-0000-0000-000000000000",
+  "roleInClass": "INSTRUCTOR"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -1238,25 +1295,24 @@ Xóa Giảng viên/Trợ giảng khỏi lớp. (Chỉ Admin hoặc chủ lớp)
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-| `userId` | path | Có | string (uuid) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------- | ------ | -------: | ------------- | ----- |
+| `id`     | path   |       Có | string (uuid) | -     |
+| `userId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -1270,10 +1326,9 @@ Chuyển trạng thái lớp: DRAFT -> ACTIVE -> COMPLETED -> ARCHIVED.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -1281,32 +1336,32 @@ Schema: `UpdateClassStatusDTO`
 
 ```json
 {
-    "status":  "DRAFT"
+  "status": "DRAFT"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseClassDTO` |
+| HTTP | Ý nghĩa | Schema                |
+| ---: | ------- | --------------------- |
+|  200 | OK      | `ApiResponseClassDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "classCode":  "<string>",
-                 "instructorId":  "00000000-0000-0000-0000-000000000000",
-                 "maxStudents":  0,
-                 "status":  "DRAFT",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "classCode": "<string>",
+    "instructorId": "00000000-0000-0000-0000-000000000000",
+    "maxStudents": 0,
+    "status": "DRAFT",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -1320,60 +1375,59 @@ Lấy danh sách sinh viên đã ghi danh vào lớp.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-| `status` | query | Không | string: ACTIVE, DROPPED, COMPLETED | - |
-| `page` | query | Không | integer (int32) | - |
-| `size` | query | Không | integer (int32) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu                               | Mô tả |
+| -------- | ------ | -------: | ---------------------------------- | ----- |
+| `id`     | path   |       Có | string (uuid)                      | -     |
+| `status` | query  |    Không | string: ACTIVE, DROPPED, COMPLETED | -     |
+| `page`   | query  |    Không | integer (int32)                    | -     |
+| `size`   | query  |    Không | integer (int32)                    | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageEnrollmentDTO` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponsePageEnrollmentDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -1387,25 +1441,24 @@ Xóa sinh viên khỏi lớp hoàn toàn (Xóa cứng).
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-| `studentId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `id`        | path   |       Có | string (uuid) | -     |
+| `studentId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -1419,11 +1472,10 @@ Thay đổi trạng thái ghi danh (ACTIVE, DROPPED, COMPLETED).
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-| `studentId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `id`        | path   |       Có | string (uuid) | -     |
+| `studentId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -1431,23 +1483,23 @@ Schema: `UpdateEnrollmentStatusDTO`
 
 ```json
 {
-    "status":  "ACTIVE"
+  "status": "ACTIVE"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -1461,39 +1513,38 @@ Xem biểu đồ phân bố điểm, tỉ lệ hoàn thành học phần và cá
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseDashboardSnapshotDTO` |
+| HTTP | Ý nghĩa | Schema                            |
+| ---: | ------- | --------------------------------- |
+|  200 | OK      | `ApiResponseDashboardSnapshotDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "snapshotId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "period":  "<string>",
-                 "data":  {
-                              "avgScore":  0,
-                              "completedTopics":  0,
-                              "totalTopics":  0,
-                              "labsConfirmed":  0,
-                              "aiSessionsCount":  0,
-                              "totalExamsTaken":  0,
-                              "lastUpdated":  "2026-09-24T10:00:00Z"
-                          },
-                 "generatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "snapshotId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "period": "<string>",
+    "data": {
+      "avgScore": 0,
+      "completedTopics": 0,
+      "totalTopics": 0,
+      "labsConfirmed": 0,
+      "aiSessionsCount": 0,
+      "totalExamsTaken": 0,
+      "lastUpdated": "2026-09-24T10:00:00Z"
+    },
+    "generatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -1507,39 +1558,38 @@ Tính toán và cập nhật lại dữ liệu snapshot bảng điều khiển t
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseDashboardSnapshotDTO` |
+| HTTP | Ý nghĩa | Schema                            |
+| ---: | ------- | --------------------------------- |
+|  200 | OK      | `ApiResponseDashboardSnapshotDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "snapshotId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "period":  "<string>",
-                 "data":  {
-                              "avgScore":  0,
-                              "completedTopics":  0,
-                              "totalTopics":  0,
-                              "labsConfirmed":  0,
-                              "aiSessionsCount":  0,
-                              "totalExamsTaken":  0,
-                              "lastUpdated":  "2026-09-24T10:00:00Z"
-                          },
-                 "generatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "snapshotId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "period": "<string>",
+    "data": {
+      "avgScore": 0,
+      "completedTopics": 0,
+      "totalTopics": 0,
+      "labsConfirmed": 0,
+      "aiSessionsCount": 0,
+      "totalExamsTaken": 0,
+      "lastUpdated": "2026-09-24T10:00:00Z"
+    },
+    "generatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -1553,40 +1603,39 @@ Giảng viên xem chi tiết quá trình học tập của một sinh viên tron
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-| `studentId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `id`        | path   |       Có | string (uuid) | -     |
+| `studentId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseDashboardSnapshotDTO` |
+| HTTP | Ý nghĩa | Schema                            |
+| ---: | ------- | --------------------------------- |
+|  200 | OK      | `ApiResponseDashboardSnapshotDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "snapshotId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "period":  "<string>",
-                 "data":  {
-                              "avgScore":  0,
-                              "completedTopics":  0,
-                              "totalTopics":  0,
-                              "labsConfirmed":  0,
-                              "aiSessionsCount":  0,
-                              "totalExamsTaken":  0,
-                              "lastUpdated":  "2026-09-24T10:00:00Z"
-                          },
-                 "generatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "snapshotId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "period": "<string>",
+    "data": {
+      "avgScore": 0,
+      "completedTopics": 0,
+      "totalTopics": 0,
+      "labsConfirmed": 0,
+      "aiSessionsCount": 0,
+      "totalExamsTaken": 0,
+      "lastUpdated": "2026-09-24T10:00:00Z"
+    },
+    "generatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -1600,32 +1649,32 @@ Sinh viên theo dõi điểm số, xếp hạng và lộ trình hoàn thành c�
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseDashboardSnapshotDTO` |
+| HTTP | Ý nghĩa | Schema                            |
+| ---: | ------- | --------------------------------- |
+|  200 | OK      | `ApiResponseDashboardSnapshotDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "snapshotId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "period":  "<string>",
-                 "data":  {
-                              "avgScore":  0,
-                              "completedTopics":  0,
-                              "totalTopics":  0,
-                              "labsConfirmed":  0,
-                              "aiSessionsCount":  0,
-                              "totalExamsTaken":  0,
-                              "lastUpdated":  "2026-09-24T10:00:00Z"
-                          },
-                 "generatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "snapshotId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "period": "<string>",
+    "data": {
+      "avgScore": 0,
+      "completedTopics": 0,
+      "totalTopics": 0,
+      "labsConfirmed": 0,
+      "aiSessionsCount": 0,
+      "totalExamsTaken": 0,
+      "lastUpdated": "2026-09-24T10:00:00Z"
+    },
+    "generatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -1643,41 +1692,41 @@ Schema: `CreateExamDTO`
 
 ```json
 {
-    "classId":  "00000000-0000-0000-0000-000000000000",
-    "matrixId":  "00000000-0000-0000-0000-000000000000",
-    "title":  "<string>",
-    "examType":  "PRACTICE",
-    "durationMinutes":  0,
-    "startTime":  "2026-09-24T10:00:00Z",
-    "endTime":  "2026-09-24T10:00:00Z"
+  "classId": "00000000-0000-0000-0000-000000000000",
+  "matrixId": "00000000-0000-0000-0000-000000000000",
+  "title": "<string>",
+  "examType": "PRACTICE",
+  "durationMinutes": 0,
+  "startTime": "2026-09-24T10:00:00Z",
+  "endTime": "2026-09-24T10:00:00Z"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExamDTO` |
+| HTTP | Ý nghĩa | Schema               |
+| ---: | ------- | -------------------- |
+|  200 | OK      | `ApiResponseExamDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "matrixId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "examType":  "PRACTICE",
-                 "durationMinutes":  0,
-                 "startTime":  "2026-09-24T10:00:00Z",
-                 "endTime":  "2026-09-24T10:00:00Z",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "totalQuestions":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "matrixId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "examType": "PRACTICE",
+    "durationMinutes": 0,
+    "startTime": "2026-09-24T10:00:00Z",
+    "endTime": "2026-09-24T10:00:00Z",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "totalQuestions": 0
+  }
 }
 ```
 
@@ -1691,36 +1740,35 @@ Xem cấu hình chi tiết, thời gian và thông tin kỳ thi.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `examId` | path | Có | string (uuid) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------- | ------ | -------: | ------------- | ----- |
+| `examId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExamDTO` |
+| HTTP | Ý nghĩa | Schema               |
+| ---: | ------- | -------------------- |
+|  200 | OK      | `ApiResponseExamDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "matrixId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "examType":  "PRACTICE",
-                 "durationMinutes":  0,
-                 "startTime":  "2026-09-24T10:00:00Z",
-                 "endTime":  "2026-09-24T10:00:00Z",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "totalQuestions":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "matrixId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "examType": "PRACTICE",
+    "durationMinutes": 0,
+    "startTime": "2026-09-24T10:00:00Z",
+    "endTime": "2026-09-24T10:00:00Z",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "totalQuestions": 0
+  }
 }
 ```
 
@@ -1734,33 +1782,32 @@ Khởi tạo lượt làm bài mới, hỗ trợ multi-attempt cho đề luyện
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `examId` | path | Có | string (uuid) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------- | ------ | -------: | ------------- | ----- |
+| `examId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExamAttemptDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponseExamAttemptDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "attemptId":  "00000000-0000-0000-0000-000000000000",
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "attemptNumber":  0,
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "submittedAt":  "2026-09-24T10:00:00Z",
-                 "status":  "IN_PROGRESS",
-                 "totalScore":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "attemptId": "00000000-0000-0000-0000-000000000000",
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "attemptNumber": 0,
+    "startedAt": "2026-09-24T10:00:00Z",
+    "submittedAt": "2026-09-24T10:00:00Z",
+    "status": "IN_PROGRESS",
+    "totalScore": 0
+  }
 }
 ```
 
@@ -1774,26 +1821,25 @@ Lấy câu hỏi ngẫu nhiên từ ngân hàng theo tỉ lệ chương mục v�
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `examId` | path | Có | string (uuid) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------- | ------ | -------: | ------------- | ----- |
+| `examId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseMapStringObject` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseMapStringObject` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "key":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "key": "<string>"
+  }
 }
 ```
 
@@ -1807,33 +1853,32 @@ Xem thông tin hoặc tiếp tục bài thi đang làm dở.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `examId` | path | Có | string (uuid) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------- | ------ | -------: | ------------- | ----- |
+| `examId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExamAttemptDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponseExamAttemptDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "attemptId":  "00000000-0000-0000-0000-000000000000",
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "attemptNumber":  0,
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "submittedAt":  "2026-09-24T10:00:00Z",
-                 "status":  "IN_PROGRESS",
-                 "totalScore":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "attemptId": "00000000-0000-0000-0000-000000000000",
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "attemptNumber": 0,
+    "startedAt": "2026-09-24T10:00:00Z",
+    "submittedAt": "2026-09-24T10:00:00Z",
+    "status": "IN_PROGRESS",
+    "totalScore": 0
+  }
 }
 ```
 
@@ -1847,33 +1892,32 @@ Xem danh sách và điểm số tất cả các lần thi (đặc biệt cho đ�
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `examId` | path | Có | string (uuid) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------- | ------ | -------: | ------------- | ----- |
+| `examId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListExamAttemptDTO` |
+| HTTP | Ý nghĩa | Schema                          |
+| ---: | ------- | ------------------------------- |
+|  200 | OK      | `ApiResponseListExamAttemptDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "attemptId":  "00000000-0000-0000-0000-000000000000",
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "attemptNumber":  0,
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "submittedAt":  "2026-09-24T10:00:00Z",
-                 "status":  "IN_PROGRESS",
-                 "totalScore":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "attemptId": "00000000-0000-0000-0000-000000000000",
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "attemptNumber": 0,
+    "startedAt": "2026-09-24T10:00:00Z",
+    "submittedAt": "2026-09-24T10:00:00Z",
+    "status": "IN_PROGRESS",
+    "totalScore": 0
+  }
 }
 ```
 
@@ -1887,10 +1931,9 @@ Chỉ định trực tiếp câu hỏi từ ngân hàng vào kỳ thi.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `examId` | path | Có | string (uuid) | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------- | ------ | -------: | ------------- | ----- |
+| `examId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -1898,25 +1941,25 @@ Schema: `AddExamQuestionDTO`
 
 ```json
 {
-    "questionId":  "00000000-0000-0000-0000-000000000000",
-    "scoreWeight":  0,
-    "orderIndex":  0
+  "questionId": "00000000-0000-0000-0000-000000000000",
+  "scoreWeight": 0,
+  "orderIndex": 0
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -1930,33 +1973,32 @@ Xem bảng điểm, số câu đúng/sai và phân tích chi tiết bài thi đ�
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `attemptId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `attemptId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExamAttemptDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponseExamAttemptDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "attemptId":  "00000000-0000-0000-0000-000000000000",
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "attemptNumber":  0,
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "submittedAt":  "2026-09-24T10:00:00Z",
-                 "status":  "IN_PROGRESS",
-                 "totalScore":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "attemptId": "00000000-0000-0000-0000-000000000000",
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "attemptNumber": 0,
+    "startedAt": "2026-09-24T10:00:00Z",
+    "submittedAt": "2026-09-24T10:00:00Z",
+    "status": "IN_PROGRESS",
+    "totalScore": 0
+  }
 }
 ```
 
@@ -1970,10 +2012,9 @@ Ghi nhận phương án chọn cho từng câu hỏi trong quá trình làm bài
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `attemptId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `attemptId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -1981,25 +2022,25 @@ Schema: `SubmitAnswerDTO`
 
 ```json
 {
-    "questionId":  "00000000-0000-0000-0000-000000000000",
-    "selectedOptionIds":  "00000000-0000-0000-0000-000000000000",
-    "answerText":  "<string>"
+  "questionId": "00000000-0000-0000-0000-000000000000",
+  "selectedOptionIds": "00000000-0000-0000-0000-000000000000",
+  "answerText": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -2013,33 +2054,32 @@ Khóa bài thi bằng khóa bi quan (SELECT FOR UPDATE) chống race condition v
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `attemptId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `attemptId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExamAttemptDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponseExamAttemptDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "attemptId":  "00000000-0000-0000-0000-000000000000",
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "attemptNumber":  0,
-                 "startedAt":  "2026-09-24T10:00:00Z",
-                 "submittedAt":  "2026-09-24T10:00:00Z",
-                 "status":  "IN_PROGRESS",
-                 "totalScore":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "attemptId": "00000000-0000-0000-0000-000000000000",
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "attemptNumber": 0,
+    "startedAt": "2026-09-24T10:00:00Z",
+    "submittedAt": "2026-09-24T10:00:00Z",
+    "status": "IN_PROGRESS",
+    "totalScore": 0
+  }
 }
 ```
 
@@ -2053,36 +2093,35 @@ Trả về tất cả kỳ thi trắc nghiệm thuộc một lớp học.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `classId` | path | Có | string (uuid) | - |
-
+| Tên       | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| --------- | ------ | -------: | ------------- | ----- |
+| `classId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListExamDTO` |
+| HTTP | Ý nghĩa | Schema                   |
+| ---: | ------- | ------------------------ |
+|  200 | OK      | `ApiResponseListExamDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "examId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "matrixId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "examType":  "PRACTICE",
-                 "durationMinutes":  0,
-                 "startTime":  "2026-09-24T10:00:00Z",
-                 "endTime":  "2026-09-24T10:00:00Z",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "totalQuestions":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "examId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "matrixId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "examType": "PRACTICE",
+    "durationMinutes": 0,
+    "startTime": "2026-09-24T10:00:00Z",
+    "endTime": "2026-09-24T10:00:00Z",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "totalQuestions": 0
+  }
 }
 ```
 
@@ -2096,33 +2135,32 @@ Trả về danh sách các bài thí nghiệm ảo 3D thuộc môn học.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | query | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | query  |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListExperimentDTO` |
+| HTTP | Ý nghĩa | Schema                         |
+| ---: | ------- | ------------------------------ |
+|  200 | OK      | `ApiResponseListExperimentDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "experimentId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "description":  "<string>",
-                 "sceneAssetUrl":  "<string>",
-                 "sceneAssetsJson":  "<string>",
-                 "instructions":  "<string>",
-                 "orderIndex":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "experimentId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "description": "<string>",
+    "sceneAssetUrl": "<string>",
+    "sceneAssetsJson": "<string>",
+    "instructions": "<string>",
+    "orderIndex": 0
+  }
 }
 ```
 
@@ -2140,38 +2178,38 @@ Schema: `CreateExperimentDTO`
 
 ```json
 {
-    "subjectId":  "00000000-0000-0000-0000-000000000000",
-    "title":  "<string>",
-    "description":  "<string>",
-    "sceneAssetUrl":  "<string>",
-    "sceneAssetsJson":  "<string>",
-    "instructions":  "<string>",
-    "orderIndex":  0
+  "subjectId": "00000000-0000-0000-0000-000000000000",
+  "title": "<string>",
+  "description": "<string>",
+  "sceneAssetUrl": "<string>",
+  "sceneAssetsJson": "<string>",
+  "instructions": "<string>",
+  "orderIndex": 0
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExperimentDTO` |
+| HTTP | Ý nghĩa | Schema                     |
+| ---: | ------- | -------------------------- |
+|  200 | OK      | `ApiResponseExperimentDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "experimentId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "description":  "<string>",
-                 "sceneAssetUrl":  "<string>",
-                 "sceneAssetsJson":  "<string>",
-                 "instructions":  "<string>",
-                 "orderIndex":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "experimentId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "description": "<string>",
+    "sceneAssetUrl": "<string>",
+    "sceneAssetsJson": "<string>",
+    "instructions": "<string>",
+    "orderIndex": 0
+  }
 }
 ```
 
@@ -2185,33 +2223,32 @@ Xem cấu hình, tiêu chí đánh giá và thông số của bài thí nghiệm
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `experimentId` | path | Có | string (uuid) | - |
-
+| Tên            | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------------- | ------ | -------: | ------------- | ----- |
+| `experimentId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExperimentDTO` |
+| HTTP | Ý nghĩa | Schema                     |
+| ---: | ------- | -------------------------- |
+|  200 | OK      | `ApiResponseExperimentDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "experimentId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "description":  "<string>",
-                 "sceneAssetUrl":  "<string>",
-                 "sceneAssetsJson":  "<string>",
-                 "instructions":  "<string>",
-                 "orderIndex":  0
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "experimentId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "description": "<string>",
+    "sceneAssetUrl": "<string>",
+    "sceneAssetsJson": "<string>",
+    "instructions": "<string>",
+    "orderIndex": 0
+  }
 }
 ```
 
@@ -2225,10 +2262,9 @@ Tạo đợt thực hành thí nghiệm ảo cho lớp với hạn nộp.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `experimentId` | path | Có | string (uuid) | - |
-
+| Tên            | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------------- | ------ | -------: | ------------- | ----- |
+| `experimentId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -2236,33 +2272,33 @@ Schema: `CreateExperimentAssignmentDTO`
 
 ```json
 {
-    "classId":  "00000000-0000-0000-0000-000000000000",
-    "dueDate":  "2026-09-24T10:00:00Z",
-    "instructionsOverride":  "<string>"
+  "classId": "00000000-0000-0000-0000-000000000000",
+  "dueDate": "2026-09-24T10:00:00Z",
+  "instructionsOverride": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseExperimentAssignmentDTO` |
+| HTTP | Ý nghĩa | Schema                               |
+| ---: | ------- | ------------------------------------ |
+|  200 | OK      | `ApiResponseExperimentAssignmentDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "assignmentId":  "00000000-0000-0000-0000-000000000000",
-                 "experimentId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "assignedBy":  "00000000-0000-0000-0000-000000000000",
-                 "dueDate":  "2026-09-24T10:00:00Z",
-                 "instructionsOverride":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "assignmentId": "00000000-0000-0000-0000-000000000000",
+    "experimentId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "assignedBy": "00000000-0000-0000-0000-000000000000",
+    "dueDate": "2026-09-24T10:00:00Z",
+    "instructionsOverride": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -2276,10 +2312,9 @@ Tải lên file số liệu đo đạc, đồ thị và hình ảnh minh chứng
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `assignmentId` | path | Có | string (uuid) | - |
-
+| Tên            | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------------- | ------ | -------: | ------------- | ----- |
+| `assignmentId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (multipart/form-data, không bắt buộc)
 
@@ -2287,25 +2322,25 @@ Schema: `SubmitExperimentDTO`
 
 ```json
 {
-    "evidenceUrl":  "<string>",
-    "file":  "<string>",
-    "rawDataJson":  "<string>"
+  "evidenceUrl": "<string>",
+  "file": "<string>",
+  "rawDataJson": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -2319,10 +2354,9 @@ Giảng viên phê duyệt và chốt điểm chính thức cho sinh viên.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `submissionId` | path | Có | string (uuid) | - |
-
+| Tên            | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------------- | ------ | -------: | ------------- | ----- |
+| `submissionId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, không bắt buộc)
 
@@ -2330,23 +2364,23 @@ Schema: `ConfirmSubmissionDTO`
 
 ```json
 {
-    "note":  "Xác nhận điểm số chung cuộc"
+  "note": "Xác nhận điểm số chung cuộc"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -2360,10 +2394,9 @@ Giảng viên / Trợ giảng chấm điểm từng tiêu chí Rubric cho bài n
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `submissionId` | path | Có | string (uuid) | - |
-
+| Tên            | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| -------------- | ------ | -------: | ------------- | ----- |
+| `submissionId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, không bắt buộc)
 
@@ -2371,26 +2404,26 @@ Schema: `GradeSubmissionDTO`
 
 ```json
 {
-    "rubricId":  "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-    "score":  8.5,
-    "feedback":  "Báo cáo thực hành tốt",
-    "comment":  "Đã kiểm tra số liệu đo đạc"
+  "rubricId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "score": 8.5,
+  "feedback": "Báo cáo thực hành tốt",
+  "comment": "Đã kiểm tra số liệu đo đạc"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -2404,9 +2437,9 @@ Stream tệp/ảnh từ MinIO với đúng MediaType để hiển thị trực t
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `string` |
+| HTTP | Ý nghĩa | Schema   |
+| ---: | ------- | -------- |
+|  200 | OK      | `string` |
 
 Ví dụ response thành công (200):
 
@@ -2424,10 +2457,9 @@ Lưu trữ tệp, hình ảnh câu hỏi, minh chứng hoặc avatar vào MinIO 
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `folder` | query | Không | string | - |
-
+| Tên      | Vị trí | Bắt buộc | Kiểu   | Mô tả |
+| -------- | ------ | -------: | ------ | ----- |
+| `folder` | query  |    Không | string | -     |
 
 ### Input: request body (multipart/form-data, không bắt buộc)
 
@@ -2435,25 +2467,25 @@ Schema: `object`
 
 ```json
 {
-    "file":  "<string>"
+  "file": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseMapStringObject` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseMapStringObject` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "key":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "key": "<string>"
+  }
 }
 ```
 
@@ -2467,61 +2499,60 @@ Tìm kiếm câu hỏi theo môn học, chương mục và độ khó Bloom.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | query | Có | string (uuid) | - |
-| `topicId` | query | Không | string (uuid) | - |
-| `difficultyLevel` | query | Không | string: EASY, MEDIUM, HARD | - |
-| `page` | query | Không | integer (int32) | - |
-| `size` | query | Không | integer (int32) | - |
-
+| Tên               | Vị trí | Bắt buộc | Kiểu                       | Mô tả |
+| ----------------- | ------ | -------: | -------------------------- | ----- |
+| `subjectId`       | query  |       Có | string (uuid)              | -     |
+| `topicId`         | query  |    Không | string (uuid)              | -     |
+| `difficultyLevel` | query  |    Không | string: EASY, MEDIUM, HARD | -     |
+| `page`            | query  |    Không | integer (int32)            | -     |
+| `size`            | query  |    Không | integer (int32)            | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageQuestionBankDTO` |
+| HTTP | Ý nghĩa | Schema                           |
+| ---: | ------- | -------------------------------- |
+|  200 | OK      | `ApiResponsePageQuestionBankDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -2539,55 +2570,55 @@ Schema: `CreateQuestionDTO`
 
 ```json
 {
-    "subjectId":  "00000000-0000-0000-0000-000000000000",
-    "topicId":  "00000000-0000-0000-0000-000000000000",
-    "questionType":  "MCQ_SINGLE",
-    "content":  "<string>",
-    "mediaUrl":  "<string>",
-    "difficultyLevel":  "EASY",
-    "cognitiveLevel":  "<string>",
-    "options":  {
-                    "content":  "<string>",
-                    "isCorrect":  false,
-                    "orderIndex":  0,
-                    "explanation":  "<string>"
-                }
+  "subjectId": "00000000-0000-0000-0000-000000000000",
+  "topicId": "00000000-0000-0000-0000-000000000000",
+  "questionType": "MCQ_SINGLE",
+  "content": "<string>",
+  "mediaUrl": "<string>",
+  "difficultyLevel": "EASY",
+  "cognitiveLevel": "<string>",
+  "options": {
+    "content": "<string>",
+    "isCorrect": false,
+    "orderIndex": 0,
+    "explanation": "<string>"
+  }
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseQuestionBankDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseQuestionBankDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "questionId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "questionType":  "MCQ_SINGLE",
-                 "content":  "<string>",
-                 "mediaUrl":  "<string>",
-                 "difficultyLevel":  "EASY",
-                 "cognitiveLevel":  "<string>",
-                 "approvalStatus":  "DRAFT",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "options":  {
-                                 "optionId":  "<…>",
-                                 "questionId":  "<…>",
-                                 "content":  "<…>",
-                                 "isCorrect":  "<…>",
-                                 "orderIndex":  "<…>",
-                                 "explanation":  "<…>"
-                             }
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "questionId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "questionType": "MCQ_SINGLE",
+    "content": "<string>",
+    "mediaUrl": "<string>",
+    "difficultyLevel": "EASY",
+    "cognitiveLevel": "<string>",
+    "approvalStatus": "DRAFT",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "options": {
+      "optionId": "<…>",
+      "questionId": "<…>",
+      "content": "<…>",
+      "isCorrect": "<…>",
+      "orderIndex": "<…>",
+      "explanation": "<…>"
+    }
+  }
 }
 ```
 
@@ -2601,44 +2632,43 @@ Xem nội dung câu hỏi, danh sách đáp án A/B/C/D và giải thích chi ti
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `questionId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `questionId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseQuestionBankDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseQuestionBankDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "questionId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "questionType":  "MCQ_SINGLE",
-                 "content":  "<string>",
-                 "mediaUrl":  "<string>",
-                 "difficultyLevel":  "EASY",
-                 "cognitiveLevel":  "<string>",
-                 "approvalStatus":  "DRAFT",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "options":  {
-                                 "optionId":  "<…>",
-                                 "questionId":  "<…>",
-                                 "content":  "<…>",
-                                 "isCorrect":  "<…>",
-                                 "orderIndex":  "<…>",
-                                 "explanation":  "<…>"
-                             }
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "questionId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "questionType": "MCQ_SINGLE",
+    "content": "<string>",
+    "mediaUrl": "<string>",
+    "difficultyLevel": "EASY",
+    "cognitiveLevel": "<string>",
+    "approvalStatus": "DRAFT",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "options": {
+      "optionId": "<…>",
+      "questionId": "<…>",
+      "content": "<…>",
+      "isCorrect": "<…>",
+      "orderIndex": "<…>",
+      "explanation": "<…>"
+    }
+  }
 }
 ```
 
@@ -2652,10 +2682,9 @@ Chỉnh sửa câu hỏi, đáp án hoặc giải thích chi tiết.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `questionId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `questionId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -2663,55 +2692,55 @@ Schema: `CreateQuestionDTO`
 
 ```json
 {
-    "subjectId":  "00000000-0000-0000-0000-000000000000",
-    "topicId":  "00000000-0000-0000-0000-000000000000",
-    "questionType":  "MCQ_SINGLE",
-    "content":  "<string>",
-    "mediaUrl":  "<string>",
-    "difficultyLevel":  "EASY",
-    "cognitiveLevel":  "<string>",
-    "options":  {
-                    "content":  "<string>",
-                    "isCorrect":  false,
-                    "orderIndex":  0,
-                    "explanation":  "<string>"
-                }
+  "subjectId": "00000000-0000-0000-0000-000000000000",
+  "topicId": "00000000-0000-0000-0000-000000000000",
+  "questionType": "MCQ_SINGLE",
+  "content": "<string>",
+  "mediaUrl": "<string>",
+  "difficultyLevel": "EASY",
+  "cognitiveLevel": "<string>",
+  "options": {
+    "content": "<string>",
+    "isCorrect": false,
+    "orderIndex": 0,
+    "explanation": "<string>"
+  }
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseQuestionBankDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseQuestionBankDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "questionId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "questionType":  "MCQ_SINGLE",
-                 "content":  "<string>",
-                 "mediaUrl":  "<string>",
-                 "difficultyLevel":  "EASY",
-                 "cognitiveLevel":  "<string>",
-                 "approvalStatus":  "DRAFT",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "options":  {
-                                 "optionId":  "<…>",
-                                 "questionId":  "<…>",
-                                 "content":  "<…>",
-                                 "isCorrect":  "<…>",
-                                 "orderIndex":  "<…>",
-                                 "explanation":  "<…>"
-                             }
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "questionId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "questionType": "MCQ_SINGLE",
+    "content": "<string>",
+    "mediaUrl": "<string>",
+    "difficultyLevel": "EASY",
+    "cognitiveLevel": "<string>",
+    "approvalStatus": "DRAFT",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "options": {
+      "optionId": "<…>",
+      "questionId": "<…>",
+      "content": "<…>",
+      "isCorrect": "<…>",
+      "orderIndex": "<…>",
+      "explanation": "<…>"
+    }
+  }
 }
 ```
 
@@ -2725,24 +2754,23 @@ Xóa câu hỏi khỏi ngân hàng câu hỏi.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `questionId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `questionId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -2756,44 +2784,43 @@ Chuyển trạng thái câu hỏi thành APPROVED để sẵn sàng sinh đề.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `questionId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `questionId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseQuestionBankDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseQuestionBankDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "questionId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "questionType":  "MCQ_SINGLE",
-                 "content":  "<string>",
-                 "mediaUrl":  "<string>",
-                 "difficultyLevel":  "EASY",
-                 "cognitiveLevel":  "<string>",
-                 "approvalStatus":  "DRAFT",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "options":  {
-                                 "optionId":  "<…>",
-                                 "questionId":  "<…>",
-                                 "content":  "<…>",
-                                 "isCorrect":  "<…>",
-                                 "orderIndex":  "<…>",
-                                 "explanation":  "<…>"
-                             }
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "questionId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "questionType": "MCQ_SINGLE",
+    "content": "<string>",
+    "mediaUrl": "<string>",
+    "difficultyLevel": "EASY",
+    "cognitiveLevel": "<string>",
+    "approvalStatus": "DRAFT",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "options": {
+      "optionId": "<…>",
+      "questionId": "<…>",
+      "content": "<…>",
+      "isCorrect": "<…>",
+      "orderIndex": "<…>",
+      "explanation": "<…>"
+    }
+  }
 }
 ```
 
@@ -2807,11 +2834,10 @@ Bóc tách tệp bảng tính Excel (.xlsx, .xls) và nhập hàng loạt câu h
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | query | Có | string (uuid) | - |
-| `topicId` | query | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | query  |       Có | string (uuid) | -     |
+| `topicId`   | query  |       Có | string (uuid) | -     |
 
 ### Input: request body (multipart/form-data, không bắt buộc)
 
@@ -2819,41 +2845,41 @@ Schema: `object`
 
 ```json
 {
-    "file":  "<string>"
+  "file": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseQuestionImportResultDTO` |
+| HTTP | Ý nghĩa | Schema                               |
+| ---: | ------- | ------------------------------------ |
+|  200 | OK      | `ApiResponseQuestionImportResultDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalParsed":  0,
-                 "totalImported":  0,
-                 "questions":  {
-                                   "questionId":  "<…>",
-                                   "subjectId":  "<…>",
-                                   "topicId":  "<…>",
-                                   "questionType":  "<…>",
-                                   "content":  "<…>",
-                                   "mediaUrl":  "<…>",
-                                   "difficultyLevel":  "<…>",
-                                   "cognitiveLevel":  "<…>",
-                                   "approvalStatus":  "<…>",
-                                   "createdBy":  "<…>",
-                                   "createdAt":  "<…>",
-                                   "options":  "<…>"
-                               },
-                 "warnings":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalParsed": 0,
+    "totalImported": 0,
+    "questions": {
+      "questionId": "<…>",
+      "subjectId": "<…>",
+      "topicId": "<…>",
+      "questionType": "<…>",
+      "content": "<…>",
+      "mediaUrl": "<…>",
+      "difficultyLevel": "<…>",
+      "cognitiveLevel": "<…>",
+      "approvalStatus": "<…>",
+      "createdBy": "<…>",
+      "createdAt": "<…>",
+      "options": "<…>"
+    },
+    "warnings": "<string>"
+  }
 }
 ```
 
@@ -2867,9 +2893,9 @@ Tải xuống file Excel (.xlsx) chuẩn hóa để giáo viên điền danh sá
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `string` |
+| HTTP | Ý nghĩa | Schema   |
+| ---: | ------- | -------- |
+|  200 | OK      | `string` |
 
 Ví dụ response thành công (200):
 
@@ -2887,26 +2913,26 @@ Lấy danh sách tất cả học kỳ, được sắp xếp mới nhất lên �
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListSemesterDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseListSemesterDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterCode":  "<string>",
-                 "semesterName":  "<string>",
-                 "academicYear":  "<string>",
-                 "startDate":  "2026-09-24",
-                 "endDate":  "2026-09-24",
-                 "isCurrent":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "semesterCode": "<string>",
+    "semesterName": "<string>",
+    "academicYear": "<string>",
+    "startDate": "2026-09-24",
+    "endDate": "2026-09-24",
+    "isCurrent": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -2924,36 +2950,36 @@ Schema: `CreateSemesterDTO`
 
 ```json
 {
-    "semesterCode":  "<string>",
-    "semesterName":  "<string>",
-    "academicYear":  "<string>",
-    "startDate":  "2026-09-24",
-    "endDate":  "2026-09-24"
+  "semesterCode": "<string>",
+  "semesterName": "<string>",
+  "academicYear": "<string>",
+  "startDate": "2026-09-24",
+  "endDate": "2026-09-24"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSemesterDTO` |
+| HTTP | Ý nghĩa | Schema                   |
+| ---: | ------- | ------------------------ |
+|  200 | OK      | `ApiResponseSemesterDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterCode":  "<string>",
-                 "semesterName":  "<string>",
-                 "academicYear":  "<string>",
-                 "startDate":  "2026-09-24",
-                 "endDate":  "2026-09-24",
-                 "isCurrent":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "semesterCode": "<string>",
+    "semesterName": "<string>",
+    "academicYear": "<string>",
+    "startDate": "2026-09-24",
+    "endDate": "2026-09-24",
+    "isCurrent": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -2967,33 +2993,32 @@ Lấy thông tin chi tiết của 1 học kỳ bằng ID.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSemesterDTO` |
+| HTTP | Ý nghĩa | Schema                   |
+| ---: | ------- | ------------------------ |
+|  200 | OK      | `ApiResponseSemesterDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterCode":  "<string>",
-                 "semesterName":  "<string>",
-                 "academicYear":  "<string>",
-                 "startDate":  "2026-09-24",
-                 "endDate":  "2026-09-24",
-                 "isCurrent":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "semesterCode": "<string>",
+    "semesterName": "<string>",
+    "academicYear": "<string>",
+    "startDate": "2026-09-24",
+    "endDate": "2026-09-24",
+    "isCurrent": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3007,10 +3032,9 @@ Cập nhật thông tin học kỳ. Không cho phép trùng tên học kỳ tron
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -3018,35 +3042,35 @@ Schema: `UpdateSemesterDTO`
 
 ```json
 {
-    "semesterName":  "<string>",
-    "academicYear":  "<string>",
-    "startDate":  "2026-09-24",
-    "endDate":  "2026-09-24"
+  "semesterName": "<string>",
+  "academicYear": "<string>",
+  "startDate": "2026-09-24",
+  "endDate": "2026-09-24"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSemesterDTO` |
+| HTTP | Ý nghĩa | Schema                   |
+| ---: | ------- | ------------------------ |
+|  200 | OK      | `ApiResponseSemesterDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterCode":  "<string>",
-                 "semesterName":  "<string>",
-                 "academicYear":  "<string>",
-                 "startDate":  "2026-09-24",
-                 "endDate":  "2026-09-24",
-                 "isCurrent":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "semesterCode": "<string>",
+    "semesterName": "<string>",
+    "academicYear": "<string>",
+    "startDate": "2026-09-24",
+    "endDate": "2026-09-24",
+    "isCurrent": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3060,33 +3084,32 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSemesterDTO` |
+| HTTP | Ý nghĩa | Schema                   |
+| ---: | ------- | ------------------------ |
+|  200 | OK      | `ApiResponseSemesterDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "semesterId":  "00000000-0000-0000-0000-000000000000",
-                 "semesterCode":  "<string>",
-                 "semesterName":  "<string>",
-                 "academicYear":  "<string>",
-                 "startDate":  "2026-09-24",
-                 "endDate":  "2026-09-24",
-                 "isCurrent":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "semesterId": "00000000-0000-0000-0000-000000000000",
+    "semesterCode": "<string>",
+    "semesterName": "<string>",
+    "academicYear": "<string>",
+    "startDate": "2026-09-24",
+    "endDate": "2026-09-24",
+    "isCurrent": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3100,32 +3123,31 @@ Giảng viên xem minh chứng của sinh viên trong lớp hoặc sinh viên t�
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListEvidenceDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseListEvidenceDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "evidenceId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "sourceType":  "EXPERIMENT",
-                 "sourceId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "fileUrl":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "evidenceId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "sourceType": "EXPERIMENT",
+    "sourceId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "fileUrl": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3139,26 +3161,26 @@ Xem lịch sử các thao tác học tập, nộp bài và tương tác của si
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListActivityLog` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseListActivityLog` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "logId":  "00000000-0000-0000-0000-000000000000",
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "actionType":  "<string>",
-                 "objectType":  "<string>",
-                 "objectId":  "00000000-0000-0000-0000-000000000000",
-                 "metadataJson":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "logId": "00000000-0000-0000-0000-000000000000",
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "actionType": "<string>",
+    "objectType": "<string>",
+    "objectId": "00000000-0000-0000-0000-000000000000",
+    "metadataJson": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3172,58 +3194,57 @@ Lấy danh sách các lớp học mà sinh viên đang ghi danh.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `page` | query | Không | integer (int32) | - |
-| `size` | query | Không | integer (int32) | - |
-
+| Tên    | Vị trí | Bắt buộc | Kiểu            | Mô tả |
+| ------ | ------ | -------: | --------------- | ----- |
+| `page` | query  |    Không | integer (int32) | -     |
+| `size` | query  |    Không | integer (int32) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageClassDTO` |
+| HTTP | Ý nghĩa | Schema                    |
+| ---: | ------- | ------------------------- |
+|  200 | OK      | `ApiResponsePageClassDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -3237,25 +3258,25 @@ Trả về danh sách kết quả đo đạc, báo cáo thí nghiệm ảo của
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListEvidenceDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseListEvidenceDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "evidenceId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "sourceType":  "EXPERIMENT",
-                 "sourceId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "fileUrl":  "<string>",
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "evidenceId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "sourceType": "EXPERIMENT",
+    "sourceId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "fileUrl": "<string>",
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3269,32 +3290,31 @@ Sinh viên xem danh sách học liệu đã hoàn thành và tiến độ phần
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `classId` | query | Có | string (uuid) | - |
-
+| Tên       | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| --------- | ------ | -------: | ------------- | ----- |
+| `classId` | query  |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListLearningProgressDTO` |
+| HTTP | Ý nghĩa | Schema                               |
+| ---: | ------- | ------------------------------------ |
+|  200 | OK      | `ApiResponseListLearningProgressDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "progressId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "status":  "NOT_STARTED",
-                 "progressPercent":  0,
-                 "lastAccessedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "progressId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "status": "NOT_STARTED",
+    "progressPercent": 0,
+    "lastAccessedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3312,33 +3332,33 @@ Schema: `UpdateLearningProgressDTO`
 
 ```json
 {
-    "topicId":  "00000000-0000-0000-0000-000000000000",
-    "classId":  "00000000-0000-0000-0000-000000000000",
-    "progressPercent":  0
+  "topicId": "00000000-0000-0000-0000-000000000000",
+  "classId": "00000000-0000-0000-0000-000000000000",
+  "progressPercent": 0
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseLearningProgressDTO` |
+| HTTP | Ý nghĩa | Schema                           |
+| ---: | ------- | -------------------------------- |
+|  200 | OK      | `ApiResponseLearningProgressDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "progressId":  "00000000-0000-0000-0000-000000000000",
-                 "studentId":  "00000000-0000-0000-0000-000000000000",
-                 "classId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "status":  "NOT_STARTED",
-                 "progressPercent":  0,
-                 "lastAccessedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "progressId": "00000000-0000-0000-0000-000000000000",
+    "studentId": "00000000-0000-0000-0000-000000000000",
+    "classId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "status": "NOT_STARTED",
+    "progressPercent": 0,
+    "lastAccessedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3352,59 +3372,58 @@ Lấy danh sách phân trang tất cả môn học. Hỗ trợ lọc theo trạn
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `isActive` | query | Không | boolean | - |
-| `page` | query | Không | integer (int32) | - |
-| `size` | query | Không | integer (int32) | - |
-
+| Tên        | Vị trí | Bắt buộc | Kiểu            | Mô tả |
+| ---------- | ------ | -------: | --------------- | ----- |
+| `isActive` | query  |    Không | boolean         | -     |
+| `page`     | query  |    Không | integer (int32) | -     |
+| `size`     | query  |    Không | integer (int32) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageSubjectDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponsePageSubjectDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -3422,32 +3441,32 @@ Schema: `CreateSubjectDTO`
 
 ```json
 {
-    "subjectCode":  "<string>",
-    "subjectName":  "<string>",
-    "description":  "<string>"
+  "subjectCode": "<string>",
+  "subjectName": "<string>",
+  "description": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSubjectDTO` |
+| HTTP | Ý nghĩa | Schema                  |
+| ---: | ------- | ----------------------- |
+|  200 | OK      | `ApiResponseSubjectDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectCode":  "<string>",
-                 "subjectName":  "<string>",
-                 "description":  "<string>",
-                 "isActive":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "subjectCode": "<string>",
+    "subjectName": "<string>",
+    "description": "<string>",
+    "isActive": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3461,31 +3480,30 @@ Lấy thông tin chi tiết của 1 môn học bằng ID.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSubjectDTO` |
+| HTTP | Ý nghĩa | Schema                  |
+| ---: | ------- | ----------------------- |
+|  200 | OK      | `ApiResponseSubjectDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectCode":  "<string>",
-                 "subjectName":  "<string>",
-                 "description":  "<string>",
-                 "isActive":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "subjectCode": "<string>",
+    "subjectName": "<string>",
+    "description": "<string>",
+    "isActive": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3499,10 +3517,9 @@ Cập nhật thông tin môn học (tên, mô tả). Không được sửa mã m
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -3510,31 +3527,31 @@ Schema: `UpdateSubjectDTO`
 
 ```json
 {
-    "subjectName":  "<string>",
-    "description":  "<string>"
+  "subjectName": "<string>",
+  "description": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSubjectDTO` |
+| HTTP | Ý nghĩa | Schema                  |
+| ---: | ------- | ----------------------- |
+|  200 | OK      | `ApiResponseSubjectDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectCode":  "<string>",
-                 "subjectName":  "<string>",
-                 "description":  "<string>",
-                 "isActive":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "subjectCode": "<string>",
+    "subjectName": "<string>",
+    "description": "<string>",
+    "isActive": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3548,31 +3565,30 @@ Toggle trạng thái isActive của môn học (Xóa mềm).
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseSubjectDTO` |
+| HTTP | Ý nghĩa | Schema                  |
+| ---: | ------- | ----------------------- |
+|  200 | OK      | `ApiResponseSubjectDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectCode":  "<string>",
-                 "subjectName":  "<string>",
-                 "description":  "<string>",
-                 "isActive":  false,
-                 "createdAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "subjectCode": "<string>",
+    "subjectName": "<string>",
+    "description": "<string>",
+    "isActive": false,
+    "createdAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3586,30 +3602,29 @@ Trả về toàn bộ các chương/chủ đề kiến thức thuộc môn học
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListTopicDTO` |
+| HTTP | Ý nghĩa | Schema                    |
+| ---: | ------- | ------------------------- |
+|  200 | OK      | `ApiResponseListTopicDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "orderIndex":  0,
-                 "description":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "orderIndex": 0,
+    "description": "<string>"
+  }
 }
 ```
 
@@ -3623,10 +3638,9 @@ Thêm chương mục mới vào môn học.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -3634,32 +3648,32 @@ Schema: `CreateTopicDTO`
 
 ```json
 {
-    "subjectId":  "00000000-0000-0000-0000-000000000000",
-    "topicName":  "<string>",
-    "orderIndex":  0,
-    "description":  "<string>"
+  "subjectId": "00000000-0000-0000-0000-000000000000",
+  "topicName": "<string>",
+  "orderIndex": 0,
+  "description": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseTopicDTO` |
+| HTTP | Ý nghĩa | Schema                |
+| ---: | ------- | --------------------- |
+|  200 | OK      | `ApiResponseTopicDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "orderIndex":  0,
-                 "description":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "orderIndex": 0,
+    "description": "<string>"
+  }
 }
 ```
 
@@ -3673,31 +3687,30 @@ Xem thông tin tên, mô tả và thứ tự chương mục.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | path | Có | string (uuid) | - |
-| `topicId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | path   |       Có | string (uuid) | -     |
+| `topicId`   | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseTopicDTO` |
+| HTTP | Ý nghĩa | Schema                |
+| ---: | ------- | --------------------- |
+|  200 | OK      | `ApiResponseTopicDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "orderIndex":  0,
-                 "description":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "orderIndex": 0,
+    "description": "<string>"
+  }
 }
 ```
 
@@ -3711,11 +3724,10 @@ Chỉnh sửa tên, mô tả và thứ tự hiển thị của chương mục.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | path | Có | string (uuid) | - |
-| `topicId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | path   |       Có | string (uuid) | -     |
+| `topicId`   | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -3723,32 +3735,32 @@ Schema: `CreateTopicDTO`
 
 ```json
 {
-    "subjectId":  "00000000-0000-0000-0000-000000000000",
-    "topicName":  "<string>",
-    "orderIndex":  0,
-    "description":  "<string>"
+  "subjectId": "00000000-0000-0000-0000-000000000000",
+  "topicName": "<string>",
+  "orderIndex": 0,
+  "description": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseTopicDTO` |
+| HTTP | Ý nghĩa | Schema                |
+| ---: | ------- | --------------------- |
+|  200 | OK      | `ApiResponseTopicDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "subjectId":  "00000000-0000-0000-0000-000000000000",
-                 "topicName":  "<string>",
-                 "orderIndex":  0,
-                 "description":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "subjectId": "00000000-0000-0000-0000-000000000000",
+    "topicName": "<string>",
+    "orderIndex": 0,
+    "description": "<string>"
+  }
 }
 ```
 
@@ -3762,25 +3774,24 @@ Xóa một chương mục kiến thức khỏi hệ thống.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `subjectId` | path | Có | string (uuid) | - |
-| `topicId` | path | Có | string (uuid) | - |
-
+| Tên         | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ----------- | ------ | -------: | ------------- | ----- |
+| `subjectId` | path   |       Có | string (uuid) | -     |
+| `topicId`   | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -3794,38 +3805,37 @@ Trả về danh sách tài liệu số (PDF, Video, Bài giảng) thuộc chươ
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `topicId` | path | Có | string (uuid) | - |
-
+| Tên       | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| --------- | ------ | -------: | ------------- | ----- |
+| `topicId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseListLearningMaterialDTO` |
+| HTTP | Ý nghĩa | Schema                               |
+| ---: | ------- | ------------------------------------ |
+|  200 | OK      | `ApiResponseListLearningMaterialDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "materialId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "type":  "PDF",
-                 "fileUrl":  "<string>",
-                 "contentText":  "<string>",
-                 "version":  0,
-                 "approvalStatus":  "DRAFT",
-                 "sourceCitation":  "<string>",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "materialId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "type": "PDF",
+    "fileUrl": "<string>",
+    "contentText": "<string>",
+    "version": 0,
+    "approvalStatus": "DRAFT",
+    "sourceCitation": "<string>",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3839,10 +3849,9 @@ Tải lên tài liệu học tập mới (File hoặc URL liên kết).
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `topicId` | path | Có | string (uuid) | - |
-
+| Tên       | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| --------- | ------ | -------: | ------------- | ----- |
+| `topicId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (multipart/form-data, không bắt buộc)
 
@@ -3850,42 +3859,42 @@ Schema: `CreateLearningMaterialDTO`
 
 ```json
 {
-    "topicId":  "00000000-0000-0000-0000-000000000000",
-    "title":  "<string>",
-    "type":  "PDF",
-    "contentText":  "<string>",
-    "sourceCitation":  "<string>",
-    "file":  "<string>"
+  "topicId": "00000000-0000-0000-0000-000000000000",
+  "title": "<string>",
+  "type": "PDF",
+  "contentText": "<string>",
+  "sourceCitation": "<string>",
+  "file": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseLearningMaterialDTO` |
+| HTTP | Ý nghĩa | Schema                           |
+| ---: | ------- | -------------------------------- |
+|  200 | OK      | `ApiResponseLearningMaterialDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "materialId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "type":  "PDF",
-                 "fileUrl":  "<string>",
-                 "contentText":  "<string>",
-                 "version":  0,
-                 "approvalStatus":  "DRAFT",
-                 "sourceCitation":  "<string>",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "materialId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "type": "PDF",
+    "fileUrl": "<string>",
+    "contentText": "<string>",
+    "version": 0,
+    "approvalStatus": "DRAFT",
+    "sourceCitation": "<string>",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3899,39 +3908,38 @@ Xem nội dung chi tiết hoặc link truy cập tài liệu số.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `topicId` | path | Có | string (uuid) | - |
-| `materialId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `topicId`    | path   |       Có | string (uuid) | -     |
+| `materialId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseLearningMaterialDTO` |
+| HTTP | Ý nghĩa | Schema                           |
+| ---: | ------- | -------------------------------- |
+|  200 | OK      | `ApiResponseLearningMaterialDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "materialId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "type":  "PDF",
-                 "fileUrl":  "<string>",
-                 "contentText":  "<string>",
-                 "version":  0,
-                 "approvalStatus":  "DRAFT",
-                 "sourceCitation":  "<string>",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "materialId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "type": "PDF",
+    "fileUrl": "<string>",
+    "contentText": "<string>",
+    "version": 0,
+    "approvalStatus": "DRAFT",
+    "sourceCitation": "<string>",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -3945,11 +3953,10 @@ Chỉnh sửa thông tin, tệp đính kèm hoặc nội dung bài giảng.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `topicId` | path | Có | string (uuid) | - |
-| `materialId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `topicId`    | path   |       Có | string (uuid) | -     |
+| `materialId` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (multipart/form-data, không bắt buộc)
 
@@ -3957,42 +3964,42 @@ Schema: `CreateLearningMaterialDTO`
 
 ```json
 {
-    "topicId":  "00000000-0000-0000-0000-000000000000",
-    "title":  "<string>",
-    "type":  "PDF",
-    "contentText":  "<string>",
-    "sourceCitation":  "<string>",
-    "file":  "<string>"
+  "topicId": "00000000-0000-0000-0000-000000000000",
+  "title": "<string>",
+  "type": "PDF",
+  "contentText": "<string>",
+  "sourceCitation": "<string>",
+  "file": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseLearningMaterialDTO` |
+| HTTP | Ý nghĩa | Schema                           |
+| ---: | ------- | -------------------------------- |
+|  200 | OK      | `ApiResponseLearningMaterialDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "materialId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "type":  "PDF",
-                 "fileUrl":  "<string>",
-                 "contentText":  "<string>",
-                 "version":  0,
-                 "approvalStatus":  "DRAFT",
-                 "sourceCitation":  "<string>",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "materialId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "type": "PDF",
+    "fileUrl": "<string>",
+    "contentText": "<string>",
+    "version": 0,
+    "approvalStatus": "DRAFT",
+    "sourceCitation": "<string>",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -4006,25 +4013,24 @@ Gỡ bỏ tài liệu học tập khỏi chương mục.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `topicId` | path | Có | string (uuid) | - |
-| `materialId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `topicId`    | path   |       Có | string (uuid) | -     |
+| `materialId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -4038,39 +4044,38 @@ Kiểm duyệt và xuất bản học liệu cho sinh viên truy cập.
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `topicId` | path | Có | string (uuid) | - |
-| `materialId` | path | Có | string (uuid) | - |
-
+| Tên          | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ------------ | ------ | -------: | ------------- | ----- |
+| `topicId`    | path   |       Có | string (uuid) | -     |
+| `materialId` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseLearningMaterialDTO` |
+| HTTP | Ý nghĩa | Schema                           |
+| ---: | ------- | -------------------------------- |
+|  200 | OK      | `ApiResponseLearningMaterialDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "materialId":  "00000000-0000-0000-0000-000000000000",
-                 "topicId":  "00000000-0000-0000-0000-000000000000",
-                 "fileId":  "00000000-0000-0000-0000-000000000000",
-                 "title":  "<string>",
-                 "type":  "PDF",
-                 "fileUrl":  "<string>",
-                 "contentText":  "<string>",
-                 "version":  0,
-                 "approvalStatus":  "DRAFT",
-                 "sourceCitation":  "<string>",
-                 "createdBy":  "00000000-0000-0000-0000-000000000000",
-                 "createdAt":  "2026-09-24T10:00:00Z",
-                 "updatedAt":  "2026-09-24T10:00:00Z"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "materialId": "00000000-0000-0000-0000-000000000000",
+    "topicId": "00000000-0000-0000-0000-000000000000",
+    "fileId": "00000000-0000-0000-0000-000000000000",
+    "title": "<string>",
+    "type": "PDF",
+    "fileUrl": "<string>",
+    "contentText": "<string>",
+    "version": 0,
+    "approvalStatus": "DRAFT",
+    "sourceCitation": "<string>",
+    "createdBy": "00000000-0000-0000-0000-000000000000",
+    "createdAt": "2026-09-24T10:00:00Z",
+    "updatedAt": "2026-09-24T10:00:00Z"
+  }
 }
 ```
 
@@ -4082,33 +4087,32 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `username` | path | Có | string | Username |
-
+| Tên        | Vị trí | Bắt buộc | Kiểu   | Mô tả    |
+| ---------- | ------ | -------: | ------ | -------- |
+| `username` | path   |       Có | string | Username |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Success | `ApiResponseUserResponseDTO` |
-| 400 | Something went wrong | `ApiResponseUserResponseDTO` |
-| 403 | Access denied | `ApiResponseUserResponseDTO` |
-| 404 | The user doesn't exist | `ApiResponseUserResponseDTO` |
+| HTTP | Ý nghĩa                | Schema                       |
+| ---: | ---------------------- | ---------------------------- |
+|  200 | Success                | `ApiResponseUserResponseDTO` |
+|  400 | Something went wrong   | `ApiResponseUserResponseDTO` |
+|  403 | Access denied          | `ApiResponseUserResponseDTO` |
+|  404 | The user doesn't exist | `ApiResponseUserResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "username":  "<string>",
-                 "email":  "<string>",
-                 "role":  "STUDENT",
-                 "status":  "ACTIVE"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "username": "<string>",
+    "email": "<string>",
+    "role": "STUDENT",
+    "status": "ACTIVE"
+  }
 }
 ```
 
@@ -4120,27 +4124,26 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `username` | path | Có | string | Username |
-
+| Tên        | Vị trí | Bắt buộc | Kiểu   | Mô tả    |
+| ---------- | ------ | -------: | ------ | -------- |
+| `username` | path   |       Có | string | Username |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Success | `ApiResponseString` |
-| 400 | Something went wrong | `ApiResponseString` |
-| 403 | Access denied | `ApiResponseString` |
-| 404 | The user doesn't exist | `ApiResponseString` |
+| HTTP | Ý nghĩa                | Schema              |
+| ---: | ---------------------- | ------------------- |
+|  200 | Success                | `ApiResponseString` |
+|  400 | Something went wrong   | `ApiResponseString` |
+|  403 | Access denied          | `ApiResponseString` |
+|  404 | The user doesn't exist | `ApiResponseString` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -4156,35 +4159,35 @@ Schema: `AdminCreateUserDTO`
 
 ```json
 {
-    "username":  "newinstructor",
-    "email":  "instructor@example.com",
-    "password":  "password123",
-    "role":  "INSTRUCTOR"
+  "username": "newinstructor",
+  "email": "instructor@example.com",
+  "password": "password123",
+  "role": "INSTRUCTOR"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Success | `ApiResponseUserResponseDTO` |
-| 400 | Something went wrong | `ApiResponseUserResponseDTO` |
-| 403 | Access denied | `ApiResponseUserResponseDTO` |
-| 422 | Username is already in use | `ApiResponseUserResponseDTO` |
+| HTTP | Ý nghĩa                    | Schema                       |
+| ---: | -------------------------- | ---------------------------- |
+|  200 | Success                    | `ApiResponseUserResponseDTO` |
+|  400 | Something went wrong       | `ApiResponseUserResponseDTO` |
+|  403 | Access denied              | `ApiResponseUserResponseDTO` |
+|  422 | Username is already in use | `ApiResponseUserResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "username":  "<string>",
-                 "email":  "<string>",
-                 "role":  "STUDENT",
-                 "status":  "ACTIVE"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "username": "<string>",
+    "email": "<string>",
+    "role": "STUDENT",
+    "status": "ACTIVE"
+  }
 }
 ```
 
@@ -4196,59 +4199,58 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `page` | query | Không | integer | Zero-based page index (0..N) |
-| `size` | query | Không | integer | The size of the page to be returned |
-| `sort` | query | Không | array | Sorting criteria in the format: property,(asc\\|desc). Default sort order is ascending. Multiple sort criteria are supported. |
-
+| Tên    | Vị trí | Bắt buộc | Kiểu    | Mô tả                                           |
+| ------ | ------ | -------: | ------- | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| `page` | query  |    Không | integer | Zero-based page index (0..N)                    |
+| `size` | query  |    Không | integer | The size of the page to be returned             |
+| `sort` | query  |    Không | array   | Sorting criteria in the format: property,(asc\\ | desc). Default sort order is ascending. Multiple sort criteria are supported. |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponsePageUserResponseDTO` |
+| HTTP | Ý nghĩa | Schema                           |
+| ---: | ------- | -------------------------------- |
+|  200 | OK      | `ApiResponsePageUserResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "totalPages":  0,
-                 "totalElements":  0,
-                 "size":  0,
-                 "content":  {
-                                 "userId":  "<…>",
-                                 "username":  "<…>",
-                                 "email":  "<…>",
-                                 "role":  "<…>",
-                                 "status":  "<…>"
-                             },
-                 "number":  0,
-                 "first":  false,
-                 "last":  false,
-                 "numberOfElements":  0,
-                 "sort":  {
-                              "empty":  false,
-                              "sorted":  false,
-                              "unsorted":  false
-                          },
-                 "pageable":  {
-                                  "offset":  0,
-                                  "sort":  {
-                                               "empty":  "<…>",
-                                               "sorted":  "<…>",
-                                               "unsorted":  "<…>"
-                                           },
-                                  "pageNumber":  0,
-                                  "pageSize":  0,
-                                  "paged":  false,
-                                  "unpaged":  false
-                              },
-                 "empty":  false
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "totalPages": 0,
+    "totalElements": 0,
+    "size": 0,
+    "content": {
+      "userId": "<…>",
+      "username": "<…>",
+      "email": "<…>",
+      "role": "<…>",
+      "status": "<…>"
+    },
+    "number": 0,
+    "first": false,
+    "last": false,
+    "numberOfElements": 0,
+    "sort": {
+      "empty": false,
+      "sorted": false,
+      "unsorted": false
+    },
+    "pageable": {
+      "offset": 0,
+      "sort": {
+        "empty": "<…>",
+        "sorted": "<…>",
+        "unsorted": "<…>"
+      },
+      "pageNumber": 0,
+      "pageSize": 0,
+      "paged": false,
+      "unpaged": false
+    },
+    "empty": false
+  }
 }
 ```
 
@@ -4260,10 +4262,9 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -4271,30 +4272,30 @@ Schema: `AdminUpdateUserDTO`
 
 ```json
 {
-    "role":  "STUDENT",
-    "email":  "<string>"
+  "role": "STUDENT",
+  "email": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseUserResponseDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseUserResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "username":  "<string>",
-                 "email":  "<string>",
-                 "role":  "STUDENT",
-                 "status":  "ACTIVE"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "username": "<string>",
+    "email": "<string>",
+    "role": "STUDENT",
+    "status": "ACTIVE"
+  }
 }
 ```
 
@@ -4306,32 +4307,31 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseUserProfileDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponseUserProfileDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "fullName":  "<string>",
-                 "avatarUrl":  "<string>",
-                 "dateOfBirth":  "2026-09-24",
-                 "gender":  "MALE",
-                 "phone":  "<string>",
-                 "studentCode":  "<string>",
-                 "bio":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "fullName": "<string>",
+    "avatarUrl": "<string>",
+    "dateOfBirth": "2026-09-24",
+    "gender": "MALE",
+    "phone": "<string>",
+    "studentCode": "<string>",
+    "bio": "<string>"
+  }
 }
 ```
 
@@ -4343,10 +4343,9 @@ Ví dụ response thành công (200):
 
 ### Input: path/query
 
-| Tên | Vị trí | Bắt buộc | Kiểu | Mô tả |
-|---|---|---:|---|---|
-| `id` | path | Có | string (uuid) | - |
-
+| Tên  | Vị trí | Bắt buộc | Kiểu          | Mô tả |
+| ---- | ------ | -------: | ------------- | ----- |
+| `id` | path   |       Có | string (uuid) | -     |
 
 ### Input: request body (application/json, bắt buộc)
 
@@ -4354,29 +4353,29 @@ Schema: `UpdateUserStatusDTO`
 
 ```json
 {
-    "status":  "ACTIVE"
+  "status": "ACTIVE"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseUserResponseDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseUserResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "username":  "<string>",
-                 "email":  "<string>",
-                 "role":  "STUDENT",
-                 "status":  "ACTIVE"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "username": "<string>",
+    "email": "<string>",
+    "role": "STUDENT",
+    "status": "ACTIVE"
+  }
 }
 ```
 
@@ -4394,25 +4393,25 @@ Schema: `ForgotPasswordRequestDTO`
 
 ```json
 {
-    "email":  "student@edu.vn"
+  "email": "student@edu.vn"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Password reset email dispatched successfully | `ApiResponseVoid` |
-| 400 | Invalid email format | `ApiResponseVoid` |
-| 429 | Rate limit exceeded | `ApiResponseVoid` |
+| HTTP | Ý nghĩa                                      | Schema            |
+| ---: | -------------------------------------------- | ----------------- |
+|  200 | Password reset email dispatched successfully | `ApiResponseVoid` |
+|  400 | Invalid email format                         | `ApiResponseVoid` |
+|  429 | Rate limit exceeded                          | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -4430,24 +4429,24 @@ Schema: `RefreshRequestDTO`
 
 ```json
 {
-    "refreshToken":  "<string>"
+  "refreshToken": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Refresh token revoked | `ApiResponseVoid` |
-| 400 | Something went wrong | `ApiResponseVoid` |
+| HTTP | Ý nghĩa               | Schema            |
+| ---: | --------------------- | ----------------- |
+|  200 | Refresh token revoked | `ApiResponseVoid` |
+|  400 | Something went wrong  | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -4459,25 +4458,25 @@ Ví dụ response thành công (200):
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Success | `ApiResponseUserResponseDTO` |
-| 400 | Something went wrong | `ApiResponseUserResponseDTO` |
-| 401 | Expired or invalid JWT token | `ApiResponseUserResponseDTO` |
+| HTTP | Ý nghĩa                      | Schema                       |
+| ---: | ---------------------------- | ---------------------------- |
+|  200 | Success                      | `ApiResponseUserResponseDTO` |
+|  400 | Something went wrong         | `ApiResponseUserResponseDTO` |
+|  401 | Expired or invalid JWT token | `ApiResponseUserResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "username":  "<string>",
-                 "email":  "<string>",
-                 "role":  "STUDENT",
-                 "status":  "ACTIVE"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "username": "<string>",
+    "email": "<string>",
+    "role": "STUDENT",
+    "status": "ACTIVE"
+  }
 }
 ```
 
@@ -4493,30 +4492,30 @@ Schema: `UserUpdateDTO`
 
 ```json
 {
-    "username":  "<string>",
-    "email":  "<string>"
+  "username": "<string>",
+  "email": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseUserResponseDTO` |
+| HTTP | Ý nghĩa | Schema                       |
+| ---: | ------- | ---------------------------- |
+|  200 | OK      | `ApiResponseUserResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "userId":  "00000000-0000-0000-0000-000000000000",
-                 "username":  "<string>",
-                 "email":  "<string>",
-                 "role":  "STUDENT",
-                 "status":  "ACTIVE"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "userId": "00000000-0000-0000-0000-000000000000",
+    "username": "<string>",
+    "email": "<string>",
+    "role": "STUDENT",
+    "status": "ACTIVE"
+  }
 }
 ```
 
@@ -4532,24 +4531,24 @@ Schema: `ChangePasswordDTO`
 
 ```json
 {
-    "oldPassword":  "<string>",
-    "newPassword":  "<string>"
+  "oldPassword": "<string>",
+  "newPassword": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseVoid` |
+| HTTP | Ý nghĩa | Schema            |
+| ---: | ------- | ----------------- |
+|  200 | OK      | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -4561,25 +4560,25 @@ Ví dụ response thành công (200):
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseUserProfileDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponseUserProfileDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "fullName":  "<string>",
-                 "avatarUrl":  "<string>",
-                 "dateOfBirth":  "2026-09-24",
-                 "gender":  "MALE",
-                 "phone":  "<string>",
-                 "studentCode":  "<string>",
-                 "bio":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "fullName": "<string>",
+    "avatarUrl": "<string>",
+    "dateOfBirth": "2026-09-24",
+    "gender": "MALE",
+    "phone": "<string>",
+    "studentCode": "<string>",
+    "bio": "<string>"
+  }
 }
 ```
 
@@ -4595,37 +4594,37 @@ Schema: `UserProfileUpdateDTO`
 
 ```json
 {
-    "fullName":  "<string>",
-    "avatarUrl":  "<string>",
-    "dateOfBirth":  "2026-09-24",
-    "gender":  "MALE",
-    "phone":  "<string>",
-    "studentCode":  "<string>",
-    "bio":  "<string>"
+  "fullName": "<string>",
+  "avatarUrl": "<string>",
+  "dateOfBirth": "2026-09-24",
+  "gender": "MALE",
+  "phone": "<string>",
+  "studentCode": "<string>",
+  "bio": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | OK | `ApiResponseUserProfileDTO` |
+| HTTP | Ý nghĩa | Schema                      |
+| ---: | ------- | --------------------------- |
+|  200 | OK      | `ApiResponseUserProfileDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "fullName":  "<string>",
-                 "avatarUrl":  "<string>",
-                 "dateOfBirth":  "2026-09-24",
-                 "gender":  "MALE",
-                 "phone":  "<string>",
-                 "studentCode":  "<string>",
-                 "bio":  "<string>"
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "fullName": "<string>",
+    "avatarUrl": "<string>",
+    "dateOfBirth": "2026-09-24",
+    "gender": "MALE",
+    "phone": "<string>",
+    "studentCode": "<string>",
+    "bio": "<string>"
+  }
 }
 ```
 
@@ -4643,32 +4642,32 @@ Schema: `RefreshRequestDTO`
 
 ```json
 {
-    "refreshToken":  "<string>"
+  "refreshToken": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | New token pair issued | `ApiResponseAuthResponseDTO` |
-| 400 | Something went wrong | `ApiResponseAuthResponseDTO` |
-| 401 | Expired or invalid refresh token | `ApiResponseAuthResponseDTO` |
-| 404 | User no longer exists | `ApiResponseAuthResponseDTO` |
+| HTTP | Ý nghĩa                          | Schema                       |
+| ---: | -------------------------------- | ---------------------------- |
+|  200 | New token pair issued            | `ApiResponseAuthResponseDTO` |
+|  400 | Something went wrong             | `ApiResponseAuthResponseDTO` |
+|  401 | Expired or invalid refresh token | `ApiResponseAuthResponseDTO` |
+|  404 | User no longer exists            | `ApiResponseAuthResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "accessToken":  "<string>",
-                 "refreshToken":  "<string>",
-                 "tokenType":  "Bearer",
-                 "expiresIn":  3600,
-                 "refreshExpiresIn":  604800
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "accessToken": "<string>",
+    "refreshToken": "<string>",
+    "tokenType": "Bearer",
+    "expiresIn": 3600,
+    "refreshExpiresIn": 604800
+  }
 }
 ```
 
@@ -4686,25 +4685,25 @@ Schema: `ResetPasswordRequestDTO`
 
 ```json
 {
-    "token":  "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "newPassword":  "newStrongPass123"
+  "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "newPassword": "newStrongPass123"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Password reset successfully | `ApiResponseVoid` |
-| 400 | Invalid, expired, or previously used token | `ApiResponseVoid` |
+| HTTP | Ý nghĩa                                    | Schema            |
+| ---: | ------------------------------------------ | ----------------- |
+|  200 | Password reset successfully                | `ApiResponseVoid` |
+|  400 | Invalid, expired, or previously used token | `ApiResponseVoid` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  "<string>"
+  "status": 200,
+  "message": "Success",
+  "data": "<string>"
 }
 ```
 
@@ -4722,32 +4721,32 @@ Schema: `SigninRequestDTO`
 
 ```json
 {
-    "username":  "admin",
-    "password":  "admin123456"
+  "username": "admin",
+  "password": "admin123456"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Success | `ApiResponseAuthResponseDTO` |
-| 400 | Something went wrong | `ApiResponseAuthResponseDTO` |
-| 422 | Invalid username/password supplied | `ApiResponseAuthResponseDTO` |
+| HTTP | Ý nghĩa                            | Schema                       |
+| ---: | ---------------------------------- | ---------------------------- |
+|  200 | Success                            | `ApiResponseAuthResponseDTO` |
+|  400 | Something went wrong               | `ApiResponseAuthResponseDTO` |
+|  422 | Invalid username/password supplied | `ApiResponseAuthResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "accessToken":  "<string>",
-                 "refreshToken":  "<string>",
-                 "tokenType":  "Bearer",
-                 "expiresIn":  3600,
-                 "refreshExpiresIn":  604800
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "accessToken": "<string>",
+    "refreshToken": "<string>",
+    "tokenType": "Bearer",
+    "expiresIn": 3600,
+    "refreshExpiresIn": 604800
+  }
 }
 ```
 
@@ -4763,33 +4762,32 @@ Schema: `UserDataDTO`
 
 ```json
 {
-    "username":  "<string>",
-    "email":  "<string>",
-    "password":  "<string>"
+  "username": "<string>",
+  "email": "<string>",
+  "password": "<string>"
 }
 ```
 
 ### Output
 
-| HTTP | Ý nghĩa | Schema |
-|---:|---|---|
-| 200 | Success | `ApiResponseAuthResponseDTO` |
-| 400 | Something went wrong | `ApiResponseAuthResponseDTO` |
-| 422 | Username is already in use | `ApiResponseAuthResponseDTO` |
+| HTTP | Ý nghĩa                    | Schema                       |
+| ---: | -------------------------- | ---------------------------- |
+|  200 | Success                    | `ApiResponseAuthResponseDTO` |
+|  400 | Something went wrong       | `ApiResponseAuthResponseDTO` |
+|  422 | Username is already in use | `ApiResponseAuthResponseDTO` |
 
 Ví dụ response thành công (200):
 
 ```json
 {
-    "status":  200,
-    "message":  "Success",
-    "data":  {
-                 "accessToken":  "<string>",
-                 "refreshToken":  "<string>",
-                 "tokenType":  "Bearer",
-                 "expiresIn":  3600,
-                 "refreshExpiresIn":  604800
-             }
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "accessToken": "<string>",
+    "refreshToken": "<string>",
+    "tokenType": "Bearer",
+    "expiresIn": 3600,
+    "refreshExpiresIn": 604800
+  }
 }
 ```
-

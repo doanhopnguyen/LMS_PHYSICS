@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Button } from './Button.jsx';
 
-export function ConfirmDialog({ title, description, confirmLabel = 'Xác nhận', onCancel, onConfirm }) {
+export function ConfirmDialog({ title, description, confirmLabel = 'Xác nhận', busy = false, onCancel, onConfirm }) {
   const cancelButtonRef = useRef(null);
 
   useEffect(() => {
@@ -20,8 +20,8 @@ export function ConfirmDialog({ title, description, confirmLabel = 'Xác nhận'
         <h2 id="confirm-dialog-title" className="mt-4 text-headline-md font-bold">{title}</h2>
         <p id="confirm-dialog-description" className="mt-2 text-body-md text-[#64748B]">{description}</p>
         <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-          <Button ref={cancelButtonRef} type="button" variant="secondary" onClick={onCancel}>Hủy</Button>
-          <Button type="button" onClick={onConfirm}>{confirmLabel}</Button>
+          <Button ref={cancelButtonRef} type="button" variant="secondary" disabled={busy} onClick={onCancel}>Hủy</Button>
+          <Button type="button" disabled={busy} onClick={onConfirm}>{busy ? 'Đang xử lý…' : confirmLabel}</Button>
         </div>
       </section>
     </div>

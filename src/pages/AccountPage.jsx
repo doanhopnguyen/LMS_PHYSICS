@@ -12,8 +12,8 @@ import { studentNavItems, studentFooterItems } from '../components/Sidebar.jsx';
 import { lecturerNavigation, lecturerUtilityNavigation } from '../data/lecturerData.js';
 import { adminNavigation } from '../data/adminData.js';
 import { taNavigation, taUtilityNavigation } from '../data/taNavigation.js';
-import { SectionHeader } from '../components/SectionHeader.jsx';
 import { StatusBadge } from '../components/StatusBadge.jsx';
+import { Tabs } from '../components/Tabs.jsx';
 
 const navigationByRole = {
   STUDENT: { items: studentNavItems, utility: studentFooterItems, current: 'profile_settings.html', eyebrow: 'TÀI KHOẢN SINH VIÊN' },
@@ -26,6 +26,7 @@ export function AccountPage() {
   const account = useApiData('/api/v1/users/me');
   const profile = useApiData('/api/v1/users/me/profile');
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const session = getDemoSession();
@@ -39,8 +40,8 @@ export function AccountPage() {
     setBusy(true);
     try {
       if (kind === 'password') { await api.users.changePassword({ oldPassword: body.oldPassword, newPassword: body.newPassword }); form.reset(); }
-      else if (kind === 'profile') { const updated = await api.users.updateProfile({ ...profile.data, ...body }); setAuthenticatedSession(account.data, updated); profile.reload(); }
-      else { const updated = await api.users.updateMe(body); setAuthenticatedSession(updated, profile.data || {}); account.reload(); }
+      else if (kind === 'profile') { const updated = await api.users.updateProfile({ ...profile.data, ...body }); setAuthenticatedSession(account.data, updated); profile.updateData(updated); setEditing(''); }
+      else { const updated = await api.users.updateMe(body); setAuthenticatedSession(updated, profile.data || {}); account.updateData(updated); setEditing(''); }
       setMessage('Đã lưu thay đổi.');
     } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
@@ -59,11 +60,7 @@ export function AccountPage() {
           </Card>
           <div className="account-security-note"><span className="material-symbols-outlined" aria-hidden="true">shield_lock</span><p>Giữ mật khẩu riêng tư và sử dụng email bạn thường xuyên kiểm tra để khôi phục tài khoản.</p></div>
         </aside>
-        <div className="account-forms">
-          <Card className="p-5 md:p-6"><SectionHeader icon="manage_accounts" title="Thông tin tài khoản" /><p className="account-description">Cập nhật tên đăng nhập và email liên hệ của bạn.</p><form onSubmit={(e) => save(e, 'account')} key={JSON.stringify(account.data)}><div className="account-field-grid">{field('Tên đăng nhập', 'username', account.data?.username, 'text', true)}{field('Email', 'email', account.data?.email, 'email', true)}</div><div className="account-form-actions"><Button icon="save" type="submit" disabled={busy}>Lưu tài khoản</Button></div></form></Card>
-          <Card className="p-5 md:p-6"><SectionHeader icon="badge" title="Hồ sơ cá nhân" /><p className="account-description">Thông tin hiển thị trên hồ sơ của bạn trong hệ thống.</p><form onSubmit={(e) => save(e, 'profile')} key={JSON.stringify(profile.data)}><div className="account-field-grid">{field('Họ và tên', 'fullName', profile.data?.fullName)}{field('Số điện thoại', 'phone', profile.data?.phone, 'tel')}</div><label className="account-field mt-5">Giới thiệu<textarea name="bio" defaultValue={profile.data?.bio ?? ''} rows={3} disabled={busy} className="rounded-xl" placeholder="Viết vài dòng giới thiệu về bạn…" /></label><div className="account-form-actions"><Button icon="save" type="submit" disabled={busy}>Lưu hồ sơ</Button></div></form></Card>
-          <Card className="p-5 md:p-6"><SectionHeader icon="lock" title="Đổi mật khẩu" /><p className="account-description">Mật khẩu mới cần có ít nhất 8 ký tự.</p><form onSubmit={(e) => save(e, 'password')}><div className="account-password-current">{field('Mật khẩu hiện tại', 'oldPassword', '', 'password', true)}</div><div className="account-field-grid mt-5">{field('Mật khẩu mới', 'newPassword', '', 'password', true)}{field('Xác nhận mật khẩu mới', 'confirmPassword', '', 'password', true)}</div><div className="account-form-actions"><Button icon="lock_reset" type="submit" disabled={busy}>Đổi mật khẩu</Button></div></form></Card>
-        </div>
+        <div className="account-forms"><Card className="p-5 md:p-6"><Tabs items={[{ id: 'account', label: 'Thông tin tài khoản' }, { id: 'profile', label: 'Hồ sơ cá nhân' }, { id: 'password', label: 'Đổi mật khẩu' }]}>{(tab) => tab === 'account' ? <section><p className="account-description">Tên đăng nhập và email liên hệ của bạn.</p>{editing === 'account' ? <form onSubmit={(e) => save(e, 'account')} key={JSON.stringify(account.data)}><div className="account-field-grid">{field('Tên đăng nhập', 'username', account.data?.username, 'text', true)}{field('Email', 'email', account.data?.email, 'email', true)}</div><div className="account-form-actions"><Button type="button" variant="secondary" disabled={busy} onClick={() => setEditing('')}>Hủy</Button><Button icon="save" type="submit" disabled={busy}>Lưu thay đổi</Button></div></form> : <><dl className="account-summary-details"><div><dt>Tên đăng nhập</dt><dd>{account.data?.username}</dd></div><div><dt>Email</dt><dd>{account.data?.email}</dd></div></dl><div className="account-form-actions"><Button icon="edit" onClick={() => setEditing('account')}>Chỉnh sửa</Button></div></>}</section> : tab === 'profile' ? <section><p className="account-description">Thông tin hiển thị trên hồ sơ của bạn trong hệ thống.</p>{editing === 'profile' ? <form onSubmit={(e) => save(e, 'profile')} key={JSON.stringify(profile.data)}><div className="account-field-grid">{field('Họ và tên', 'fullName', profile.data?.fullName)}{field('Số điện thoại', 'phone', profile.data?.phone, 'tel')}</div><label className="account-field mt-5">Giới thiệu<textarea name="bio" defaultValue={profile.data?.bio ?? ''} rows={3} disabled={busy} className="rounded-xl" placeholder="Viết vài dòng giới thiệu về bạn…" /></label><div className="account-form-actions"><Button type="button" variant="secondary" disabled={busy} onClick={() => setEditing('')}>Hủy</Button><Button icon="save" type="submit" disabled={busy}>Lưu thay đổi</Button></div></form> : <><dl className="account-summary-details"><div><dt>Họ và tên</dt><dd>{profile.data?.fullName || 'Chưa cập nhật'}</dd></div><div><dt>Số điện thoại</dt><dd>{profile.data?.phone || 'Chưa cập nhật'}</dd></div><div><dt>Giới thiệu</dt><dd>{profile.data?.bio || 'Chưa cập nhật'}</dd></div></dl><div className="account-form-actions"><Button icon="edit" onClick={() => setEditing('profile')}>Chỉnh sửa</Button></div></>}</section> : <section><p className="account-description">Mật khẩu mới cần có ít nhất 8 ký tự.</p><form onSubmit={(e) => save(e, 'password')}><div className="account-password-current">{field('Mật khẩu hiện tại', 'oldPassword', '', 'password', true)}</div><div className="account-field-grid mt-5">{field('Mật khẩu mới', 'newPassword', '', 'password', true)}{field('Xác nhận mật khẩu mới', 'confirmPassword', '', 'password', true)}</div><div className="account-form-actions"><Button icon="lock_reset" type="submit" disabled={busy}>Đổi mật khẩu</Button></div></form></section>}</Tabs></Card></div>
       </div>}
     </PageContainer>
   </AppShell>;

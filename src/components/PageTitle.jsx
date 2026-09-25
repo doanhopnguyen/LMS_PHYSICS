@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { PageHeaderContext } from './PageHeaderContext.jsx';
 
-export function PageTitle({ eyebrow, title, description, actions, accentColor = '#e52220' }) {
+export function PageTitle({ eyebrow, title, description, actions, accentColor = '#e52220', inHeader = true }) {
   const context = useContext(PageHeaderContext);
   const content = (
     <div className="page-heading" style={{ '--page-title-accent': accentColor }}>
@@ -17,5 +17,5 @@ export function PageTitle({ eyebrow, title, description, actions, accentColor = 
       </div>
     </div>
   );
-  return context?.target ? <>{createPortal(content, context.target)}{actions && <div className="page-content-actions" aria-label="Thao tác trang">{actions}</div>}</> : content;
+  return context?.target && inHeader ? <>{createPortal(content, context.target)}{actions && <div className="page-content-actions" aria-label="Thao tác trang">{actions}</div>}</> : content;
 }

@@ -15,5 +15,12 @@ export function useApiData(path) {
     );
     return () => { active = false; };
   }, [path, version]);
-  return { ...state, reload: () => setVersion((value) => value + 1) };
+  return {
+    ...state,
+    reload: () => setVersion((value) => value + 1),
+    updateData: (updater) => setState((current) => ({
+      ...current,
+      data: typeof updater === 'function' ? updater(current.data) : updater,
+    })),
+  };
 }

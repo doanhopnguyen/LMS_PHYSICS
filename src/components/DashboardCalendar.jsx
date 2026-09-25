@@ -40,7 +40,7 @@ const schedules = {
   ADMIN: [
     ['Rà soát tài khoản', 'Yêu cầu mở khóa', 0, 9, 10.5, 'blue', 'admin_users.html'],
     ['Quản lý học kỳ', 'Lớp và môn học', 1, 10.5, 12, 'purple', 'admin_academics.html'],
-    ['Duyệt nội dung', 'Học liệu chờ duyệt', 2, 8.5, 10, 'peach', 'admin_content.html'],
+    ['Phân tích học tập', 'Chất lượng nội dung', 2, 8.5, 10, 'peach', 'admin_analytics.html'],
     ['Kiểm tra vận hành', 'Nhật ký hệ thống', 3, 13, 14.5, 'pink', 'admin_operations.html'],
     ['Tổng hợp hoạt động', 'Báo cáo tuần', 4, 14, 15.5, 'green', 'admin_operations.html'],
   ],

@@ -43,7 +43,7 @@ export const routeFiles = [
   'admin_operations.html',
   'ta_dashboard.html',
   'ta_work_queue.html',
-  'admin_content.html',
+  'admin_analytics.html',
   'student_evidence.html',
   'lecturer_class_operations.html',
   'auth_access.html',
