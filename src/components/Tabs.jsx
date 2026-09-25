@@ -8,9 +8,9 @@ export function Tabs({ items, children, activeId, onChange, actions }) {
     onChange?.(id);
   };
   return (
-    <div>
-      <div className="flex items-center border-b border-[#E2E8F0]">
-        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto" role="tablist">
+    <div className="tabs">
+      <div className="tabs-toolbar">
+        <div className="tabs-list" role="tablist">
           {items.map((item) => (
           <button
             key={item.id}
@@ -24,7 +24,7 @@ export function Tabs({ items, children, activeId, onChange, actions }) {
           </button>
           ))}
         </div>
-        {actions && <div className="ml-3 flex shrink-0 items-center gap-2 py-1">{actions}</div>}
+        {actions && <div className="tabs-actions">{actions}</div>}
       </div>
       {children ? children(active) : null}
     </div>

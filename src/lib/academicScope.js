@@ -2,15 +2,6 @@ import { getDemoSession } from './demoSession.js';
 import { useState } from 'react';
 
 export const academicPages = {
-  'lecturer_courses.html': 'class',
-  'lecturer_students.html': 'class',
-  'lecturer_assessments.html': 'existing',
-  'lecturer_grading.html': 'existing',
-  'lecturer_labs.html': 'existing',
-  'lecturer_analytics.html': 'existing',
-  'lecturer_ai_insights.html': 'existing',
-  'lecturer_materials.html': 'subject',
-  'lecturer_question_bank.html': 'subject',
   'my_courses.html': 'class',
   'student_evidence.html': 'class',
   'virtual_lab.html': 'class',

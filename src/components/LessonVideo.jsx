@@ -1,3 +1,4 @@
+import { Form, SubmitButton } from './Form.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from './Card.jsx';
 import { AuthAlert } from './AuthLayout.jsx';
@@ -66,11 +67,11 @@ export function LessonVideo({ lesson }) {
       <p className="lesson-video__demo">Xem thử trên thiết bị · Video không được tải lên hệ thống.</p>
       <Card className="lesson-video__notes">
         <div className="lesson-video__notes-heading"><h3>Ghi chú theo thời gian</h3><span>Lưu trong phiên xem</span></div>
-        <form onSubmit={(event) => { event.preventDefault(); if (!note.trim() || !duration) return; setNotes(current => [...current, { id: Date.now(), time, text: note.trim() }]); setNote(''); }}>
+        <Form onSubmit={(event) => { event.preventDefault(); if (!note.trim() || !duration) return; setNotes(current => [...current, { id: Date.now(), time, text: note.trim() }]); setNote(''); }}>
           <label className="sr-only" htmlFor="video-note">Nội dung ghi chú</label>
           <input id="video-note" value={note} onChange={event => setNote(event.target.value)} placeholder="Ghi lại điều cần nhớ tại thời điểm đang xem…" disabled={!duration || !!error} />
-          <button type="submit" disabled={!duration || !note.trim() || !!error}>Lưu tại {formatTime(time)}</button>
-        </form>
+          <SubmitButton type="submit" disabled={!duration || !note.trim() || !!error}>Lưu tại {formatTime(time)}</SubmitButton>
+        </Form>
         {notes.length > 0 && <ol>{notes.map(item => <li key={item.id}><button type="button" aria-label={`Tua đến ${formatTime(item.time)}`} onClick={() => { if (player.current) player.current.currentTime = item.time; }}>{formatTime(item.time)}</button><p>{item.text}</p></li>)}</ol>}
       </Card>
     </div>

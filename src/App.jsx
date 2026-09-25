@@ -23,28 +23,13 @@ import { DocumentViewerPage } from './pages/students/DocumentViewerPage.jsx';
 import { ExamSessionPage } from './pages/students/ExamSessionPage.jsx';
 import { InteractiveLessonPage } from './pages/students/InteractiveLessonPage.jsx';
 import { MobileExperiencePage } from './pages/students/MobileExperiencePage.jsx';
-import { LecturerDashboardPage } from './pages/lecturers/LecturerDashboardPage.jsx';
-import { LecturerCoursesPage } from './pages/lecturers/LecturerCoursesPage.jsx';
-import { LecturerCourseDetailPage } from './pages/lecturers/LecturerCourseDetailPage.jsx';
-import { LecturerStudentsPage } from './pages/lecturers/LecturerStudentsPage.jsx';
-import { LecturerStudentDetailPage } from './pages/lecturers/LecturerStudentDetailPage.jsx';
-import { LecturerMaterialsPage } from './pages/lecturers/LecturerMaterialsPage.jsx';
-import { LecturerQuestionBankPage } from './pages/lecturers/LecturerQuestionBankPage.jsx';
-import { LecturerAssessmentsPage } from './pages/lecturers/LecturerAssessmentsPage.jsx';
-import { LecturerAssessmentResultsPage } from './pages/lecturers/LecturerAssessmentResultsPage.jsx';
-import { LecturerAttemptDetailPage } from './pages/lecturers/LecturerAttemptDetailPage.jsx';
-import { LecturerGradingPage } from './pages/lecturers/LecturerGradingPage.jsx';
-import { LecturerLabsPage } from './pages/lecturers/LecturerLabsPage.jsx';
-import { LecturerLabAssignmentDetailPage } from './pages/lecturers/LecturerLabAssignmentDetailPage.jsx';
-import { LecturerLabSubmissionDetailPage } from './pages/lecturers/LecturerLabSubmissionDetailPage.jsx';
-import { LecturerLabGradingPage } from './pages/lecturers/LecturerLabGradingPage.jsx';
-import { LecturerAiInsightsPage } from './pages/lecturers/LecturerAiInsightsPage.jsx';
-import { LecturerLearningAnalyticsPage } from './pages/lecturers/LecturerLearningAnalyticsPage.jsx';
+import { LecturerAnalyticsApiPage, LecturerAssessmentApiPage, LecturerDashboardApiPage, LecturerExperimentsApiPage, LecturerGradingApiPage } from './pages/lecturers/LecturerApiWorkspace.jsx';
+import { LecturerAuthoringApiPage } from './pages/lecturers/LecturerContent.jsx';
+import { LecturerClassesApiPage, LecturerClassDetail, LecturerStudentDetailApiPage } from './pages/lecturers/LecturerClasses.jsx';
 import { AdminDashboardPage } from './pages/admin/AdminPages.jsx';
 import { AdminAcademicsApiPage } from './pages/admin/AdminAcademicsApiPage.jsx';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage.jsx';
 import { StudentEvidencePage } from './pages/students/StudentEvidencePage.jsx';
-import { LecturerClassOperationsPage } from './pages/lecturers/LecturerClassOperationsPage.jsx';
 import { RegisterPage } from './pages/RegisterPage.jsx';
 import { ResetPasswordPage } from './pages/ResetPasswordPage.jsx';
 import { TADashboardApiPage, TAWorkQueueApiPage } from './pages/ta/TAPagesApi.jsx';
@@ -74,23 +59,23 @@ const pageComponents = {
   'exam_session.html': ExamSessionPage,
   'interactive_lesson.html': InteractiveLessonPage,
   'mobile_experience.html': MobileExperiencePage,
-  'lecturer_dashboard.html': LecturerDashboardPage,
-  'lecturer_courses.html': LecturerCoursesPage,
-  'lecturer_course_detail.html': LecturerCourseDetailPage,
-  'lecturer_students.html': LecturerStudentsPage,
-  'lecturer_student_detail.html': LecturerStudentDetailPage,
-  'lecturer_materials.html': LecturerMaterialsPage,
-  'lecturer_question_bank.html': LecturerQuestionBankPage,
-  'lecturer_assessments.html': LecturerAssessmentsPage,
-  'lecturer_assessment_results.html': LecturerAssessmentResultsPage,
-  'lecturer_attempt_detail.html': LecturerAttemptDetailPage,
-  'lecturer_grading.html': LecturerGradingPage,
-  'lecturer_labs.html': LecturerLabsPage,
-  'lecturer_lab_assignment_detail.html': LecturerLabAssignmentDetailPage,
-  'lecturer_lab_submission_detail.html': LecturerLabSubmissionDetailPage,
-  'lecturer_lab_grading.html': LecturerLabGradingPage,
-  'lecturer_ai_insights.html': LecturerAiInsightsPage,
-  'lecturer_analytics.html': LecturerLearningAnalyticsPage,
+  'lecturer_dashboard.html': LecturerDashboardApiPage,
+  'lecturer_courses.html': LecturerClassesApiPage,
+  'lecturer_course_detail.html': LecturerClassDetail,
+  'lecturer_students.html': () => <LecturerClassesApiPage mode="students" />,
+  'lecturer_student_detail.html': LecturerStudentDetailApiPage,
+  'lecturer_materials.html': () => <LecturerAuthoringApiPage kind="materials" />,
+  'lecturer_question_bank.html': () => <LecturerAuthoringApiPage kind="questions" />,
+  'lecturer_assessments.html': LecturerAssessmentApiPage,
+  'lecturer_assessment_results.html': LecturerAssessmentApiPage,
+  'lecturer_attempt_detail.html': LecturerAssessmentApiPage,
+  'lecturer_grading.html': LecturerGradingApiPage,
+  'lecturer_labs.html': LecturerExperimentsApiPage,
+  'lecturer_lab_assignment_detail.html': LecturerExperimentsApiPage,
+  'lecturer_lab_submission_detail.html': LecturerExperimentsApiPage,
+  'lecturer_lab_grading.html': LecturerExperimentsApiPage,
+  'lecturer_ai_insights.html': LecturerAnalyticsApiPage,
+  'lecturer_analytics.html': LecturerAnalyticsApiPage,
   'admin_dashboard.html': AdminDashboardPage,
   'admin_users.html': UsersPage,
   'admin_academics.html': AdminAcademicsApiPage,
@@ -99,7 +84,7 @@ const pageComponents = {
   'ta_dashboard.html': TADashboardApiPage,
   'ta_work_queue.html': TAWorkQueueApiPage,
   'student_evidence.html': StudentEvidencePage,
-  'lecturer_class_operations.html': LecturerClassOperationsPage,
+  'lecturer_class_operations.html': LecturerClassesApiPage,
   'auth_access.html': ResetPasswordPage,
   'register.html': RegisterPage,
   'reset_password.html': ResetPasswordPage,

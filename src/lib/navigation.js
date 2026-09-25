@@ -16,7 +16,10 @@ export const navigationByLabel = [
 ];
 
 export function navigate(file) {
-  const next = `/${getCleanRoute(academicHref(file))}`;
+  const url = new URL(file, window.location.href);
+  if (url.origin !== window.location.origin) return;
+  const scoped = new URL(academicHref(`${url.pathname.slice(1)}${url.search}${url.hash}`), window.location.origin);
+  const next = `${getCleanRoute(scoped.pathname)}${scoped.search}${scoped.hash}`;
   if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== next) {
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     window.history.pushState({ ptitPrevious: current }, '', next);
@@ -29,7 +32,10 @@ export function goBack(fallback = 'dashboard.html') {
   const session = getDemoSession();
   if (typeof previous === 'string' && previous.startsWith('/') && !previous.startsWith('//')) {
     const file = getPageFile(new URL(previous, window.location.origin).pathname);
-    if (!['login.html', 'register.html', 'reset_password.html', 'auth_access.html'].includes(file) && canAccess(session?.role, file)) {
+    if (
+      !['login.html', 'register.html', 'reset_password.html', 'auth_access.html'].includes(file) &&
+      canAccess(session?.role, file)
+    ) {
       window.history.back();
       return;
     }
@@ -39,8 +45,15 @@ export function goBack(fallback = 'dashboard.html') {
 
 export function routeFromLink(link) {
   const href = link.getAttribute('href') || '';
-  const route = href.split('?')[0].split('#')[0];
-  if (routeFiles.includes(route)) return href;
+  if (link.hasAttribute('download') || (link.target && link.target !== '_self')) return null;
+  if (href && !href.startsWith('#')) {
+    let url;
+    try { url = new URL(href, window.location.href); } catch { return null; }
+    if (url.origin !== window.location.origin) return null;
+    const route = url.pathname.replace(/^\//, '');
+    const file = route.endsWith('.html') ? route : `${route}.html`;
+    if (routeFiles.includes(file)) return `${url.pathname}${url.search}${url.hash}`;
+  }
   if (href === '#' || href.startsWith('#')) {
     const text = link.textContent.replace(/\s+/g, ' ').trim();
     const match = navigationByLabel.find(([label]) => text.startsWith(label));

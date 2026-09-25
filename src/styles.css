@@ -171,14 +171,45 @@
 }
 .login-panel form > .form-alert { margin-bottom: 16px; }
 .login-panel button:disabled { opacity: 0.6; cursor: wait; }
-.select-field { display: flex; min-width: 0; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #334155; }
-.select-field__label { flex: none; white-space: nowrap; }
-.select-field__control { flex: 1; min-width: 0; height: 40px; border: 1px solid #CBD5E1; border-radius: 12px; background: #fff; padding: 0 34px 0 12px; color: #0F172A; font: inherit; font-weight: 400; outline: none; transition: border-color 150ms, box-shadow 150ms; }
+/* Shared submission forms inherit the existing application typography. */
+.app-form, .form-dialog { font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.6; font-weight: 400; }
+.app-form { gap: 16px; }
+.app-form label, .app-form legend { font-weight: 400; }
+.app-form :is(h2, h3, h4, strong, b), .form-dialog > div > h2 { font-weight: 500; }
+.app-form :is(input, select, textarea) { font-family: inherit; font-size: 14px; font-weight: 400; }
+.app-form :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), select) { min-height: 36px; }
+.app-form textarea { line-height: 1.6; resize: vertical; }
+.app-form > .form-submit { grid-column: 1 / -1; justify-self: end; }
+.app-form > div:has(> .form-submit) { gap: 8px; }
+.app-form .form-submit { font-family: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.form-dialog .select-field, .form-dialog .lookup-field { max-width: 100%; }
+.select-field { display: flex; flex-wrap: wrap; flex: none; width: var(--select-field-width, 248px); max-width: 100%; min-width: 0; align-items: center; gap: 8px; font-size: 14px; font-weight: 400; color: #334155; }
+.select-field__label { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select-field__control { flex: 1 1 0; width: 0; min-width: 0; height: 36px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #CBD5E1; border-radius: 12px; background: #fff; padding: 0 28px 0 10px; color: #0F172A; font: inherit; font-weight: 400; outline: none; transition: border-color 150ms, box-shadow 150ms; }
 .select-field__control:hover { border-color: #94A3B8; }
 .select-field__control:focus { border-color: #E52220; box-shadow: 0 0 0 3px #FEE2E2; }
 .select-field__control:disabled { cursor: not-allowed; background: #F1F5F9; color: #64748B; }
 .select-field__hint { flex-basis: 100%; font-size: 12px; font-weight: 400; color: #64748B; }
 .select-field__hint--error { color: #B91C1C; }
+.tabs { min-width: 0; max-width: 100%; }
+.tabs-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; border-bottom: 1px solid #E2E8F0; }
+.tabs-list { display: flex; flex: 0 1 auto; align-items: center; gap: 4px; min-width: 0; max-width: 100%; overflow-x: auto; }
+.tabs-list > button { flex: none; padding-inline: 12px; }
+.tabs-actions { display: flex; flex: 1 1 320px; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; max-width: 100%; padding-block: 8px; }
+.tabs-actions:empty { display: none; }
+.tabs-actions > button, .tabs-actions > a { flex: none; white-space: nowrap; }
+.lookup-field { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px; width: var(--select-field-width, 248px); min-width: 0; max-width: 100%; }
+.lookup-field > .select-field { width: 100%; min-width: 0; }
+.tabs-actions .select-field, .tabs-actions .lookup-field { width: var(--toolbar-select-width, 216px); min-width: 0; max-width: 100%; }
+.tabs-actions .lookup-field > .select-field { width: 100%; }
+.tabs-actions .select-field__control { height: 36px; }
+.tabs-actions > .select-field:has(select[name="difficultyLevel"]) { width: 172px; }
+
+@media (max-width: 639px) {
+  .tabs-list { flex-basis: 100%; }
+  .tabs-actions { flex-basis: 100%; justify-content: flex-start; }
+  .tabs-actions .select-field, .tabs-actions .lookup-field { width: min(100%, var(--toolbar-select-width, 216px)); }
+}
 .form-alert {
   display: flex;
   align-items: flex-start;

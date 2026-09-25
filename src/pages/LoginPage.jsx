@@ -1,3 +1,4 @@
+import { Form, SubmitButton } from '../components/Form.jsx';
 import React, { useState } from 'react';
 import { AuthAlert, AuthInput, AuthLayout } from '../components/AuthLayout.jsx';
 import { navigate } from '../lib/navigation.js';
@@ -29,7 +30,7 @@ export function LoginPage() {
   return (
     <AuthLayout title="Đăng nhập" description="Chào mừng bạn trở lại hệ thống học tập Vật lý.">
           <AuthAlert error>{error}</AuthAlert>
-          <form
+          <Form
             onSubmit={signIn}
           >
             <label htmlFor="student-id">Tên đăng nhập</label>
@@ -51,10 +52,10 @@ export function LoginPage() {
               placeholder="Nhập mật khẩu"
               required
             />
-            <button className="login-submit" type="submit" disabled={submitting}>
+            <SubmitButton className="login-submit" type="submit" disabled={submitting}>
               {submitting ? 'Đang đăng nhập…' : 'Đăng nhập'}
-            </button>
-          </form>
+            </SubmitButton>
+          </Form>
 
           <div className="login-divider">
           </div>

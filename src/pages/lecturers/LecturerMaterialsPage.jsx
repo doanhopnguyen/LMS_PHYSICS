@@ -1,3 +1,4 @@
+import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -87,7 +88,7 @@ function MaterialFormModal({ material, onClose, onSave }) {
           <h2 id="material-form-title" className="text-headline-md font-bold">{material ? 'Chỉnh sửa học liệu' : 'Thêm học liệu'}</h2>
           <button type="button" onClick={onClose} aria-label="Đóng biểu mẫu" className="flex h-9 w-9 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"><span className="material-symbols-outlined">close</span></button>
         </div>
-        <form onSubmit={submit} className="space-y-5 p-5 md:p-6">
+        <Form onSubmit={submit} className="space-y-5 p-5 md:p-6">
           <label className="block text-body-sm font-semibold">Tên học liệu *<input value={form.title} onChange={(event) => update('title', event.target.value)} className="mt-2 w-full border border-[#CBD5E1] px-4 focus:border-primary focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]" aria-invalid={Boolean(errors.title)} />{errors.title && <span className="mt-1 block text-body-sm text-primary">{errors.title}</span>}</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <label className="text-body-sm font-semibold">Loại học liệu *<select value={form.type} onChange={(event) => update('type', event.target.value)} className="mt-2 w-full border border-[#CBD5E1] bg-white px-4">{Object.entries(materialTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
@@ -103,8 +104,8 @@ function MaterialFormModal({ material, onClose, onSave }) {
             <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-5 text-body-sm text-[#64748B] hover:border-primary"><span className="material-symbols-outlined">upload_file</span><span>Chọn file minh họa từ thiết bị</span><input type="file" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) setForm((current) => ({ ...current, fileName: file.name, fileSize: `${(file.size / 1024 / 1024).toFixed(1)} MB` })); }} /></label>
           </div>
           <label className="block text-body-sm font-semibold">Trạng thái<select value={form.status} onChange={(event) => update('status', event.target.value)} className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"><option value="DRAFT">Bản nháp</option><option value="PENDING_APPROVAL">Chờ phê duyệt</option>{material && <><option value="APPROVED">Đã phê duyệt</option><option value="ARCHIVED">Đã lưu trữ</option></>}</select></label>
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-[#E2E8F0] pt-5"><Button type="button" variant="secondary" onClick={onClose}>Hủy</Button><Button type="submit" icon="save">Lưu học liệu</Button></div>
-        </form>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-[#E2E8F0] pt-5"><Button type="button" variant="secondary" onClick={onClose}>Hủy</Button><SubmitButton type="submit" icon="save">Lưu học liệu</SubmitButton></div>
+        </Form>
       </section>
     </div>
   );

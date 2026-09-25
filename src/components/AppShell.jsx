@@ -90,6 +90,7 @@ export function AppShell({
     <div
       className="app-shell app-shell-white min-h-screen flex flex-col"
       onClick={(event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
         const link = event.target.closest('a');
         const target = link && routeFromLink(link);
         if (target) {

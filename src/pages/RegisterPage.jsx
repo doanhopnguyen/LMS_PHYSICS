@@ -1,3 +1,4 @@
+import { Form, SubmitButton } from '../components/Form.jsx';
 import React, { useState } from 'react';
 import { AuthAlert, AuthInput, AuthLayout } from '../components/AuthLayout.jsx';
 import { api, tokenStore } from '../lib/apiClient.js';
@@ -30,7 +31,7 @@ export function RegisterPage() {
   }
   return <AuthLayout title="Đăng ký tài khoản" description="Tạo tài khoản sinh viên để bắt đầu học tập.">
     <AuthAlert error>{error}</AuthAlert>
-    <form onSubmit={submit}>
+    <Form onSubmit={submit}>
       <label htmlFor="register-username">Tên đăng nhập</label>
       <AuthInput id="register-username" name="username" autoComplete="username" placeholder="Nhập tên đăng nhập" required />
       <label htmlFor="register-email">Email</label>
@@ -40,7 +41,7 @@ export function RegisterPage() {
       <label htmlFor="register-confirm">Xác nhận mật khẩu</label>
       <AuthInput id="register-confirm" name="confirmPassword" type="password" autoComplete="new-password" minLength={8} placeholder="Nhập lại mật khẩu" required error={confirmError} onChange={() => setConfirmError('')} />
       <button className="login-submit" disabled={submitting}>{submitting ? 'Đang đăng ký…' : 'Đăng ký'}</button>
-    </form>
+    </Form>
     <a href="/login" className="auth-link">Đã có tài khoản? Đăng nhập</a>
   </AuthLayout>;
 }

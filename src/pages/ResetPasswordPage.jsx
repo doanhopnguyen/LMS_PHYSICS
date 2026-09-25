@@ -1,3 +1,4 @@
+import { Form, SubmitButton } from '../components/Form.jsx';
 import React, { useState } from 'react';
 import { AuthAlert, AuthInput, AuthLayout } from '../components/AuthLayout.jsx';
 import { api } from '../lib/apiClient.js';
@@ -42,7 +43,7 @@ export function ResetPasswordPage() {
   return <AuthLayout title={step === 'EMAIL' ? 'Quên mật khẩu' : 'Đặt lại mật khẩu'} description={step === 'EMAIL' ? 'Nhập email tài khoản để nhận mã đặt lại mật khẩu.' : step === 'RESET' ? 'Nhập mã nhận qua email và tạo mật khẩu mới.' : 'Mật khẩu của bạn đã được cập nhật.'}>
     <AuthAlert>{feedback}</AuthAlert>
     <AuthAlert error>{error}</AuthAlert>
-    {step !== 'DONE' && <form key={step} onSubmit={submit}>
+    {step !== 'DONE' && <Form key={step} onSubmit={submit}>
       {step === 'EMAIL' ? <>
         <label htmlFor="reset-email">Email</label>
         <AuthInput id="reset-email" name="email" type="email" autoComplete="email" placeholder="Nhập email đã đăng ký" value={email} onChange={(event) => setEmail(event.target.value)} required />
@@ -56,7 +57,7 @@ export function ResetPasswordPage() {
       </>}
       <button className="login-submit" disabled={submitting}>{submitting ? 'Đang xử lý…' : step === 'EMAIL' ? 'Gửi mã qua email' : 'Đặt lại mật khẩu'}</button>
       {step === 'RESET' && <button className="auth-secondary auth-resend" type="button" disabled={submitting} onClick={() => { setStep('EMAIL'); setError(''); setFeedback(''); }}>Gửi lại</button>}
-    </form>}
+    </Form>}
     <a href="/login" className="auth-link">Về đăng nhập</a>
   </AuthLayout>;
 }
