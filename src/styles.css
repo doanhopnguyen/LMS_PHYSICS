@@ -193,6 +193,8 @@
   max-width: calc(100vw - 40px);
   margin: 0;
   align-items: center;
+  border-radius: 16px;
+  min-height: 52px;
   box-shadow: 0 8px 28px #0f172a1a;
   animation: auth-toast-in 180ms ease-out;
 }

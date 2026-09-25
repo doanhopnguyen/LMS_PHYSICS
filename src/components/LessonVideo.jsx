@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from './Card.jsx';
+import { AuthAlert } from './AuthLayout.jsx';
 
 const formatTime = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
@@ -54,7 +55,7 @@ export function LessonVideo({ lesson }) {
         )}
       </div>
       <input ref={picker} type="file" accept="video/*" className="sr-only" tabIndex={-1} onChange={selectVideo} aria-label="Chọn video minh họa từ thiết bị" />
-      {error && <p className="lesson-video__error" role="alert">{error}</p>}
+      <AuthAlert error>{error}</AuthAlert>
       <div className="lesson-video__toolbar">
         <span className="lesson-video__time"><span className="material-symbols-outlined" aria-hidden="true">schedule</span>{formatTime(time)} / {formatTime(duration)}</span>
         <label>Tốc độ <select value={speed} disabled={!source || !!error} onChange={(event) => { setSpeed(event.target.value); if (player.current) player.current.playbackRate = Number(event.target.value); }}>

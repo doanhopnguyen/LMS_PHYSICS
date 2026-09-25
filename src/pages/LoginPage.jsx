@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthInput, AuthLayout } from '../components/AuthLayout.jsx';
+import { AuthAlert, AuthInput, AuthLayout } from '../components/AuthLayout.jsx';
 import { navigate } from '../lib/navigation.js';
 import { setAuthenticatedSession } from '../lib/demoSession.js';
 import { api, tokenStore } from '../lib/apiClient.js';
@@ -28,7 +28,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout title="Đăng nhập" description="Chào mừng bạn trở lại hệ thống học tập Vật lý.">
-
+          <AuthAlert error>{error}</AuthAlert>
           <form
             onSubmit={signIn}
           >
@@ -44,7 +44,6 @@ export function LoginPage() {
             <label htmlFor="login-password">Mật khẩu</label>
             <AuthInput
               id="login-password"
-              error={error}
               onChange={() => setError('')}
               name="password"
               type="password"
