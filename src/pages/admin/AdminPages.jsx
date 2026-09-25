@@ -2,6 +2,7 @@ import React from 'react';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
+import { DashboardCalendar } from '../../components/DashboardCalendar.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
 import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { SectionHeader } from '../../components/SectionHeader.jsx';
@@ -55,7 +56,8 @@ export function AdminDashboardPage() {
           <SectionHeader icon="history" title="Hoạt động gần đây" />
           <ol className="mt-4 space-y-4">{activityRows.length ? activityRows.map((item, index) => <li key={item.logId || `${item.createdAt}-${index}`}><p className="text-label-md font-bold text-primary">{formatTime(item.createdAt)}</p><p className="mt-1 text-body-sm font-semibold">{item.username || item.userId || 'Hệ thống'} · {item.actionType || item.action || 'Hoạt động'}</p><p className="text-body-sm text-[#64748B]">{item.objectType || item.entity || 'Đối tượng'} {item.objectId || item.entityId || ''}</p></li>) : <li className="text-body-sm text-[#64748B]">Chưa có hoạt động gần đây.</li>}</ol>
         </Card>
-      </div></>}
+      </div>
+      <div className="mt-6"><DashboardCalendar role="ADMIN" /></div></>}
     </AdminPageShell>
   );
 }

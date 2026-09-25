@@ -47,7 +47,8 @@ import { StudentEvidencePage } from './pages/students/StudentEvidencePage.jsx';
 import { LecturerClassOperationsPage } from './pages/lecturers/LecturerClassOperationsPage.jsx';
 import { RegisterPage } from './pages/RegisterPage.jsx';
 import { ResetPasswordPage } from './pages/ResetPasswordPage.jsx';
-import { TAClassSupportPage, TADashboardPage, TAWorkQueuePage } from './pages/ta/TAPages.jsx';
+import { TADashboardApiPage, TAWorkQueueApiPage } from './pages/ta/TAPagesApi.jsx';
+import { TAClassSupportTabsPage } from './pages/ta/TAClassSupportTabsPage.jsx';
 import { RoleAccessPage } from './pages/RoleAccessPage.jsx';
 import { canAccess, getDemoSession } from './lib/demoSession.js';
 
@@ -95,14 +96,14 @@ const pageComponents = {
   'admin_academics.html': AdminAcademicsApiPage,
   'admin_operations.html': OperationsPage,
   'admin_analytics.html': AdminAnalyticsPage,
-  'ta_dashboard.html': TADashboardPage,
-  'ta_work_queue.html': TAWorkQueuePage,
+  'ta_dashboard.html': TADashboardApiPage,
+  'ta_work_queue.html': TAWorkQueueApiPage,
   'student_evidence.html': StudentEvidencePage,
   'lecturer_class_operations.html': LecturerClassOperationsPage,
   'auth_access.html': ResetPasswordPage,
   'register.html': RegisterPage,
   'reset_password.html': ResetPasswordPage,
-  'ta_class_support.html': TAClassSupportPage,
+  'ta_class_support.html': TAClassSupportTabsPage,
 };
 
 function App() {
