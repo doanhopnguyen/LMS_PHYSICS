@@ -87,56 +87,181 @@ export async function apiRequest(path, options = {}) {
 }
 
 export const api = {
+  // ─── Auth ────────────────────────────────────────────────────────────────────
   auth: {
     signin: (credentials) => apiRequest('/api/v1/users/signin', { method: 'POST', body: credentials, auth: false }),
     signup: (account) => apiRequest('/api/v1/users/signup', { method: 'POST', body: account, auth: false }),
     forgotPassword: (email) => apiRequest('/api/v1/users/forgot-password', { method: 'POST', body: { email }, auth: false }),
     resetPassword: (payload) => apiRequest('/api/v1/users/reset-password', { method: 'POST', body: payload, auth: false }),
+    refresh: (refreshToken) => apiRequest('/api/v1/users/refresh', { method: 'POST', body: { refreshToken }, auth: false }),
     logout: () => apiRequest('/api/v1/users/logout', { method: 'POST', body: { refreshToken: tokenStore.getRefreshToken() } }),
   },
+
+  // ─── Users ───────────────────────────────────────────────────────────────────
   users: {
     me: () => apiRequest('/api/v1/users/me'),
     updateMe: (body) => apiRequest('/api/v1/users/me', { method: 'PUT', body }),
     profile: () => apiRequest('/api/v1/users/me/profile'),
     updateProfile: (body) => apiRequest('/api/v1/users/me/profile', { method: 'PUT', body }),
     changePassword: (body) => apiRequest('/api/v1/users/me/password', { method: 'PUT', body }),
+    // Admin only
+    adminList: (query) => apiRequest('/api/v1/users/admin/users', { query }),
+    adminCreate: (body) => apiRequest('/api/v1/users/admin/create-user', { method: 'POST', body }),
+    adminUpdate: (id, body) => apiRequest(`/api/v1/users/admin/users/${id}`, { method: 'PUT', body }),
+    adminGetProfile: (id) => apiRequest(`/api/v1/users/admin/users/${id}/profile`),
+    adminUpdateStatus: (id, body) => apiRequest(`/api/v1/users/admin/users/${id}/status`, { method: 'PUT', body }),
+    getByUsername: (username) => apiRequest(`/api/v1/users/${username}`),
+    deleteByUsername: (username) => apiRequest(`/api/v1/users/${username}`, { method: 'DELETE' }),
   },
+
+  // ─── Semesters ───────────────────────────────────────────────────────────────
+  semesters: {
+    list: () => apiRequest('/api/v1/semesters'),
+    get: (id) => apiRequest(`/api/v1/semesters/${id}`),
+    create: (body) => apiRequest('/api/v1/semesters', { method: 'POST', body }),
+    update: (id, body) => apiRequest(`/api/v1/semesters/${id}`, { method: 'PUT', body }),
+    setCurrent: (id) => apiRequest(`/api/v1/semesters/${id}/set-current`, { method: 'PUT' }),
+  },
+
+  // ─── Subjects & Topics ───────────────────────────────────────────────────────
+  subjects: {
+    list: (query) => apiRequest('/api/v1/subjects', { query }),
+    get: (id) => apiRequest(`/api/v1/subjects/${id}`),
+    create: (body) => apiRequest('/api/v1/subjects', { method: 'POST', body }),
+    update: (id, body) => apiRequest(`/api/v1/subjects/${id}`, { method: 'PUT', body }),
+    toggleStatus: (id) => apiRequest(`/api/v1/subjects/${id}/toggle-status`, { method: 'PUT' }),
+    topics: (subjectId) => apiRequest(`/api/v1/subjects/${subjectId}/topics`),
+    getTopic: (subjectId, topicId) => apiRequest(`/api/v1/subjects/${subjectId}/topics/${topicId}`),
+    createTopic: (subjectId, body) => apiRequest(`/api/v1/subjects/${subjectId}/topics`, { method: 'POST', body }),
+    updateTopic: (subjectId, topicId, body) => apiRequest(`/api/v1/subjects/${subjectId}/topics/${topicId}`, { method: 'PUT', body }),
+    deleteTopic: (subjectId, topicId) => apiRequest(`/api/v1/subjects/${subjectId}/topics/${topicId}`, { method: 'DELETE' }),
+  },
+
+  // ─── Learning Materials ──────────────────────────────────────────────────────
+  materials: {
+    list: (topicId) => apiRequest(`/api/v1/topics/${topicId}/materials`),
+    get: (topicId, materialId) => apiRequest(`/api/v1/topics/${topicId}/materials/${materialId}`),
+    create: (topicId, formData) => apiRequest(`/api/v1/topics/${topicId}/materials`, { method: 'POST', formData }),
+    update: (topicId, materialId, formData) => apiRequest(`/api/v1/topics/${topicId}/materials/${materialId}`, { method: 'PUT', formData }),
+    remove: (topicId, materialId) => apiRequest(`/api/v1/topics/${topicId}/materials/${materialId}`, { method: 'DELETE' }),
+    approve: (topicId, materialId) => apiRequest(`/api/v1/topics/${topicId}/materials/${materialId}/approve`, { method: 'PUT' }),
+  },
+
+  // ─── Classes ─────────────────────────────────────────────────────────────────
   classes: {
     list: (query) => apiRequest('/api/v1/classes', { query }),
     get: (id) => apiRequest(`/api/v1/classes/${id}`),
     create: (body) => apiRequest('/api/v1/classes', { method: 'POST', body }),
     update: (id, body) => apiRequest(`/api/v1/classes/${id}`, { method: 'PUT', body }),
+    updateStatus: (id, body) => apiRequest(`/api/v1/classes/${id}/status`, { method: 'PUT', body }),
+    // Students enrollment
     students: (id, query) => apiRequest(`/api/v1/classes/${id}/students`, { query }),
-    progress: (id, query) => apiRequest(`/api/v1/classes/${id}/progress`, { query }),
+    enrollSingle: (id, body) => apiRequest(`/api/v1/classes/${id}/enroll-single`, { method: 'POST', body }),
+    enrollBulk: (id, body) => apiRequest(`/api/v1/classes/${id}/enroll-bulk`, { method: 'POST', body }),
+    removeStudent: (id, studentId) => apiRequest(`/api/v1/classes/${id}/students/${studentId}`, { method: 'DELETE' }),
+    updateStudentStatus: (id, studentId, body) => apiRequest(`/api/v1/classes/${id}/students/${studentId}/status`, { method: 'PUT', body }),
+    // Staff
+    staff: (id) => apiRequest(`/api/v1/classes/${id}/staff`),
+    assignStaff: (id, body) => apiRequest(`/api/v1/classes/${id}/staff`, { method: 'POST', body }),
+    removeStaff: (id, userId) => apiRequest(`/api/v1/classes/${id}/staff/${userId}`, { method: 'DELETE' }),
+    // Learning data
+    progress: (id) => apiRequest(`/api/v1/classes/${id}/progress`),
+    evidence: (id) => apiRequest(`/api/v1/classes/${id}/evidence`),
+    activityLogs: (id) => apiRequest(`/api/v1/classes/${id}/activity-logs`),
   },
-  subjects: {
-    list: (query) => apiRequest('/api/v1/subjects', { query }),
-    get: (id) => apiRequest(`/api/v1/subjects/${id}`),
-    topics: (id, query) => apiRequest(`/api/v1/subjects/${id}/topics`, { query }),
+
+  // ─── Students ────────────────────────────────────────────────────────────────
+  students: {
+    myClasses: (query) => apiRequest('/api/v1/students/me/classes', { query }),
+    myProgress: (classId) => apiRequest('/api/v1/students/me/progress', { query: { classId } }),
+    updateProgress: (body) => apiRequest('/api/v1/students/me/progress', { method: 'PUT', body }),
+    myEvidence: () => apiRequest('/api/v1/students/me/evidence'),
+    myActivityLogs: () => apiRequest('/api/v1/students/me/activity-logs'),
+    getEvidence: (id) => apiRequest(`/api/v1/students/${id}/evidence`),
   },
+
+  // ─── Questions Bank ──────────────────────────────────────────────────────────
   questions: {
     list: (query) => apiRequest('/api/v1/questions', { query }),
     get: (id) => apiRequest(`/api/v1/questions/${id}`),
     create: (body) => apiRequest('/api/v1/questions', { method: 'POST', body }),
     update: (id, body) => apiRequest(`/api/v1/questions/${id}`, { method: 'PUT', body }),
     remove: (id) => apiRequest(`/api/v1/questions/${id}`, { method: 'DELETE' }),
+    approve: (id) => apiRequest(`/api/v1/questions/${id}/approve`, { method: 'PUT' }),
+    importExcel: (formData, query) => apiRequest('/api/v1/questions/import-excel', { method: 'POST', formData, query }),
+    downloadTemplate: () => apiRequest('/api/v1/questions/import-excel/template', { responseType: 'blob' }),
   },
+
+  // ─── Exams ───────────────────────────────────────────────────────────────────
   exams: {
-    listForClass: (classId, query) => apiRequest(`/api/v1/exams/class/${classId}`, { query }),
+    listForClass: (classId) => apiRequest(`/api/v1/exams/class/${classId}`),
     get: (id) => apiRequest(`/api/v1/exams/${id}`),
     create: (body) => apiRequest('/api/v1/exams', { method: 'POST', body }),
-    startAttempt: (id) => apiRequest(`/api/v1/exams/${id}/attempts`, { method: 'POST' }),
+    addQuestion: (examId, body) => apiRequest(`/api/v1/exams/${examId}/questions`, { method: 'POST', body }),
+    generateQuestions: (examId) => apiRequest(`/api/v1/exams/${examId}/generate-questions`, { method: 'POST' }),
+    // Attempts
+    startAttempt: (examId) => apiRequest(`/api/v1/exams/${examId}/attempts`, { method: 'POST' }),
+    myAttempt: (examId) => apiRequest(`/api/v1/exams/${examId}/my-attempt`),
+    myAttempts: (examId) => apiRequest(`/api/v1/exams/${examId}/my-attempts`),
+    getAttempt: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}`),
     saveAnswer: (attemptId, body) => apiRequest(`/api/v1/exams/attempts/${attemptId}/answers`, { method: 'POST', body }),
     submit: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}/submit`, { method: 'PUT' }),
   },
+
+  // ─── Experiments (Virtual Lab) ───────────────────────────────────────────────
+  experiments: {
+    list: (subjectId) => apiRequest('/api/v1/experiments', { query: { subjectId } }),
+    get: (experimentId) => apiRequest(`/api/v1/experiments/${experimentId}`),
+    create: (body) => apiRequest('/api/v1/experiments', { method: 'POST', body }),
+    assign: (experimentId, body) => apiRequest(`/api/v1/experiments/${experimentId}/assign`, { method: 'POST', body }),
+    submitAssignment: (assignmentId, formData) => apiRequest(`/api/v1/experiments/assignments/${assignmentId}/submit`, { method: 'POST', formData }),
+    gradeSubmission: (submissionId, body) => apiRequest(`/api/v1/experiments/submissions/${submissionId}/scores`, { method: 'POST', body }),
+    confirmSubmission: (submissionId, body) => apiRequest(`/api/v1/experiments/submissions/${submissionId}/confirmation`, { method: 'POST', body }),
+  },
+
+  // ─── AI Tutor ────────────────────────────────────────────────────────────────
   aiTutor: {
+    myConversations: () => apiRequest('/api/v1/ai-tutor/conversations/my'),
+    /** @deprecated Use myConversations() */
     conversations: () => apiRequest('/api/v1/ai-tutor/conversations/my'),
     start: (body) => apiRequest('/api/v1/ai-tutor/conversations', { method: 'POST', body }),
-    messages: (id) => apiRequest(`/api/v1/ai-tutor/conversations/${id}/messages`),
-    send: (id, body) => apiRequest(`/api/v1/ai-tutor/conversations/${id}/messages`, { method: 'POST', body }),
-    end: (id) => apiRequest(`/api/v1/ai-tutor/conversations/${id}/end`, { method: 'PUT' }),
+    end: (conversationId) => apiRequest(`/api/v1/ai-tutor/conversations/${conversationId}/end`, { method: 'PUT' }),
+    messages: (conversationId) => apiRequest(`/api/v1/ai-tutor/conversations/${conversationId}/messages`),
+    send: (conversationId, body) => apiRequest(`/api/v1/ai-tutor/conversations/${conversationId}/messages`, { method: 'POST', body }),
+    sendFeedback: (messageId, body) => apiRequest(`/api/v1/ai-tutor/messages/${messageId}/feedback`, { method: 'POST', body }),
   },
+
+  // ─── Dashboard ───────────────────────────────────────────────────────────────
+  dashboard: {
+    me: () => apiRequest('/api/v1/dashboard/me'),
+    forClass: (id) => apiRequest(`/api/v1/dashboard/class/${id}`),
+    forStudent: (classId, studentId) => apiRequest(`/api/v1/dashboard/class/${classId}/student/${studentId}`),
+    regenerate: (id) => apiRequest(`/api/v1/dashboard/class/${id}/regenerate`, { method: 'POST' }),
+  },
+
+  // ─── Analytics ───────────────────────────────────────────────────────────────
+  analytics: {
+    topicDifficulty: (query) => apiRequest('/api/v1/analytics/topic-difficulty', { query }),
+    questionQuality: (query) => apiRequest('/api/v1/analytics/question-quality', { query }),
+    materialEffectiveness: (query) => apiRequest('/api/v1/analytics/material-effectiveness', { query }),
+    aiGaps: (query) => apiRequest('/api/v1/analytics/ai-gaps', { query }),
+    triggerAggregation: (body) => apiRequest('/api/v1/analytics/trigger', { method: 'POST', body }),
+  },
+
+  // ─── Admin ───────────────────────────────────────────────────────────────────
+  admin: {
+    activityLogs: (query) => apiRequest('/api/v1/admin/activity-logs', { query }),
+    auditLogs: (query) => apiRequest('/api/v1/admin/audit-logs', { query }),
+    settings: () => apiRequest('/api/v1/admin/settings'),
+    getSetting: (key) => apiRequest(`/api/v1/admin/settings/${key}`),
+    updateSetting: (key, body) => apiRequest(`/api/v1/admin/settings/${key}`, { method: 'PUT', body }),
+    bulkUpdateSettings: (body) => apiRequest('/api/v1/admin/settings/bulk', { method: 'POST', body }),
+  },
+
+  // ─── Files ───────────────────────────────────────────────────────────────────
   files: {
     upload: (formData, query) => apiRequest('/api/v1/files/upload', { method: 'POST', formData, query }),
+    /** Get a public read-only URL for a stored file (no auth needed). */
+    url: (filePath) => makeUrl(`/api/v1/files/${filePath}`, {}),
   },
 };

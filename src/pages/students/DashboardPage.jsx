@@ -6,6 +6,8 @@ import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { CountDotsChart, DonutChart } from '../../components/DataCharts.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { useCurrentUser } from '../../hooks/useCurrentUser.js';
+import { api } from '../../lib/apiClient.js';
 
 const tasks = [
   {
@@ -51,11 +53,25 @@ function getSkyMessage(period) {
 
 export function DashboardPage() {
   const [skyPeriod, setSkyPeriod] = useState(() => getSkyPeriod(new Date().getHours()));
+  const [snapshot, setSnapshot] = useState(null);
+  const [myClasses, setMyClasses] = useState([]);
+  const user = useCurrentUser();
 
   useEffect(() => {
     const timer = window.setInterval(() => setSkyPeriod(getSkyPeriod(new Date().getHours())), 60 * 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    api.dashboard.me().then(setSnapshot).catch(() => {});
+    api.students.myClasses().then((data) => {
+      const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
+      setMyClasses(list);
+    }).catch(() => {});
+  }, []);
+
+  const stats = snapshot?.data || {};
+  const displayName = user?.name || user?.username || 'Sinh viên';
 
   return (
     <AppShell
@@ -79,9 +95,9 @@ export function DashboardPage() {
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-2 max-w-2xl">
               <StatusBadge tone="primary" className="bg-white/10 text-white border-white/20">
-                Học kỳ 1 · Năm học 2024-2025
+                {myClasses.length > 0 ? myClasses[0]?.classCode || 'Học kỳ hiện tại' : 'Học kỳ hiện tại'}
               </StatusBadge>
-              <h1 className="text-headline-lg font-headline-lg font-bold tracking-tight">Xin chào, Nguyễn Văn A!</h1>
+              <h1 className="text-headline-lg font-headline-lg font-bold tracking-tight">Xin chào, {displayName}!</h1>
               {/* <p className="text-body-lg text-white/90 leading-relaxed">
                 {getSkyMessage(skyPeriod)} Tiếp tục hành trình khám phá môn Vật lý 1 cùng hệ thống học tập thông minh
                 PTIT. Bạn đã duy trì chuỗi học 5 ngày liên tiếp!
@@ -105,29 +121,34 @@ export function DashboardPage() {
         </Card>
 
         <DashboardOverview role="STUDENT">
-          <StatCard label="Tiến độ học tập chung" value="68%" icon="trending_up" fillProgress={68} />
           <StatCard
-            label="Bài học đã hoàn thành"
-            value="18"
-            detail="/ 24 bài"
+            label="Tiến độ học tập chung"
+            value={stats.completedTopics != null && stats.totalTopics ? `${Math.round((stats.completedTopics / stats.totalTopics) * 100)}%` : '–'}
+            icon="trending_up"
+            fillProgress={stats.totalTopics ? (stats.completedTopics / stats.totalTopics) * 100 : 0}
+          />
+          <StatCard
+            label="Chủ đề đã hoàn thành"
+            value={stats.completedTopics ?? '–'}
+            detail={stats.totalTopics ? `/ ${stats.totalTopics} chủ đề` : ''}
             icon="menu_book"
             tone="success"
-            sideChart={<DonutChart value={(18 / 24) * 100} label="Bài học đã hoàn thành" compact />}
+            sideChart={<DonutChart value={stats.totalTopics ? (stats.completedTopics / stats.totalTopics) * 100 : 0} label="Hoàn thành" compact />}
           />
           <StatCard
-            label="Bài luyện tập đã làm"
-            value="45"
-            detail="bộ đề"
+            label="Bài thi đã tham gia"
+            value={stats.totalExamsTaken ?? '–'}
+            detail="lượt thi"
             icon="quiz"
             tone="warning"
-            chart={<CountDotsChart value={45} unit="bộ đề" groupSize={5} />}
+            chart={<CountDotsChart value={stats.totalExamsTaken || 0} unit="bài thi" groupSize={5} />}
           />
           <StatCard
-            label="Nhiệm vụ cần làm"
-            value="3"
-            detail="nhiệm vụ mở"
-            icon="notification_important"
-            chart={<CountDotsChart value={tasks.length} unit="nhiệm vụ" color="#b45309" />}
+            label="Phiên AI Tutor"
+            value={stats.aiSessionsCount ?? '–'}
+            detail="phiên thảo luận"
+            icon="smart_toy"
+            chart={<CountDotsChart value={stats.aiSessionsCount || 0} unit="phiên" color="#b45309" />}
           />
         </DashboardOverview>
 

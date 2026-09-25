@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { ProgressBar } from '../../components/ProgressBar.jsx';
 import { useChatAutoScroll } from '../../hooks/useChatAutoScroll.js';
+import { api } from '../../lib/apiClient.js';
+import { useApiData } from '../../hooks/useApiData.js';
 
 const starterQuestions = [
   'Giải thích định luật II Newton',
@@ -13,31 +15,93 @@ const starterQuestions = [
 ];
 
 export function AiTutorPage() {
-  const [messages, setMessages] = useState([
-    { role: 'user', text: 'Tại sao lực ma sát lại phụ thuộc vào áp lực của vật lên mặt phẳng?' },
-    {
-      role: 'assistant',
-      text: 'Lực ma sát trượt tỉ lệ với áp lực vì sự tương tác ở các điểm tiếp xúc vi mô tăng khi hai bề mặt bị ép vào nhau. Công thức là Fms = μN, trong đó N là áp lực vuông góc.',
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [value, setValue] = useState('');
-  const [topic, setTopic] = useState('TOPIC-FRICTION');
   const [mode, setMode] = useState('TEXT');
   const [ended, setEnded] = useState(false);
-  const [rated, setRated] = useState(null);
+  const [rated, setRated] = useState({});
+  const [sending, setSending] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  const [lastMessageId, setLastMessageId] = useState(null);
   const messagesRef = useChatAutoScroll(messages);
 
-  const send = () => {
-    if (!value.trim() || ended) return;
-    setMessages((current) => [
-      ...current,
-      { role: 'user', text: value },
-      {
-        role: 'assistant',
-        text: 'Hãy bắt đầu bằng việc xác định các lực tác dụng lên vật. Bạn thử vẽ sơ đồ lực trước nhé!',
-      },
-    ]);
+  // Load my conversations list
+  const { data: conversationsData } = useApiData('/api/v1/ai-tutor/conversations/my');
+  const conversations = Array.isArray(conversationsData) ? conversationsData : [];
+
+  // Start a new conversation
+  const startNewConversation = async () => {
+    try {
+      const conv = await api.aiTutor.start({ mode });
+      setConversationId(conv.conversationId);
+      setMessages([]);
+      setEnded(false);
+      setRated({});
+      setValue('');
+    } catch (err) {
+      console.error('Cannot start conversation:', err);
+    }
+  };
+
+  // Load messages for an existing conversation
+  const loadConversation = async (convId) => {
+    try {
+      const msgs = await api.aiTutor.messages(convId);
+      const list = Array.isArray(msgs) ? msgs : [];
+      setMessages(list.map((m) => ({
+        role: m.sender === 'USER' ? 'user' : 'assistant',
+        text: m.contentText,
+        messageId: m.messageId,
+      })));
+      setConversationId(convId);
+      setEnded(false);
+    } catch (err) {
+      console.error('Cannot load messages:', err);
+    }
+  };
+
+  const send = async () => {
+    if (!value.trim() || ended || sending) return;
+    const userText = value;
     setValue('');
+    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
+    setSending(true);
+    try {
+      let convId = conversationId;
+      if (!convId) {
+        const conv = await api.aiTutor.start({ mode });
+        convId = conv.conversationId;
+        setConversationId(convId);
+      }
+      const reply = await api.aiTutor.send(convId, { content: userText });
+      setLastMessageId(reply.messageId);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: reply.contentText, messageId: reply.messageId },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', text: 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', isError: true },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const endConversation = async () => {
+    if (!conversationId) { setEnded(true); return; }
+    try {
+      await api.aiTutor.end(conversationId);
+    } catch (err) { /* ignore */ }
+    setEnded(true);
+  };
+
+  const submitFeedback = async (messageId, rating) => {
+    setRated((prev) => ({ ...prev, [messageId]: rating }));
+    try {
+      await api.aiTutor.sendFeedback(messageId, { rating: rating === 'UP' ? 1 : 0 });
+    } catch (err) { /* ignore */ }
   };
 
   return (
@@ -60,12 +124,7 @@ export function AiTutorPage() {
               <a href="document_viewer.html">Học liệu</a>
               <Button
                 icon="add"
-                onClick={() => {
-                  setMessages([]);
-                  setValue('');
-                  setEnded(false);
-                  setRated(null);
-                }}
+                onClick={startNewConversation}
               >
                 Chat mới
               </Button>
@@ -79,16 +138,18 @@ export function AiTutorPage() {
           <div className="min-h-0 flex-1 overflow-y-auto">
             <span className="text-label-sm uppercase text-[#94A3B8]">Lịch sử gần đây</span>
             <div className="mt-2 space-y-1">
-              {['Định luật Newton', 'Bài tập lực ma sát', 'Ôn tập Chương 1', 'Công và năng lượng'].map(
-                (item, index) => (
-                  <button
-                    key={item}
-                    className={`w-full rounded-xl px-3 py-2.5 text-left text-body-sm transition-colors ${index === 0 ? 'bg-[#FEF2F2] font-semibold text-primary' : 'text-[#64748B] hover:bg-[#F8FAFC]'}`}
-                  >
-                    <span className="material-symbols-outlined mr-2 align-middle text-sm">chat_bubble_outline</span>
-                    {item}
-                  </button>
-                )
+              {(conversations.length > 0 ? conversations.slice(0, 6) : []).map((conv, index) => (
+                <button
+                  key={conv.conversationId}
+                  onClick={() => loadConversation(conv.conversationId)}
+                  className={`w-full rounded-xl px-3 py-2.5 text-left text-body-sm transition-colors ${conversationId === conv.conversationId ? 'bg-[#FEF2F2] font-semibold text-primary' : 'text-[#64748B] hover:bg-[#F8FAFC]'}`}
+                >
+                  <span className="material-symbols-outlined mr-2 align-middle text-sm">chat_bubble_outline</span>
+                  {`Phiên ${index + 1} • ${conv.messageCount || 0} tin`}
+                </button>
+              ))}
+              {conversations.length === 0 && (
+                <p className="text-body-sm text-[#94A3B8] px-3 py-2">Chưa có phiên nào</p>
               )}
             </div>
           </div>
@@ -125,8 +186,20 @@ export function AiTutorPage() {
                     <div className="mb-1.5 text-label-md font-bold text-primary">PTIT Tutor</div>
                   )}
                   <p className="text-body-md leading-relaxed">{message.text}</p>
-                  {message.role === 'assistant' && (
-                    <><Card as="div" className="mt-3 border-l-4 border-primary bg-[#FEF2F2] px-3 py-2 text-body-sm text-[#475569]"><strong className="text-primary">Gợi ý:</strong> Xác định phản lực pháp tuyến trước khi thay số.</Card><div className="mt-3 flex items-center gap-2 text-label-sm text-[#64748B]"><span>Phản hồi hữu ích?</span><button onClick={() => setRated('UP')} className={`rounded-full px-2 py-1 ${rated === 'UP' ? 'bg-[#DCFCE7] text-[#15803D]' : 'hover:bg-[#F1F5F9]'}`} aria-label="Hữu ích">👍</button><button onClick={() => setRated('DOWN')} className={`rounded-full px-2 py-1 ${rated === 'DOWN' ? 'bg-[#FEE2E2] text-primary' : 'hover:bg-[#F1F5F9]'}`} aria-label="Chưa hữu ích">👎</button></div></>
+                  {message.role === 'assistant' && message.messageId && !message.isError && (
+                    <div className="mt-3 flex items-center gap-2 text-label-sm text-[#64748B]">
+                      <span>Phản hồi hữu ích?</span>
+                      <button
+                        onClick={() => submitFeedback(message.messageId, 'UP')}
+                        className={`rounded-full px-2 py-1 ${rated[message.messageId] === 'UP' ? 'bg-[#DCFCE7] text-[#15803D]' : 'hover:bg-[#F1F5F9]'}`}
+                        aria-label="Hữu ích"
+                      >👍</button>
+                      <button
+                        onClick={() => submitFeedback(message.messageId, 'DOWN')}
+                        className={`rounded-full px-2 py-1 ${rated[message.messageId] === 'DOWN' ? 'bg-[#FEE2E2] text-primary' : 'hover:bg-[#F1F5F9]'}`}
+                        aria-label="Chưa hữu ích"
+                      >👎</button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -163,11 +236,11 @@ export function AiTutorPage() {
               />
               <button
                 onClick={send}
-                disabled={ended || !value.trim()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white hover:bg-[#C41E1A]"
+                disabled={ended || !value.trim() || sending}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white hover:bg-[#C41E1A] disabled:opacity-50"
                 aria-label="Gửi câu hỏi"
               >
-                <span className="material-symbols-outlined">send</span>
+                <span className="material-symbols-outlined">{sending ? 'pending' : 'send'}</span>
               </button>
             </div>
             <p className="mt-1.5 text-center text-label-sm text-[#94A3B8]">
