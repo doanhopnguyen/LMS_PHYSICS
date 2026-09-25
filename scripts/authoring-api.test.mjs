@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { build } from 'esbuild';
 
 // Compile only the existing service module; no server or real mutations are used.
@@ -59,4 +60,11 @@ test('API rejection is surfaced to the form instead of reporting success', async
 test('successful empty response is accepted', async () => {
   globalThis.fetch = async () => new Response(null, { status: 204 });
   assert.equal(await api.materials.create('topic-one', new FormData()), null);
+});
+
+test('Excel import summary uses the shared alert instead of a page card', async () => {
+  const source = readFileSync('src/pages/lecturers/LecturerContent.jsx', 'utf8');
+  assert.doesNotMatch(source, /importResult/);
+  assert.match(source, /action\.setNotice\(/);
+  assert.match(source, /Đã đọc \$\{imported\.totalParsed/);
 });

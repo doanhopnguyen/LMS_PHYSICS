@@ -1,6 +1,7 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useState } from 'react';
 import { api } from '../../lib/apiClient.js';
+import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { queryPath, validateOptions } from '../../lib/lecturerUtils.js';
 import {
   Button,
@@ -177,7 +178,6 @@ export function LecturerAuthoringApiPage({ kind }) {
         : null
   );
   const [modal, setModal] = useState(null);
-  const [importResult, setImportResult] = useState(null);
   const [newTopicName, setNewTopicName] = useState('');
   const action = useMutation();
   const formTopicId = modal?.row.topicId || validTopic;
@@ -186,7 +186,6 @@ export function LecturerAuthoringApiPage({ kind }) {
     setSubject(value);
     setTopic('');
     setPage(0);
-    setImportResult(null);
     setNewTopicName('');
     action.clear();
   };
@@ -392,9 +391,11 @@ export function LecturerAuthoringApiPage({ kind }) {
                     displayName(row),
                     row.description,
                     row.orderIndex,
-                    <Button variant="secondary" disabled={action.busy} onClick={() => open('topic', row)}>
-                      Chỉnh sửa
-                    </Button>,
+                    <ActionMenu
+                      disabled={action.busy}
+                      label={`Thao tác với ${displayName(row)}`}
+                      items={[{ label: 'Chỉnh sửa', onSelect: () => open('topic', row) }]}
+                    />,
                   ]}
                 />
               )}
@@ -412,36 +413,25 @@ export function LecturerAuthoringApiPage({ kind }) {
                       labelOf(row.type || row.questionType),
                       materialMode ? row.version : labelOf(row.difficultyLevel),
                       labelOf(row.approvalStatus),
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="secondary" disabled={action.busy} onClick={() => open('view', row)}>
-                          Chi tiết
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          disabled={action.busy}
-                          onClick={() => open(materialMode ? 'material' : 'question', row)}
-                        >
-                          Sửa
-                        </Button>
-                        {materialMode && row.approvalStatus !== 'APPROVED' && (
-                          <Button
-                            variant="secondary"
-                            disabled={action.busy}
-                            onClick={() =>
-                              action.confirm(
-                                'Duyệt học liệu này?',
-                                () => api.materials.approve(validTopic, row.materialId),
-                                resource.reload
-                              )
-                            }
-                          >
-                            Duyệt
-                          </Button>
-                        )}
-                        <Button variant="secondary" disabled={action.busy} onClick={() => remove(row)}>
-                          Xóa
-                        </Button>
-                      </div>,
+                      <ActionMenu
+                        label={`Thao tác với ${row.title || 'câu hỏi'}`}
+                        disabled={action.busy}
+                        items={[
+                          { label: 'Xem chi tiết', onSelect: () => open('view', row) },
+                          { label: 'Chỉnh sửa', onSelect: () => open(materialMode ? 'material' : 'question', row) },
+                          materialMode &&
+                            row.approvalStatus !== 'APPROVED' && {
+                              label: 'Duyệt học liệu',
+                              onSelect: () =>
+                                action.confirm(
+                                  'Duyệt học liệu này?',
+                                  () => api.materials.approve(validTopic, row.materialId),
+                                  resource.reload
+                                ),
+                            },
+                          { label: 'Xóa', danger: true, onSelect: () => remove(row) },
+                        ]}
+                      />,
                     ]}
                   />
                   {!materialMode && <Pager data={data} page={page} onChange={setPage} />}
@@ -451,21 +441,6 @@ export function LecturerAuthoringApiPage({ kind }) {
           )
         }
       </Tabs>
-      {importResult && (
-        <Card className="mt-4 p-5" role="status">
-          <p>
-            Đã đọc {importResult.totalParsed ?? 0} câu, nhập thành công {importResult.totalImported ?? 0} câu.
-          </p>
-          {(Array.isArray(importResult.warnings) ? importResult.warnings : [importResult.warnings])
-            .filter(Boolean)
-            .map((w, i) => (
-              <p key={i}>{typeof w === 'string' ? w : w.message || 'Có cảnh báo khi nhập.'}</p>
-            ))}
-          {itemsOf(importResult.questions).map((q) => (
-            <p key={q.questionId}>{q.content}</p>
-          ))}
-        </Card>
-      )}
       {modal && (
         <Modal
           title={
@@ -625,7 +600,10 @@ export function LecturerAuthoringApiPage({ kind }) {
                   'Đã xử lý tệp Excel.'
                 );
                 if (result.ok) {
-                  setImportResult(result.data || { warnings: ['Máy chủ đã nhận tệp nhưng chưa trả thống kê nhập.'] });
+                  const imported = result.data || {};
+                  action.setNotice(
+                    `Đã đọc ${imported.totalParsed ?? 0} câu, nhập thành công ${imported.totalImported ?? 0} câu.`
+                  );
                   setModal(null);
                   setPage(0);
                   resource.reload();

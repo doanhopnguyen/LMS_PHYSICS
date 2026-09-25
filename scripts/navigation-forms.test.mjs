@@ -15,6 +15,11 @@ test('authoring entry buttons open without requiring an outside topic filter', (
   assert.match(source, /onClick=\{createInlineTopic\}/);
 });
 
+test('create-class form aligns related lookup fields in the shared two-column layout', () => {
+  const source = readFileSync('src/pages/lecturers/LecturerClasses.jsx', 'utf8');
+  assert.match(source, /<Form className="app-form--two-columns grid gap-4" onSubmit=\{save\}>/);
+});
+
 globalThis.window = {
   location: new URL('https://lms.example/lecturer_courses'),
   localStorage: { getItem: () => null },
@@ -83,7 +88,10 @@ for (const file of [
       count += 1;
       let submit = false;
       walk(node, (child) => {
-        if (child.type === 'JSXOpeningElement' && ['Button', 'SubmitButton', 'button', 'input'].includes(child.name.name))
+        if (
+          child.type === 'JSXOpeningElement' &&
+          ['Button', 'SubmitButton', 'button', 'input'].includes(child.name.name)
+        )
           submit ||= child.attributes.some((a) => a.name?.name === 'type' && a.value?.value === 'submit');
       });
       assert.ok(submit, `Form at line ${node.loc.start.line} has no submit button`);

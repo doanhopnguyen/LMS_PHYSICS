@@ -6,6 +6,7 @@ import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { api } from '../../lib/apiClient.js';
 import { getDemoSession } from '../../lib/demoSession.js';
@@ -415,34 +416,23 @@ export function UsersPage() {
                       </StatusBadge>
                     </td>
                     <td className="p-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="secondary" icon="visibility" onClick={() => openProfile(user)}>
-                          Hồ sơ
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          icon="edit"
-                          disabled={busy || isCurrentUser(user)}
-                          onClick={() => setEditing(user)}
-                        >
-                          Sửa
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          disabled={busy || isCurrentUser(user)}
-                          onClick={() => setConfirm({ type: 'status', user })}
-                        >
-                          {user.status === 'ACTIVE' ? 'Khóa' : 'Mở khóa'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          icon="delete"
-                          disabled={busy || isCurrentUser(user)}
-                          onClick={() => setConfirm({ type: 'delete', user })}
-                        >
-                          Xóa
-                        </Button>
-                      </div>
+                      <ActionMenu
+                        label={`Thao tác với ${user.username}`}
+                        disabled={busy}
+                        items={[
+                          { label: 'Xem hồ sơ', onSelect: () => openProfile(user) },
+                          !isCurrentUser(user) && { label: 'Chỉnh sửa', onSelect: () => setEditing(user) },
+                          !isCurrentUser(user) && {
+                            label: user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
+                            onSelect: () => setConfirm({ type: 'status', user }),
+                          },
+                          !isCurrentUser(user) && {
+                            label: 'Xóa tài khoản',
+                            danger: true,
+                            onSelect: () => setConfirm({ type: 'delete', user }),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

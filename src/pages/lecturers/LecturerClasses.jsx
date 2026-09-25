@@ -2,8 +2,10 @@ import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useState } from 'react';
 import { api } from '../../lib/apiClient.js';
 import { queryPath } from '../../lib/lecturerUtils.js';
+import { navigate } from '../../lib/navigation.js';
 import { DashboardOverview } from '../../components/DashboardOverview.jsx';
 import { MetricGrid } from '../../components/MetricGrid.jsx';
+import { ActionMenu } from '../../components/ActionMenu.jsx';
 import {
   Button,
   Card,
@@ -237,30 +239,22 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
                       displayName(itemsOf(semesters.data).find((s) => s.semesterId === row.semesterId)),
                       row.maxStudents,
                       labelOf(row.status),
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="secondary" disabled={action.busy} onClick={() => edit(row)}>
-                          Sửa
-                        </Button>
-                        <SelectField
-                          label="Chuyển trạng thái"
-                          value={row.status}
-                          disabled={action.busy}
-                          onChange={(e) => {
-                            const status = e.target.value;
-                            action.confirm(
-                              `Chuyển ${displayName(row)} sang ${labelOf(status)}?`,
-                              () => api.classes.updateStatus(row.classId, { status }),
-                              classes.reload
-                            );
-                          }}
-                        >
-                          {CLASS_STATES.map((v) => (
-                            <option key={v} value={v}>
-                              {labelOf(v)}
-                            </option>
-                          ))}
-                        </SelectField>
-                      </div>,
+                      <ActionMenu
+                        label={`Thao tác với ${displayName(row)}`}
+                        disabled={action.busy}
+                        items={[
+                          { label: 'Chỉnh sửa', onSelect: () => edit(row) },
+                          ...CLASS_STATES.filter((status) => status !== row.status).map((status) => ({
+                            label: `Chuyển sang ${labelOf(status)}`,
+                            onSelect: () =>
+                              action.confirm(
+                                `Chuyển ${displayName(row)} sang ${labelOf(status)}?`,
+                                () => api.classes.updateStatus(row.classId, { status }),
+                                classes.reload
+                              ),
+                          })),
+                        ]}
+                      />,
                     ]}
                   />
                   <Pager data={data} page={page} onChange={setPage} />
@@ -273,7 +267,7 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
       {modal && (
         <Modal title={modal.classId ? 'Chỉnh sửa lớp' : 'Tạo lớp'} busy={action.busy} onClose={() => setModal(null)}>
           {action.error && <p role="alert">{action.error}</p>}
-          <Form className="grid gap-4" onSubmit={save}>
+          <Form className="app-form--two-columns grid gap-4" onSubmit={save}>
             {!modal.classId && (
               <>
                 <Lookup label="Học phần *" resource={activeSubjects} idKey="subjectId" name="subjectId" required />
@@ -350,57 +344,49 @@ function ClassPeople({ classId, staff = false }) {
                   row.username,
                   row.email,
                   labelOf(staff ? row.roleInClass : row.status),
-                  <div className="flex flex-wrap gap-2">
-                    {!staff && studentId && (
-                      <>
-                        <a
-                          className="font-semibold text-primary"
-                          href={`lecturer_student_detail.html?classId=${idPath(classId)}&studentId=${idPath(studentId)}`}
-                        >
-                          Chi tiết
-                        </a>
-                        <SelectField
-                          label="Trạng thái"
-                          value={row.status || ''}
-                          disabled={action.busy}
-                          onChange={(e) => {
-                            const next = e.target.value;
-                            action.confirm(
-                              `Cập nhật trạng thái ${displayName(row)}?`,
-                              () => api.classes.updateStudentStatus(classId, studentId, { status: next }),
-                              resource.reload
-                            );
-                          }}
-                        >
-                          {!row.status && <option value="">Chọn trạng thái</option>}
-                          {['ACTIVE', 'DROPPED', 'COMPLETED'].map((v) => (
-                            <option key={v} value={v}>
-                              {labelOf(v)}
-                            </option>
-                          ))}
-                        </SelectField>
-                      </>
-                    )}
-                    <Button
-                      variant="secondary"
-                      disabled={action.busy || !(staff ? row.userId : studentId)}
-                      onClick={() =>
-                        action.confirm(
-                          `Gỡ ${displayName(row)} khỏi lớp?`,
-                          () =>
-                            staff
-                              ? api.classes.removeStaff(classId, row.userId)
-                              : api.classes.removeStudent(classId, studentId),
-                          () => {
-                            setPage(0);
-                            resource.reload();
-                          }
-                        )
-                      }
-                    >
-                      Gỡ khỏi lớp
-                    </Button>
-                  </div>,
+                  <ActionMenu
+                    label={`Thao tác với ${displayName(row)}`}
+                    disabled={action.busy}
+                    items={[
+                      !staff &&
+                        studentId && {
+                          label: 'Xem chi tiết',
+                          onSelect: () =>
+                            navigate(
+                              `lecturer_student_detail.html?classId=${idPath(classId)}&studentId=${idPath(studentId)}`
+                            ),
+                        },
+                      !staff &&
+                        studentId &&
+                        ['ACTIVE', 'DROPPED', 'COMPLETED']
+                          .filter((status) => status !== row.status)
+                          .map((status) => ({
+                            label: `Chuyển sang ${labelOf(status)}`,
+                            onSelect: () =>
+                              action.confirm(
+                                `Cập nhật trạng thái ${displayName(row)}?`,
+                                () => api.classes.updateStudentStatus(classId, studentId, { status }),
+                                resource.reload
+                              ),
+                          })),
+                      (staff ? row.userId : studentId) && {
+                        label: 'Gỡ khỏi lớp',
+                        danger: true,
+                        onSelect: () =>
+                          action.confirm(
+                            `Gỡ ${displayName(row)} khỏi lớp?`,
+                            () =>
+                              staff
+                                ? api.classes.removeStaff(classId, row.userId)
+                                : api.classes.removeStudent(classId, studentId),
+                            () => {
+                              setPage(0);
+                              resource.reload();
+                            }
+                          ),
+                      },
+                    ].flat()}
+                  />,
                 ];
               }}
             />

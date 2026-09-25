@@ -4,7 +4,11 @@ import { StatusBadge } from './StatusBadge.jsx';
 
 export function ResourceCard({ resource }) {
   return (
-    <Card as="article" variant="accent" className="resource-card p-5 flex flex-col gap-4 h-full hover:-translate-y-1 hover:shadow-md transition-all">
+    <Card
+      as="article"
+      variant="accent"
+      className="resource-card w-full p-5 flex flex-col gap-4 h-full hover:-translate-y-1 hover:shadow-md transition-all"
+    >
       <div className="flex items-start justify-between gap-2">
         <span className="w-10 h-10 rounded-full bg-[#FEE2E2] text-primary flex items-center justify-center">
           <span className="material-symbols-outlined text-xl">{resource.icon}</span>

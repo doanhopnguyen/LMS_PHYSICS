@@ -215,6 +215,7 @@ export function useMutation() {
     busy,
     error,
     setError,
+    setNotice,
     clear: () => {
       setError('');
       setNotice('');

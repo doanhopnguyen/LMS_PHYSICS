@@ -12,6 +12,7 @@
 - Submit buttons must explicitly set `type="submit"`; other buttons keep `Button`'s safe default of `type="button"`.
 - All submission forms use `Form` and `SubmitButton` from `Form.jsx`. `Form` renders a native form and forwards refs, events, validation attributes and layout classes; it does not alter request handling. `SubmitButton` always renders `type="submit"` and accepts `busy` / `disabled`. Retain compact filter/search layouts via `className`.
 - Forms use the established Be Vietnam Pro font, regular labels and medium-weight headings/actions. Keep implementation notes (API availability, endpoint names) in documentation rather than permanent user-facing banners.
+- Use `app-form--two-columns` with `Form` when related fields (for example Học phần / Học kỳ, Mã lớp / Sĩ số) should align in two columns. It collapses to one column on mobile and makes shared lookup selects fill their grid cell.
 
 ## Content surfaces
 

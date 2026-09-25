@@ -8,6 +8,7 @@ import { Button } from '../../components/Button.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { api } from '../../lib/apiClient.js';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
@@ -229,21 +230,17 @@ export function AdminAcademicsApiPage() {
                         </td>
                         <td className="p-3">{semesterStatus(semester)}</td>
                         <td className="p-3">
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              variant="secondary"
-                              icon="edit"
-                              disabled={busy}
-                              onClick={() => setModal({ type: 'edit-semester', item: semester })}
-                            >
-                              Sửa
-                            </Button>
-                            {!semester.isCurrent && (
-                              <Button variant="secondary" disabled={busy} onClick={() => setCurrent(semester)}>
-                                Đặt hiện hành
-                              </Button>
-                            )}
-                          </div>
+                          <ActionMenu
+                            label={`Thao tác với ${semester.semesterName}`}
+                            disabled={busy}
+                            items={[
+                              {
+                                label: 'Chỉnh sửa',
+                                onSelect: () => setModal({ type: 'edit-semester', item: semester }),
+                              },
+                              !semester.isCurrent && { label: 'Đặt hiện hành', onSelect: () => setCurrent(semester) },
+                            ]}
+                          />
                         </td>
                       </tr>
                     )}
@@ -270,19 +267,20 @@ export function AdminAcademicsApiPage() {
                           <td className="p-3">{subject.description || '—'}</td>
                           <td className="p-3">{subjectStatus(subject)}</td>
                           <td className="p-3">
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                variant="secondary"
-                                icon="edit"
-                                disabled={busy}
-                                onClick={() => setModal({ type: 'edit-subject', item: subject })}
-                              >
-                                Sửa
-                              </Button>
-                              <Button variant="secondary" disabled={busy} onClick={() => toggleSubject(subject)}>
-                                {subject.isActive ? 'Tạm ngưng' : 'Kích hoạt'}
-                              </Button>
-                            </div>
+                            <ActionMenu
+                              label={`Thao tác với ${subject.subjectName}`}
+                              disabled={busy}
+                              items={[
+                                {
+                                  label: 'Chỉnh sửa',
+                                  onSelect: () => setModal({ type: 'edit-subject', item: subject }),
+                                },
+                                {
+                                  label: subject.isActive ? 'Tạm ngưng' : 'Kích hoạt',
+                                  onSelect: () => toggleSubject(subject),
+                                },
+                              ]}
+                            />
                           </td>
                         </tr>
                       )}

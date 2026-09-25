@@ -5,15 +5,16 @@ import { StatusBadge } from './StatusBadge.jsx';
 export function TaskList({ items }) {
   const [completed, setCompleted] = useState([]);
   return (
-    <div className="space-y-2">
+    <div className="list-stack space-y-2">
       {items.map((item) => {
         const done = completed.includes(item.title);
         return (
-          <Card as="div"
+          <Card
+            as="div"
             key={item.title}
-            className={`p-3 border flex items-start justify-between gap-3 transition-colors ${done ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}
+            className={`w-full p-3 border flex items-start justify-between gap-3 transition-colors ${done ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}
           >
-            <div className="flex items-start gap-2.5">
+            <div className="flex min-w-0 flex-1 items-start gap-2.5">
               <button
                 aria-label={`Đánh dấu ${item.title}`}
                 onClick={() =>
@@ -25,7 +26,7 @@ export function TaskList({ items }) {
               >
                 {done && <span className="material-symbols-outlined text-sm">check</span>}
               </button>
-              <div>
+              <div className="min-w-0 flex-1">
                 <h3
                   className={`text-body-md font-semibold ${done ? 'line-through text-[#64748B]' : 'text-on-surface'}`}
                 >
@@ -37,7 +38,9 @@ export function TaskList({ items }) {
                 </span>
               </div>
             </div>
-            <StatusBadge tone={item.tone}>{item.status}</StatusBadge>
+            <StatusBadge tone={item.tone} className="shrink-0">
+              {item.status}
+            </StatusBadge>
           </Card>
         );
       })}
