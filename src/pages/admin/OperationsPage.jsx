@@ -1,5 +1,5 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -15,6 +15,21 @@ function Setting({ item, onSave, busy }) {
     <label className="mt-3 block">Mô tả<input name="description" defaultValue={item.description ?? ''} className="mt-2 block w-full rounded-xl border p-3" disabled={busy} /></label>
     <SubmitButton className="mt-4" type="submit" disabled={busy}>Lưu cấu hình</SubmitButton>
   </Form></Card>;
+}
+
+function BulkSettingsEditor({ rows, busy, onSave }) {
+  const [values, setValues] = useState({});
+  useEffect(() => { setValues(Object.fromEntries(rows.map((item) => [item.settingKey, item.settingValue ?? '']))); }, [rows]);
+  return <Card className="mt-5 p-5"><h2 className="text-lg font-bold">Lưu nhiều cấu hình</h2><p className="mt-1 text-sm text-slate-600">Cập nhật các giá trị bên dưới rồi lưu đồng thời.</p><Form className="mt-4 grid gap-4 md:grid-cols-2" onSubmit={(event) => { event.preventDefault(); onSave(values); }}>
+    {rows.map((item) => <label key={item.settingKey} className="block text-sm font-semibold">{item.settingKey}<input value={values[item.settingKey] ?? ''} onChange={(event) => setValues((current) => ({ ...current, [item.settingKey]: event.target.value }))} className="mt-1 block w-full rounded-xl border p-3 font-normal" disabled={busy} required /></label>)}
+    <div className="md:col-span-2"><SubmitButton disabled={busy} type="submit">Lưu tất cả cấu hình</SubmitButton></div>
+  </Form></Card>;
+}
+
+function DashboardRegenerator({ classes, busy, onRegenerate }) {
+  const [classId, setClassId] = useState('');
+  const rows = listItems(classes.data);
+  return <Card className="mt-5 p-5"><h2 className="text-lg font-bold">Tái tạo dashboard lớp</h2><p className="mt-1 text-sm text-slate-600">Tạo lại số liệu tổng hợp cho một lớp sau khi dữ liệu thay đổi.</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><select value={classId} onChange={(event) => setClassId(event.target.value)} disabled={busy || classes.loading} className="min-w-0 flex-1 rounded-xl border p-3"><option value="">Chọn lớp học</option>{rows.map((item) => <option key={item.classId} value={item.classId}>{item.classCode} · {item.className}</option>)}</select><Button disabled={!classId || busy} onClick={() => onRegenerate(classId)} icon="refresh">Tái tạo dashboard</Button></div></Card>;
 }
 
 function formatDate(value) {
@@ -47,6 +62,7 @@ export function OperationsPage() {
   const [error, setError] = useState('');
   const [change, setChange] = useState(null);
   const users = useApiData('/api/v1/users/admin/users?page=0&size=100&sort=username,asc');
+  const classes = useApiData('/api/v1/classes?page=0&size=100');
   const query = useMemo(() => {
     if (tab === 'settings') return '';
     const params = new URLSearchParams({ page: String(page), size: '20', sort: 'createdAt,desc' });
@@ -65,6 +81,16 @@ export function OperationsPage() {
     try { await apiRequest(path, options); setMessage(successMessage); resource.reload(); }
     catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
   }
+  async function saveAllSettings(settings) {
+    setBusy(true); setError(''); setMessage('');
+    try { await api.admin.bulkUpdateSettings({ settings }); setMessage('Đã lưu toàn bộ cấu hình.'); resource.reload(); }
+    catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
+  }
+  async function regenerateDashboard(classId) {
+    setBusy(true); setError(''); setMessage('');
+    try { await api.dashboard.regenerate(classId); setMessage('Đã gửi yêu cầu tái tạo dashboard lớp.'); }
+    catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
+  }
   function applyFilters(event) {
     event.preventDefault();
     setAppliedFilters(filters);
@@ -78,6 +104,7 @@ export function OperationsPage() {
     <AuthAlert>{message}</AuthAlert><AuthAlert error>{error}</AuthAlert>{change && <ChangeDialog item={change} onClose={() => setChange(null)} />}
     <div className="mt-6"><Tabs items={[['settings', 'Cấu hình'], ['activity-logs', 'Nhật ký hoạt động'], ['audit-logs', 'Nhật ký kiểm toán']].map(([id, label]) => ({ id, label }))} activeId={tab} onChange={changeTab} actions={<Button disabled={busy} onClick={() => mutate('/api/v1/analytics/trigger', { method: 'POST' }, 'Đã gửi yêu cầu tổng hợp dữ liệu.')}>Chạy tổng hợp analytics</Button>}>
       {() => <>
+        {tab === 'settings' && <><BulkSettingsEditor rows={rows} busy={busy} onSave={saveAllSettings} /><DashboardRegenerator classes={classes} busy={busy} onRegenerate={regenerateDashboard} /></>}
         {tab !== 'settings' && <Card className="mt-4 p-4"><Form className="grid gap-3 md:grid-cols-3" onSubmit={applyFilters}>
           <label>Người dùng<select value={filters.userId} onChange={(event) => setFilters((current) => ({ ...current, userId: event.target.value }))} className="mt-1 block w-full rounded-xl border p-2" disabled={users.loading}><option value="">Tất cả người dùng</option>{listItems(users.data).map((user) => <option key={user.userId} value={user.userId}>{user.fullName || user.username || user.email}</option>)}</select></label>
           <label>{tab === 'activity-logs' ? 'Loại hành động' : 'Thực thể'}<input value={tab === 'activity-logs' ? filters.actionType : filters.entity} onChange={(event) => setFilters((current) => ({ ...current, [tab === 'activity-logs' ? 'actionType' : 'entity']: event.target.value }))} className="mt-1 block w-full rounded-xl border p-2" /></label>

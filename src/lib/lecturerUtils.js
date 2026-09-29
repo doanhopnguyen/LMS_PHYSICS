@@ -39,7 +39,7 @@ export function validateOptions(type, options) {
     return 'Nội dung các đáp án không được trùng nhau.';
   const correct = options.filter((o) => o.isCorrect).length;
   if (type === 'MCQ_SINGLE' && correct !== 1) return 'Câu hỏi một đáp án phải có đúng một đáp án đúng.';
-  if (type === 'MCQ_MULTIPLE' && correct < 1) return 'Chọn ít nhất một đáp án đúng.';
+  if ((type === 'MCQ_MULTI' || type === 'MCQ_MULTIPLE') && correct < 1) return 'Chọn ít nhất một đáp án đúng.';
   return '';
 }
 export function safeUrl(value) {
@@ -63,7 +63,10 @@ export const labels = {
   INSTRUCTOR: 'Giảng viên',
   TA: 'Trợ giảng',
   MCQ_SINGLE: 'Một đáp án',
+  MCQ_MULTI: 'Nhiều đáp án',
   MCQ_MULTIPLE: 'Nhiều đáp án',
+  TRUE_FALSE: 'Đúng / Sai',
+  SHORT_ANSWER: 'Trả lời ngắn',
   EASY: 'Dễ',
   MEDIUM: 'Trung bình',
   HARD: 'Khó',

@@ -255,6 +255,40 @@
   animation: auth-toast-in 180ms ease-out;
 }
 .auth-alert > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.api-toast-stack {
+  position: fixed;
+  top: max(20px, env(safe-area-inset-top));
+  right: max(20px, env(safe-area-inset-right));
+  z-index: 2100;
+  display: grid;
+  gap: 10px;
+  width: min(420px, calc(100vw - 40px));
+}
+.api-toast {
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  align-items: center;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px #0f172a1a;
+  animation: auth-toast-in 180ms ease-out;
+}
+.api-toast > span:nth-child(2) { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.api-toast__details { margin-top: 6px; color: inherit; font-size: 12px; font-weight: 400; }
+.api-toast__details summary { cursor: pointer; font-weight: 600; }
+.api-toast__details code { display: block; max-height: 132px; margin-top: 6px; overflow: auto; border-radius: 8px; padding: 8px; background: rgb(127 29 29 / 8%); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.45; white-space: pre-wrap; }
+.api-toast button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: inherit;
+}
+.api-toast button:hover { background: #fee2e2; }
+.api-toast button .material-symbols-outlined { margin: 0; font-size: 18px; }
 @keyframes auth-toast-in {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2438,4 +2472,47 @@ button {
   .chapter-progress-fill {
     animation: none;
   }
+}
+
+/* One compact red scrollbar treatment across page and scrollable components. */
+:root,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #e52220 transparent;
+}
+
+:root::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+:root::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:root::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #e52220;
+  background-clip: padding-box;
+}
+
+:root::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+  background-clip: padding-box;
+}
+
+/* Existing named scrollers used stronger selectors, so normalize them too. */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e52220;
+}
+
+.chat-page__messages,
+.chat-widget-messages {
+  scrollbar-color: #e52220 transparent;
 }

@@ -15,14 +15,24 @@ export function StatCard({
   sideChart,
   fillProgress,
   accentColor,
+  onClick,
+  active = false,
 }) {
   const palette = ['#0284c7', '#059669', '#7c3aed', '#db2777', '#b45309', '#4f46e5', '#0e7490'];
   const seed = Array.from(label ?? '').reduce((hash, char) => (hash * 31 + char.codePointAt(0)) >>> 0, 0);
   const accent = accentColor ?? palette[seed % palette.length];
   const hasChart = chart || trend?.length || progress !== undefined;
+  const Container = onClick ? 'button' : 'section';
 
   return (
-    <section className="stat-card" style={{ '--stat-accent': accent }} aria-label={label}>
+    <Container
+      type={onClick ? 'button' : undefined}
+      className={`stat-card ${onClick ? 'w-full cursor-pointer border-0 p-0 text-left transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2' : ''} ${active ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+      style={{ '--stat-accent': accent }}
+      aria-label={label}
+      aria-pressed={onClick ? active : undefined}
+      onClick={onClick}
+    >
       <div className="stat-card__ribbon">
         {fillProgress !== undefined || progress !== undefined ? 'TIẾN ĐỘ' : 'THỐNG KÊ HỌC TẬP'}
       </div>
@@ -59,6 +69,6 @@ export function StatCard({
           ) : null}
         </div>
       </div>
-    </section>
+    </Container>
   );
 }

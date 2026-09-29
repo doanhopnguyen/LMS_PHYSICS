@@ -1,71 +1,46 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SelectField } from './SelectField.jsx';
-import { academicPages, academicSemesters, readAcademicScope } from '../lib/academicScope.js';
+import { academicPages, readAcademicScope } from '../lib/academicScope.js';
+import { api } from '../lib/apiClient.js';
 import { navigate } from '../lib/navigation.js';
+
+const rowsOf = (value) => Array.isArray(value) ? value : value?.content || value?.data || [];
+const semesterLabel = (item) => [item.semesterName || item.semesterCode, item.academicYear].filter(Boolean).join(' · ') || 'Học kỳ';
 
 export function AcademicFilters({ page, actions }) {
   const mode = academicPages[page];
-  if (!mode) return null;
   const scope = readAcademicScope();
+  const [semesters, setSemesters] = useState([]);
+  const [loadingSemesters, setLoadingSemesters] = useState(Boolean(mode && mode !== 'subject'));
+  const [semesterError, setSemesterError] = useState('');
   const change = (key, value) => {
     const params = new URLSearchParams(window.location.search);
-    params.set(key, value);
+    if (value) params.set(key, value); else params.delete(key);
     if (key === 'semester') params.set('class', 'ALL');
     params.delete('page');
     navigate(`${page}?${params}`);
   };
-  return (
-    <section
-      aria-label="Phạm vi học tập"
-      className="mx-auto flex w-full max-w-[1440px] flex-wrap items-center gap-3 px-3 pt-3 md:px-5 lg:px-6"
-    >
-      {mode !== 'subject' && (
-        <SelectField
-          label="Học kỳ"
-          name="academic-semester"
-          className="min-w-56"
-          value={scope.semester}
-          onChange={(event) => change('semester', event.target.value)}
-        >
-          {academicSemesters.map(([id, label]) => (
-            <option key={id} value={id}>
-              {label}
-            </option>
-          ))}
-        </SelectField>
-      )}
-      {mode === 'class' && (
-        <SelectField
-          label="Lớp"
-          name="academic-class"
-          className="min-w-40"
-          value={scope.classId}
-          disabled={!scope.classes.length}
-          onChange={(event) => change('class', event.target.value)}
-        >
-          <option value="ALL">Tất cả lớp</option>
-          {scope.classes.map((id) => (
-            <option key={id}>{id}</option>
-          ))}
-        </SelectField>
-      )}
-      {mode === 'subject' && (
-        <SelectField
-          label="Môn học"
-          name="academic-subject"
-          className="min-w-56"
-          value={scope.subjectId}
-          onChange={(event) => change('subject', event.target.value)}
-        >
-          <option value="BAS1201">Vật lý đại cương 1</option>
-          <option value="BAS1202">Vật lý đại cương 2</option>
-        </SelectField>
-      )}
-      {actions && (
-        <div className="academic-filter-actions" aria-label="Thao tác trang">
-          {actions}
-        </div>
-      )}
-    </section>
-  );
+
+  useEffect(() => {
+    if (!mode || mode === 'subject') return;
+    let alive = true;
+    api.semesters.list().then((data) => {
+      if (!alive) return;
+      const rows = rowsOf(data);
+      setSemesters(rows);
+    }).catch((error) => { if (alive) setSemesterError(error.message || 'Không thể tải danh sách học kỳ.'); }).finally(() => { if (alive) setLoadingSemesters(false); });
+    return () => { alive = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  if (!mode) return null;
+  return <section aria-label="Phạm vi học tập" className="mx-auto flex w-full max-w-[1440px] flex-wrap items-center gap-3 px-3 pt-3 md:px-5 lg:px-6">
+    {mode !== 'subject' && <SelectField label="Học kỳ" name="academic-semester" className="min-w-56" value={scope.semester} disabled={loadingSemesters || !semesters.length} onChange={(event) => change('semester', event.target.value)}>
+      <option value="">{loadingSemesters ? 'Đang tải học kỳ…' : 'Tất cả học kỳ'}</option>
+      {semesters.map((item) => <option key={item.semesterId} value={item.semesterId}>{semesterLabel(item)}{item.isCurrent ? ' (Hiện tại)' : ''}</option>)}
+    </SelectField>}
+    {semesterError && <span role="alert" className="text-body-sm text-primary">{semesterError}</span>}
+    {mode === 'class' && <SelectField label="Lớp" name="academic-class" className="min-w-40" value={scope.classId} onChange={(event) => change('class', event.target.value)}><option value="ALL">Tất cả lớp</option></SelectField>}
+    {actions && <div className="academic-filter-actions" aria-label="Thao tác trang">{actions}</div>}
+  </section>;
 }

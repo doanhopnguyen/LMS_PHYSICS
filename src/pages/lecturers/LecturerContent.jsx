@@ -85,7 +85,9 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
         }}
       >
         <option value="MCQ_SINGLE">Một đáp án</option>
-        <option value="MCQ_MULTIPLE">Nhiều đáp án</option>
+        <option value="MCQ_MULTI">Nhiều đáp án</option>
+        <option value="TRUE_FALSE">Đúng / Sai</option>
+        <option value="SHORT_ANSWER">Trả lời ngắn</option>
       </SelectField>
       <SelectField label="Độ khó" name="difficultyLevel" defaultValue={initial.difficultyLevel || 'EASY'}>
         {['EASY', 'MEDIUM', 'HARD'].map((v) => (
@@ -358,9 +360,18 @@ export function LecturerAuthoringApiPage({ kind }) {
             </Button>
             {!materialMode && (
               <>
-                <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
-                  Nhập PDF
-                </Button>
+                <Button variant="secondary" disabled={action.busy} onClick={async () => {
+                  const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
+                  if (result.ok) {
+                    const url = URL.createObjectURL(result.data);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'mau-nhap-cau-hoi.xlsx';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  }
+                }}>Tải mẫu Excel</Button>
+                <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>Nhập Excel</Button>
               </>
             )}
           </>
@@ -372,6 +383,7 @@ export function LecturerAuthoringApiPage({ kind }) {
               {(data) => (
                 <Table
                   rows={itemsOf(data)}
+                  asCards
                   columns={['Chủ đề', 'Mô tả', 'Thứ tự', 'Thao tác']}
                   cells={(row) => [
                     displayName(row),
@@ -393,6 +405,7 @@ export function LecturerAuthoringApiPage({ kind }) {
                   <Table
                     rows={itemsOf(data)}
                     server={!materialMode}
+                    asCards
                     columns={['Nội dung', 'Loại', materialMode ? 'Phiên bản' : 'Độ khó', 'Trạng thái', 'Thao tác']}
                     cells={(row) => [
                       row.title || row.content,
@@ -405,16 +418,10 @@ export function LecturerAuthoringApiPage({ kind }) {
                         items={[
                           { label: 'Xem chi tiết', onSelect: () => open('view', row) },
                           { label: 'Chỉnh sửa', onSelect: () => open(materialMode ? 'material' : 'question', row) },
-                          materialMode &&
-                            row.approvalStatus !== 'APPROVED' && {
-                              label: 'Duyệt học liệu',
-                              onSelect: () =>
-                                action.confirm(
-                                  'Duyệt học liệu này?',
-                                  () => api.materials.approve(validTopic, row.materialId),
-                                  resource.reload
-                                ),
-                            },
+                          materialMode && row.approvalStatus !== 'APPROVED' && {
+                            label: 'Duyệt học liệu',
+                            onSelect: () => action.confirm(`Duyệt học liệu “${row.title || 'này'}”?`, () => api.materials.approve(validTopic, row.materialId), resource.reload),
+                          },
                           { label: 'Xóa', danger: true, onSelect: () => remove(row) },
                         ]}
                       />,
@@ -577,12 +584,12 @@ export function LecturerAuthoringApiPage({ kind }) {
                 if (!checkScope()) return;
                 const form = new FormData(e.currentTarget);
                 const file = form.get('file');
-                if (!file?.size || !/\.pdf$/i.test(file.name)) {
+                if (!file?.size || !/\.(xlsx|xls)$/i.test(file.name)) {
                   action.setError('Chọn tệp Excel .xlsx hoặc .xls không rỗng.');
                   return;
                 }
                 const result = await action.run(
-                  () => api.questions.importPdf(form, { subjectId, topicId: validTopic }),
+                  () => api.questions.importExcel(form, { subjectId, topicId: validTopic }),
                   'Đã xử lý tệp Excel.'
                 );
                 if (result.ok) {
@@ -596,8 +603,8 @@ export function LecturerAuthoringApiPage({ kind }) {
                 }
               }}
             >
-              <p className="text-body-sm text-[#64748B]">Chọn tệp PDF chứa câu hỏi để gửi tới API import hiện hành.</p>
-              <Field label="Tệp PDF *" name="file" type="file" accept="application/pdf,.pdf" required />
+              <p className="text-body-sm text-[#64748B]">Chọn tệp Excel theo mẫu để nhập hàng loạt câu hỏi vào chủ đề đã chọn.</p>
+              <Field label="Tệp Excel *" name="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required />
               <SubmitButton type="submit" disabled={action.busy || !validSubject || !validTopic}>
                 {action.busy ? 'Đang nhập câu hỏi…' : 'Nhập câu hỏi'}
               </SubmitButton>

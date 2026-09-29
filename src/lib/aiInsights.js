@@ -1,7 +1,9 @@
 export function filterAIActivity(records, filters) {
   const anchor = new Date('2026-09-22T23:59:59');
   const rangeStart =
-    filters.range === '7D'
+    filters.range === 'ALL'
+      ? null
+      : filters.range === '7D'
       ? new Date('2026-09-16T00:00:00')
       : filters.range === '30D'
         ? new Date('2026-08-24T00:00:00')

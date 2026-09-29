@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -85,12 +85,30 @@ export function AdminAcademicsApiPage() {
     try { await api.subjects.toggleStatus(subject.subjectId); subjects.reload(); subjectOptions.reload(); setMessage(`Đã cập nhật trạng thái ${subject.subjectName}.`); }
     catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
   }
+  async function openEditor(type, item) {
+    start();
+    try {
+      const detail = type === 'semester' ? await api.semesters.get(item.semesterId) : await api.subjects.get(item.subjectId);
+      setModal({ type: `edit-${type}`, item: detail });
+    } catch (requestError) { setError(requestError.message); }
+    finally { setBusy(false); }
+  }
   async function deleteTopic() {
     if (!topicToDelete) return;
     start();
     try { await api.subjects.deleteTopic(topicSubjectId, topicToDelete.topicId); topics.reload(); setMessage(`Đã xóa chủ đề ${topicToDelete.topicName}.`); setTopicToDelete(null); }
     catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
   }
+  useEffect(() => {
+    if (!modal || !['edit-semester', 'edit-subject'].includes(modal.type) || modal.item?._detailLoaded) return;
+    const loadDetail = async () => {
+      try {
+        const detail = modal.type === 'edit-semester' ? await api.semesters.get(modal.item.semesterId) : await api.subjects.get(modal.item.subjectId);
+        setModal((current) => current?.type === modal.type && current.item === modal.item ? { ...current, item: { ...detail, _detailLoaded: true } } : current);
+      } catch (requestError) { setError(requestError.message); }
+    };
+    loadDetail();
+  }, [modal]);
   const openCreate = () => {
     if (tab === 'topics' && !topicSubjectId) { setError('Vui lòng chọn học phần trước khi tạo chủ đề.'); return; }
     setModal({ type: `create-${tab === 'semesters' ? 'semester' : tab === 'subjects' ? 'subject' : 'topic'}` });

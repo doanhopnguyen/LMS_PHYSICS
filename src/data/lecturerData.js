@@ -296,10 +296,11 @@ export const studentDifficultTopics = [
 ];
 
 export const materialTypeLabels = {
-  TEXTBOOK: 'Giáo trình',
+  MARKDOWN: 'Bài đọc',
+  PDF: 'Tài liệu PDF',
   SLIDE: 'Slide',
   VIDEO: 'Video',
-  READING: 'Bài đọc',
+  TEXT: 'Văn bản',
   OTHER: 'Tài liệu khác',
 };
 
@@ -323,7 +324,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT001',
     title: 'Giáo trình Vật lý đại cương 1',
-    type: 'TEXTBOOK',
+    type: 'PDF',
     chapter: 'ALL',
     description: 'Giáo trình chính thức dùng cho toàn bộ học phần Vật lý đại cương 1.',
     keywords: ['cơ học', 'vật lý', 'giáo trình'],
@@ -393,7 +394,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT006',
     title: 'Bài đọc — Chuyển động ném xiên',
-    type: 'READING',
+    type: 'MARKDOWN',
     chapter: 'CHAPTER_1',
     description: 'Tài liệu đọc bổ sung kèm ví dụ về chuyển động ném xiên.',
     keywords: ['ném xiên', 'quỹ đạo'],
@@ -407,7 +408,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT007',
     title: 'Bài đọc — Các lực trong cơ học',
-    type: 'READING',
+    type: 'MARKDOWN',
     chapter: 'CHAPTER_2',
     description: 'Tổng hợp trọng lực, phản lực, lực căng và lực đàn hồi.',
     keywords: ['lực', 'cơ học', 'đàn hồi'],
@@ -463,7 +464,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT011',
     title: 'Bài đọc — Bảo toàn cơ năng',
-    type: 'READING',
+    type: 'MARKDOWN',
     chapter: 'CHAPTER_3',
     description: 'Các điều kiện áp dụng định luật bảo toàn cơ năng.',
     keywords: ['bảo toàn', 'cơ năng'],
@@ -505,7 +506,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT014',
     title: 'Bài đọc — Bảo toàn động lượng',
-    type: 'READING',
+    type: 'MARKDOWN',
     chapter: 'CHAPTER_4',
     description: 'Hệ thống ví dụ về định luật bảo toàn động lượng.',
     keywords: ['bảo toàn', 'động lượng'],
@@ -547,7 +548,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT017',
     title: 'Bài đọc — Mô men quán tính',
-    type: 'READING',
+    type: 'MARKDOWN',
     chapter: 'CHAPTER_5',
     description: 'Tài liệu bổ sung về mô men quán tính của các vật đồng chất.',
     keywords: ['mô men quán tính', 'vật rắn'],
@@ -617,7 +618,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT022',
     title: 'Bài đọc — Chuyển động lăn',
-    type: 'READING',
+    type: 'MARKDOWN',
     chapter: 'CHAPTER_5',
     description: 'Tài liệu về chuyển động lăn không trượt của vật rắn.',
     keywords: ['chuyển động lăn', 'vật rắn'],
@@ -631,7 +632,7 @@ export const lecturerMaterials = [
   {
     id: 'MAT023',
     title: 'Bài đọc — Lực ma sát',
-    type: 'READING',
+    type: 'MARKDOWN',
     chapter: 'CHAPTER_2',
     description: 'Bản thảo phân biệt ma sát nghỉ và ma sát trượt.',
     keywords: ['ma sát', 'lực'],

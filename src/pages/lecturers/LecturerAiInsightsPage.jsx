@@ -143,7 +143,7 @@ export function LecturerAiInsightsPage() {
   const requestedChapter = new URLSearchParams(window.location.search).get('chapter');
   const initialFilters = {
     classId: readAcademicScope().classId,
-    range: '30D',
+    range: 'ALL',
     chapterId: requestedChapter && questionChapterLabels[requestedChapter] ? requestedChapter : 'ALL',
     customStart: '2026-09-01',
     customEnd: '2026-09-22',
@@ -203,6 +203,7 @@ export function LecturerAiInsightsPage() {
               onChange={(event) => setFilters({ ...filters, range: event.target.value })}
               className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
             >
+              <option value="ALL">Tất cả thời gian</option>
               <option value="7D">7 ngày gần nhất</option>
               <option value="30D">30 ngày gần nhất</option>
               <option value="SEMESTER">Học kỳ hiện tại</option>

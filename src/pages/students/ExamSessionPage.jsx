@@ -1,290 +1,313 @@
-import { DetailToolbar } from '../../components/DetailToolbar.jsx';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
-import { ImmersiveShell } from '../../components/ImmersiveShell.jsx';
+import { DetailToolbar } from '../../components/DetailToolbar.jsx';
+import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { api } from '../../lib/apiClient.js';
+import { navigate } from '../../lib/navigation.js';
 
-const examOptions = [
-  {
-    id: 'chapter-2',
-    title: 'Kiểm tra trắc nghiệm Chương 2',
-    description: 'Động lực học chất điểm và các định luật Newton',
-    questions: 20,
-    duration: '45 phút',
-    difficulty: 'Trung bình',
-    due: 'Hạn nộp: 21/03/2025 · 23:59',
-    status: 'Đang mở',
-  },
-  {
-    id: 'midterm',
-    title: 'Bài kiểm tra giữa kỳ Vật lý 1',
-    description: 'Tổng hợp Chương 1 và Chương 2',
-    questions: 50,
-    duration: '90 phút',
-    difficulty: 'Tổng hợp',
-    due: 'Mở từ 25/03/2025',
-    status: 'Sắp mở',
-  },
-  {
-    id: 'practice',
-    title: 'Bài luyện tập nhanh: Công và năng lượng',
-    description: 'Tự luyện trước khi học Chương 3',
-    questions: 15,
-    duration: '25 phút',
-    difficulty: 'Cơ bản',
-    due: 'Không giới hạn thời gian',
-    status: 'Tự luyện',
-  },
-];
+const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
+const finished = (attempt) =>
+  Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
+const formatDate = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
 
-const questions = [
-  'Một vật khối lượng 2kg chịu lực 10N. Gia tốc của vật là bao nhiêu?',
-  'Lực ma sát trượt phụ thuộc vào đại lượng nào?',
-  'Trong chuyển động tròn đều, gia tốc hướng về đâu?',
-  'Công của lực không đổi được tính như thế nào?',
-];
-
-function ExamSelection({ onStart }) {
-  const [selectedId, setSelectedId] = useState(examOptions[0].id);
-  const selected = examOptions.find((exam) => exam.id === selectedId);
-
+function ExamSelection() {
+  const [exams, setExams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [startingId, setStartingId] = useState('');
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const classes = rowsOf(await api.students.myClasses());
+        const grouped = await Promise.all(
+          classes.map(async (item) => ({
+            item,
+            exams: rowsOf(await api.exams.listForClass(item.classId).catch(() => [])),
+          }))
+        );
+        const transferred = rowsOf(await api.exams.myTransferredExams().catch(() => []));
+        const unique = new Map();
+        [
+          ...grouped.flatMap(({ item, exams: examRows }) =>
+            examRows.map((exam) => ({ ...exam, classLabel: item.classCode || item.className || item.subjectName }))
+          ),
+          ...transferred,
+        ].forEach((exam) => unique.set(String(exam.examId), exam));
+        if (alive) setExams([...unique.values()]);
+      } catch (loadError) {
+        if (alive) setError(loadError?.message || 'Không thể tải danh sách đề kiểm tra.');
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const start = async (exam) => {
+    setStartingId(exam.examId);
+    setError('');
+    try {
+      const attempt = await api.exams.startAttempt(exam.examId);
+      navigate(
+        `exam_session.html?examId=${encodeURIComponent(exam.examId)}${attempt?.attemptId ? `&attemptId=${encodeURIComponent(attempt.attemptId)}` : ''}`
+      );
+    } catch (startError) {
+      setError(startError?.message || 'Không thể bắt đầu lượt làm bài.');
+    } finally {
+      setStartingId('');
+    }
+  };
   return (
-    <AppShell
-      currentPage="exam_session.html"
-      title="Chọn bài kiểm tra · PTIT Physics 1"
-      breadcrumbs={['Kiểm tra']}
-      current="Chọn bài kiểm tra"
-    >
-      <PageContainer className="max-w-[1180px]">
+    <AppShell currentPage="exam_session.html" title="Kiểm tra · PTIT Physics LMS">
+      <PageContainer>
         <PageTitle
-          eyebrow="TRUNG TÂM KIỂM TRA"
-          title="Chọn bài kiểm tra"
+          eyebrow="KIỂM TRA"
+          title="Chọn đề kiểm tra"
+          description="Chọn đề được cấp quyền để bắt đầu hoặc tiếp tục lượt làm."
         />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-8 space-y-4">
-            {examOptions.map((exam) => (
-              <Card as="button"
-                key={exam.id}
-                onClick={() => setSelectedId(exam.id)}
-                className={`w-full text-left p-5 rounded-2xl border-2 transition-all ${selectedId === exam.id ? 'border-primary bg-[#FEF2F2] shadow-sm' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}`}
-              >
-                <div className="flex items-start gap-4">
-                  <span
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${selectedId === exam.id ? 'bg-primary text-white' : 'bg-[#F1F5F9] text-[#64748B]'}`}
-                  >
-                    <span className="material-symbols-outlined">
-                      {exam.id === 'practice' ? 'fitness_center' : 'assignment'}
-                    </span>
-                  </span>
-                  <span className="flex-1">
-                    <span className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <strong className="text-headline-sm">{exam.title}</strong>
-                      <StatusBadge
-                        tone={exam.status === 'Đang mở' ? 'success' : exam.status === 'Sắp mở' ? 'warning' : 'neutral'}
-                      >
-                        {exam.status}
-                      </StatusBadge>
-                    </span>
-                    <span className="block text-body-md text-[#64748B] mt-1">{exam.description}</span>
-                    <span className="flex flex-wrap gap-x-5 gap-y-2 text-body-sm text-[#64748B] mt-4">
-                      <span>
-                        <span className="material-symbols-outlined text-sm mr-1">quiz</span>
-                        {exam.questions} câu hỏi
-                      </span>
-                      <span>
-                        <span className="material-symbols-outlined text-sm mr-1">timer</span>
-                        {exam.duration}
-                      </span>
-                      <span>
-                        <span className="material-symbols-outlined text-sm mr-1">signal_cellular_alt</span>
-                        {exam.difficulty}
-                      </span>
-                    </span>
-                    <span className="block text-label-sm text-[#94A3B8] mt-3">{exam.due}</span>
-                  </span>
-                  <span
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedId === exam.id ? 'border-primary' : 'border-[#CBD5E1]'}`}
-                  >
-                    {selectedId === exam.id && <span className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                  </span>
-                </div>
+        {loading ? (
+          <p className="py-10 text-center text-[#64748B]">Đang tải đề kiểm tra…</p>
+        ) : error ? (
+          <Card className="p-8 text-center">
+            <p role="alert" className="text-primary">
+              {error}
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {exams.map((exam) => (
+              <Card key={exam.examId} className="flex flex-col p-6">
+                <StatusBadge tone="neutral">{exam.examType === 'PRACTICE' ? 'Luyện tập' : 'Kiểm tra'}</StatusBadge>
+                <h2 className="mt-4 text-headline-sm font-bold">{exam.title || 'Đề không có tiêu đề'}</h2>
+                <p className="mt-1 text-body-sm text-[#64748B]">{exam.classLabel || 'Đề được chuyển'}</p>
+                <p className="mt-5 text-body-sm text-[#64748B]">
+                  {exam.totalQuestions ?? '—'} câu hỏi ·{' '}
+                  {exam.durationMinutes ? `${exam.durationMinutes} phút` : 'Không giới hạn thời gian'}
+                </p>
+                <Button
+                  className="mt-6 w-full"
+                  icon="play_arrow"
+                  disabled={startingId === exam.examId}
+                  onClick={() => start(exam)}
+                >
+                  {startingId === exam.examId ? 'Đang mở…' : 'Bắt đầu làm bài'}
+                </Button>
               </Card>
             ))}
           </div>
-          <Card className="lg:col-span-4 p-6 lg:sticky lg:top-24">
-            <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-[#FEE2E2] text-primary flex items-center justify-center">
-                <span className="material-symbols-outlined">fact_check</span>
-              </span>
-              <div>
-                <span className="text-body-sm text-[#64748B]">Bài đã chọn</span>
-                <h2 className="text-headline-sm font-bold">{selected.title}</h2>
-              </div>
-            </div>
-            <div className="mt-5 space-y-3 text-body-sm">
-              <div className="flex justify-between">
-                <span className="text-[#64748B]">Số câu hỏi</span>
-                <strong>{selected.questions} câu</strong>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#64748B]">Thời gian</span>
-                <strong>{selected.duration}</strong>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#64748B]">Số lần làm</span>
-                <strong>{selected.id === 'practice' ? 'Không giới hạn' : '1 lần'}</strong>
-              </div>
-            </div>
-            <Card as="div" className="mt-5 p-4 bg-[#FFFBEB] border-[#FDE68A] text-body-sm text-[#92400E]">
-              <span className="material-symbols-outlined text-sm mr-1 align-middle">info</span>Hãy đảm bảo kết nối mạng
-              ổn định trước khi bắt đầu.
-            </Card>
-            <Button
-              className="w-full mt-5"
-              disabled={selected.status === 'Sắp mở'}
-              onClick={() => onStart(selected)}
-              icon="play_arrow"
-            >
-              {selected.status === 'Sắp mở' ? 'Chưa đến thời gian mở' : 'Bắt đầu kiểm tra'}
-            </Button>
-          </Card>
-        </div>
+        )}
+        {!loading && !error && !exams.length && (
+          <Card className="p-10 text-center text-[#64748B]">Chưa có đề kiểm tra được cấp quyền.</Card>
+        )}
       </PageContainer>
     </AppShell>
   );
 }
 
-function RunningExam({ exam, onBack }) {
-  const [current, setCurrent] = useState(0);
-  const [selected, setSelected] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const options =
-    current === 0
-      ? ['2 m/s²', '5 m/s²', '10 m/s²', '20 m/s²']
-      : ['Khối lượng và vận tốc', 'Hệ số ma sát và áp lực', 'Diện tích tiếp xúc', 'Nhiệt độ bề mặt'];
-
+function AttemptSession({ examId, attemptId }) {
+  const [exam, setExam] = useState(null);
+  const [attempt, setAttempt] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const [examData, attemptData] = await Promise.all([
+          api.exams.get(examId),
+          attemptId ? api.exams.getAttempt(attemptId) : api.exams.myAttempt(examId).catch(() => null),
+        ]);
+        if (!alive) return;
+        setExam(examData);
+        setAttempt(attemptData);
+      } catch (loadError) {
+        if (alive) setError(loadError?.message || 'Không thể tải phiên kiểm tra.');
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [examId, attemptId]);
+  const start = async () => {
+    setStarting(true);
+    setError('');
+    try {
+      const created = await api.exams.startAttempt(examId);
+      setAttempt(created);
+      const url = new URL(window.location.href);
+      if (created?.attemptId) url.searchParams.set('attemptId', created.attemptId);
+      window.history.replaceState(window.history.state, '', url);
+    } catch (startError) {
+      setError(startError?.message || 'Không thể bắt đầu lượt làm bài.');
+    } finally {
+      setStarting(false);
+    }
+  };
+  const title = exam?.title || 'Phiên kiểm tra';
+  const isCompleted = finished(attempt);
+  const statusLabel = isCompleted ? 'Đã nộp bài' : attempt ? 'Phiên đang mở' : 'Chưa bắt đầu';
+  const metrics = [
+    {
+      label: 'Số câu hỏi',
+      value: exam?.totalQuestions ?? '—',
+      detail: 'Theo cấu hình đề',
+      icon: 'format_list_numbered',
+      tone: 'primary',
+    },
+    {
+      label: 'Thời lượng',
+      value: exam?.durationMinutes ?? '—',
+      detail: exam?.durationMinutes ? 'phút làm bài' : 'Không giới hạn',
+      icon: 'schedule',
+      tone: 'warning',
+    },
+    {
+      label: 'Trạng thái',
+      value: isCompleted ? 'Đã nộp' : attempt ? 'Đang làm' : 'Sẵn sàng',
+      detail: attempt?.attemptNumber ? `Lượt làm ${attempt.attemptNumber}` : 'Chưa tạo lượt làm',
+      icon: 'assignment_turned_in',
+      tone: isCompleted ? 'success' : 'primary',
+    },
+    {
+      label: 'Điểm số',
+      value: attempt?.totalScore ?? '—',
+      detail: isCompleted ? 'Kết quả lượt làm bài' : 'Có sau khi nộp bài',
+      icon: 'emoji_events',
+      tone: 'success',
+    },
+  ];
   return (
-    <ImmersiveShell
-      showChatLauncher={false}
-      title={`${exam.title} · PTIT Physics 1`}
-      bodyClass="bg-[#F8FAFC] text-on-surface min-h-screen"
-      topbar={
+    <AppShell
+      currentPage="exam_session.html"
+      title={`${title} · PTIT Physics LMS`}
+      footer={false}
+      toolbar={
         <DetailToolbar
-          title={exam.title}
-          subtitle={`${Object.keys(selected).length}/${exam.questions} câu đã chọn · ${exam.duration}`}
-          onBack={onBack}
-          backLabel="Chọn bài khác"
-          actions={
-            <>
-              <span className="detail-toolbar-status">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  timer
-                </span>
-                32:18
-              </span>
-              <Button icon="task_alt" onClick={() => setSubmitted(true)}>
-                Nộp bài
-              </Button>
-            </>
+          title={title}
+          subtitle={
+            attempt
+              ? `Lượt làm ${attempt.attemptNumber || '—'} · ${isCompleted ? 'Đã nộp' : 'Đang làm'}`
+              : 'Sẵn sàng bắt đầu'
           }
+          backHref="exam_practice_center.html"
+          backLabel="Về ôn luyện"
         />
       }
     >
-      <div className="max-w-[1440px] mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <Card className="lg:col-span-8 p-6 md:p-8">
-          <div className="flex items-center justify-between">
-            <StatusBadge tone="primary">
-              Câu {current + 1}/{exam.questions}
-            </StatusBadge>
-            <span className="text-body-sm text-[#64748B]">{exam.description}</span>
-          </div>
-          <h1 className="text-headline-md font-bold mt-6">{questions[current]}</h1>
-          <div className="space-y-3 mt-8">
-            {options.map((option, index) => (
-              <button
-                key={option}
-                onClick={() => setSelected({ ...selected, [current]: index })}
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${selected[current] === index ? 'border-primary bg-[#FEF2F2] text-primary' : 'border-[#E2E8F0] hover:border-[#CBD5E1]'}`}
-              >
-                <span
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border ${selected[current] === index ? 'border-primary bg-primary text-white' : 'border-[#CBD5E1] text-[#64748B]'}`}
-                >
-                  {String.fromCharCode(65 + index)}
-                </span>
-                <span className="text-body-md">{option}</span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center justify-between mt-10 pt-5 border-t border-[#E2E8F0]">
-            <button
-              disabled={current === 0}
-              onClick={() => setCurrent(current - 1)}
-              className="px-4 py-2 rounded-xl border border-[#CBD5E1] disabled:opacity-40"
-            >
-              ← Câu trước
-            </button>
-            <button
-              onClick={() => setCurrent(Math.min(questions.length - 1, current + 1))}
-              className="px-4 py-2 rounded-xl bg-primary-container text-white"
-            >
-              Câu tiếp theo →
-            </button>
-          </div>
-        </Card>
-        <Card className="lg:col-span-4 p-6 h-fit">
-          <div className="flex items-center justify-between">
-            <h2 className="text-headline-sm font-bold">Danh sách câu hỏi</h2>
-            <span className="text-body-sm text-[#64748B]">
-              {Object.keys(selected).length}/{exam.questions} đã chọn
-            </span>
-          </div>
-          <div className="grid grid-cols-5 gap-2 mt-5">
-            {Array.from({ length: exam.questions }, (_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrent(Math.min(index, questions.length - 1))}
-                className={`w-10 h-10 rounded-lg text-body-sm font-semibold ${current === index ? 'bg-primary text-white' : selected[index] !== undefined ? 'bg-[#DCFCE7] text-[#15803D]' : 'bg-[#F1F5F9] text-[#64748B]'}`}
-              >
-                {index + 1}
-              </button>
-            ))}
-          </div>
-          <Card as="div" className="mt-6 p-4 bg-[#FFFBEB] border-[#FDE68A] text-body-sm text-[#92400E]">
-            <span className="material-symbols-outlined text-sm mr-1">info</span>Bạn có thể quay lại câu hỏi trước khi
-            nộp bài.
-          </Card>
-        </Card>
-      </div>
-      {submitted && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <Card className="p-7 max-w-md w-full text-center">
-            <span className="w-14 h-14 rounded-full bg-[#FEF2F2] text-primary flex items-center justify-center mx-auto">
-              <span className="material-symbols-outlined text-3xl">assignment_turned_in</span>
-            </span>
-            <h2 className="text-headline-md font-bold mt-4">Nộp bài kiểm tra?</h2>
-            <p className="text-body-md text-[#64748B] mt-2">
-              Bạn đã chọn {Object.keys(selected).length}/{exam.questions} câu. Sau khi nộp, bạn không thể chỉnh sửa.
+      <PageContainer>
+        {loading ? (
+          <p className="py-10 text-center text-[#64748B]">Đang tải phiên kiểm tra…</p>
+        ) : error ? (
+          <Card className="p-8 text-center">
+            <p role="alert" className="text-primary">
+              {error}
             </p>
-            <div className="flex gap-3 mt-6">
-              <Button variant="secondary" className="flex-1" onClick={() => setSubmitted(false)}>
-                Tiếp tục làm
-              </Button>
-              <a href="exam_results.html" className="flex-1">
-                <Button className="w-full">Xác nhận nộp</Button>
-              </a>
-            </div>
+            <a href="exam_practice_center.html" className="mt-4 inline-block">
+              <Button>Quay lại ôn luyện</Button>
+            </a>
           </Card>
-        </div>
-      )}
-    </ImmersiveShell>
+        ) : (
+          <div className="mx-auto max-w-6xl space-y-6">
+            <Card className="overflow-hidden p-0">
+              <div className="bg-gradient-to-r from-primary to-[#4338CA] p-6 text-white md:p-8">
+                <StatusBadge tone={isCompleted ? 'success' : 'neutral'}>{statusLabel}</StatusBadge>
+                <div className="mt-5 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <p className="text-body-sm text-white/80">Phiên kiểm tra của bạn</p>
+                    <h1 className="mt-1 text-headline-md font-bold">{title}</h1>
+                    {attempt?.startedAt && <p className="mt-2 text-body-sm text-white/80">Bắt đầu lúc {formatDate(attempt.startedAt)}</p>}
+                  </div>
+                  {!attempt && (
+                    <Button icon="play_arrow" disabled={starting} onClick={start}>
+                      {starting ? 'Đang bắt đầu…' : 'Bắt đầu làm bài'}
+                    </Button>
+                  )}
+                  {isCompleted && (
+                    <a href={`exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}>
+                      <Button icon="visibility">Xem kết quả</Button>
+                    </a>
+                  )}
+                </div>
+              </div>
+              <div className="p-5 md:p-6">
+                <MetricGrid items={metrics} />
+              </div>
+            </Card>
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <Card className="p-6 md:p-8">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined rounded-xl bg-[#EEF2FF] p-2 text-primary" aria-hidden="true">assignment</span>
+                  <div>
+                    <h2 className="text-headline-sm font-bold">Khu vực làm bài</h2>
+                    <p className="mt-1 text-body-sm text-[#64748B]">Theo dõi trạng thái và tiếp tục lượt làm của bạn.</p>
+                  </div>
+                </div>
+                {!attempt && (
+                  <Card as="div" className="mt-6 border-[#BFDBFE] bg-[#EFF6FF] p-5">
+                    <h3 className="font-bold text-[#1E3A8A]">Sẵn sàng bắt đầu</h3>
+                    <p className="mt-2 text-body-sm text-[#1D4ED8]">Nhấn “Bắt đầu làm bài” để tạo một lượt làm mới cho đề này.</p>
+                  </Card>
+                )}
+                {attempt && !isCompleted && (
+                  <Card as="div" className="mt-6 border-[#FDE68A] bg-[#FFFBEB] p-5">
+                    <span className="material-symbols-outlined text-[#B45309]" aria-hidden="true">info</span>
+                    <h3 className="mt-2 font-bold text-[#92400E]">Chưa thể tải câu hỏi của bài thi</h3>
+                    <p className="mt-2 text-body-sm text-[#92400E]">Backend hiện chưa có API Student trả câu hỏi và lựa chọn theo lượt làm. Vì vậy hệ thống chưa thể hiển thị hoặc gửi câu trả lời một cách an toàn.</p>
+                  </Card>
+                )}
+                {isCompleted && (
+                  <Card as="div" className="mt-6 border-[#A7F3D0] bg-[#ECFDF5] p-5">
+                    <h3 className="font-bold text-[#065F46]">Bạn đã hoàn thành lượt làm bài</h3>
+                    <p className="mt-2 text-body-sm text-[#047857]">Điểm số và chi tiết kết quả đã sẵn sàng để xem.</p>
+                  </Card>
+                )}
+              </Card>
+              <div className="space-y-6">
+                <Card className="p-6">
+                  <h2 className="text-headline-sm font-bold">Thông tin đề</h2>
+                  <dl className="mt-5 space-y-4 text-body-sm">
+                    <div className="border-b border-[#E2E8F0] pb-3">
+                      <dt className="text-[#64748B]">Loại đề</dt>
+                      <dd className="mt-1 font-semibold">{exam?.examType === 'PRACTICE' ? 'Luyện tập' : exam?.examType || '—'}</dd>
+                    </div>
+                    <div className="border-b border-[#E2E8F0] pb-3">
+                      <dt className="text-[#64748B]">Thời gian mở đề</dt>
+                      <dd className="mt-1 font-semibold">{formatDate(exam?.startTime)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#64748B]">Hạn kết thúc</dt>
+                      <dd className="mt-1 font-semibold">{formatDate(exam?.endTime)}</dd>
+                    </div>
+                  </dl>
+                </Card>
+                <Card className="border-[#DDD6FE] bg-[#F5F3FF] p-5">
+                  <span className="material-symbols-outlined text-[#6D28D9]" aria-hidden="true">tips_and_updates</span>
+                  <p className="mt-2 text-body-sm text-[#5B21B6]">Kiểm tra kỹ thời lượng và hạn kết thúc trước khi bắt đầu làm bài.</p>
+                </Card>
+              </div>
+            </div>
+          </div>
+        )}
+      </PageContainer>
+    </AppShell>
   );
 }
 
 export function ExamSessionPage() {
-  const [exam, setExam] = useState(null);
-  return exam ? <RunningExam exam={exam} onBack={() => setExam(null)} /> : <ExamSelection onStart={setExam} />;
+  const params = new URLSearchParams(window.location.search);
+  const examId = params.get('examId');
+  return examId ? <AttemptSession examId={examId} attemptId={params.get('attemptId')} /> : <ExamSelection />;
 }

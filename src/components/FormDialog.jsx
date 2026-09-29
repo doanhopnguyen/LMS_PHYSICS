@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { Button } from './Button.jsx';
-export function FormDialog({ title, onClose, busy, children }) {
+export function FormDialog({ title, onClose, busy, wide = false, children }) {
   const ref = useRef(null);
   const titleId = useId();
   useEffect(() => {
@@ -19,7 +19,7 @@ export function FormDialog({ title, onClose, busy, children }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="form-dialog max-h-[calc(100dvh-32px)] w-full max-w-2xl overflow-auto rounded-2xl bg-white p-6 shadow-xl"
+        className={`form-dialog max-h-[calc(100dvh-32px)] w-full ${wide ? 'max-w-6xl' : 'max-w-2xl'} overflow-auto rounded-2xl bg-white p-6 shadow-xl`}
         onKeyDown={(e) => {
           if (e.key === 'Escape' && !busy) onClose();
           if (e.key === 'Tab') {

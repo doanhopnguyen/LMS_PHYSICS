@@ -10,8 +10,11 @@ import { api } from '../../lib/apiClient.js';
 
 export function MyCoursesPage() {
   const [classes, setClasses] = useState([]);
+  const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [scheduleLoading, setScheduleLoading] = useState(true);
+  const [scheduleError, setScheduleError] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -22,6 +25,16 @@ export function MyCoursesPage() {
       })
       .catch((err) => setError(err.message || 'Không thể tải danh sách lớp học.'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    api.students.mySchedule()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : data?.data || [];
+        setSchedules([...list].sort((left, right) => (left.dayOfWeek || 9) - (right.dayOfWeek || 9) || String(left.startTime || '').localeCompare(String(right.startTime || ''))));
+      })
+      .catch((err) => setScheduleError(err.message || 'Không thể tải thời khóa biểu.'))
+      .finally(() => setScheduleLoading(false));
   }, []);
 
   const CLASS_ICONS = ['auto_stories', 'science', 'calculate', 'psychology'];
@@ -73,7 +86,7 @@ export function MyCoursesPage() {
                     </div>
                     <div className="mt-5">
                       <span className="text-label-md text-[#64748B]">{cls.classCode}</span>
-                      <h2 className="text-headline-sm font-bold mt-1">{cls.classCode}</h2>
+                      <h2 className="text-headline-sm font-bold mt-1">{cls.subjectName || cls.subjectCode || cls.className || cls.classCode}</h2>
                     </div>
                     <div className="grid grid-cols-2 gap-3 mt-5 text-body-sm">
                       <div className="p-3 rounded-lg bg-white/70 backdrop-blur-[1px]">
@@ -85,7 +98,7 @@ export function MyCoursesPage() {
                         <strong className="block text-body-md mt-1">{cls.status}</strong>
                       </div>
                     </div>
-                    <a href="course_detail.html" className="mt-5">
+                    <a href={`course_detail.html?classId=${encodeURIComponent(cls.classId)}`} className="mt-5">
                       <Button className="w-full" variant={cls.status === 'ACTIVE' ? 'primary' : 'secondary'}>
                         {cls.status === 'ACTIVE' ? 'Tiếp tục học' : 'Xem học phần'}
                       </Button>
@@ -97,21 +110,27 @@ export function MyCoursesPage() {
           </PaginatedList>
         )}
         <Card className="p-6">
-          <h2 className="text-headline-md font-bold">Lịch học tuần này</h2>
+          <h2 className="text-headline-md font-bold">Thời khóa biểu</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-            {['Thứ 2 · 09:30', 'Thứ 4 · 14:00', 'Thứ 6 · 08:00'].map((time, index) => (
-              <Card as="div" key={time} className="p-4 flex gap-3">
+            {scheduleLoading && <p className="text-body-sm text-[#64748B]">Đang tải thời khóa biểu…</p>}
+            {!scheduleLoading && scheduleError && <p role="alert" className="text-body-sm text-primary">{scheduleError}</p>}
+            {!scheduleLoading && !scheduleError && schedules.map((schedule) => (
+              <Card as="div" key={schedule.scheduleId} className="p-4 flex gap-3">
                 <span className="w-10 h-10 rounded-lg bg-[#FEE2E2] text-primary flex items-center justify-center">
                   <span className="material-symbols-outlined">event</span>
                 </span>
                 <div>
                   <strong className="text-body-md">
-                    {['Động lực học chất điểm', 'Thực hành Lab 3D', 'Ôn tập Chương 2'][index]}
+                    {schedule.subjectName || schedule.subjectCode || schedule.classCode || 'Lớp học phần'}
                   </strong>
-                  <p className="text-body-sm text-[#64748B] mt-1">{time} · Phòng A2-304</p>
+                  <p className="text-body-sm text-[#64748B] mt-1">
+                    {schedule.dayOfWeekText || `Thứ ${schedule.dayOfWeek || '—'}`} · {schedule.startTime || '—'} – {schedule.endTime || '—'}
+                  </p>
+                  {(schedule.building || schedule.room) && <p className="text-body-sm text-[#64748B] mt-1">{[schedule.building, schedule.room].filter(Boolean).join(' · ')}</p>}
                 </div>
               </Card>
             ))}
+            {!scheduleLoading && !scheduleError && !schedules.length && <p className="text-body-sm text-[#64748B]">Chưa có thời khóa biểu được công bố.</p>}
           </div>
         </Card>
       </PageContainer>

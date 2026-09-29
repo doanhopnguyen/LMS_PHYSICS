@@ -16,10 +16,11 @@ import {
 } from '../../data/lecturerData.js';
 
 const typeIcons = {
-  TEXTBOOK: 'menu_book',
+  MARKDOWN: 'article',
+  PDF: 'picture_as_pdf',
   SLIDE: 'slideshow',
   VIDEO: 'play_circle',
-  READING: 'article',
+  TEXT: 'notes',
   OTHER: 'description',
 };
 
@@ -30,7 +31,7 @@ const tabItems = [
 
 const emptyForm = {
   title: '',
-  type: 'TEXTBOOK',
+  type: 'PDF',
   chapter: 'ALL',
   description: '',
   keywords: '',

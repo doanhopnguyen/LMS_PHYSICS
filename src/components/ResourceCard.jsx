@@ -20,7 +20,7 @@ export function ResourceCard({ resource }) {
         <p className="text-body-sm text-[#64748B] mt-1">{resource.type}</p>
         <p className="text-body-sm text-[#64748B]">{resource.author}</p>
       </div>
-      <a className="resource-card__link text-body-md font-semibold text-primary mt-auto" href="document_viewer.html">
+      <a className="resource-card__link text-body-md font-semibold text-primary mt-auto" href={resource.href || 'document_viewer.html'} target={resource.external ? '_blank' : undefined} rel={resource.external ? 'noreferrer' : undefined}>
         Mở tài liệu
         <span className="material-symbols-outlined text-sm">arrow_forward</span>
       </a>

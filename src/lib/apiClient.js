@@ -1,14 +1,38 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const ACCESS_TOKEN_KEY = 'ptit-physics-access-token';
 const REFRESH_TOKEN_KEY = 'ptit-physics-refresh-token';
+const API_ERROR_EVENT = 'ptit-api-error';
+
+function reportApiError(error) {
+  window.dispatchEvent(new CustomEvent(API_ERROR_EVENT, { detail: {
+    message: error.message,
+    status: error.status,
+    method: error.method,
+    path: error.path,
+    statusText: error.statusText,
+    details: error.details,
+  } }));
+  return error;
+}
 
 export class ApiError extends Error {
-  constructor(message, { status, data } = {}) {
+  constructor(message, { status, data, method, path, statusText, details } = {}) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.data = data;
+    this.method = method;
+    this.path = path;
+    this.statusText = statusText;
+    this.details = details;
   }
+}
+
+function errorDetails(payload) {
+  const value = payload?.errors || payload?.error || payload?.details || payload?.data?.errors;
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  try { return JSON.stringify(value, null, 2); } catch { return String(value); }
 }
 
 export const tokenStore = {
@@ -73,8 +97,8 @@ export async function apiRequest(path, options = {}) {
       headers: requestHeaders,
       body: formData || (body === undefined ? undefined : JSON.stringify(body)),
     });
-  } catch {
-    throw new ApiError('Không thể kết nối tới máy chủ API. Kiểm tra VITE_API_BASE_URL hoặc backend tại cổng 8080.');
+  } catch (networkError) {
+    throw reportApiError(new ApiError('Không thể kết nối tới máy chủ API. Kiểm tra VITE_API_BASE_URL hoặc backend tại cổng 8080.'));
   }
 
   if (response.status === 401 && auth && retry && await refreshAccessToken()) {
@@ -82,7 +106,18 @@ export async function apiRequest(path, options = {}) {
   }
   if (response.ok && options.responseType === 'blob') return response.blob();
   const payload = response.status === 204 ? null : await response.json().catch(() => null);
-  if (!response.ok) throw new ApiError(payload?.message || `Yêu cầu thất bại (${response.status}).`, { status: response.status, data: payload });
+  if (!response.ok) {
+    const detailedError = new ApiError(payload?.message || `Request failed (${response.status}).`, {
+      status: response.status,
+      data: payload,
+      method,
+      path,
+      statusText: response.statusText,
+      details: errorDetails(payload),
+    });
+    throw reportApiError(detailedError);
+    throw reportApiError(new ApiError(payload?.message || `Yêu cầu thất bại (${response.status}).`, { status: response.status, data: payload }));
+  }
   return payload?.data ?? payload;
 }
 
@@ -112,6 +147,8 @@ export const api = {
     adminUpdateStatus: (id, body) => apiRequest(`/api/v1/users/admin/users/${id}/status`, { method: 'PUT', body }),
     getByUsername: (username) => apiRequest(`/api/v1/users/${username}`),
     deleteByUsername: (username) => apiRequest(`/api/v1/users/${username}`, { method: 'DELETE' }),
+    downloadStudentTemplate: () => apiRequest('/api/v1/users/import-excel/template', { responseType: 'blob' }),
+    importStudentsExcel: (formData, query) => apiRequest('/api/v1/users/import-excel', { method: 'POST', formData, query }),
   },
 
   // ─── Semesters ───────────────────────────────────────────────────────────────
@@ -168,11 +205,16 @@ export const api = {
     progress: (id) => apiRequest(`/api/v1/classes/${id}/progress`),
     evidence: (id) => apiRequest(`/api/v1/classes/${id}/evidence`),
     activityLogs: (id) => apiRequest(`/api/v1/classes/${id}/activity-logs`),
+    schedules: (id) => apiRequest(`/api/v1/classes/${id}/schedules`),
+    createSchedule: (classId, body) => apiRequest(`/api/v1/classes/${classId}/schedules`, { method: 'POST', body }),
+    updateSchedule: (scheduleId, body) => apiRequest(`/api/v1/classes/schedules/${scheduleId}`, { method: 'PUT', body }),
+    removeSchedule: (scheduleId) => apiRequest(`/api/v1/classes/schedules/${scheduleId}`, { method: 'DELETE' }),
   },
 
   // ─── Students ────────────────────────────────────────────────────────────────
   students: {
     myClasses: (query) => apiRequest('/api/v1/students/me/classes', { query }),
+    mySchedule: () => apiRequest('/api/v1/students/me/schedule'),
     myProgress: (classId) => apiRequest('/api/v1/students/me/progress', { query: { classId } }),
     updateProgress: (body) => apiRequest('/api/v1/students/me/progress', { method: 'PUT', body }),
     myEvidence: () => apiRequest('/api/v1/students/me/evidence'),
@@ -188,7 +230,31 @@ export const api = {
     update: (id, body) => apiRequest(`/api/v1/questions/${id}`, { method: 'PUT', body }),
     remove: (id) => apiRequest(`/api/v1/questions/${id}`, { method: 'DELETE' }),
     approve: (id) => apiRequest(`/api/v1/questions/${id}/approve`, { method: 'PUT' }),
-    importPdf: (formData, query) => apiRequest('/api/v1/questions/import-pdf', { method: 'POST', formData, query }),
+    downloadTemplate: () => apiRequest('/api/v1/questions/import-excel/template', { responseType: 'blob' }),
+    importExcel: (formData, query) => apiRequest('/api/v1/questions/import-excel', { method: 'POST', formData, query }),
+  },
+
+  notifications: {
+    list: (query) => apiRequest('/api/v1/notifications', { query }),
+    summary: () => apiRequest('/api/v1/notifications/summary'),
+    markRead: (id) => apiRequest(`/api/v1/notifications/${id}/read`, { method: 'PUT' }),
+    markAllRead: () => apiRequest('/api/v1/notifications/read-all', { method: 'PUT' }),
+    remove: (id) => apiRequest(`/api/v1/notifications/${id}`, { method: 'DELETE' }),
+    generateReminders: () => apiRequest('/api/v1/notifications/reminders/generate', { method: 'POST' }),
+    sendToClass: (classId, body) => apiRequest(`/api/v1/notifications/classes/${classId}`, { method: 'POST', body }),
+  },
+
+  files: {
+    upload: (formData) => apiRequest('/api/v1/files/upload', { method: 'POST', formData }),
+  },
+
+  examMatrices: {
+    list: (query) => apiRequest('/api/v1/exam-matrices', { query }),
+    get: (id) => apiRequest(`/api/v1/exam-matrices/${id}`),
+    create: (body) => apiRequest('/api/v1/exam-matrices', { method: 'POST', body }),
+    update: (id, body) => apiRequest(`/api/v1/exam-matrices/${id}`, { method: 'PUT', body }),
+    remove: (id) => apiRequest(`/api/v1/exam-matrices/${id}`, { method: 'DELETE' }),
+    validate: (id) => apiRequest(`/api/v1/exam-matrices/${id}/validate`, { method: 'POST' }),
   },
 
   // ─── Exams ───────────────────────────────────────────────────────────────────
@@ -196,12 +262,22 @@ export const api = {
     listForClass: (classId) => apiRequest(`/api/v1/exams/class/${classId}`),
     get: (id) => apiRequest(`/api/v1/exams/${id}`),
     create: (body) => apiRequest('/api/v1/exams', { method: 'POST', body }),
+    update: (id, body) => apiRequest(`/api/v1/exams/${id}`, { method: 'PUT', body }),
+    remove: (id) => apiRequest(`/api/v1/exams/${id}`, { method: 'DELETE' }),
+    questions: (id) => apiRequest(`/api/v1/exams/${id}/questions`),
     addQuestion: (examId, body) => apiRequest(`/api/v1/exams/${examId}/questions`, { method: 'POST', body }),
+    removeQuestion: (examId, questionId) => apiRequest(`/api/v1/exams/${examId}/questions/${questionId}`, { method: 'DELETE' }),
     generateQuestions: (examId) => apiRequest(`/api/v1/exams/${examId}/generate-questions`, { method: 'POST' }),
+    attempts: (id) => apiRequest(`/api/v1/exams/${id}/attempts`),
+    gradeAttempt: (attemptId, body) => apiRequest(`/api/v1/exams/attempts/${attemptId}/grade`, { method: 'PUT', body }),
+    roster: (id) => apiRequest(`/api/v1/exams/${id}/roster`),
+    transferStudent: (examId, body) => apiRequest(`/api/v1/exams/${examId}/transfers`, { method: 'POST', body }),
+    removeTransferredStudent: (examId, studentId) => apiRequest(`/api/v1/exams/${examId}/transfers/${studentId}`, { method: 'DELETE' }),
     // Attempts
     startAttempt: (examId) => apiRequest(`/api/v1/exams/${examId}/attempts`, { method: 'POST' }),
     myAttempt: (examId) => apiRequest(`/api/v1/exams/${examId}/my-attempt`),
     myAttempts: (examId) => apiRequest(`/api/v1/exams/${examId}/my-attempts`),
+    myTransferredExams: () => apiRequest('/api/v1/exams/my-transferred-exams'),
     getAttempt: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}`),
     saveAnswer: (attemptId, body) => apiRequest(`/api/v1/exams/attempts/${attemptId}/answers`, { method: 'POST', body }),
     submit: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}/submit`, { method: 'PUT' }),

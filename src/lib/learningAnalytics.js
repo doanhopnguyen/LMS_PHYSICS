@@ -3,7 +3,9 @@ import { answersAreEqual } from '../data/lecturerData.js';
 export function getAnalyticsRange(range, customStart, customEnd) {
   const end = range === 'CUSTOM' && customEnd ? new Date(`${customEnd}T23:59:59`) : new Date('2026-09-22T23:59:59');
   const start =
-    range === '7D'
+    range === 'ALL'
+      ? null
+      : range === '7D'
       ? new Date('2026-09-16T00:00:00')
       : range === '30D'
         ? new Date('2026-08-24T00:00:00')

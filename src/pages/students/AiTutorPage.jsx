@@ -14,9 +14,15 @@ const starterQuestions = [
   'Cho tôi một bài tập về lực ma sát',
 ];
 
+const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
+
 export function AiTutorPage() {
   const [messages, setMessages] = useState([]);
   const [value, setValue] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [classId, setClassId] = useState('');
+  const [topics, setTopics] = useState([]);
+  const [topic, setTopic] = useState('');
   const [mode, setMode] = useState('TEXT');
   const [ended, setEnded] = useState(false);
   const [rated, setRated] = useState({});
@@ -25,6 +31,36 @@ export function AiTutorPage() {
   const [lastMessageId, setLastMessageId] = useState(null);
   const messagesRef = useChatAutoScroll(messages);
 
+  useEffect(() => {
+    let alive = true;
+    api.students.myClasses()
+      .then((data) => {
+        if (!alive) return;
+        const classRows = rowsOf(data);
+        setClasses(classRows);
+        setClassId((current) => current || classRows[0]?.classId || '');
+      })
+      .catch(() => alive && setClasses([]));
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const selectedClass = classes.find((item) => String(item.classId) === String(classId));
+    const subjectId = selectedClass?.subjectId;
+    setTopic('');
+    if (!subjectId) {
+      setTopics([]);
+      return () => { alive = false; };
+    }
+    api.subjects.topics(subjectId)
+      .then((data) => alive && setTopics(rowsOf(data)))
+      .catch(() => alive && setTopics([]));
+    return () => { alive = false; };
+  }, [classes, classId]);
+
+  const startPayload = () => ({ classId, topicId: topic || null, mode });
+
   // Load my conversations list
   const { data: conversationsData } = useApiData('/api/v1/ai-tutor/conversations/my');
   const conversations = Array.isArray(conversationsData) ? conversationsData : [];
@@ -32,7 +68,8 @@ export function AiTutorPage() {
   // Start a new conversation
   const startNewConversation = async () => {
     try {
-      const conv = await api.aiTutor.start({ mode });
+      if (!classId) return;
+      const conv = await api.aiTutor.start(startPayload());
       setConversationId(conv.conversationId);
       setMessages([]);
       setEnded(false);
@@ -69,7 +106,8 @@ export function AiTutorPage() {
     try {
       let convId = conversationId;
       if (!convId) {
-        const conv = await api.aiTutor.start({ mode });
+        if (!classId) throw new Error('Chọn lớp học trước khi bắt đầu trao đổi.');
+        const conv = await api.aiTutor.start(startPayload());
         convId = conv.conversationId;
         setConversationId(convId);
       }
@@ -100,7 +138,7 @@ export function AiTutorPage() {
   const submitFeedback = async (messageId, rating) => {
     setRated((prev) => ({ ...prev, [messageId]: rating }));
     try {
-      await api.aiTutor.sendFeedback(messageId, { rating: rating === 'UP' ? 1 : 0 });
+      await api.aiTutor.sendFeedback(messageId, { rating: rating === 'UP' ? 5 : 1 });
     } catch (err) { /* ignore */ }
   };
 
@@ -162,11 +200,11 @@ export function AiTutorPage() {
         <Card as="section" className="chat-page__conversation flex min-w-0 flex-1 flex-col overflow-hidden bg-[#F8FAFC]">
           <div className="flex flex-col gap-2 border-b border-[#E2E8F0] bg-white p-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2 text-body-sm">
-              <span className="font-semibold text-[#475569]">Lớp D23CQCN01-B</span>
-              <select value={topic} onChange={(event) => setTopic(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"><option value="TOPIC-FRICTION">Lực ma sát</option><option value="TOPIC-NEWTON">Định luật Newton</option><option value="TOPIC-ENERGY">Công và năng lượng</option></select>
+              <select value={classId} onChange={(event) => setClassId(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"><option value="">Chọn lớp học</option>{classes.map((item) => <option key={item.classId} value={item.classId}>{item.classCode || item.className || item.subjectName}</option>)}</select>
+              <select value={topic} onChange={(event) => setTopic(event.target.value)} disabled={!topics.length} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm disabled:bg-[#F1F5F9]"><option value="">Tất cả chủ đề</option>{topics.map((item) => <option key={item.topicId} value={item.topicId}>{item.topicName}</option>)}</select>
               <select value={mode} onChange={(event) => setMode(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"><option value="TEXT">Trao đổi văn bản</option><option value="VOICE">Chế độ giọng nói</option></select>
             </div>
-            <button type="button" onClick={() => setEnded(true)} disabled={ended} className="text-body-sm font-semibold text-primary disabled:text-[#94A3B8]">{ended ? 'Đã kết thúc phiên' : 'Kết thúc phiên'}</button>
+            <button type="button" onClick={endConversation} disabled={ended} className="text-body-sm font-semibold text-primary disabled:text-[#94A3B8]">{ended ? 'Đã kết thúc phiên' : 'Kết thúc phiên'}</button>
           </div>
           <div className="chat-page__messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-6" ref={messagesRef} role="log" aria-label="Tin nhắn trợ giảng AI" aria-live="polite">
             {messages.map((message, index) => (

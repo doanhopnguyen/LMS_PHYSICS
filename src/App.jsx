@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ApiErrorToasts } from './components/ApiErrorToasts.jsx';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getCleanRoute, getPageFile } from './lib/routes.js';
 import { LoginPage } from './pages/LoginPage.jsx';
@@ -110,9 +111,9 @@ function App() {
   const session = getDemoSession();
   const Page = pageComponents[file] ?? pageComponents['login.html'];
   if (!['login.html', 'auth_access.html', 'register.html', 'reset_password.html'].includes(file) && (!session || !canAccess(session.role, file))) {
-    return <RoleAccessPage session={session} requestedPage={file} />;
+    return <><RoleAccessPage session={session} requestedPage={file} /><ApiErrorToasts /></>;
   }
-  return <Page key={locationKey} />;
+  return <><Page key={locationKey} /><ApiErrorToasts /></>;
 }
 
 export default App;
