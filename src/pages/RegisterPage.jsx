@@ -21,27 +21,71 @@ export function RegisterPage() {
     }
     setSubmitting(true);
     try {
-      const tokens = await api.auth.signup({ username: values.get('username').trim(), email: values.get('email').trim(), password: values.get('password') });
+      const tokens = await api.auth.signup({
+        username: values.get('username').trim(),
+        email: values.get('email').trim(),
+        password: values.get('password'),
+      });
       tokenStore.set(tokens);
       navigate(setAuthenticatedSession(await api.users.me()).home);
     } catch (requestError) {
       tokenStore.clear();
       setError(requestError.message || 'Không thể đăng ký tài khoản.');
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   }
-  return <AuthLayout title="Đăng ký tài khoản" description="Tạo tài khoản sinh viên để bắt đầu học tập.">
-    <AuthAlert error>{error}</AuthAlert>
-    <Form onSubmit={submit}>
-      <label htmlFor="register-username">Tên đăng nhập</label>
-      <AuthInput id="register-username" name="username" autoComplete="username" placeholder="Nhập tên đăng nhập" required />
-      <label htmlFor="register-email">Email</label>
-      <AuthInput id="register-email" name="email" type="email" autoComplete="email" placeholder="Nhập địa chỉ email" required />
-      <label htmlFor="register-password">Mật khẩu</label>
-      <AuthInput id="register-password" name="password" type="password" autoComplete="new-password" minLength={8} placeholder="Ít nhất 8 ký tự" required onChange={() => setConfirmError('')} />
-      <label htmlFor="register-confirm">Xác nhận mật khẩu</label>
-      <AuthInput id="register-confirm" name="confirmPassword" type="password" autoComplete="new-password" minLength={8} placeholder="Nhập lại mật khẩu" required error={confirmError} onChange={() => setConfirmError('')} />
-      <button className="login-submit" disabled={submitting}>{submitting ? 'Đang đăng ký…' : 'Đăng ký'}</button>
-    </Form>
-    <a href="/login" className="auth-link">Đã có tài khoản? Đăng nhập</a>
-  </AuthLayout>;
+  return (
+    <AuthLayout title="Đăng ký tài khoản" description="Tạo tài khoản sinh viên để bắt đầu học tập.">
+      <AuthAlert error>{error}</AuthAlert>
+      <Form onSubmit={submit}>
+        <label htmlFor="register-username">Tên đăng nhập</label>
+        <AuthInput
+          id="register-username"
+          name="username"
+          autoComplete="username"
+          placeholder="Nhập tên đăng nhập"
+          required
+        />
+        <label htmlFor="register-email">Email</label>
+        <AuthInput
+          id="register-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="Nhập địa chỉ email"
+          required
+        />
+        <label htmlFor="register-password">Mật khẩu</label>
+        <AuthInput
+          id="register-password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          minLength={8}
+          placeholder="Ít nhất 8 ký tự"
+          required
+          onChange={() => setConfirmError('')}
+        />
+        <label htmlFor="register-confirm">Xác nhận mật khẩu</label>
+        <AuthInput
+          id="register-confirm"
+          name="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          minLength={8}
+          placeholder="Nhập lại mật khẩu"
+          required
+          error={confirmError}
+          onChange={() => setConfirmError('')}
+        />
+        <button className="login-submit" disabled={submitting}>
+          {submitting ? 'Đang đăng ký…' : 'Đăng ký'}
+        </button>
+      </Form>
+      <a href="/login" className="auth-link">
+        Đã có tài khoản? Đăng nhập
+      </a>
+    </AuthLayout>
+  );
 }

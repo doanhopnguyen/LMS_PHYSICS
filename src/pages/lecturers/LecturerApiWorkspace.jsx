@@ -151,7 +151,7 @@ export function LecturerDashboardApiPage() {
                 {items.slice(0, 8).map((item) => (
                   <a
                     key={item.classId}
-                    href={`lecturer_class_operations.html?classId=${item.classId}`}
+                    href={`lecturer_courses.html?classId=${item.classId}`}
                     className="rounded-xl border border-[#E2E8F0] px-3 py-2 font-semibold hover:border-primary"
                   >
                     {nameOf(item)}
@@ -170,9 +170,34 @@ export function LecturerAssessmentApiPage({ grading = false }) {
   const classes = useApiData('/api/v1/classes?page=0&size=100');
   const rows = listItems(classes.data);
   const [classId, setClassId] = useState('');
+  const [creating, setCreating] = useState(false);
   const selected = classId || rows[0]?.classId || '';
   const exams = useApiData(selected ? `/api/v1/exams/class/${encodeURIComponent(selected)}` : null);
   const action = useAction();
+  const createExam = async (event) => {
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    const result = await action.run(
+      '/api/v1/exams',
+      {
+        method: 'POST',
+        body: {
+          classId: selected,
+          matrixId: values.matrixId.trim(),
+          title: values.title.trim(),
+          examType: values.examType,
+          durationMinutes: Number(values.durationMinutes),
+          startTime: new Date(values.startTime).toISOString(),
+          endTime: new Date(values.endTime).toISOString(),
+        },
+      },
+      'Đã tạo đề thi.'
+    );
+    if (result) {
+      setCreating(false);
+      exams.reload();
+    }
+  };
   return (
     <LecturerPageShell
       currentPage={grading ? 'lecturer_grading.html' : 'lecturer_assessments.html'}
@@ -188,6 +213,11 @@ export function LecturerAssessmentApiPage({ grading = false }) {
           actions={
             <>
               <ClassSelect classes={rows} value={selected} onChange={setClassId} />
+              {!grading && (
+                <Button icon="add" disabled={!selected} onClick={() => setCreating(true)}>
+                  Tạo đề thi
+                </Button>
+              )}
             </>
           }
         >
@@ -209,6 +239,21 @@ export function LecturerAssessmentApiPage({ grading = false }) {
           )}
         </Tabs>
       </div>
+      {creating && (
+        <Modal title="Tạo đề thi" busy={action.busy} onClose={() => setCreating(false)}>
+          <Form className="grid gap-4" busy={action.busy} onSubmit={createExam}>
+            <label className="text-body-sm font-semibold">Tên đề thi<input name="title" required className="mt-2 w-full rounded-xl border p-3" /></label>
+            <label className="text-body-sm font-semibold">Ma trận đề (ID)<input name="matrixId" required className="mt-2 w-full rounded-xl border p-3" /></label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="text-body-sm font-semibold">Loại đề<select name="examType" defaultValue="PRACTICE" className="mt-2 w-full rounded-xl border bg-white p-3"><option value="PRACTICE">Luyện tập</option><option value="MIDTERM">Giữa kỳ</option><option value="FINAL">Cuối kỳ</option></select></label>
+              <label className="text-body-sm font-semibold">Thời lượng (phút)<input name="durationMinutes" type="number" min="1" required className="mt-2 w-full rounded-xl border p-3" /></label>
+              <label className="text-body-sm font-semibold">Bắt đầu<input name="startTime" type="datetime-local" required className="mt-2 w-full rounded-xl border p-3" /></label>
+              <label className="text-body-sm font-semibold">Kết thúc<input name="endTime" type="datetime-local" required className="mt-2 w-full rounded-xl border p-3" /></label>
+            </div>
+            <div className="flex justify-end gap-3"><Button type="button" variant="secondary" disabled={action.busy} onClick={() => setCreating(false)}>Hủy</Button><SubmitButton busy={action.busy}>Tạo đề thi</SubmitButton></div>
+          </Form>
+        </Modal>
+      )}
     </LecturerPageShell>
   );
 }

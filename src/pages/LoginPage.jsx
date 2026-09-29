@@ -29,38 +29,39 @@ export function LoginPage() {
 
   return (
     <AuthLayout title="Đăng nhập" description="Chào mừng bạn trở lại hệ thống học tập Vật lý.">
-          <AuthAlert error>{error}</AuthAlert>
-          <Form
-            onSubmit={signIn}
-          >
-            <label htmlFor="student-id">Tên đăng nhập</label>
-            <AuthInput
-              id="student-id"
-              name="username"
-              type="text"
-              autoComplete="username"
-              placeholder="Nhập tên đăng nhập"
-              required
-            />
-            <label htmlFor="login-password">Mật khẩu</label>
-            <AuthInput
-              id="login-password"
-              onChange={() => setError('')}
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Nhập mật khẩu"
-              required
-            />
-            <SubmitButton className="login-submit" type="submit" disabled={submitting}>
-              {submitting ? 'Đang đăng nhập…' : 'Đăng nhập'}
-            </SubmitButton>
-          </Form>
+      <AuthAlert error>{error}</AuthAlert>
+      <Form onSubmit={signIn}>
+        <label htmlFor="student-id">Tên đăng nhập</label>
+        <AuthInput
+          id="student-id"
+          name="username"
+          type="text"
+          autoComplete="username"
+          placeholder="Nhập tên đăng nhập"
+          required
+        />
+        <label htmlFor="login-password">Mật khẩu</label>
+        <AuthInput
+          id="login-password"
+          onChange={() => setError('')}
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Nhập mật khẩu"
+          required
+        />
+        <SubmitButton className="login-submit" type="submit" disabled={submitting}>
+          {submitting ? 'Đang đăng nhập…' : 'Đăng nhập'}
+        </SubmitButton>
+      </Form>
 
-          <div className="login-divider">
-          </div>
-          <button className="auth-secondary" type="button" onClick={() => navigate('register.html')}>Đăng ký tài khoản mới</button>
-          <a href="/reset_password" className="auth-link">Quên mật khẩu?</a>
+      <div className="login-divider"></div>
+      <button className="auth-secondary" type="button" onClick={() => navigate('register.html')}>
+        Đăng ký tài khoản mới
+      </button>
+      <a href="/reset_password" className="auth-link">
+        Quên mật khẩu?
+      </a>
     </AuthLayout>
   );
 }

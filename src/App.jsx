@@ -25,7 +25,7 @@ import { InteractiveLessonPage } from './pages/students/InteractiveLessonPage.js
 import { MobileExperiencePage } from './pages/students/MobileExperiencePage.jsx';
 import { LecturerAnalyticsApiPage, LecturerAssessmentApiPage, LecturerDashboardApiPage, LecturerExperimentsApiPage, LecturerGradingApiPage } from './pages/lecturers/LecturerApiWorkspace.jsx';
 import { LecturerAuthoringApiPage } from './pages/lecturers/LecturerContent.jsx';
-import { LecturerClassesApiPage, LecturerClassDetail, LecturerStudentDetailApiPage } from './pages/lecturers/LecturerClasses.jsx';
+import { LecturerClassesApiPage, LecturerClassDetail } from './pages/lecturers/LecturerClasses.jsx';
 import { AdminDashboardPage } from './pages/admin/AdminPages.jsx';
 import { AdminAcademicsApiPage } from './pages/admin/AdminAcademicsApiPage.jsx';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage.jsx';
@@ -62,8 +62,6 @@ const pageComponents = {
   'lecturer_dashboard.html': LecturerDashboardApiPage,
   'lecturer_courses.html': LecturerClassesApiPage,
   'lecturer_course_detail.html': LecturerClassDetail,
-  'lecturer_students.html': () => <LecturerClassesApiPage mode="students" />,
-  'lecturer_student_detail.html': LecturerStudentDetailApiPage,
   'lecturer_materials.html': () => <LecturerAuthoringApiPage kind="materials" />,
   'lecturer_question_bank.html': () => <LecturerAuthoringApiPage kind="questions" />,
   'lecturer_assessments.html': LecturerAssessmentApiPage,
@@ -84,7 +82,6 @@ const pageComponents = {
   'ta_dashboard.html': TADashboardApiPage,
   'ta_work_queue.html': TAWorkQueueApiPage,
   'student_evidence.html': StudentEvidencePage,
-  'lecturer_class_operations.html': LecturerClassesApiPage,
   'auth_access.html': ResetPasswordPage,
   'register.html': RegisterPage,
   'reset_password.html': ResetPasswordPage,

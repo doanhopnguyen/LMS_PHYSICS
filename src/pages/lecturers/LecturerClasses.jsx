@@ -349,14 +349,6 @@ function ClassPeople({ classId, staff = false }) {
                     disabled={action.busy}
                     items={[
                       !staff &&
-                        studentId && {
-                          label: 'Xem chi tiết',
-                          onSelect: () =>
-                            navigate(
-                              `lecturer_student_detail.html?classId=${idPath(classId)}&studentId=${idPath(studentId)}`
-                            ),
-                        },
-                      !staff &&
                         studentId &&
                         ['ACTIVE', 'DROPPED', 'COMPLETED']
                           .filter((status) => status !== row.status)

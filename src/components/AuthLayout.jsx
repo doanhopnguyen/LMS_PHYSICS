@@ -34,23 +34,53 @@ export function AuthAlert({ error, children }) {
     return () => clearTimeout(timer);
   }, [children, error]);
   if (!children || !visible) return null;
-  return createPortal(<p className={`form-alert form-alert--${error ? 'error' : 'success'} auth-alert`} role={error ? 'alert' : 'status'} aria-atomic="true">
-    <span className="material-symbols-outlined" aria-hidden="true">{error ? 'error' : 'check_circle'}</span>
-    <span>{children}</span>
-  </p>, document.body);
+  return createPortal(
+    <p
+      className={`form-alert form-alert--${error ? 'error' : 'success'} auth-alert`}
+      role={error ? 'alert' : 'status'}
+      aria-atomic="true"
+    >
+      <span className="material-symbols-outlined" aria-hidden="true">
+        {error ? 'error' : 'check_circle'}
+      </span>
+      <span>{children}</span>
+    </p>,
+    document.body
+  );
 }
 
 export function AuthInput({ error, onChange, ...props }) {
   const [validation, setValidation] = useState('');
   const message = error || validation;
-  return <div className={`auth-input${message ? ' auth-input--invalid' : ''}`}>
-    <input {...props} aria-invalid={Boolean(message)} aria-describedby={message ? `${props.id}-error` : undefined}
-      onInvalid={(event) => {
-        event.preventDefault();
-        const input = event.currentTarget;
-        setValidation(input.validity.valueMissing ? 'Vui lòng nhập thông tin này.' : input.validity.typeMismatch ? 'Địa chỉ email không hợp lệ.' : input.validity.tooShort ? `Vui lòng nhập ít nhất ${props.minLength} ký tự.` : 'Thông tin không hợp lệ.');
-      }}
-      onChange={(event) => { setValidation(''); onChange?.(event); }} />
-    {message && <span id={`${props.id}-error`} className="auth-input-error" role="alert" title={message}>{message}</span>}
-  </div>;
+  return (
+    <div className={`auth-input${message ? ' auth-input--invalid' : ''}`}>
+      <input
+        {...props}
+        aria-invalid={Boolean(message)}
+        aria-describedby={message ? `${props.id}-error` : undefined}
+        onInvalid={(event) => {
+          event.preventDefault();
+          const input = event.currentTarget;
+          setValidation(
+            input.validity.valueMissing
+              ? 'Vui lòng nhập thông tin này.'
+              : input.validity.typeMismatch
+                ? 'Địa chỉ email không hợp lệ.'
+                : input.validity.tooShort
+                  ? `Vui lòng nhập ít nhất ${props.minLength} ký tự.`
+                  : 'Thông tin không hợp lệ.'
+          );
+        }}
+        onChange={(event) => {
+          setValidation('');
+          onChange?.(event);
+        }}
+      />
+      {message && (
+        <span id={`${props.id}-error`} className="auth-input-error" role="alert" title={message}>
+          {message}
+        </span>
+      )}
+    </div>
+  );
 }

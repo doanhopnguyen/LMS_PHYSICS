@@ -87,43 +87,72 @@ export function AppShell({
 
   return (
     <PageHeaderProvider>
-    <div
-      className="app-shell app-shell-white min-h-screen flex flex-col"
-      onClick={(event) => {
-        if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-        const link = event.target.closest('a');
-        const target = link && routeFromLink(link);
-        if (target) {
-          event.preventDefault();
-          navigate(target);
-        }
-      }}
-    >
-      {chromeVisible && (
-        <Header onMenuClick={() => setSidebarOpen((open) => !open)} user={user} homeHref={homeHref} />
-      )}
-      {chromeVisible && (
-        <Sidebar
-          currentPage={currentPage}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          items={navigationItems}
-          utilityItems={utilityItems}
-        />
-      )}
-      {chromeVisible && sidebarOpen && (
-        <button className="sidebar-backdrop" aria-label="Đóng thanh điều hướng" onClick={() => setSidebarOpen(false)} />
-      )}
       <div
-        className={`app-shell-content ${!chromeVisible ? 'app-shell-content-no-chrome' : ''} flex-1 ${contentClass}`}
+        className="app-shell app-shell-white min-h-screen flex flex-col"
+        onClick={(event) => {
+          if (
+            event.defaultPrevented ||
+            event.button !== 0 ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.shiftKey ||
+            event.altKey
+          )
+            return;
+          const link = event.target.closest('a');
+          const target = link && routeFromLink(link);
+          if (target) {
+            event.preventDefault();
+            navigate(target);
+          }
+        }}
       >
-        {toolbar ?? detailToolbar ?? (!chromeVisible && <DetailToolbar title={title} backHref={actualPage === 'exam_results.html' ? 'exam_session.html' : homeHref ?? 'dashboard.html'} backLabel={actualPage === 'exam_results.html' ? 'Về danh sách bài kiểm tra' : 'Về trang chính'} />)}
-        <AcademicFilters page={actualPage} actions={filterActions} />
-        {academicPages[actualPage] && !readAcademicScope().available ? <main className="mx-auto w-full max-w-[1440px] p-6"><Card as="div" className="p-10 text-center" role="status"><h1 className="text-headline-sm font-bold">Chưa có dữ liệu trong phạm vi đã chọn</h1><p className="mt-2 text-[#64748B]">Chọn học kỳ hoặc môn học khác.</p></Card></main> : children}
+        {chromeVisible && (
+          <Header onMenuClick={() => setSidebarOpen((open) => !open)} user={user} homeHref={homeHref} />
+        )}
+        {chromeVisible && (
+          <Sidebar
+            currentPage={currentPage}
+            open={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            items={navigationItems}
+            utilityItems={utilityItems}
+          />
+        )}
+        {chromeVisible && sidebarOpen && (
+          <button
+            className="sidebar-backdrop"
+            aria-label="Đóng thanh điều hướng"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <div
+          className={`app-shell-content ${!chromeVisible ? 'app-shell-content-no-chrome' : ''} flex-1 ${contentClass}`}
+        >
+          {toolbar ??
+            detailToolbar ??
+            (!chromeVisible && (
+              <DetailToolbar
+                title={title}
+                backHref={actualPage === 'exam_results.html' ? 'exam_session.html' : (homeHref ?? 'dashboard.html')}
+                backLabel={actualPage === 'exam_results.html' ? 'Về danh sách bài kiểm tra' : 'Về trang chính'}
+              />
+            ))}
+          <AcademicFilters page={actualPage} actions={filterActions} />
+          {academicPages[actualPage] && !readAcademicScope().available ? (
+            <main className="mx-auto w-full max-w-[1440px] p-6">
+              <Card as="div" className="p-10 text-center" role="status">
+                <h1 className="text-headline-sm font-bold">Chưa có dữ liệu trong phạm vi đã chọn</h1>
+                <p className="mt-2 text-[#64748B]">Chọn học kỳ hoặc môn học khác.</p>
+              </Card>
+            </main>
+          ) : (
+            children
+          )}
+        </div>
+        {footer && <Footer />}
+        {showChatLauncher && <ChatLauncher />}
       </div>
-      {footer && <Footer />}
-      {showChatLauncher && <ChatLauncher />}
-    </div>
     </PageHeaderProvider>
   );
 }

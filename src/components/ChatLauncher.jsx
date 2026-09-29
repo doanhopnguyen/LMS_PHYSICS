@@ -41,7 +41,13 @@ export function ChatLauncher() {
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
-          <div className="chat-widget-messages" ref={messagesRef} role="log" aria-label="Tin nhắn trợ giảng AI" aria-live="polite">
+          <div
+            className="chat-widget-messages"
+            ref={messagesRef}
+            role="log"
+            aria-label="Tin nhắn trợ giảng AI"
+            aria-live="polite"
+          >
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}

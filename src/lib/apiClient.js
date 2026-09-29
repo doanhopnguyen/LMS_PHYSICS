@@ -188,8 +188,7 @@ export const api = {
     update: (id, body) => apiRequest(`/api/v1/questions/${id}`, { method: 'PUT', body }),
     remove: (id) => apiRequest(`/api/v1/questions/${id}`, { method: 'DELETE' }),
     approve: (id) => apiRequest(`/api/v1/questions/${id}/approve`, { method: 'PUT' }),
-    importExcel: (formData, query) => apiRequest('/api/v1/questions/import-excel', { method: 'POST', formData, query }),
-    downloadTemplate: () => apiRequest('/api/v1/questions/import-excel/template', { responseType: 'blob' }),
+    importPdf: (formData, query) => apiRequest('/api/v1/questions/import-pdf', { method: 'POST', formData, query }),
   },
 
   // ─── Exams ───────────────────────────────────────────────────────────────────

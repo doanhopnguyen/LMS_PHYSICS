@@ -113,7 +113,7 @@ export function UsersPage() {
     setMessage('');
     try {
       const newUser = await api.users.adminCreate(body);
-      addUser(newUser);
+      resource.reload();
       setCreating(false);
       setMessage('Đã tạo người dùng.');
     } catch (e) {
@@ -130,7 +130,7 @@ export function UsersPage() {
     setMessage('');
     try {
       const updatedUser = await api.users.adminUpdateStatus(target.userId, { status });
-      replaceUser(updatedUser);
+      resource.reload();
       setSearchedUser((user) => (user?.userId === updatedUser.userId ? { ...user, ...updatedUser } : user));
       setConfirm(null);
       setMessage(`Đã ${status === 'ACTIVE' ? 'mở khóa' : 'khóa'} tài khoản ${updatedUser.username}.`);
@@ -149,7 +149,7 @@ export function UsersPage() {
         editing.userId,
         Object.fromEntries(new FormData(event.currentTarget))
       );
-      replaceUser(updatedUser);
+      resource.reload();
       setSearchedUser((user) => (user?.userId === updatedUser.userId ? { ...user, ...updatedUser } : user));
       setEditing(null);
       setMessage(`Đã cập nhật ${updatedUser.username}.`);
@@ -192,7 +192,7 @@ export function UsersPage() {
     startRequest();
     try {
       await api.users.deleteByUsername(confirm.user.username);
-      removeUser(confirm.user.userId);
+      resource.reload();
       setSearchedUser(null);
       setConfirm(null);
       setMessage(`Đã xóa tài khoản ${confirm.user.username}.`);

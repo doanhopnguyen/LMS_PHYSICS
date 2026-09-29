@@ -10,8 +10,6 @@ export const lecturerUser = {
 export const lecturerNavigation = [
   ['lecturer_dashboard.html', 'dashboard', 'Tổng quan'],
   ['lecturer_courses.html', 'menu_book', 'Học phần & lớp học'],
-  ['lecturer_class_operations.html', 'groups', 'Vận hành lớp'],
-  ['lecturer_students.html', 'groups', 'Sinh viên'],
   ['lecturer_materials.html', 'folder_open', 'Kho học liệu'],
   ['lecturer_question_bank.html', 'quiz', 'Ngân hàng câu hỏi'],
   ['lecturer_assessments.html', 'assignment', 'Bài tập & kiểm tra'],

@@ -259,17 +259,6 @@ export function LecturerAuthoringApiPage({ kind }) {
         resource.reload();
       }
     );
-  const download = async () => {
-    const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải file mẫu.');
-    if (result.ok) {
-      const url = URL.createObjectURL(result.data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'mau-cau-hoi.xlsx';
-      a.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
-  };
   const saveTopic = async (e) => {
     e.preventDefault();
     if (!checkScope(false)) return;
@@ -369,11 +358,8 @@ export function LecturerAuthoringApiPage({ kind }) {
             </Button>
             {!materialMode && (
               <>
-                <Button variant="secondary" disabled={action.busy} onClick={download}>
-                  Tải mẫu Excel
-                </Button>
                 <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
-                  Nhập Excel
+                  Nhập PDF
                 </Button>
               </>
             )}
@@ -591,12 +577,12 @@ export function LecturerAuthoringApiPage({ kind }) {
                 if (!checkScope()) return;
                 const form = new FormData(e.currentTarget);
                 const file = form.get('file');
-                if (!file?.size || !/\.(xlsx|xls)$/i.test(file.name)) {
+                if (!file?.size || !/\.pdf$/i.test(file.name)) {
                   action.setError('Chọn tệp Excel .xlsx hoặc .xls không rỗng.');
                   return;
                 }
                 const result = await action.run(
-                  () => api.questions.importExcel(form, { subjectId, topicId: validTopic }),
+                  () => api.questions.importPdf(form, { subjectId, topicId: validTopic }),
                   'Đã xử lý tệp Excel.'
                 );
                 if (result.ok) {
@@ -610,13 +596,8 @@ export function LecturerAuthoringApiPage({ kind }) {
                 }
               }}
             >
-              <Button type="button" variant="secondary" disabled={action.busy} onClick={download}>
-                Tải mẫu Excel
-              </Button>
-              <p className="text-body-sm text-[#64748B]">
-                Sử dụng file mẫu của hệ thống. Chấp nhận tệp .xlsx hoặc .xls.
-              </p>
-              <Field label="Tệp Excel *" name="file" type="file" accept=".xlsx,.xls" required />
+              <p className="text-body-sm text-[#64748B]">Chọn tệp PDF chứa câu hỏi để gửi tới API import hiện hành.</p>
+              <Field label="Tệp PDF *" name="file" type="file" accept="application/pdf,.pdf" required />
               <SubmitButton type="submit" disabled={action.busy || !validSubject || !validTopic}>
                 {action.busy ? 'Đang nhập câu hỏi…' : 'Nhập câu hỏi'}
               </SubmitButton>

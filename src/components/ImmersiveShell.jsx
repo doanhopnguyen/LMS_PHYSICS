@@ -25,31 +25,35 @@ export function ImmersiveShell({
 
   return (
     <PageHeaderProvider>
-    <div
-      className="app-shell app-shell-white immersive-shell min-h-screen flex flex-col"
-      onClick={(event) => {
-        const link = event.target.closest('a');
-        if (!link) return;
-        const target = routeFromLink(link);
-        if (target) {
-          event.preventDefault();
-          navigate(target);
-        }
-      }}
-    >
-      {showChrome && <Header onMenuClick={() => setSidebarOpen((open) => !open)} />}
-      {showChrome && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
-      {showChrome && sidebarOpen && (
-        <button className="sidebar-backdrop" aria-label="Đóng thanh điều hướng" onClick={() => setSidebarOpen(false)} />
-      )}
       <div
-        className={`immersive-shell-content ${!showChrome ? 'immersive-shell-content-no-chrome' : ''} flex-1 min-h-0`}
+        className="app-shell app-shell-white immersive-shell min-h-screen flex flex-col"
+        onClick={(event) => {
+          const link = event.target.closest('a');
+          if (!link) return;
+          const target = routeFromLink(link);
+          if (target) {
+            event.preventDefault();
+            navigate(target);
+          }
+        }}
       >
-        <div className="detail-toolbar-shell">{topbar}</div>
-        {children}
+        {showChrome && <Header onMenuClick={() => setSidebarOpen((open) => !open)} />}
+        {showChrome && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />}
+        {showChrome && sidebarOpen && (
+          <button
+            className="sidebar-backdrop"
+            aria-label="Đóng thanh điều hướng"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <div
+          className={`immersive-shell-content ${!showChrome ? 'immersive-shell-content-no-chrome' : ''} flex-1 min-h-0`}
+        >
+          <div className="detail-toolbar-shell">{topbar}</div>
+          {children}
+        </div>
+        {showChatLauncher && <ChatLauncher />}
       </div>
-      {showChatLauncher && <ChatLauncher />}
-    </div>
     </PageHeaderProvider>
   );
 }

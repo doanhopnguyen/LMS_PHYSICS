@@ -26,6 +26,7 @@ export function AdminDashboardPage() {
   const loading = resources.some((resource) => resource.loading);
   const error = resources.find((resource) => resource.error)?.error;
   const userRows = listItems(users.data);
+  const usersById = new Map(userRows.map((user) => [user.userId, user]));
   const activityRows = listItems(activityLogs.data);
   const auditRows = listItems(auditLogs.data);
   const currentSemester = listItems(semestersData.data).find((item) => item.status === 'CURRENT' || item.isCurrent) || listItems(semestersData.data)[0];
@@ -42,6 +43,15 @@ export function AdminDashboardPage() {
   ];
   const reload = () => resources.forEach((resource) => resource.reload());
   const formatTime = (value) => value ? new Date(value).toLocaleString('vi-VN') : '—';
+  const activityUser = (item) => {
+    const user = usersById.get(item.userId);
+    return item.fullName || item.username || item.userName || user?.fullName || user?.username || user?.email || 'Hệ thống';
+  };
+  const activityObject = (item) => {
+    const label = item.objectName || item.objectTitle || item.materialTitle || item.title || item.entityName || item.details?.title;
+    if (label) return label;
+    return ({ LEARNING_MATERIAL: 'Học liệu', SUBJECT: 'Học phần', TOPIC: 'Chủ đề', QUESTION: 'Câu hỏi', CLASS: 'Lớp học' })[item.objectType || item.entity] || 'Đối tượng hệ thống';
+  };
   return (
     <AdminPageShell currentPage="admin_dashboard.html" title="Tổng quan vận hành" description="Theo dõi dữ liệu tài khoản, học kỳ và vận hành từ hệ thống thực tế." pageTitleInHeader={false} actions={<Button variant="secondary" icon="refresh" disabled={loading} onClick={reload}>Làm mới dữ liệu</Button>}>
       {loading ? <Card className="mt-6 p-8" role="status">Đang tải dữ liệu dashboard…</Card> : error ? <Card className="mt-6 p-8" role="alert"><p>{error}</p><Button className="mt-4" variant="secondary" onClick={reload}>Thử lại</Button></Card> : <><div className="mt-6"><MetricGrid items={metrics} columns={4} /></div>
@@ -54,7 +64,7 @@ export function AdminDashboardPage() {
         </Card>
         <Card className="lg:col-span-2 p-6">
           <SectionHeader icon="history" title="Hoạt động gần đây" />
-          <ol className="mt-4 space-y-4">{activityRows.length ? activityRows.map((item, index) => <li key={item.logId || `${item.createdAt}-${index}`}><p className="text-label-md font-bold text-primary">{formatTime(item.createdAt)}</p><p className="mt-1 text-body-sm font-semibold">{item.username || item.userId || 'Hệ thống'} · {item.actionType || item.action || 'Hoạt động'}</p><p className="text-body-sm text-[#64748B]">{item.objectType || item.entity || 'Đối tượng'} {item.objectId || item.entityId || ''}</p></li>) : <li className="text-body-sm text-[#64748B]">Chưa có hoạt động gần đây.</li>}</ol>
+          <ol className="mt-4 space-y-4">{activityRows.length ? activityRows.map((item, index) => <li key={item.logId || `${item.createdAt}-${index}`}><p className="text-label-md font-bold text-primary">{formatTime(item.createdAt)}</p><p className="mt-1 text-body-sm font-semibold">{activityUser(item)} · {item.actionType || item.action || 'Hoạt động'}</p><p className="text-body-sm text-[#64748B]">{activityObject(item)}</p></li>) : <li className="text-body-sm text-[#64748B]">Chưa có hoạt động gần đây.</li>}</ol>
         </Card>
       </div>
       <div className="mt-6"><DashboardCalendar role="ADMIN" /></div></>}
