@@ -558,6 +558,10 @@ button {
   pointer-events: none;
 }
 
+.lms-card--blink::before {
+  animation: accent-card-border-blink 4.2s ease-in-out infinite;
+}
+
 .resource-card h3 {
   overflow-wrap: anywhere;
 }
@@ -594,6 +598,11 @@ button {
     #fff 100%
   );
   box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+.progress-card--blink {
+  border: 2px solid color-mix(in srgb, var(--progress-card-color) 70%, white);
+  animation: progress-card-border-blink 4.2s ease-in-out infinite;
 }
 
 .progress-card[data-progress-state='active'] {
@@ -795,6 +804,11 @@ button {
   box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
 }
 
+.stat-card--blink {
+  border: 2px solid color-mix(in srgb, var(--stat-accent) 72%, white);
+  animation: selection-card-border-blink 4.2s ease-in-out infinite;
+}
+
 .stat-card__ribbon {
   padding: 3px 10px 6px;
   color: white;
@@ -802,6 +816,54 @@ button {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.09em;
+}
+
+.stat-card--ribbon-bottom .stat-card__surface {
+  border-radius: 14px;
+  background: #fff;
+}
+
+.stat-card--ribbon-bottom {
+  border: 2px solid color-mix(in srgb, var(--stat-accent) 72%, white);
+  background: linear-gradient(
+    to top,
+    var(--stat-accent) 0%,
+    color-mix(in srgb, var(--stat-accent) 45%, white) 42%,
+    color-mix(in srgb, var(--stat-accent) 10%, white) 100%
+  );
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--stat-accent) 24%, transparent), 0 5px 18px color-mix(in srgb, var(--stat-accent) 24%, transparent);
+}
+
+.stat-card--ribbon-bottom .stat-card__ribbon {
+  border-radius: 0 0 19px 19px;
+  padding: 7px 12px;
+}
+
+@keyframes selection-card-border-blink {
+  0%, 100% {
+    border-color: color-mix(in srgb, var(--stat-accent) 62%, white);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--stat-accent) 20%, transparent), 0 5px 18px color-mix(in srgb, var(--stat-accent) 22%, transparent);
+  }
+  50% {
+    border-color: color-mix(in srgb, var(--stat-accent) 95%, #fef08a);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--stat-accent) 32%, transparent), 0 0 24px color-mix(in srgb, var(--stat-accent) 58%, transparent);
+  }
+}
+
+@keyframes progress-card-border-blink {
+  0%, 100% {
+    border-color: color-mix(in srgb, var(--progress-card-color) 58%, white);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--progress-card-color) 18%, transparent), 0 3px 10px rgba(15, 23, 42, 0.08);
+  }
+  50% {
+    border-color: color-mix(in srgb, var(--progress-card-color) 92%, #fef08a);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--progress-card-color) 28%, transparent), 0 0 20px color-mix(in srgb, var(--progress-card-color) 46%, transparent);
+  }
+}
+
+@keyframes accent-card-border-blink {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
 }
 
 .stat-card__surface {
@@ -876,6 +938,13 @@ button {
   margin-top: auto;
   padding-top: 8px;
   border-top: 1px dashed #cbd5e1;
+}
+
+.stat-card__footer {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 12px;
 }
 
 .stat-card__chart > .mt-3 {
@@ -1118,6 +1187,22 @@ button {
 
 .detail-toolbar-space {
   height: 64px;
+}
+
+.academic-filter-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .academic-filter-actions {
+    width: auto;
+    margin-left: auto;
+  }
 }
 .app-header.detail-toolbar {
   gap: 12px;
@@ -2161,6 +2246,7 @@ button {
   --sky-end: #a5e3ff;
   --celestial: #fff3bc;
   isolation: isolate;
+  border-radius: 40px;
   background: linear-gradient(118deg, var(--sky-start), var(--sky-middle) 54%, var(--sky-end));
   transition:
     background 1.2s ease,
@@ -2201,6 +2287,62 @@ button {
   --sky-end: #39679d;
   --celestial: #e4efff;
 }
+
+.dashboard-sky[data-weather='cloudy'] {
+  --sky-start: #3d5975;
+  --sky-middle: #6f91ad;
+  --sky-end: #a9c2d3;
+  --celestial: #e8eef2;
+}
+
+.dashboard-sky[data-weather='rain'] {
+  --sky-start: #1e3f62;
+  --sky-middle: #416b8f;
+  --sky-end: #7899af;
+  --celestial: #d5e5ee;
+}
+
+.dashboard-sky[data-weather='storm'] {
+  --sky-start: #192844;
+  --sky-middle: #35425d;
+  --sky-end: #66516a;
+  --celestial: #dce7ff;
+}
+
+.dashboard-sky__weather {
+  display: flex;
+  min-width: 220px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 22px;
+  padding: 10px 14px;
+  background: rgb(7 29 73 / 18%);
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-sky__clock,
+.dashboard-sky__weather > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.dashboard-sky__clock {
+  min-width: 74px;
+  font-size: 18px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-sky__weather small {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgb(255 255 255 / 78%);
+  white-space: nowrap;
+}
+
+.dashboard-sky__weather-icon { font-size: 30px; }
+.dashboard-sky__weather strong { font-size: 16px; }
 
 .dashboard-sky__aurora,
 .dashboard-sky__sun-or-moon,
@@ -2305,6 +2447,9 @@ button {
 }
 
 @media (max-width: 640px) {
+  .dashboard-sky { border-radius: 28px; }
+  .dashboard-sky__weather { width: 100%; min-width: 0; }
+
   .dashboard-sky__sun-or-moon {
     top: 1rem;
     right: 1.25rem;
@@ -2469,7 +2614,10 @@ button {
   .course-progress-card__fill,
   .course-progress-card__fill::before,
   .course-progress-card__fill::after,
-  .chapter-progress-fill {
+  .chapter-progress-fill,
+  .stat-card--blink,
+  .progress-card--blink,
+  .lms-card--blink::before {
     animation: none;
   }
 }
@@ -2483,8 +2631,26 @@ button {
 
 :root::-webkit-scrollbar,
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 3px;
+  height: 3px;
+}
+
+:root::-webkit-scrollbar-button,
+:root::-webkit-scrollbar-button:single-button,
+:root::-webkit-scrollbar-button:vertical:decrement,
+:root::-webkit-scrollbar-button:vertical:increment,
+:root::-webkit-scrollbar-button:horizontal:decrement,
+:root::-webkit-scrollbar-button:horizontal:increment,
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:vertical:decrement,
+*::-webkit-scrollbar-button:vertical:increment,
+*::-webkit-scrollbar-button:horizontal:decrement,
+*::-webkit-scrollbar-button:horizontal:increment {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none;
 }
 
 :root::-webkit-scrollbar-track,
@@ -2494,7 +2660,7 @@ button {
 
 :root::-webkit-scrollbar-thumb,
 *::-webkit-scrollbar-thumb {
-  min-height: 28px;
+  min-height: 14px;
   border: 1px solid transparent;
   border-radius: 999px;
   background: #e52220;

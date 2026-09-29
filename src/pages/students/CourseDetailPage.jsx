@@ -5,6 +5,7 @@ import { PageTitle } from '../../components/PageTitle.jsx';
 import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
 import { ProgressBar } from '../../components/ProgressBar.jsx';
+import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
 
@@ -76,47 +77,34 @@ export function CourseDetailPage() {
           actions={<a href="my_courses.html"><Button variant="secondary" icon="arrow_back">Quay lại</Button></a>}
         />
 
-        {error && <Card className="mb-6 border-rose-200 bg-rose-50 text-rose-700">{error}</Card>}
-        {loading && <Card className="py-10 text-center text-slate-500">Đang tải nội dung học phần…</Card>}
+        {error && <Card className="mb-6 p-5 text-primary">{error}</Card>}
+        {loading && <Card className="p-6 text-center text-[#64748B]">Đang tải nội dung học phần…</Card>}
 
         {!loading && course && (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <main className="space-y-6">
-              <Card className="overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-7 text-white">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm text-indigo-100">{course.subjectCode || course.classCode}</p>
-                      <h2 className="mt-1 text-2xl font-bold">{courseLabel(course)}</h2>
-                      <p className="mt-2 text-sm text-indigo-100">{course.instructorName ? `Giảng viên: ${course.instructorName}` : 'Theo dõi tiến độ học tập của bạn.'}</p>
-                    </div>
-                    <span className="material-symbols-outlined text-4xl text-indigo-100" aria-hidden="true">menu_book</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-700">Tiến độ tổng thể</span>
-                    <span className="font-semibold text-indigo-600">{formatPercent(overallProgress)}</span>
+              <Card variant="accent" className="p-5 md:p-6">
+                <SectionHeader icon="menu_book" title={courseLabel(course)} action={<StatusBadge tone="neutral">{course.subjectCode || course.classCode || 'Học phần'}</StatusBadge>} />
+                <p className="mt-3 text-body-sm text-[#64748B]">{course.instructorName ? `Giảng viên: ${course.instructorName}` : 'Theo dõi tiến độ học tập của bạn.'}</p>
+                <div className="mt-5">
+                  <div className="mb-2 flex items-center justify-between text-body-sm">
+                    <span className="font-medium text-on-surface">Tiến độ tổng thể</span>
+                    <span className="font-semibold text-primary">{formatPercent(overallProgress)}</span>
                   </div>
                   <ProgressBar value={overallProgress} />
                 </div>
               </Card>
 
               <section>
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">Nội dung học tập</h2>
-                    <p className="text-sm text-slate-500">Chọn một chủ đề để xem học liệu và tiếp tục học.</p>
-                  </div>
-                  <span className="text-sm font-medium text-slate-500">{topics.length} chủ đề</span>
-                </div>
+                <SectionHeader title="Nội dung học tập" action={<span className="text-sm font-medium text-slate-500">{topics.length} chủ đề</span>} />
+                <p className="mb-4 mt-2 text-sm text-slate-500">Chọn một chủ đề để xem học liệu và tiếp tục học.</p>
                 <div className="space-y-3">
                   {topics.map((topic, index) => {
                     const value = topicProgress(topic);
                     const href = `learning_module.html?classId=${encodeURIComponent(course.classId)}&subjectId=${encodeURIComponent(course.subjectId || '')}&topicId=${encodeURIComponent(topic.topicId)}`;
                     return (
                       <a key={topic.topicId} href={href} className="block">
-                        <Card className="group transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md">
+                        <Card variant="accent" className="group p-5 transition hover:-translate-y-0.5 hover:shadow-md">
                           <div className="flex items-center gap-4">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 font-bold text-indigo-600">{index + 1}</div>
                             <div className="min-w-0 flex-1">
@@ -136,14 +124,14 @@ export function CourseDetailPage() {
                       </a>
                     );
                   })}
-                  {!topics.length && <Card className="py-8 text-center text-slate-500">Giảng viên chưa thêm chủ đề cho học phần này.</Card>}
+                  {!topics.length && <Card className="p-6 text-center text-[#64748B]">Giảng viên chưa thêm chủ đề cho học phần này.</Card>}
                 </div>
               </section>
             </main>
 
             <aside className="space-y-6">
-              <Card>
-                <div className="mb-4 flex items-center gap-2"><span className="material-symbols-outlined text-indigo-600" aria-hidden="true">calendar_month</span><h2 className="font-bold text-slate-900">Lịch học</h2></div>
+              <Card className="p-5">
+                <SectionHeader icon="calendar_month" title="Lịch học" className="mb-4" />
                 <div className="space-y-4">
                   {schedules.map((schedule) => (
                     <div key={schedule.scheduleId} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
@@ -155,10 +143,9 @@ export function CourseDetailPage() {
                   {!schedules.length && <p className="text-sm text-slate-500">Chưa có lịch học được công bố.</p>}
                 </div>
               </Card>
-              <Card className="bg-indigo-50/70">
-                <span className="material-symbols-outlined text-2xl text-indigo-600" aria-hidden="true">play_circle</span>
-                <h2 className="mt-3 font-bold text-slate-900">Tiếp tục học</h2>
-                <p className="mt-1 text-sm text-slate-600">Mở chủ đề đầu tiên chưa hoàn thành để tiếp tục tiến độ.</p>
+              <Card variant="accent" className="p-5">
+                <SectionHeader icon="play_circle" title="Tiếp tục học" />
+                <p className="mt-3 text-body-sm text-[#64748B]">Mở chủ đề đầu tiên chưa hoàn thành để tiếp tục tiến độ.</p>
                 {topics.length > 0 && <a className="mt-4 inline-block" href={`learning_module.html?classId=${encodeURIComponent(course.classId)}&subjectId=${encodeURIComponent(course.subjectId || '')}&topicId=${encodeURIComponent(topics.find((topic) => topicProgress(topic) < 100)?.topicId || topics[0].topicId)}`}><Button>Tiếp tục</Button></a>}
               </Card>
             </aside>

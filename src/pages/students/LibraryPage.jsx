@@ -30,9 +30,27 @@ export function LibraryPage() {
     const load = async () => {
       setLoading(true); setError('');
       try {
-        const classes = rowsOf(await api.students.myClasses());
+        const [classData, materialData] = await Promise.all([api.students.myClasses(), api.students.myMaterials()]);
+        const classes = rowsOf(classData);
+        const studentMaterials = rowsOf(materialData);
         const enrolled = [...new Map(classes.filter((item) => item.subjectId).map((item) => [String(item.subjectId), item])).values()];
         const subjectRows = enrolled.map((item) => ({ subjectId: item.subjectId, subjectName: item.subjectName || item.subjectCode || item.classCode || 'Học phần', classId: item.classId }));
+        if (studentMaterials.length) {
+          if (!alive) return;
+          setSubjects(subjectRows);
+          setResources(studentMaterials.map((material) => {
+            const [tag, icon] = typeMeta[material.type] || ['Học liệu', 'menu_book'];
+            const source = subjectRows.find((item) => String(item.subjectId) === String(material.subjectId));
+            return {
+              materialId: material.materialId, title: material.title || 'Học liệu không có tiêu đề', tag, icon,
+              type: material.type || 'OTHER', subjectId: material.subjectId,
+              author: material.subjectName || source?.subjectName || 'Học phần',
+              href: material.fileUrl || `interactive_lesson.html?materialId=${encodeURIComponent(material.materialId)}`,
+              external: Boolean(material.fileUrl),
+            };
+          }));
+          return;
+        }
         const topicGroups = await Promise.all(subjectRows.map(async (subject) => ({ subject, topics: rowsOf(await api.subjects.topics(subject.subjectId)) })));
         const materialGroups = await Promise.all(topicGroups.flatMap(({ subject, topics }) => topics.map(async (topic) => ({
           subject, topic, materials: rowsOf(await api.materials.list(topic.topicId)),
@@ -63,8 +81,8 @@ export function LibraryPage() {
   const filters = ['Tất cả', ...new Set(resources.map((item) => item.tag))];
   const search = () => setQuery(queryInput.trim());
 
-  return <AppShell currentPage="library.html" title="Kho học liệu · PTIT Physics 1" breadcrumbs={['Kho học liệu']} current="Thư viện điện tử"><PageContainer>
-    <PageTitle eyebrow="TÀI NGUYÊN HỌC TẬP" title="Kho học liệu điện tử" description="Học liệu thuộc các học phần bạn đang theo học." actions={<Button variant="secondary" icon="refresh" onClick={() => setReloadKey((value) => value + 1)} disabled={loading}>Tải lại</Button>} />
+  return <AppShell currentPage="library.html" title="Kho học liệu · PTIT Physics 1" breadcrumbs={['Kho học liệu']} current="Thư viện điện tử" filterActions={<Button variant="secondary" icon="refresh" onClick={() => setReloadKey((value) => value + 1)} disabled={loading}>Tải lại</Button>}><PageContainer>
+    <PageTitle eyebrow="TÀI NGUYÊN HỌC TẬP" title="Kho học liệu điện tử" description="Học liệu thuộc các học phần bạn đang theo học." />
     <Card className="p-5">
       <div className="flex flex-col gap-3 md:flex-row">
         <div className="relative flex-1"><span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]">search</span><input value={queryInput} onChange={(event) => setQueryInput(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && search()} className="h-11 w-full rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] pl-11 pr-4 focus:border-primary focus:outline-none" placeholder="Tìm tên tài liệu, chuyên đề..." /></div>

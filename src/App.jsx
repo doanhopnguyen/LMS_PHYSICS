@@ -91,11 +91,16 @@ const pageComponents = {
 
 function App() {
   useAdaptiveCorners();
-  const [file, setFile] = useState(() => getPageFile());
+  const isRootEntry = () => ['/', '/index.html'].includes(window.location.pathname);
+  const [file, setFile] = useState(() => {
+    const session = getDemoSession();
+    return isRootEntry() && session?.home ? session.home : getPageFile();
+  });
   const [locationKey, setLocationKey] = useState(() => window.location.href);
 
   useEffect(() => {
-    const cleanPath = getCleanRoute();
+    const session = getDemoSession();
+    const cleanPath = isRootEntry() && session?.home ? getCleanRoute(`/${session.home}`) : getCleanRoute();
     if (cleanPath !== window.location.pathname) {
       window.history.replaceState(window.history.state, '', `${cleanPath}${window.location.search}${window.location.hash}`);
     }

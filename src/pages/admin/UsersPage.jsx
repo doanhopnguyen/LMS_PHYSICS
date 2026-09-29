@@ -60,6 +60,8 @@ export function UsersPage() {
   const [page, setPage] = useState(0);
   const [sortDirection, setSortDirection] = useState('asc');
   const [creating, setCreating] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const [editing, setEditing] = useState(null);
   const [profile, setProfile] = useState(null);
   const [searchedUser, setSearchedUser] = useState(null);
@@ -68,6 +70,7 @@ export function UsersPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const resource = useApiData(`/api/v1/users/admin/users?page=${page}&size=20&sort=username,${sortDirection}`);
+  const classes = useApiData('/api/v1/classes?page=0&size=100');
   const isCurrentUser = (user) => user.userId === getDemoSession()?.userId;
   const rows = searchedUser ? [searchedUser] : listItems(resource.data);
   const replaceUser = (updatedUser) =>
@@ -121,6 +124,29 @@ export function UsersPage() {
     } finally {
       setBusy(false);
     }
+  }
+  async function downloadStudentTemplate() {
+    startRequest();
+    try {
+      const blob = await api.users.downloadStudentTemplate();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url; link.download = 'mau_import_sinh_vien.xlsx'; link.click();
+      URL.revokeObjectURL(url);
+      setMessage('Đã tải mẫu Excel nhập sinh viên.');
+    } catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
+  }
+  async function importStudents(event) {
+    event.preventDefault();
+    const values = new FormData(event.currentTarget);
+    const file = values.get('file');
+    if (!file?.size) { setError('Vui lòng chọn tệp Excel trước khi nhập.'); return; }
+    startRequest(); setImportResult(null);
+    try {
+      const upload = new FormData(); upload.append('file', file);
+      const result = await api.users.importStudentsExcel(upload, { defaultPassword: values.get('defaultPassword'), classId: values.get('classId') });
+      setImportResult(result); resource.reload(); setMessage('Đã xử lý tệp Excel.');
+    } catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
   }
   async function updateStatus(target) {
     if (!target) return;
@@ -229,11 +255,23 @@ export function UsersPage() {
               Xóa lọc
             </Button>
           )}
+          <Button type="button" variant="secondary" disabled={busy} onClick={() => setImportOpen(true)} icon="upload_file">Nhập Excel</Button>
           <Button type="button" disabled={busy} onClick={() => setCreating(true)}>
             Tạo tài khoản
           </Button>
         </Form>
       </Card>
+      {importOpen && <UserModal busy={busy} title="Nhập tài khoản sinh viên từ Excel" onClose={() => !busy && setImportOpen(false)}>
+        <p className="text-body-sm text-[#64748B]">Chỉ tạo tài khoản vai trò STUDENT. Có thể chọn lớp để ghi danh tự động.</p>
+        <div className="mt-4 flex flex-wrap gap-3"><Button type="button" variant="secondary" icon="download" disabled={busy} onClick={downloadStudentTemplate}>Tải file mẫu</Button></div>
+        <Form className="mt-5 grid gap-4" onSubmit={importStudents}>
+          <label>Tệp Excel *<input name="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required disabled={busy} className="mt-2 block w-full rounded-xl border p-3" /></label>
+          <label>Mật khẩu mặc định<input name="defaultPassword" type="password" minLength={8} defaultValue="Vatly1@123" required disabled={busy} className="mt-2 block w-full rounded-xl border p-3" /></label>
+          <label>Ghi danh vào lớp (không bắt buộc)<select name="classId" disabled={busy || classes.loading} className="mt-2 block w-full rounded-xl border p-3"><option value="">Không ghi danh lớp</option>{listItems(classes.data).map((item) => <option key={item.classId} value={item.classId}>{item.classCode || item.className}</option>)}</select></label>
+          {importResult && <Card className="p-4"><strong>Kết quả nhập</strong><p className="mt-2">Đã xử lý {importResult.totalRows ?? importResult.totalParsed ?? 0} dòng · Tạo {importResult.successCount ?? importResult.totalImported ?? 0} tài khoản.</p>{(importResult.errors || importResult.warnings || []).length > 0 && <ul className="mt-2 list-disc pl-5 text-amber-700">{(importResult.errors || importResult.warnings).map((item, index) => <li key={index}>{typeof item === 'string' ? item : item.message || JSON.stringify(item)}</li>)}</ul>}</Card>}
+          <div className="flex justify-end gap-3"><Button type="button" variant="secondary" disabled={busy} onClick={() => setImportOpen(false)}>Đóng</Button><SubmitButton type="submit" disabled={busy}>{busy ? 'Đang nhập…' : 'Nhập Excel'}</SubmitButton></div>
+        </Form>
+      </UserModal>}
       {creating && (
         <UserModal busy={busy} title="Tạo tài khoản" onClose={() => !busy && setCreating(false)}>
           <Form

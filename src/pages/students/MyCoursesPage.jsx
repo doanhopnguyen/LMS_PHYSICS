@@ -6,6 +6,7 @@ import { Card } from '../../components/Card.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { StatCard } from '../../components/StatCard.jsx';
 import { api } from '../../lib/apiClient.js';
 
 export function MyCoursesPage() {
@@ -19,9 +20,15 @@ export function MyCoursesPage() {
   useEffect(() => {
     setLoading(true);
     api.students.myClasses()
-      .then((data) => {
+      .then(async (data) => {
         const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
-        setClasses(list);
+        const withProgress = await Promise.all(list.map(async (item) => {
+          const progressRows = await api.students.myProgress(item.classId).catch(() => []);
+          const rows = Array.isArray(progressRows) ? progressRows : progressRows?.content || progressRows?.data || [];
+          const values = rows.map((row) => Number(row.progressPercent ?? row.completionPercent ?? 0)).filter(Number.isFinite);
+          return { ...item, learningProgress: values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0 };
+        }));
+        setClasses(withProgress);
       })
       .catch((err) => setError(err.message || 'Không thể tải danh sách lớp học.'))
       .finally(() => setLoading(false));
@@ -38,12 +45,7 @@ export function MyCoursesPage() {
   }, []);
 
   const CLASS_ICONS = ['auto_stories', 'science', 'calculate', 'psychology'];
-  const CLASS_COLORS = [
-    { bg: 'bg-[#FEE2E2]', text: 'text-primary' },
-    { bg: 'bg-[#DCFCE7]', text: 'text-[#15803D]' },
-    { bg: 'bg-[#FEF3C7]', text: 'text-[#B45309]' },
-    { bg: 'bg-[#EDE9FE]', text: 'text-[#7C3AED]' },
-  ];
+  const CLASS_ACCENTS = ['#E52220', '#15803D', '#B45309', '#7C3AED'];
 
   return (
     <AppShell
@@ -51,13 +53,13 @@ export function MyCoursesPage() {
       title="Học phần của tôi · PTIT Physics 1"
       breadcrumbs={['Học phần của tôi']}
       current="Danh sách học phần"
+      filterActions={<Button icon="add">Tham gia học phần</Button>}
     >
       <PageContainer>
         <PageTitle
           eyebrow="NĂM HỌC 2026–2027"
           title="Học phần của tôi"
           description="Tổng quan tiến độ các học phần bạn đang theo học."
-          actions={<Button icon="add">Tham gia học phần</Button>}
         />
         {loading && <p className="text-body-md text-[#64748B] py-10 text-center">Đang tải danh sách lớp học...</p>}
         {error && <p className="text-body-md text-primary py-10 text-center">{error}</p>}
@@ -67,44 +69,19 @@ export function MyCoursesPage() {
         {!loading && !error && classes.length > 0 && (
           <PaginatedList className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {classes.map((cls, idx) => {
-              const color = CLASS_COLORS[idx % CLASS_COLORS.length];
               const icon = CLASS_ICONS[idx % CLASS_ICONS.length];
               return (
-                <Card
+                <StatCard
                   key={cls.classId}
-                  status={cls.status}
-                  className="hover:-translate-y-1 hover:shadow-md transition-all"
-                >
-                  <div className="relative z-10 p-6 flex flex-col h-full">
-                    <div className="flex items-start justify-between">
-                      <span className={`w-12 h-12 rounded-xl flex items-center justify-center ${color.bg} ${color.text}`}>
-                        <span className="material-symbols-outlined text-2xl">{icon}</span>
-                      </span>
-                      <StatusBadge tone={cls.status === 'ACTIVE' ? 'success' : cls.status === 'COMPLETED' ? 'neutral' : 'warning'}>
-                        {cls.status === 'ACTIVE' ? 'Đang học' : cls.status === 'COMPLETED' ? 'Hoàn thành' : cls.status === 'DRAFT' ? 'Chưa bắt đầu' : cls.status}
-                      </StatusBadge>
-                    </div>
-                    <div className="mt-5">
-                      <span className="text-label-md text-[#64748B]">{cls.classCode}</span>
-                      <h2 className="text-headline-sm font-bold mt-1">{cls.subjectName || cls.subjectCode || cls.className || cls.classCode}</h2>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-5 text-body-sm">
-                      <div className="p-3 rounded-lg bg-white/70 backdrop-blur-[1px]">
-                        <span className="text-[#64748B]">Số sinh viên</span>
-                        <strong className="block text-body-md mt-1">{cls.maxStudents ?? '–'}</strong>
-                      </div>
-                      <div className="p-3 rounded-lg bg-white/70 backdrop-blur-[1px]">
-                        <span className="text-[#64748B]">Trạng thái</span>
-                        <strong className="block text-body-md mt-1">{cls.status}</strong>
-                      </div>
-                    </div>
-                    <a href={`course_detail.html?classId=${encodeURIComponent(cls.classId)}`} className="mt-5">
-                      <Button className="w-full" variant={cls.status === 'ACTIVE' ? 'primary' : 'secondary'}>
-                        {cls.status === 'ACTIVE' ? 'Tiếp tục học' : 'Xem học phần'}
-                      </Button>
-                    </a>
-                  </div>
-                </Card>
+                  label={cls.subjectName || cls.subjectCode || cls.className || cls.classCode}
+                  value={`${Math.round(cls.learningProgress || 0)}%`}
+                  detail="tiến độ học liệu"
+                  icon={icon}
+                  fillProgress={cls.learningProgress || 0}
+                  ribbonLabel={cls.classCode || 'Học phần'}
+                  accentColor={CLASS_ACCENTS[idx % CLASS_ACCENTS.length]}
+                  footer={<><div className="flex items-center justify-between gap-3 text-body-sm"><span className="truncate text-[#64748B]">{cls.subjectName || cls.subjectCode || cls.className || 'Học phần'}</span><StatusBadge tone={cls.status === 'ACTIVE' ? 'success' : cls.status === 'COMPLETED' ? 'neutral' : 'warning'}>{cls.status === 'ACTIVE' ? 'Đang học' : cls.status === 'COMPLETED' ? 'Hoàn thành' : cls.status === 'DRAFT' ? 'Chưa bắt đầu' : cls.status}</StatusBadge></div><p className="mt-2 text-body-sm text-[#64748B]">Sĩ số tối đa: {cls.maxStudents ?? '—'}</p><a href={`course_detail.html?classId=${encodeURIComponent(cls.classId)}`} className="mt-3 block"><Button className="w-full" variant={cls.status === 'ACTIVE' ? 'primary' : 'secondary'}>{cls.status === 'ACTIVE' ? 'Tiếp tục học' : 'Xem học phần'}</Button></a></>}
+                />
               );
             })}
           </PaginatedList>

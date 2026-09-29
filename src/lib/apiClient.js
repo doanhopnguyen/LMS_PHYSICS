@@ -215,6 +215,10 @@ export const api = {
   students: {
     myClasses: (query) => apiRequest('/api/v1/students/me/classes', { query }),
     mySchedule: () => apiRequest('/api/v1/students/me/schedule'),
+    myAgenda: () => apiRequest('/api/v1/students/me/agenda'),
+    myUpcomingTasks: () => apiRequest('/api/v1/students/me/upcoming-tasks'),
+    myMaterials: (query) => apiRequest('/api/v1/students/me/materials', { query }),
+    myExperimentAssignments: () => apiRequest('/api/v1/students/me/experiment-assignments'),
     myProgress: (classId) => apiRequest('/api/v1/students/me/progress', { query: { classId } }),
     updateProgress: (body) => apiRequest('/api/v1/students/me/progress', { method: 'PUT', body }),
     myEvidence: () => apiRequest('/api/v1/students/me/evidence'),
@@ -269,6 +273,9 @@ export const api = {
     removeQuestion: (examId, questionId) => apiRequest(`/api/v1/exams/${examId}/questions/${questionId}`, { method: 'DELETE' }),
     generateQuestions: (examId) => apiRequest(`/api/v1/exams/${examId}/generate-questions`, { method: 'POST' }),
     attempts: (id) => apiRequest(`/api/v1/exams/${id}/attempts`),
+    attemptQuestions: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}/questions`),
+    attemptProgress: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}/progress`),
+    attemptPolicy: (examId) => apiRequest(`/api/v1/exams/${examId}/attempt-policy`),
     gradeAttempt: (attemptId, body) => apiRequest(`/api/v1/exams/attempts/${attemptId}/grade`, { method: 'PUT', body }),
     roster: (id) => apiRequest(`/api/v1/exams/${id}/roster`),
     transferStudent: (examId, body) => apiRequest(`/api/v1/exams/${examId}/transfers`, { method: 'POST', body }),
@@ -280,6 +287,7 @@ export const api = {
     myTransferredExams: () => apiRequest('/api/v1/exams/my-transferred-exams'),
     getAttempt: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}`),
     saveAnswer: (attemptId, body) => apiRequest(`/api/v1/exams/attempts/${attemptId}/answers`, { method: 'POST', body }),
+    autosave: (attemptId, body) => apiRequest(`/api/v1/exams/attempts/${attemptId}/autosave`, { method: 'POST', body }),
     submit: (attemptId) => apiRequest(`/api/v1/exams/attempts/${attemptId}/submit`, { method: 'PUT' }),
   },
 
@@ -336,6 +344,7 @@ export const api = {
   // ─── Files ───────────────────────────────────────────────────────────────────
   files: {
     upload: (formData, query) => apiRequest('/api/v1/files/upload', { method: 'POST', formData, query }),
+    downloadUrl: (fileId) => apiRequest(`/api/v1/files/${fileId}/download-url`, { method: 'POST' }),
     /** Get a public read-only URL for a stored file (no auth needed). */
     url: (filePath) => makeUrl(`/api/v1/files/${filePath}`, {}),
   },

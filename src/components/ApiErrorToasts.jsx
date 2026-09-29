@@ -20,7 +20,7 @@ export function ApiErrorToasts() {
         statusText: detail.statusText,
         details: detail.details,
       }].slice(-3));
-      window.setTimeout(() => setItems((current) => current.filter((item) => item.id !== id)), 6000);
+      window.setTimeout(() => setItems((current) => current.filter((item) => item.id !== id)), 2000);
     };
     window.addEventListener(API_ERROR_EVENT, onError);
     return () => window.removeEventListener(API_ERROR_EVENT, onError);

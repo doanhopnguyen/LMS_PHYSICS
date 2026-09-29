@@ -51,27 +51,75 @@ function getSkyMessage(period) {
   }[period];
 }
 
+function weatherMeta(code) {
+  if (code === 0) return { label: 'Trời quang', icon: 'wb_sunny', theme: 'clear' };
+  if ([1, 2, 3].includes(code)) return { label: 'Có mây', icon: 'partly_cloudy_day', theme: 'cloudy' };
+  if ([45, 48].includes(code)) return { label: 'Sương mù', icon: 'foggy', theme: 'cloudy' };
+  if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { label: 'Có mưa', icon: 'rainy', theme: 'rain' };
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return { label: 'Tuyết', icon: 'ac_unit', theme: 'cloudy' };
+  if (code >= 95) return { label: 'Dông', icon: 'thunderstorm', theme: 'storm' };
+  return { label: 'Đang cập nhật', icon: 'cloud', theme: 'clear' };
+}
+
+const defaultWeatherLocation = { latitude: 20.9808, longitude: 105.7852, label: 'Hà Nội' };
+
 export function DashboardPage() {
-  const [skyPeriod, setSkyPeriod] = useState(() => getSkyPeriod(new Date().getHours()));
+  const [now, setNow] = useState(() => new Date());
+  const [weather, setWeather] = useState({ loading: true, ...weatherMeta(-1), location: '' });
   const [snapshot, setSnapshot] = useState(null);
-  const [myClasses, setMyClasses] = useState([]);
+  const [upcomingTasks, setUpcomingTasks] = useState([]);
   const user = useCurrentUser();
 
   useEffect(() => {
-    const timer = window.setInterval(() => setSkyPeriod(getSkyPeriod(new Date().getHours())), 60 * 1000);
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const loadWeather = async (location = defaultWeatherLocation) => {
+      try {
+        const query = new URLSearchParams({ latitude: String(location.latitude), longitude: String(location.longitude), current: 'temperature_2m,weather_code', timezone: 'auto' });
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?${query}`, { signal: controller.signal });
+        if (!response.ok) throw new Error('Weather request failed');
+        const payload = await response.json();
+        if (!active) return;
+        const meta = weatherMeta(payload?.current?.weather_code);
+        setWeather({ loading: false, ...meta, temperature: Math.round(Number(payload?.current?.temperature_2m)), location: location.label });
+      } catch {
+        if (active && !controller.signal.aborted) setWeather({ loading: false, ...weatherMeta(-1), location: location.label });
+      }
+    };
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => loadWeather({ latitude: position.coords.latitude, longitude: position.coords.longitude, label: 'Vị trí của bạn' }),
+        () => loadWeather(),
+        { timeout: 5000, maximumAge: 30 * 60 * 1000 }
+      );
+    } else loadWeather();
+    return () => { active = false; controller.abort(); };
+  }, []);
+
+  useEffect(() => {
     api.dashboard.me().then(setSnapshot).catch(() => {});
-    api.students.myClasses().then((data) => {
-      const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
-      setMyClasses(list);
-    }).catch(() => {});
+    Promise.all([api.students.myUpcomingTasks().catch(() => []), api.students.myAgenda().catch(() => [])]).then(([taskData, agendaData]) => {
+      const rows = (data) => Array.isArray(data) ? data : data?.content || [];
+      setUpcomingTasks([...rows(taskData), ...rows(agendaData)]);
+    });
   }, []);
 
   const stats = snapshot?.data || {};
+  const visibleTasks = upcomingTasks.length ? upcomingTasks.map((item) => ({
+    title: item.title || item.taskName || item.name || 'Nhiệm vụ học tập',
+    description: item.description || item.content || item.referenceType || '',
+    due: item.dueDate || item.deadline || item.endTime ? `Hạn: ${new Date(item.dueDate || item.deadline || item.endTime).toLocaleString('vi-VN')}` : 'Đang mở',
+    tone: item.urgent ? 'primary' : 'warning', status: item.status || 'Đang mở',
+  })) : tasks;
   const displayName = user?.name || user?.username || 'Sinh viên';
+  const skyPeriod = getSkyPeriod(now.getHours());
+  const timeText = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(now);
+  const dateText = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' }).format(now);
 
   return (
     <AppShell
@@ -86,6 +134,7 @@ export function DashboardPage() {
         <Card as="section"
           className="dashboard-sky relative overflow-hidden p-6 md:p-8 text-white"
           data-sky-period={skyPeriod}
+          data-weather={weather.theme}
         >
           <div className="dashboard-sky__aurora pointer-events-none" />
           <div className="dashboard-sky__sun-or-moon pointer-events-none" aria-hidden="true" />
@@ -93,11 +142,14 @@ export function DashboardPage() {
           <div className="dashboard-sky__cloud dashboard-sky__cloud--two pointer-events-none" aria-hidden="true" />
           <div className="dashboard-sky__cloud dashboard-sky__cloud--three pointer-events-none" aria-hidden="true" />
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
-              <StatusBadge tone="primary" className="bg-white/10 text-white border-white/20">
-                {myClasses.length > 0 ? myClasses[0]?.classCode || 'Học kỳ hiện tại' : 'Học kỳ hiện tại'}
-              </StatusBadge>
+            <div className="space-y-3 max-w-2xl">
+              <div className="dashboard-sky__weather" aria-label="Thời gian và thời tiết hiện tại">
+                <span className="dashboard-sky__clock">{timeText}<small>{dateText}</small></span>
+                <span className="material-symbols-outlined dashboard-sky__weather-icon" aria-hidden="true">{weather.icon}</span>
+                <span><strong>{weather.loading ? 'Đang tải' : Number.isFinite(weather.temperature) ? `${weather.temperature}°C` : '—'}</strong><small>{weather.loading ? 'Thời tiết' : `${weather.label}${weather.location ? ` · ${weather.location}` : ''}`}</small></span>
+              </div>
               <h1 className="text-headline-lg font-headline-lg font-bold tracking-tight">Xin chào, {displayName}!</h1>
+              <p className="text-body-lg leading-relaxed text-white/90">{getSkyMessage(skyPeriod)}</p>
               {/* <p className="text-body-lg text-white/90 leading-relaxed">
                 {getSkyMessage(skyPeriod)} Tiếp tục hành trình khám phá môn Vật lý 1 cùng hệ thống học tập thông minh
                 PTIT. Bạn đã duy trì chuỗi học 5 ngày liên tiếp!
@@ -171,7 +223,7 @@ export function DashboardPage() {
               }
             />
             <div className="space-y-3.5 pt-5">
-              {tasks.map((task) => (
+              {visibleTasks.map((task) => (
                 <Card as="div"
                   key={task.title}
                   className="p-4 hover:border-[#CBD5E1] transition-colors flex items-start justify-between gap-4"

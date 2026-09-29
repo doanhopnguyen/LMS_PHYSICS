@@ -19,7 +19,7 @@ export function Card({
     const statusText =
       status || (state === 'complete' ? 'Đã hoàn thành' : state === 'active' ? 'Đang thực hiện' : 'Chưa bắt đầu');
     return (
-      <Component {...props} style={style} className={`progress-card ${className}`} data-progress-state={state}>
+      <Component {...props} style={style} className={`progress-card progress-card--blink ${className}`} data-progress-state={state}>
         <div className={`progress-card__surface ${contentClassName}`}>{children}</div>
         <div className="progress-card__ribbon">
           <span className="material-symbols-outlined" aria-hidden="true">
@@ -35,7 +35,7 @@ export function Card({
     <Component
       {...props}
       style={{ '--card-accent': accentColor, ...style }}
-      className={`lms-card ${variant === 'accent' ? 'lms-card--accent' : ''} bg-surface-container-lowest rounded-2xl border border-[#E2E8F0] shadow-sm ${className}`}
+      className={`lms-card ${variant === 'accent' ? 'lms-card--accent lms-card--blink' : ''} bg-surface-container-lowest rounded-2xl border border-[#E2E8F0] shadow-sm ${className}`}
     >
       {children}
     </Component>

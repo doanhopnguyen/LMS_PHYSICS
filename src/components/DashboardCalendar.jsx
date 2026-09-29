@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from './Card.jsx';
 import { listItems } from '../hooks/useApiData.js';
 import { apiRequest } from '../lib/apiClient.js';
@@ -51,6 +51,8 @@ export function DashboardCalendar({ role }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const scrollRef = useRef(null);
+  const timelineRef = useRef(null);
   const currentWeek = mondayOf(today);
   const days = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(week, index)), [week]);
   const hours = Array.from({ length: 14 }, (_, index) => index + 7);
@@ -92,6 +94,21 @@ export function DashboardCalendar({ role }) {
     };
   }, [role]);
 
+  useEffect(() => {
+    const scrollArea = scrollRef.current;
+    const timeline = timelineRef.current;
+    if (!scrollArea || !timeline) return undefined;
+    const scrollToCurrentTime = () => {
+      const now = new Date();
+      const currentHour = now.getHours() + now.getMinutes() / 60;
+      const visibleHour = Math.min(20.5, Math.max(7, currentHour));
+      const currentTimeOffset = (visibleHour - 7) * 44;
+      scrollArea.scrollTop = Math.max(0, timeline.offsetTop + currentTimeOffset - scrollArea.clientHeight * 0.35);
+    };
+    const frame = requestAnimationFrame(scrollToCurrentTime);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   const weekEvents = events.filter((event) => event.start >= week && event.start < addDays(week, 7));
   return (
     <Card className="dashboard-calendar" aria-label="Lịch kỳ thi tuần">
@@ -119,7 +136,7 @@ export function DashboardCalendar({ role }) {
         </div>
       </header>
       <p className="mt-1 text-body-sm text-[#64748B]">Đồng bộ từ các kỳ thi đã lập lịch của lớp được cấp quyền.</p>
-      <div className="dashboard-calendar__scroll" tabIndex={0} aria-label="Lịch kỳ thi theo giờ, có thể cuộn ngang">
+      <div ref={scrollRef} className="dashboard-calendar__scroll" tabIndex={0} aria-label="Lịch kỳ thi theo giờ, có thể cuộn">
         <div className="dashboard-calendar__grid">
           <div className="dashboard-calendar__days">
             <span className="dashboard-calendar__timezone">GMT+7</span>
@@ -135,7 +152,7 @@ export function DashboardCalendar({ role }) {
               </div>
             ))}
           </div>
-          <div className="dashboard-calendar__timeline">
+          <div ref={timelineRef} className="dashboard-calendar__timeline">
             <div className="dashboard-calendar__hours">
               {hours.map((hour) => (
                 <span key={hour}>{timeLabel(hour)}</span>

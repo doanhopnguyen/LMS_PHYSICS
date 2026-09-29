@@ -8,6 +8,7 @@ export function DetailToolbar({
   backLabel = 'Quay lại',
   onBack,
   actions,
+  showBack = true,
 }) {
   const backContent = (
     <>
@@ -20,16 +21,16 @@ export function DetailToolbar({
         className={`app-header detail-toolbar ${actions ? 'has-actions' : ''}`}
         aria-label="Công cụ trang chi tiết"
       >
-        {onBack ? (
+        {showBack && onBack ? (
           <button type="button" onClick={onBack} className="detail-toolbar-back" aria-label={backLabel}>
             {backContent}
           </button>
-        ) : (
+        ) : showBack ? (
           <a href={backHref} className="detail-toolbar-back" aria-label={backLabel}>
             {backContent}
           </a>
-        )}
-        <span className="detail-toolbar-divider" />
+        ) : null}
+        {showBack && <span className="detail-toolbar-divider" />}
         <PageHeaderSlot />
         <div className="detail-toolbar-info">
           <strong>{title}</strong>
