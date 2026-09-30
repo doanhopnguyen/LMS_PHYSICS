@@ -226,11 +226,55 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
               {(data) => (
                 <>
                   <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {itemsOf(data).map((row) => <Card as="article" variant="accent" key={row.classId} className="flex min-h-56 flex-col p-5">
-                      <div className="flex items-start justify-between gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2] text-primary"><span className="material-symbols-outlined">school</span></span><StatusBadge tone={row.status === 'ACTIVE' ? 'success' : row.status === 'DRAFT' ? 'warning' : 'neutral'}>{labelOf(row.status)}</StatusBadge></div>
-                      <div className="mt-4"><a className="text-headline-sm font-bold text-primary" href={`lecturer_course_detail.html?classId=${idPath(row.classId)}`}>{displayName(row)}</a><p className="mt-1 text-body-sm text-[#64748B]">{displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}</p><p className="text-body-sm text-[#64748B]">{displayName(itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId))}</p></div>
-                      <div className="mt-auto flex items-end justify-between gap-3 pt-4"><span className="text-body-sm text-[#64748B]">Sĩ số tối đa: <strong className="text-on-surface">{row.maxStudents || '—'}</strong></span><ActionMenu label={`Thao tác với ${displayName(row)}`} disabled={action.busy} items={[{ label: 'Chỉnh sửa', onSelect: () => edit(row) }, ...CLASS_STATES.filter((status) => status !== row.status).map((status) => ({ label: `Chuyển sang ${labelOf(status)}`, onSelect: () => action.confirm(`Chuyển ${displayName(row)} sang ${labelOf(status)}?`, () => api.classes.updateStatus(row.classId, { status }), classes.reload) }))]} /></div>
-                    </Card>)}
+                    {itemsOf(data).map((row) => (
+                      <Card as="article" variant="accent" key={row.classId} className="flex min-h-56 flex-col p-5">
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2] text-primary">
+                            <span className="material-symbols-outlined">school</span>
+                          </span>
+                          <StatusBadge
+                            tone={row.status === 'ACTIVE' ? 'success' : row.status === 'DRAFT' ? 'warning' : 'neutral'}
+                          >
+                            {labelOf(row.status)}
+                          </StatusBadge>
+                        </div>
+                        <div className="mt-4">
+                          <a
+                            className="text-headline-sm font-bold text-primary"
+                            href={`lecturer_course_detail.html?classId=${idPath(row.classId)}`}
+                          >
+                            {displayName(row)}
+                          </a>
+                          <p className="mt-1 text-body-sm text-[#64748B]">
+                            {displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}
+                          </p>
+                          <p className="text-body-sm text-[#64748B]">
+                            {displayName(itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId))}
+                          </p>
+                        </div>
+                        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+                          <span className="text-body-sm text-[#64748B]">
+                            Sĩ số tối đa: <strong className="text-on-surface">{row.maxStudents || '—'}</strong>
+                          </span>
+                          <ActionMenu
+                            label={`Thao tác với ${displayName(row)}`}
+                            disabled={action.busy}
+                            items={[
+                              { label: 'Chỉnh sửa', onSelect: () => edit(row) },
+                              ...CLASS_STATES.filter((status) => status !== row.status).map((status) => ({
+                                label: `Chuyển sang ${labelOf(status)}`,
+                                onSelect: () =>
+                                  action.confirm(
+                                    `Chuyển ${displayName(row)} sang ${labelOf(status)}?`,
+                                    () => api.classes.updateStatus(row.classId, { status }),
+                                    classes.reload
+                                  ),
+                              })),
+                            ]}
+                          />
+                        </div>
+                      </Card>
+                    ))}
                   </div>
                   <Pager data={data} page={page} onChange={setPage} />
                 </>
@@ -305,10 +349,33 @@ function ClassPeople({ classId, staff = false }) {
             ))}
           </SelectField>
         )}
-        {!staff && <><Button variant="secondary" disabled={action.busy} onClick={async () => {
-          const result = await action.run(() => api.users.downloadStudentTemplate(), 'Đã tải mẫu Excel sinh viên.');
-          if (result.ok) { const url = URL.createObjectURL(result.data); const link = document.createElement('a'); link.href = url; link.download = 'mau-import-sinh-vien.xlsx'; link.click(); URL.revokeObjectURL(url); }
-        }}>Tải mẫu Excel</Button><Button disabled={action.busy} onClick={() => setImporting(true)}>Nhập sinh viên Excel</Button></>}
+        {!staff && (
+          <>
+            <Button
+              variant="secondary"
+              disabled={action.busy}
+              onClick={async () => {
+                const result = await action.run(
+                  () => api.users.downloadStudentTemplate(),
+                  'Đã tải mẫu Excel sinh viên.'
+                );
+                if (result.ok) {
+                  const url = URL.createObjectURL(result.data);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = 'mau-import-sinh-vien.xlsx';
+                  link.click();
+                  URL.revokeObjectURL(url);
+                }
+              }}
+            >
+              Tải mẫu Excel
+            </Button>
+            <Button disabled={action.busy} onClick={() => setImporting(true)}>
+              Nhập sinh viên Excel
+            </Button>
+          </>
+        )}
       </div>
       <Resource value={resource}>
         {(data) => (
@@ -366,12 +433,48 @@ function ClassPeople({ classId, staff = false }) {
           </>
         )}
       </Resource>
-      {importing && <Modal title="Nhập và ghi danh sinh viên từ Excel" busy={action.busy} onClose={() => !action.busy && setImporting(false)}><Form className="grid gap-4" onSubmit={async (event) => {
-        event.preventDefault(); const form = new FormData(event.currentTarget); const file = form.get('file');
-        if (!file?.size || !/\.(xlsx|xls)$/i.test(file.name)) { action.setError('Chọn tệp Excel .xlsx hoặc .xls không rỗng.'); return; }
-        const result = await action.run(() => api.users.importStudentsExcel(form, { classId }), 'Đã xử lý danh sách sinh viên.');
-        if (result.ok) { setImporting(false); setPage(0); resource.reload(); }
-      }}><p className="text-body-sm text-[#64748B]">Các tài khoản được tạo từ tệp sẽ được ghi danh ngay vào lớp này.</p><Field label="Mật khẩu mặc định (tùy chọn)" name="defaultPassword" /><Field label="Tệp Excel *" name="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required /><SubmitButton busy={action.busy}>Nhập và ghi danh</SubmitButton></Form></Modal>}
+      {importing && (
+        <Modal
+          title="Nhập và ghi danh sinh viên từ Excel"
+          busy={action.busy}
+          onClose={() => !action.busy && setImporting(false)}
+        >
+          <Form
+            className="grid gap-4"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const file = form.get('file');
+              if (!file?.size || !/\.(xlsx|xls)$/i.test(file.name)) {
+                action.setError('Chọn tệp Excel .xlsx hoặc .xls không rỗng.');
+                return;
+              }
+              const result = await action.run(
+                () => api.users.importStudentsExcel(form, { classId }),
+                'Đã xử lý danh sách sinh viên.'
+              );
+              if (result.ok) {
+                setImporting(false);
+                setPage(0);
+                resource.reload();
+              }
+            }}
+          >
+            <p className="text-body-sm text-[#64748B]">
+              Các tài khoản được tạo từ tệp sẽ được ghi danh ngay vào lớp này.
+            </p>
+            <Field label="Mật khẩu mặc định (tùy chọn)" name="defaultPassword" />
+            <Field
+              label="Tệp Excel *"
+              name="file"
+              type="file"
+              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              required
+            />
+            <SubmitButton busy={action.busy}>Nhập và ghi danh</SubmitButton>
+          </Form>
+        </Modal>
+      )}
     </>
   );
 }
@@ -395,30 +498,118 @@ function ClassSchedules({ classId }) {
       notes: values.notes.trim() || null,
     };
     const result = await action.run(
-      () => modal.row ? api.classes.updateSchedule(modal.row.scheduleId, body) : api.classes.createSchedule(classId, body),
+      () =>
+        modal.row ? api.classes.updateSchedule(modal.row.scheduleId, body) : api.classes.createSchedule(classId, body),
       modal.row ? 'Đã cập nhật lịch học.' : 'Đã thêm lịch học.'
     );
-    if (result.ok) { setModal(null); resource.reload(); }
+    if (result.ok) {
+      setModal(null);
+      resource.reload();
+    }
   };
-  return <>
-    {action.feedback}
-    <div className="mt-4 flex justify-end"><Button onClick={() => setModal({ row: null })}>Thêm lịch học</Button></div>
-    <Resource value={resource}>{(data) => <Table asCards rows={itemsOf(data)} columns={['Buổi học', 'Thời gian', 'Địa điểm', 'Ghi chú', 'Thao tác']} cells={(row) => [
-      row.dayOfWeekText || `Thứ ${row.dayOfWeek ?? '—'}`,
-      [row.startPeriod && `Tiết ${row.startPeriod}${row.endPeriod ? `–${row.endPeriod}` : ''}`, row.startTime && `${row.startTime}${row.endTime ? ` – ${row.endTime}` : ''}`].filter(Boolean).join(' · ') || '—',
-      [row.building, row.room].filter(Boolean).join(' · ') || '—',
-      row.notes || labelOf(row.lessonType) || '—',
-      <ActionMenu label={`Thao tác với lịch ${row.dayOfWeekText || row.dayOfWeek || ''}`} disabled={action.busy} items={[
-        { label: 'Chỉnh sửa', onSelect: () => setModal({ row }) },
-        { label: 'Xóa', danger: true, onSelect: () => action.confirm('Xóa lịch học này?', () => api.classes.removeSchedule(row.scheduleId), resource.reload) },
-      ]} />,
-    ]} />}</Resource>
-    {modal && <Modal title={modal.row ? 'Chỉnh sửa lịch học' : 'Thêm lịch học'} busy={action.busy} onClose={() => !action.busy && setModal(null)}><Form className="grid gap-4" onSubmit={submit}>
-      <div className="grid gap-4 sm:grid-cols-2"><SelectField label="Thứ trong tuần" name="dayOfWeek" defaultValue={modal.row?.dayOfWeek ?? 2}>{[[2, 'Thứ Hai'], [3, 'Thứ Ba'], [4, 'Thứ Tư'], [5, 'Thứ Năm'], [6, 'Thứ Sáu'], [7, 'Thứ Bảy'], [8, 'Chủ Nhật']].map(([value, text]) => <option key={value} value={value}>{text}</option>)}</SelectField><SelectField label="Loại buổi học" name="lessonType" defaultValue={modal.row?.lessonType || 'THEORY'}>{['THEORY', 'LAB', 'EXERCISE', 'EXAM'].map((value) => <option key={value} value={value}>{labelOf(value)}</option>)}</SelectField></div>
-      <div className="grid gap-4 sm:grid-cols-2"><Field label="Tiết bắt đầu" name="startPeriod" type="number" min="1" defaultValue={modal.row?.startPeriod || ''} /><Field label="Tiết kết thúc" name="endPeriod" type="number" min="1" defaultValue={modal.row?.endPeriod || ''} /><Field label="Giờ bắt đầu" name="startTime" type="time" defaultValue={modal.row?.startTime || ''} /><Field label="Giờ kết thúc" name="endTime" type="time" defaultValue={modal.row?.endTime || ''} /></div>
-      <div className="grid gap-4 sm:grid-cols-2"><Field label="Tòa nhà" name="building" defaultValue={modal.row?.building || ''} /><Field label="Phòng học" name="room" defaultValue={modal.row?.room || ''} /></div><Field label="Ghi chú" name="notes" multiline rows={3} defaultValue={modal.row?.notes || ''} /><SubmitButton busy={action.busy}>Lưu lịch học</SubmitButton>
-    </Form></Modal>}
-  </>;
+  return (
+    <>
+      {action.feedback}
+      <div className="mt-4 flex justify-end">
+        <Button onClick={() => setModal({ row: null })}>Thêm lịch học</Button>
+      </div>
+      <Resource value={resource}>
+        {(data) => (
+          <Table
+            asCards
+            rows={itemsOf(data)}
+            columns={['Buổi học', 'Thời gian', 'Địa điểm', 'Ghi chú', 'Thao tác']}
+            cells={(row) => [
+              row.dayOfWeekText || `Thứ ${row.dayOfWeek ?? '—'}`,
+              [
+                row.startPeriod && `Tiết ${row.startPeriod}${row.endPeriod ? `–${row.endPeriod}` : ''}`,
+                row.startTime && `${row.startTime}${row.endTime ? ` – ${row.endTime}` : ''}`,
+              ]
+                .filter(Boolean)
+                .join(' · ') || '—',
+              [row.building, row.room].filter(Boolean).join(' · ') || '—',
+              row.notes || labelOf(row.lessonType) || '—',
+              <ActionMenu
+                label={`Thao tác với lịch ${row.dayOfWeekText || row.dayOfWeek || ''}`}
+                disabled={action.busy}
+                items={[
+                  { label: 'Chỉnh sửa', onSelect: () => setModal({ row }) },
+                  {
+                    label: 'Xóa',
+                    danger: true,
+                    onSelect: () =>
+                      action.confirm(
+                        'Xóa lịch học này?',
+                        () => api.classes.removeSchedule(row.scheduleId),
+                        resource.reload
+                      ),
+                  },
+                ]}
+              />,
+            ]}
+          />
+        )}
+      </Resource>
+      {modal && (
+        <Modal
+          title={modal.row ? 'Chỉnh sửa lịch học' : 'Thêm lịch học'}
+          busy={action.busy}
+          onClose={() => !action.busy && setModal(null)}
+        >
+          <Form className="grid gap-4" onSubmit={submit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <SelectField label="Thứ trong tuần" name="dayOfWeek" defaultValue={modal.row?.dayOfWeek ?? 2}>
+                {[
+                  [2, 'Thứ Hai'],
+                  [3, 'Thứ Ba'],
+                  [4, 'Thứ Tư'],
+                  [5, 'Thứ Năm'],
+                  [6, 'Thứ Sáu'],
+                  [7, 'Thứ Bảy'],
+                  [8, 'Chủ Nhật'],
+                ].map(([value, text]) => (
+                  <option key={value} value={value}>
+                    {text}
+                  </option>
+                ))}
+              </SelectField>
+              <SelectField label="Loại buổi học" name="lessonType" defaultValue={modal.row?.lessonType || 'THEORY'}>
+                {['THEORY', 'LAB', 'EXERCISE', 'EXAM'].map((value) => (
+                  <option key={value} value={value}>
+                    {labelOf(value)}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Tiết bắt đầu"
+                name="startPeriod"
+                type="number"
+                min="1"
+                defaultValue={modal.row?.startPeriod || ''}
+              />
+              <Field
+                label="Tiết kết thúc"
+                name="endPeriod"
+                type="number"
+                min="1"
+                defaultValue={modal.row?.endPeriod || ''}
+              />
+              <Field label="Giờ bắt đầu" name="startTime" type="time" defaultValue={modal.row?.startTime || ''} />
+              <Field label="Giờ kết thúc" name="endTime" type="time" defaultValue={modal.row?.endTime || ''} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Tòa nhà" name="building" defaultValue={modal.row?.building || ''} />
+              <Field label="Phòng học" name="room" defaultValue={modal.row?.room || ''} />
+            </div>
+            <Field label="Ghi chú" name="notes" multiline rows={3} defaultValue={modal.row?.notes || ''} />
+            <SubmitButton busy={action.busy}>Lưu lịch học</SubmitButton>
+          </Form>
+        </Modal>
+      )}
+    </>
+  );
 }
 
 function ClassNotification({ classId }) {
@@ -426,10 +617,32 @@ function ClassNotification({ classId }) {
   const submit = async (event) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
-    const result = await action.run(() => api.notifications.sendToClass(classId, { title: values.title.trim(), content: values.content.trim(), type: values.type, referenceType: 'CLASS' }), 'Đã gửi thông báo đến sinh viên đang học trong lớp.');
+    const result = await action.run(
+      () =>
+        api.notifications.sendToClass(classId, {
+          title: values.title.trim(),
+          content: values.content.trim(),
+          type: values.type,
+          referenceType: 'CLASS',
+        }),
+      'Đã gửi thông báo đến sinh viên đang học trong lớp.'
+    );
     if (result.ok) event.currentTarget.reset();
   };
-  return <Card className="mt-4 max-w-3xl p-5">{action.feedback}<Form className="grid gap-4" onSubmit={submit}><Field label="Tiêu đề *" name="title" required /><Field label="Nội dung *" name="content" multiline rows={5} required /><SelectField label="Loại thông báo" name="type" defaultValue="ANNOUNCEMENT"><option value="ANNOUNCEMENT">Thông báo chung</option><option value="SYSTEM">Hệ thống</option></SelectField><SubmitButton busy={action.busy}>Gửi thông báo</SubmitButton></Form></Card>;
+  return (
+    <Card className="mt-4 max-w-3xl p-5">
+      {action.feedback}
+      <Form className="grid gap-4" onSubmit={submit}>
+        <Field label="Tiêu đề *" name="title" required />
+        <Field label="Nội dung *" name="content" multiline rows={5} required />
+        <SelectField label="Loại thông báo" name="type" defaultValue="ANNOUNCEMENT">
+          <option value="ANNOUNCEMENT">Thông báo chung</option>
+          <option value="SYSTEM">Hệ thống</option>
+        </SelectField>
+        <SubmitButton busy={action.busy}>Gửi thông báo</SubmitButton>
+      </Form>
+    </Card>
+  );
 }
 const observationLabels = { progress: 'Tiến độ', evidence: 'Minh chứng', activity: 'Hoạt động' };
 export function ClassObservation({ classId, subjectId, studentId, tabs = ['progress', 'evidence', 'activity'] }) {

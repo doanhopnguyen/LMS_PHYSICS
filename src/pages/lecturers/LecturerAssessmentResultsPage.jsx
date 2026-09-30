@@ -13,7 +13,15 @@ import { Tabs } from '../../components/Tabs.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { AddParticipantsDialog, ReassignParticipantDialog } from '../../components/ParticipantDialogs.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
-import { addManualParticipants, assignMakeupSession, canTransferParticipant, getAssignmentSessions, getParticipants, loadParticipantRecords, transferParticipant } from '../../lib/participantState.js';
+import {
+  addManualParticipants,
+  assignMakeupSession,
+  canTransferParticipant,
+  getAssignmentSessions,
+  getParticipants,
+  loadParticipantRecords,
+  transferParticipant,
+} from '../../lib/participantState.js';
 import {
   answersAreEqual,
   assessmentAttempts,
@@ -126,12 +134,29 @@ export function LecturerAssessmentResultsPage() {
     () => assessmentAttempts.filter((attempt) => attempt.assessmentId === assessment.id),
     [assessment]
   );
-  const participants = useMemo(() => getParticipants({ activityType: 'ASSESSMENT', assignment: assessment, students: lecturerStudents, attempts, records: participantRecords }), [assessment, attempts, participantRecords]);
-  const rows = useMemo(() => participants.filter((item) => !['CANCELLED', 'TRANSFERRED'].includes(item.status)).map((participant) => {
-    const student = lecturerStudents.find((item) => item.id === participant.studentId);
-    const attempt = attempts.find((item) => item.studentId === participant.studentId);
-    return student ? { ...student, participant, attempt, attemptStatus: attempt?.status ?? 'NOT_STARTED' } : null;
-  }).filter(Boolean), [attempts, participants]);
+  const participants = useMemo(
+    () =>
+      getParticipants({
+        activityType: 'ASSESSMENT',
+        assignment: assessment,
+        students: lecturerStudents,
+        attempts,
+        records: participantRecords,
+      }),
+    [assessment, attempts, participantRecords]
+  );
+  const rows = useMemo(
+    () =>
+      participants
+        .filter((item) => !['CANCELLED', 'TRANSFERRED'].includes(item.status))
+        .map((participant) => {
+          const student = lecturerStudents.find((item) => item.id === participant.studentId);
+          const attempt = attempts.find((item) => item.studentId === participant.studentId);
+          return student ? { ...student, participant, attempt, attemptStatus: attempt?.status ?? 'NOT_STARTED' } : null;
+        })
+        .filter(Boolean),
+    [attempts, participants]
+  );
   const submittedAttempts = attempts.filter((attempt) => ['SUBMITTED', 'LATE'].includes(attempt.status));
   const counts = {
     submitted: submittedAttempts.length,
@@ -209,7 +234,14 @@ export function LecturerAssessmentResultsPage() {
       description={`${assessment.classIds.join(', ')} · ${assessment.questionIds.length} câu · ${assessment.duration} phút · ${assessment.totalScore} điểm`}
     >
       <Card className="mt-5 p-5 md:p-6">
-        {participantFeedback && <p className="mb-4 rounded-xl border border-[#86EFAC] bg-[#F0FDF4] p-3 text-body-sm text-[#15803D]" role="status">{participantFeedback}</p>}
+        {participantFeedback && (
+          <p
+            className="mb-4 rounded-xl border border-[#86EFAC] bg-[#F0FDF4] p-3 text-body-sm text-[#15803D]"
+            role="status"
+          >
+            {participantFeedback}
+          </p>
+        )}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-body-sm text-[#64748B]">Thời gian</p>
@@ -270,7 +302,11 @@ export function LecturerAssessmentResultsPage() {
             if (tab === 'STUDENTS')
               return (
                 <div className="space-y-5 pt-5">
-                  <div className="flex justify-end"><Button icon="person_add" onClick={() => setParticipantDialog({ type: 'ADD' })}>Thêm sinh viên</Button></div>
+                  <div className="flex justify-end">
+                    <Button icon="person_add" onClick={() => setParticipantDialog({ type: 'ADD' })}>
+                      Thêm sinh viên
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <label className="text-body-sm font-semibold">
                       Tìm sinh viên
@@ -312,51 +348,94 @@ export function LecturerAssessmentResultsPage() {
                       </select>
                     </label>
                   </div>
-                  {visibleRows.length ? (<>
-                    <DataTable paginate={false}
-                      columns={[
-                        'Mã sinh viên',
-                        'Họ và tên',
-                        'Trạng thái',
-                        'Bắt đầu',
-                        'Nộp bài',
-                        'Thời gian làm',
-                        'Điểm',
-                        'Hành động',
-                      ]}
-                      rows={studentPagination.pageItems}
-                      renderRow={(row) => {
-                        const meta = attemptStatusMeta[row.attemptStatus];
-                        return (
-                          <tr className="border-t border-[#E2E8F0]">
-                            <td className="px-3 py-3 font-mono">{row.id}</td>
-                            <td className="px-3 py-3 font-semibold whitespace-nowrap">{row.name}</td>
-                            <td className="px-3 py-3">
-                              <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
-                            </td>
-                            <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(row.attempt?.startedAt)}</td>
-                            <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(row.attempt?.submittedAt)}</td>
-                            <td className="px-3 py-3 whitespace-nowrap">{getDuration(row.attempt)}</td>
-                            <td className="px-3 py-3 font-semibold whitespace-nowrap">
-                              {formatScore(getFinalScore(row.attempt), assessment.totalScore)}
-                            </td>
-                            <td className="px-3 py-3"><div className="flex flex-col items-start gap-1">
-                              {row.attempt && (
-                                <a
-                                  className="font-semibold text-primary whitespace-nowrap"
-                                  href={`lecturer_attempt_detail.html?assessment=${assessment.id}&attempt=${row.attempt.id}`}
-                                >
-                                  {row.attemptStatus === 'IN_PROGRESS' ? 'Xem trạng thái' : 'Xem bài'}
-                                </a>
-                              )}
-                              {!row.attempt && <button type="button" className="font-semibold text-primary" onClick={() => { const allowed = canTransferParticipant(row.participant, false); allowed.allowed ? setParticipantDialog({ type: 'TRANSFER', participant: row.participant, student: row }) : setParticipantFeedback(allowed.reason); }}>Chuyển ca</button>}
-                              {row.participant.status === 'ABSENT' && <button type="button" className="font-semibold text-primary" onClick={() => setParticipantDialog({ type: 'MAKEUP', participant: row.participant, student: row })}>Bố trí thi bù</button>}
-                            </div></td>
-                          </tr>
-                        );
-                      }}
-                    />
-                    <Pagination currentPage={studentPagination.currentPage} pageSize={studentPagination.pageSize} totalItems={visibleRows.length} onPageChange={studentPagination.setCurrentPage} onPageSizeChange={studentPagination.setPageSize} />
+                  {visibleRows.length ? (
+                    <>
+                      <DataTable
+                        paginate={false}
+                        columns={[
+                          'Mã sinh viên',
+                          'Họ và tên',
+                          'Trạng thái',
+                          'Bắt đầu',
+                          'Nộp bài',
+                          'Thời gian làm',
+                          'Điểm',
+                          'Hành động',
+                        ]}
+                        rows={studentPagination.pageItems}
+                        renderRow={(row) => {
+                          const meta = attemptStatusMeta[row.attemptStatus];
+                          return (
+                            <tr className="border-t border-[#E2E8F0]">
+                              <td className="px-3 py-3 font-mono">{row.id}</td>
+                              <td className="px-3 py-3 font-semibold whitespace-nowrap">{row.name}</td>
+                              <td className="px-3 py-3">
+                                <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
+                              </td>
+                              <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(row.attempt?.startedAt)}</td>
+                              <td className="px-3 py-3 whitespace-nowrap">
+                                {formatDateTime(row.attempt?.submittedAt)}
+                              </td>
+                              <td className="px-3 py-3 whitespace-nowrap">{getDuration(row.attempt)}</td>
+                              <td className="px-3 py-3 font-semibold whitespace-nowrap">
+                                {formatScore(getFinalScore(row.attempt), assessment.totalScore)}
+                              </td>
+                              <td className="px-3 py-3">
+                                <div className="flex flex-col items-start gap-1">
+                                  {row.attempt && (
+                                    <a
+                                      className="font-semibold text-primary whitespace-nowrap"
+                                      href={`lecturer_attempt_detail.html?assessment=${assessment.id}&attempt=${row.attempt.id}`}
+                                    >
+                                      {row.attemptStatus === 'IN_PROGRESS' ? 'Xem trạng thái' : 'Xem bài'}
+                                    </a>
+                                  )}
+                                  {!row.attempt && (
+                                    <button
+                                      type="button"
+                                      className="font-semibold text-primary"
+                                      onClick={() => {
+                                        const allowed = canTransferParticipant(row.participant, false);
+                                        allowed.allowed
+                                          ? setParticipantDialog({
+                                              type: 'TRANSFER',
+                                              participant: row.participant,
+                                              student: row,
+                                            })
+                                          : setParticipantFeedback(allowed.reason);
+                                      }}
+                                    >
+                                      Chuyển ca
+                                    </button>
+                                  )}
+                                  {row.participant.status === 'ABSENT' && (
+                                    <button
+                                      type="button"
+                                      className="font-semibold text-primary"
+                                      onClick={() =>
+                                        setParticipantDialog({
+                                          type: 'MAKEUP',
+                                          participant: row.participant,
+                                          student: row,
+                                        })
+                                      }
+                                    >
+                                      Bố trí thi bù
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }}
+                      />
+                      <Pagination
+                        currentPage={studentPagination.currentPage}
+                        pageSize={studentPagination.pageSize}
+                        totalItems={visibleRows.length}
+                        onPageChange={studentPagination.setCurrentPage}
+                        onPageSizeChange={studentPagination.setPageSize}
+                      />
                     </>
                   ) : (
                     <EmptyState
@@ -394,7 +473,8 @@ export function LecturerAssessmentResultsPage() {
                         .sort((a, b) => a.rate - b.rate)
                         .slice(0, 3)
                         .map((question) => (
-                          <Card as="div"
+                          <Card
+                            as="div"
                             key={question.id}
                             className="flex flex-wrap items-center justify-between gap-3 p-4"
                           >
@@ -448,8 +528,50 @@ export function LecturerAssessmentResultsPage() {
           }}
         </Tabs>
       </Card>
-      {participantDialog?.type === 'ADD' && <AddParticipantsDialog title="Thêm sinh viên" context={assessment.title} students={lecturerStudents} participants={participants} sessions={sessions} onCancel={() => setParticipantDialog(null)} onConfirm={(studentIds) => { const result = addManualParticipants(participantRecords, { activityType: 'ASSESSMENT', assignmentId: assessment.id, sessionId: sessions[0].id, studentIds }); setParticipantRecords(result.records); setParticipantFeedback(`Đã thêm ${result.added} sinh viên vào bài kiểm tra.`); setParticipantDialog(null); }} />}
-      {['TRANSFER', 'MAKEUP'].includes(participantDialog?.type) && <ReassignParticipantDialog mode={participantDialog.type} participant={participantDialog.participant} student={participantDialog.student} sessions={sessions} onCancel={() => setParticipantDialog(null)} onConfirm={(targetSessionId, reason) => { const result = participantDialog.type === 'TRANSFER' ? transferParticipant(participantRecords, participantDialog.participant, targetSessionId, reason) : assignMakeupSession(participantRecords, participantDialog.participant, targetSessionId, reason); if (result.error) return setParticipantFeedback(result.error); setParticipantRecords(result.records); setParticipantFeedback(participantDialog.type === 'TRANSFER' ? 'Đã chuyển ca và giữ lịch sử ca cũ.' : 'Đã bố trí thi bù và giữ trạng thái ca cũ.'); setParticipantDialog(null); }} />}
+      {participantDialog?.type === 'ADD' && (
+        <AddParticipantsDialog
+          title="Thêm sinh viên"
+          context={assessment.title}
+          students={lecturerStudents}
+          participants={participants}
+          sessions={sessions}
+          onCancel={() => setParticipantDialog(null)}
+          onConfirm={(studentIds) => {
+            const result = addManualParticipants(participantRecords, {
+              activityType: 'ASSESSMENT',
+              assignmentId: assessment.id,
+              sessionId: sessions[0].id,
+              studentIds,
+            });
+            setParticipantRecords(result.records);
+            setParticipantFeedback(`Đã thêm ${result.added} sinh viên vào bài kiểm tra.`);
+            setParticipantDialog(null);
+          }}
+        />
+      )}
+      {['TRANSFER', 'MAKEUP'].includes(participantDialog?.type) && (
+        <ReassignParticipantDialog
+          mode={participantDialog.type}
+          participant={participantDialog.participant}
+          student={participantDialog.student}
+          sessions={sessions}
+          onCancel={() => setParticipantDialog(null)}
+          onConfirm={(targetSessionId, reason) => {
+            const result =
+              participantDialog.type === 'TRANSFER'
+                ? transferParticipant(participantRecords, participantDialog.participant, targetSessionId, reason)
+                : assignMakeupSession(participantRecords, participantDialog.participant, targetSessionId, reason);
+            if (result.error) return setParticipantFeedback(result.error);
+            setParticipantRecords(result.records);
+            setParticipantFeedback(
+              participantDialog.type === 'TRANSFER'
+                ? 'Đã chuyển ca và giữ lịch sử ca cũ.'
+                : 'Đã bố trí thi bù và giữ trạng thái ca cũ.'
+            );
+            setParticipantDialog(null);
+          }}
+        />
+      )}
     </LecturerPageShell>
   );
 }

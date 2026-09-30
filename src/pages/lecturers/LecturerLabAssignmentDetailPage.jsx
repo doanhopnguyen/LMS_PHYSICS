@@ -11,7 +11,15 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { AddParticipantsDialog, ReassignParticipantDialog } from '../../components/ParticipantDialogs.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
-import { addManualParticipants, assignMakeupSession, canTransferParticipant, getAssignmentSessions, getParticipants, loadParticipantRecords, transferParticipant } from '../../lib/participantState.js';
+import {
+  addManualParticipants,
+  assignMakeupSession,
+  canTransferParticipant,
+  getAssignmentSessions,
+  getParticipants,
+  loadParticipantRecords,
+  transferParticipant,
+} from '../../lib/participantState.js';
 import { labs } from '../../data/lmsData.js';
 import {
   labAssignments,
@@ -47,13 +55,29 @@ export function LecturerLabAssignmentDetailPage() {
   const [participantDialog, setParticipantDialog] = useState(null);
   const [participantFeedback, setParticipantFeedback] = useState('');
   const sessions = useMemo(() => getAssignmentSessions(assignment, 'LAB'), [assignment]);
-  const participants = useMemo(() => getParticipants({ activityType: 'LAB', assignment, students: lecturerStudents, submissions, records: participantRecords }), [assignment, participantRecords, submissions]);
+  const participants = useMemo(
+    () =>
+      getParticipants({
+        activityType: 'LAB',
+        assignment,
+        students: lecturerStudents,
+        submissions,
+        records: participantRecords,
+      }),
+    [assignment, participantRecords, submissions]
+  );
   const students = useMemo(
-    () => participants.filter((item) => !['CANCELLED', 'TRANSFERRED'].includes(item.status)).map((participant) => {
-      const student = lecturerStudents.find((item) => item.id === participant.studentId);
-      const submission = submissions.find((item) => item.studentId === participant.studentId);
-      return student ? { ...student, participant, submission, labStatus: submission?.status ?? 'NOT_STARTED' } : null;
-    }).filter(Boolean),
+    () =>
+      participants
+        .filter((item) => !['CANCELLED', 'TRANSFERRED'].includes(item.status))
+        .map((participant) => {
+          const student = lecturerStudents.find((item) => item.id === participant.studentId);
+          const submission = submissions.find((item) => item.studentId === participant.studentId);
+          return student
+            ? { ...student, participant, submission, labStatus: submission?.status ?? 'NOT_STARTED' }
+            : null;
+        })
+        .filter(Boolean),
     [participants, submissions]
   );
   const visible = useMemo(
@@ -107,8 +131,19 @@ export function LecturerLabAssignmentDetailPage() {
       description={`${assignment.classIds.join(', ')} · ${assignment.id}`}
     >
       <Card className="mt-5 p-5 md:p-6">
-        {participantFeedback && <p className="mb-4 rounded-xl border border-[#86EFAC] bg-[#F0FDF4] p-3 text-body-sm text-[#15803D]" role="status">{participantFeedback}</p>}
-        <div className="mb-4 flex justify-end"><Button icon="person_add" onClick={() => setParticipantDialog({ type: 'ADD' })}>Thêm sinh viên</Button></div>
+        {participantFeedback && (
+          <p
+            className="mb-4 rounded-xl border border-[#86EFAC] bg-[#F0FDF4] p-3 text-body-sm text-[#15803D]"
+            role="status"
+          >
+            {participantFeedback}
+          </p>
+        )}
+        <div className="mb-4 flex justify-end">
+          <Button icon="person_add" onClick={() => setParticipantDialog({ type: 'ADD' })}>
+            Thêm sinh viên
+          </Button>
+        </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-label-md font-bold text-primary">{lab.code}</p>
@@ -182,67 +217,100 @@ export function LecturerLabAssignmentDetailPage() {
             </select>
           </label>
         </div>
-        {visible.length ? (<>
-          <DataTable paginate={false}
-            columns={[
-              'Mã sinh viên',
-              'Họ tên',
-              'Trạng thái thực hiện',
-              'Bắt đầu',
-              'Nộp bài',
-              'Số lần',
-              'Minh chứng',
-              'Hành động',
-            ]}
-            rows={pagination.pageItems}
-            renderRow={(student) => {
-              const meta = labSubmissionStatusMeta[student.labStatus];
-              return (
-                <tr className="border-t border-[#E2E8F0]">
-                  <td className="px-3 py-3 font-mono">{student.id}</td>
-                  <td className="px-3 py-3 font-semibold whitespace-nowrap">{student.name}</td>
-                  <td className="px-3 py-3">
-                    <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
-                  </td>
-                  <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(student.submission?.startedAt)}</td>
-                  <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(student.submission?.submittedAt)}</td>
-                  <td className="px-3 py-3">{student.submission?.attemptCount ?? '—'}</td>
-                  <td className="px-3 py-3">
-                    {student.submission?.evidence.report ? 'Có báo cáo' : 'Chưa có báo cáo'}
-                  </td>
-                  <td className="px-3 py-3"><div className="space-y-1">
-                    {student.submission?.evidence.report ? (
+        {visible.length ? (
+          <>
+            <DataTable
+              paginate={false}
+              columns={[
+                'Mã sinh viên',
+                'Họ tên',
+                'Trạng thái thực hiện',
+                'Bắt đầu',
+                'Nộp bài',
+                'Số lần',
+                'Minh chứng',
+                'Hành động',
+              ]}
+              rows={pagination.pageItems}
+              renderRow={(student) => {
+                const meta = labSubmissionStatusMeta[student.labStatus];
+                return (
+                  <tr className="border-t border-[#E2E8F0]">
+                    <td className="px-3 py-3 font-mono">{student.id}</td>
+                    <td className="px-3 py-3 font-semibold whitespace-nowrap">{student.name}</td>
+                    <td className="px-3 py-3">
+                      <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(student.submission?.startedAt)}</td>
+                    <td className="px-3 py-3 whitespace-nowrap">{formatDateTime(student.submission?.submittedAt)}</td>
+                    <td className="px-3 py-3">{student.submission?.attemptCount ?? '—'}</td>
+                    <td className="px-3 py-3">
+                      {student.submission?.evidence.report ? 'Có báo cáo' : 'Chưa có báo cáo'}
+                    </td>
+                    <td className="px-3 py-3">
                       <div className="space-y-1">
-                        <a
-                          href={`lecturer_lab_submission_detail.html?submission=${student.submission.id}`}
-                          className="block font-semibold text-primary whitespace-nowrap"
-                        >
-                          Xem báo cáo
-                        </a>
-                        {(() => {
-                          const grading = gradings.find((item) => item.submissionId === student.submission.id);
-                          const gradingStatus = grading?.status ?? 'UNGRADED';
-                          return (
+                        {student.submission?.evidence.report ? (
+                          <div className="space-y-1">
                             <a
-                              href={`lecturer_lab_grading.html?submission=${student.submission.id}`}
-                              className="block text-body-sm font-semibold text-[#475569]"
+                              href={`lecturer_lab_submission_detail.html?submission=${student.submission.id}`}
+                              className="block font-semibold text-primary whitespace-nowrap"
                             >
-                              {labGradingStatusMeta[gradingStatus].label}
+                              Xem báo cáo
                             </a>
-                          );
-                        })()}
+                            {(() => {
+                              const grading = gradings.find((item) => item.submissionId === student.submission.id);
+                              const gradingStatus = grading?.status ?? 'UNGRADED';
+                              return (
+                                <a
+                                  href={`lecturer_lab_grading.html?submission=${student.submission.id}`}
+                                  className="block text-body-sm font-semibold text-[#475569]"
+                                >
+                                  {labGradingStatusMeta[gradingStatus].label}
+                                </a>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <span className="text-body-sm text-[#64748B]">Chưa có báo cáo</span>
+                        )}
+                        {!student.submission && (
+                          <button
+                            type="button"
+                            className="block text-body-sm font-semibold text-primary"
+                            onClick={() => {
+                              const allowed = canTransferParticipant(student.participant, false);
+                              allowed.allowed
+                                ? setParticipantDialog({ type: 'TRANSFER', participant: student.participant, student })
+                                : setParticipantFeedback(allowed.reason);
+                            }}
+                          >
+                            Chuyển ca
+                          </button>
+                        )}
+                        {student.participant.status === 'ABSENT' && (
+                          <button
+                            type="button"
+                            className="block text-body-sm font-semibold text-primary"
+                            onClick={() =>
+                              setParticipantDialog({ type: 'MAKEUP', participant: student.participant, student })
+                            }
+                          >
+                            Bố trí thực hành bù
+                          </button>
+                        )}
                       </div>
-                    ) : (
-                      <span className="text-body-sm text-[#64748B]">Chưa có báo cáo</span>
-                    )}
-                    {!student.submission && <button type="button" className="block text-body-sm font-semibold text-primary" onClick={() => { const allowed = canTransferParticipant(student.participant, false); allowed.allowed ? setParticipantDialog({ type: 'TRANSFER', participant: student.participant, student }) : setParticipantFeedback(allowed.reason); }}>Chuyển ca</button>}
-                    {student.participant.status === 'ABSENT' && <button type="button" className="block text-body-sm font-semibold text-primary" onClick={() => setParticipantDialog({ type: 'MAKEUP', participant: student.participant, student })}>Bố trí thực hành bù</button>}
-                  </div></td>
-                </tr>
-              );
-            }}
-          />
-          <Pagination currentPage={pagination.currentPage} pageSize={pagination.pageSize} totalItems={visible.length} onPageChange={pagination.setCurrentPage} onPageSizeChange={pagination.setPageSize} />
+                    </td>
+                  </tr>
+                );
+              }}
+            />
+            <Pagination
+              currentPage={pagination.currentPage}
+              pageSize={pagination.pageSize}
+              totalItems={visible.length}
+              onPageChange={pagination.setCurrentPage}
+              onPageSizeChange={pagination.setPageSize}
+            />
           </>
         ) : (
           <div className="py-10 text-center">
@@ -254,8 +322,50 @@ export function LecturerLabAssignmentDetailPage() {
           </div>
         )}
       </Card>
-      {participantDialog?.type === 'ADD' && <AddParticipantsDialog title="Thêm sinh viên" context={assignment.title} students={lecturerStudents} participants={participants} sessions={sessions} onCancel={() => setParticipantDialog(null)} onConfirm={(studentIds) => { const result = addManualParticipants(participantRecords, { activityType: 'LAB', assignmentId: assignment.id, sessionId: sessions[0].id, studentIds }); setParticipantRecords(result.records); setParticipantFeedback(`Đã thêm ${result.added} sinh viên vào bài thực hành.`); setParticipantDialog(null); }} />}
-      {['TRANSFER', 'MAKEUP'].includes(participantDialog?.type) && <ReassignParticipantDialog mode={participantDialog.type} participant={participantDialog.participant} student={participantDialog.student} sessions={sessions} onCancel={() => setParticipantDialog(null)} onConfirm={(targetSessionId, reason) => { const result = participantDialog.type === 'TRANSFER' ? transferParticipant(participantRecords, participantDialog.participant, targetSessionId, reason) : assignMakeupSession(participantRecords, participantDialog.participant, targetSessionId, reason); if (result.error) return setParticipantFeedback(result.error); setParticipantRecords(result.records); setParticipantFeedback(participantDialog.type === 'TRANSFER' ? 'Đã chuyển ca và giữ lịch sử ca cũ.' : 'Đã bố trí thực hành bù và giữ trạng thái ca cũ.'); setParticipantDialog(null); }} />}
+      {participantDialog?.type === 'ADD' && (
+        <AddParticipantsDialog
+          title="Thêm sinh viên"
+          context={assignment.title}
+          students={lecturerStudents}
+          participants={participants}
+          sessions={sessions}
+          onCancel={() => setParticipantDialog(null)}
+          onConfirm={(studentIds) => {
+            const result = addManualParticipants(participantRecords, {
+              activityType: 'LAB',
+              assignmentId: assignment.id,
+              sessionId: sessions[0].id,
+              studentIds,
+            });
+            setParticipantRecords(result.records);
+            setParticipantFeedback(`Đã thêm ${result.added} sinh viên vào bài thực hành.`);
+            setParticipantDialog(null);
+          }}
+        />
+      )}
+      {['TRANSFER', 'MAKEUP'].includes(participantDialog?.type) && (
+        <ReassignParticipantDialog
+          mode={participantDialog.type}
+          participant={participantDialog.participant}
+          student={participantDialog.student}
+          sessions={sessions}
+          onCancel={() => setParticipantDialog(null)}
+          onConfirm={(targetSessionId, reason) => {
+            const result =
+              participantDialog.type === 'TRANSFER'
+                ? transferParticipant(participantRecords, participantDialog.participant, targetSessionId, reason)
+                : assignMakeupSession(participantRecords, participantDialog.participant, targetSessionId, reason);
+            if (result.error) return setParticipantFeedback(result.error);
+            setParticipantRecords(result.records);
+            setParticipantFeedback(
+              participantDialog.type === 'TRANSFER'
+                ? 'Đã chuyển ca và giữ lịch sử ca cũ.'
+                : 'Đã bố trí thực hành bù và giữ trạng thái ca cũ.'
+            );
+            setParticipantDialog(null);
+          }}
+        />
+      )}
     </LecturerPageShell>
   );
 }

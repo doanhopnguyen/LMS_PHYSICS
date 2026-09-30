@@ -209,7 +209,8 @@ export function LecturerAttemptDetailPage() {
                   {question.answers.map((answer) => {
                     const selected = selectedIds.includes(answer.id);
                     return (
-                      <Card as="div"
+                      <Card
+                        as="div"
                         key={answer.id}
                         className={`border p-3 text-body-sm ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : selected ? 'border-[#FECACA] bg-[#FEF2F2]' : 'border-[#E2E8F0]'}`}
                       >

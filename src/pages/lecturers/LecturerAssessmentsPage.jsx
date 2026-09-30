@@ -1,5 +1,5 @@
 import { formatPercent } from '../../lib/formatPercent.js';
-import { PaginatedList } from "../../components/Pagination.jsx";
+import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
@@ -578,10 +578,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                   const question = lecturerQuestions.find((item) => item.id === id);
                   if (!question) return null;
                   return (
-                    <Card as="li"
-                      key={id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-4"
-                    >
+                    <Card as="li" key={id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FEE2E2] font-bold text-primary">
                         {index + 1}
                       </span>
@@ -1161,129 +1158,135 @@ export function LecturerAssessmentsPage() {
         {(activeStatus) => {
           const visible = baseFiltered.filter((item) => activeStatus === 'ALL' || item.status === activeStatus);
           return visible.length ? (
-            <PaginatedCollection items={visible} resetKeys={[activeStatus, query, classFilter, statusFilter, chapterFilter]} pageSize={8}>
-              {(pageItems) => <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pt-5">
-              {pageItems.map((item) => {
-                const meta = assessmentStatusMeta[item.status];
-                return (
-                  <Card key={item.id} variant="accent" className="p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-label-md font-bold text-primary">
-                          {item.id} · {assessmentTypeLabels[item.type]}
-                        </p>
-                        <h2 className="mt-1 text-headline-sm font-bold">{item.title}</h2>
-                        <p className="mt-1 text-body-sm text-[#64748B]">{item.classIds.join(', ')}</p>
-                      </div>
-                      <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-body-sm">
-                      <Card as="div" className="bg-[#F8FAFC] p-3">
-                        <span className="text-[#64748B]">Câu hỏi</span>
-                        <strong className="mt-1 block">{item.questionIds.length} câu</strong>
-                      </Card>
-                      <Card as="div" className="bg-[#F8FAFC] p-3">
-                        <span className="text-[#64748B]">Thời gian</span>
-                        <strong className="mt-1 block">{item.duration} phút</strong>
-                      </Card>
-                      <Card as="div" className="bg-[#F8FAFC] p-3 col-span-2">
-                        <span className="text-[#64748B]">Lịch</span>
-                        <strong className="mt-1 block">
-                          {formatDateTime(item.startAt)} → {formatDateTime(item.endAt)}
-                        </strong>
-                      </Card>
-                    </div>
-                    <ProgressBar
-                      value={item.totalStudents ? (item.completedCount / item.totalStudents) * 100 : 0}
-                      label={`Đã hoàn thành: ${item.completedCount} / ${item.totalStudents}`}
-                      className="mt-4 text-[#64748B]"
-                    />
-                    <div className="mt-5 flex items-center gap-2">
-                      {['OPEN', 'CLOSED'].includes(item.status) ? (
-                        <a href={`lecturer_assessment_results.html?assessment=${item.id}`} className="flex-1">
-                          <Button variant="secondary" className="w-full">
-                            {item.status === 'CLOSED' ? 'Xem kết quả' : 'Theo dõi'}
-                          </Button>
-                        </a>
-                      ) : (
-                        <Button variant="secondary" onClick={() => setViewing(item)} className="flex-1">
-                          Xem
-                        </Button>
-                      )}
-                      <details className="relative">
-                        <summary
-                          className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-[#CBD5E1] text-[#64748B]"
-                          aria-label={`Tùy chọn ${item.title}`}
-                        >
-                          <span className="material-symbols-outlined">more_vert</span>
-                        </summary>
-                        <div className="absolute bottom-11 right-0 z-30 w-48 rounded-xl border border-[#E2E8F0] bg-white p-2 shadow-lg">
-                          <button
-                            type="button"
-                            onClick={() => setViewing(item)}
-                            className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
-                          >
-                            Xem chi tiết
-                          </button>
-                          {['DRAFT', 'SCHEDULED'].includes(item.status) && (
-                            <button
-                              type="button"
-                              onClick={() => openEdit(item)}
-                              className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
-                            >
-                              Chỉnh sửa
-                            </button>
+            <PaginatedCollection
+              items={visible}
+              resetKeys={[activeStatus, query, classFilter, statusFilter, chapterFilter]}
+              pageSize={8}
+            >
+              {(pageItems) => (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pt-5">
+                  {pageItems.map((item) => {
+                    const meta = assessmentStatusMeta[item.status];
+                    return (
+                      <Card key={item.id} variant="accent" className="p-5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-label-md font-bold text-primary">
+                              {item.id} · {assessmentTypeLabels[item.type]}
+                            </p>
+                            <h2 className="mt-1 text-headline-sm font-bold">{item.title}</h2>
+                            <p className="mt-1 text-body-sm text-[#64748B]">{item.classIds.join(', ')}</p>
+                          </div>
+                          <StatusBadge tone={meta.tone}>{meta.label}</StatusBadge>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-body-sm">
+                          <Card as="div" className="bg-[#F8FAFC] p-3">
+                            <span className="text-[#64748B]">Câu hỏi</span>
+                            <strong className="mt-1 block">{item.questionIds.length} câu</strong>
+                          </Card>
+                          <Card as="div" className="bg-[#F8FAFC] p-3">
+                            <span className="text-[#64748B]">Thời gian</span>
+                            <strong className="mt-1 block">{item.duration} phút</strong>
+                          </Card>
+                          <Card as="div" className="bg-[#F8FAFC] p-3 col-span-2">
+                            <span className="text-[#64748B]">Lịch</span>
+                            <strong className="mt-1 block">
+                              {formatDateTime(item.startAt)} → {formatDateTime(item.endAt)}
+                            </strong>
+                          </Card>
+                        </div>
+                        <ProgressBar
+                          value={item.totalStudents ? (item.completedCount / item.totalStudents) * 100 : 0}
+                          label={`Đã hoàn thành: ${item.completedCount} / ${item.totalStudents}`}
+                          className="mt-4 text-[#64748B]"
+                        />
+                        <div className="mt-5 flex items-center gap-2">
+                          {['OPEN', 'CLOSED'].includes(item.status) ? (
+                            <a href={`lecturer_assessment_results.html?assessment=${item.id}`} className="flex-1">
+                              <Button variant="secondary" className="w-full">
+                                {item.status === 'CLOSED' ? 'Xem kết quả' : 'Theo dõi'}
+                              </Button>
+                            </a>
+                          ) : (
+                            <Button variant="secondary" onClick={() => setViewing(item)} className="flex-1">
+                              Xem
+                            </Button>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => copyAssessment(item)}
-                            className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
-                          >
-                            Sao chép
-                          </button>
-                          {item.status === 'DRAFT' && (
-                            <>
+                          <details className="relative">
+                            <summary
+                              className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-full border border-[#CBD5E1] text-[#64748B]"
+                              aria-label={`Tùy chọn ${item.title}`}
+                            >
+                              <span className="material-symbols-outlined">more_vert</span>
+                            </summary>
+                            <div className="absolute bottom-11 right-0 z-30 w-48 rounded-xl border border-[#E2E8F0] bg-white p-2 shadow-lg">
                               <button
                                 type="button"
-                                onClick={() => openEdit(item)}
+                                onClick={() => setViewing(item)}
                                 className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
                               >
-                                Giao bài
+                                Xem chi tiết
                               </button>
+                              {['DRAFT', 'SCHEDULED'].includes(item.status) && (
+                                <button
+                                  type="button"
+                                  onClick={() => openEdit(item)}
+                                  className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
+                                >
+                                  Chỉnh sửa
+                                </button>
+                              )}
                               <button
                                 type="button"
-                                onClick={() => setDeleting(item)}
-                                className="w-full rounded-lg px-3 py-2 text-left text-body-sm text-primary hover:bg-[#FEF2F2]"
+                                onClick={() => copyAssessment(item)}
+                                className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
                               >
-                                Xóa
+                                Sao chép
                               </button>
-                            </>
-                          )}
-                          {item.status === 'SCHEDULED' && (
-                            <button
-                              type="button"
-                              onClick={() => changeStatus(item.id, 'DRAFT')}
-                              className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
-                            >
-                              Hủy lịch
-                            </button>
-                          )}
-                          {item.status === 'OPEN' && (
-                            <button
-                              type="button"
-                              onClick={() => changeStatus(item.id, 'CLOSED')}
-                              className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
-                            >
-                              Đóng bài
-                            </button>
-                          )}
+                              {item.status === 'DRAFT' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEdit(item)}
+                                    className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
+                                  >
+                                    Giao bài
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleting(item)}
+                                    className="w-full rounded-lg px-3 py-2 text-left text-body-sm text-primary hover:bg-[#FEF2F2]"
+                                  >
+                                    Xóa
+                                  </button>
+                                </>
+                              )}
+                              {item.status === 'SCHEDULED' && (
+                                <button
+                                  type="button"
+                                  onClick={() => changeStatus(item.id, 'DRAFT')}
+                                  className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
+                                >
+                                  Hủy lịch
+                                </button>
+                              )}
+                              {item.status === 'OPEN' && (
+                                <button
+                                  type="button"
+                                  onClick={() => changeStatus(item.id, 'CLOSED')}
+                                  className="w-full rounded-lg px-3 py-2 text-left text-body-sm hover:bg-[#F1F5F9]"
+                                >
+                                  Đóng bài
+                                </button>
+                              )}
+                            </div>
+                          </details>
                         </div>
-                      </details>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>}
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </PaginatedCollection>
           ) : (
             <Card className="mt-5 p-10 text-center">
@@ -1333,7 +1336,8 @@ function QuestionPreview({ question, onClose }) {
         </div>
         <div className="mt-5 space-y-2">
           {question.answers.map((answer) => (
-            <Card as="div"
+            <Card
+              as="div"
               key={answer.id}
               className={`border p-3 ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}
             >

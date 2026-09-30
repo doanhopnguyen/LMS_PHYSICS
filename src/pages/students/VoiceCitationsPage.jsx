@@ -36,7 +36,10 @@ export function VoiceCitationsPage() {
               </div>
               <span className="material-symbols-outlined text-3xl text-red-300">graphic_eq</span>
             </div>
-            <Card as="div" className="mt-10 h-28 flex items-center justify-center gap-1.5 px-6 bg-slate-900/70 border-slate-700">
+            <Card
+              as="div"
+              className="mt-10 h-28 flex items-center justify-center gap-1.5 px-6 bg-slate-900/70 border-slate-700"
+            >
               {Array.from({ length: 32 }, (_, index) => (
                 <span
                   key={index}

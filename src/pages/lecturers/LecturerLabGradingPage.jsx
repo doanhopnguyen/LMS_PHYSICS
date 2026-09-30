@@ -571,10 +571,7 @@ export function LecturerLabGradingPage() {
         </Tabs>
       </Card>
       <Card className="mt-5 p-5 md:p-6">
-        <SectionHeader
-          title="Lịch sử chấm điểm"
-
-        />
+        <SectionHeader title="Lịch sử chấm điểm" />
         {result.history.length ? (
           <div className="mt-5">
             <DataTable

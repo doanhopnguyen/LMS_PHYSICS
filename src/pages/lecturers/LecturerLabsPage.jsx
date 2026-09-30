@@ -1,4 +1,4 @@
-import { PaginatedList } from "../../components/Pagination.jsx";
+import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useMemo, useState } from 'react';
 import { useAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
@@ -116,10 +116,7 @@ function LabDetailModal({ lab, assignments, onClose, onAssign }) {
             <div className="mt-3 space-y-2">
               {assigned.length ? (
                 assigned.map((item) => (
-                  <Card as="div"
-                    key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-3 p-3"
-                  >
+                  <Card as="div" key={item.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
                     <span>{item.classIds.join(', ')}</span>
                     <StatusBadge tone={labAssignmentStatusMeta[item.status].tone}>
                       {labAssignmentStatusMeta[item.status].label}

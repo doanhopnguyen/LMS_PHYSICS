@@ -360,18 +360,26 @@ export function LecturerAuthoringApiPage({ kind }) {
             </Button>
             {!materialMode && (
               <>
-                <Button variant="secondary" disabled={action.busy} onClick={async () => {
-                  const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
-                  if (result.ok) {
-                    const url = URL.createObjectURL(result.data);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'mau-nhap-cau-hoi.xlsx';
-                    link.click();
-                    URL.revokeObjectURL(url);
-                  }
-                }}>Tải mẫu Excel</Button>
-                <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>Nhập Excel</Button>
+                <Button
+                  variant="secondary"
+                  disabled={action.busy}
+                  onClick={async () => {
+                    const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
+                    if (result.ok) {
+                      const url = URL.createObjectURL(result.data);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = 'mau-nhap-cau-hoi.xlsx';
+                      link.click();
+                      URL.revokeObjectURL(url);
+                    }
+                  }}
+                >
+                  Tải mẫu Excel
+                </Button>
+                <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
+                  Nhập Excel
+                </Button>
               </>
             )}
           </>
@@ -418,10 +426,16 @@ export function LecturerAuthoringApiPage({ kind }) {
                         items={[
                           { label: 'Xem chi tiết', onSelect: () => open('view', row) },
                           { label: 'Chỉnh sửa', onSelect: () => open(materialMode ? 'material' : 'question', row) },
-                          materialMode && row.approvalStatus !== 'APPROVED' && {
-                            label: 'Duyệt học liệu',
-                            onSelect: () => action.confirm(`Duyệt học liệu “${row.title || 'này'}”?`, () => api.materials.approve(validTopic, row.materialId), resource.reload),
-                          },
+                          materialMode &&
+                            row.approvalStatus !== 'APPROVED' && {
+                              label: 'Duyệt học liệu',
+                              onSelect: () =>
+                                action.confirm(
+                                  `Duyệt học liệu “${row.title || 'này'}”?`,
+                                  () => api.materials.approve(validTopic, row.materialId),
+                                  resource.reload
+                                ),
+                            },
                           { label: 'Xóa', danger: true, onSelect: () => remove(row) },
                         ]}
                       />,
@@ -603,8 +617,16 @@ export function LecturerAuthoringApiPage({ kind }) {
                 }
               }}
             >
-              <p className="text-body-sm text-[#64748B]">Chọn tệp Excel theo mẫu để nhập hàng loạt câu hỏi vào chủ đề đã chọn.</p>
-              <Field label="Tệp Excel *" name="file" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required />
+              <p className="text-body-sm text-[#64748B]">
+                Chọn tệp Excel theo mẫu để nhập hàng loạt câu hỏi vào chủ đề đã chọn.
+              </p>
+              <Field
+                label="Tệp Excel *"
+                name="file"
+                type="file"
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                required
+              />
               <SubmitButton type="submit" disabled={action.busy || !validSubject || !validTopic}>
                 {action.busy ? 'Đang nhập câu hỏi…' : 'Nhập câu hỏi'}
               </SubmitButton>

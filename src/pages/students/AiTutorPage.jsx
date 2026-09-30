@@ -33,7 +33,8 @@ export function AiTutorPage() {
 
   useEffect(() => {
     let alive = true;
-    api.students.myClasses()
+    api.students
+      .myClasses()
       .then((data) => {
         if (!alive) return;
         const classRows = rowsOf(data);
@@ -41,7 +42,9 @@ export function AiTutorPage() {
         setClassId((current) => current || classRows[0]?.classId || '');
       })
       .catch(() => alive && setClasses([]));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -51,12 +54,17 @@ export function AiTutorPage() {
     setTopic('');
     if (!subjectId) {
       setTopics([]);
-      return () => { alive = false; };
+      return () => {
+        alive = false;
+      };
     }
-    api.subjects.topics(subjectId)
+    api.subjects
+      .topics(subjectId)
       .then((data) => alive && setTopics(rowsOf(data)))
       .catch(() => alive && setTopics([]));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [classes, classId]);
 
   const startPayload = () => ({ classId, topicId: topic || null, mode });
@@ -85,11 +93,13 @@ export function AiTutorPage() {
     try {
       const msgs = await api.aiTutor.messages(convId);
       const list = Array.isArray(msgs) ? msgs : [];
-      setMessages(list.map((m) => ({
-        role: m.sender === 'USER' ? 'user' : 'assistant',
-        text: m.contentText,
-        messageId: m.messageId,
-      })));
+      setMessages(
+        list.map((m) => ({
+          role: m.sender === 'USER' ? 'user' : 'assistant',
+          text: m.contentText,
+          messageId: m.messageId,
+        }))
+      );
       setConversationId(convId);
       setEnded(false);
     } catch (err) {
@@ -113,10 +123,7 @@ export function AiTutorPage() {
       }
       const reply = await api.aiTutor.send(convId, { content: userText });
       setLastMessageId(reply.messageId);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', text: reply.contentText, messageId: reply.messageId },
-      ]);
+      setMessages((prev) => [...prev, { role: 'assistant', text: reply.contentText, messageId: reply.messageId }]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -128,10 +135,15 @@ export function AiTutorPage() {
   };
 
   const endConversation = async () => {
-    if (!conversationId) { setEnded(true); return; }
+    if (!conversationId) {
+      setEnded(true);
+      return;
+    }
     try {
       await api.aiTutor.end(conversationId);
-    } catch (err) { /* ignore */ }
+    } catch (err) {
+      /* ignore */
+    }
     setEnded(true);
   };
 
@@ -139,7 +151,9 @@ export function AiTutorPage() {
     setRated((prev) => ({ ...prev, [messageId]: rating }));
     try {
       await api.aiTutor.sendFeedback(messageId, { rating: rating === 'UP' ? 5 : 1 });
-    } catch (err) { /* ignore */ }
+    } catch (err) {
+      /* ignore */
+    }
   };
 
   return (
@@ -160,10 +174,7 @@ export function AiTutorPage() {
           actions={
             <>
               <a href="document_viewer.html">Học liệu</a>
-              <Button
-                icon="add"
-                onClick={startNewConversation}
-              >
+              <Button icon="add" onClick={startNewConversation}>
                 Chat mới
               </Button>
             </>
@@ -186,9 +197,7 @@ export function AiTutorPage() {
                   {`Phiên ${index + 1} • ${conv.messageCount || 0} tin`}
                 </button>
               ))}
-              {conversations.length === 0 && (
-                <p className="text-body-sm text-[#94A3B8] px-3 py-2">Chưa có phiên nào</p>
-              )}
+              {conversations.length === 0 && <p className="text-body-sm text-[#94A3B8] px-3 py-2">Chưa có phiên nào</p>}
             </div>
           </div>
           <Card as="div" className="bg-[#F8FAFC] p-3 text-body-sm text-[#64748B]">
@@ -197,16 +206,62 @@ export function AiTutorPage() {
           </Card>
         </Card>
 
-        <Card as="section" className="chat-page__conversation flex min-w-0 flex-1 flex-col overflow-hidden bg-[#F8FAFC]">
+        <Card
+          as="section"
+          className="chat-page__conversation flex min-w-0 flex-1 flex-col overflow-hidden bg-[#F8FAFC]"
+        >
           <div className="flex flex-col gap-2 border-b border-[#E2E8F0] bg-white p-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2 text-body-sm">
-              <select value={classId} onChange={(event) => setClassId(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"><option value="">Chọn lớp học</option>{classes.map((item) => <option key={item.classId} value={item.classId}>{item.classCode || item.className || item.subjectName}</option>)}</select>
-              <select value={topic} onChange={(event) => setTopic(event.target.value)} disabled={!topics.length} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm disabled:bg-[#F1F5F9]"><option value="">Tất cả chủ đề</option>{topics.map((item) => <option key={item.topicId} value={item.topicId}>{item.topicName}</option>)}</select>
-              <select value={mode} onChange={(event) => setMode(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"><option value="TEXT">Trao đổi văn bản</option><option value="VOICE">Chế độ giọng nói</option></select>
+              <select
+                value={classId}
+                onChange={(event) => setClassId(event.target.value)}
+                className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"
+              >
+                <option value="">Chọn lớp học</option>
+                {classes.map((item) => (
+                  <option key={item.classId} value={item.classId}>
+                    {item.classCode || item.className || item.subjectName}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={topic}
+                onChange={(event) => setTopic(event.target.value)}
+                disabled={!topics.length}
+                className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm disabled:bg-[#F1F5F9]"
+              >
+                <option value="">Tất cả chủ đề</option>
+                {topics.map((item) => (
+                  <option key={item.topicId} value={item.topicId}>
+                    {item.topicName}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={mode}
+                onChange={(event) => setMode(event.target.value)}
+                className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"
+              >
+                <option value="TEXT">Trao đổi văn bản</option>
+                <option value="VOICE">Chế độ giọng nói</option>
+              </select>
             </div>
-            <button type="button" onClick={endConversation} disabled={ended} className="text-body-sm font-semibold text-primary disabled:text-[#94A3B8]">{ended ? 'Đã kết thúc phiên' : 'Kết thúc phiên'}</button>
+            <button
+              type="button"
+              onClick={endConversation}
+              disabled={ended}
+              className="text-body-sm font-semibold text-primary disabled:text-[#94A3B8]"
+            >
+              {ended ? 'Đã kết thúc phiên' : 'Kết thúc phiên'}
+            </button>
           </div>
-          <div className="chat-page__messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-6" ref={messagesRef} role="log" aria-label="Tin nhắn trợ giảng AI" aria-live="polite">
+          <div
+            className="chat-page__messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-6"
+            ref={messagesRef}
+            role="log"
+            aria-label="Tin nhắn trợ giảng AI"
+            aria-live="polite"
+          >
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
@@ -217,9 +272,7 @@ export function AiTutorPage() {
                     <span className="material-symbols-outlined text-lg">smart_toy</span>
                   </span>
                 )}
-                <div
-                  className={`chat-message ${message.role === 'user' ? 'is-user' : ''}`}
-                >
+                <div className={`chat-message ${message.role === 'user' ? 'is-user' : ''}`}>
                   {message.role === 'assistant' && (
                     <div className="mb-1.5 text-label-md font-bold text-primary">PTIT Tutor</div>
                   )}
@@ -231,12 +284,16 @@ export function AiTutorPage() {
                         onClick={() => submitFeedback(message.messageId, 'UP')}
                         className={`rounded-full px-2 py-1 ${rated[message.messageId] === 'UP' ? 'bg-[#DCFCE7] text-[#15803D]' : 'hover:bg-[#F1F5F9]'}`}
                         aria-label="Hữu ích"
-                      >👍</button>
+                      >
+                        👍
+                      </button>
                       <button
                         onClick={() => submitFeedback(message.messageId, 'DOWN')}
                         className={`rounded-full px-2 py-1 ${rated[message.messageId] === 'DOWN' ? 'bg-[#FEE2E2] text-primary' : 'hover:bg-[#F1F5F9]'}`}
                         aria-label="Chưa hữu ích"
-                      >👎</button>
+                      >
+                        👎
+                      </button>
                     </div>
                   )}
                 </div>
@@ -255,7 +312,11 @@ export function AiTutorPage() {
             </div>
           </div>
           <div className="border-t border-[#E2E8F0] bg-white p-3 md:p-4">
-            {ended && <p className="mb-3 rounded-xl bg-[#F1F5F9] px-3 py-2 text-body-sm text-[#475569]">Phiên trao đổi đã kết thúc. Chọn “Chat mới” để bắt đầu phiên khác.</p>}
+            {ended && (
+              <p className="mb-3 rounded-xl bg-[#F1F5F9] px-3 py-2 text-body-sm text-[#475569]">
+                Phiên trao đổi đã kết thúc. Chọn “Chat mới” để bắt đầu phiên khác.
+              </p>
+            )}
             <div className="chat-composer">
               <textarea
                 value={value}

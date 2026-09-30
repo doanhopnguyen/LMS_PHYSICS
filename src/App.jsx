@@ -24,7 +24,13 @@ import { DocumentViewerPage } from './pages/students/DocumentViewerPage.jsx';
 import { ExamSessionPage } from './pages/students/ExamSessionPage.jsx';
 import { InteractiveLessonPage } from './pages/students/InteractiveLessonPage.jsx';
 import { MobileExperiencePage } from './pages/students/MobileExperiencePage.jsx';
-import { LecturerAnalyticsApiPage, LecturerAssessmentApiPage, LecturerDashboardApiPage, LecturerExperimentsApiPage, LecturerGradingApiPage } from './pages/lecturers/LecturerApiWorkspace.jsx';
+import {
+  LecturerAnalyticsApiPage,
+  LecturerAssessmentApiPage,
+  LecturerDashboardApiPage,
+  LecturerExperimentsApiPage,
+  LecturerGradingApiPage,
+} from './pages/lecturers/LecturerApiWorkspace.jsx';
 import { LecturerAuthoringApiPage } from './pages/lecturers/LecturerContent.jsx';
 import { LecturerClassesApiPage, LecturerClassDetail } from './pages/lecturers/LecturerClasses.jsx';
 import { AdminDashboardPage } from './pages/admin/AdminPages.jsx';
@@ -102,7 +108,11 @@ function App() {
     const session = getDemoSession();
     const cleanPath = isRootEntry() && session?.home ? getCleanRoute(`/${session.home}`) : getCleanRoute();
     if (cleanPath !== window.location.pathname) {
-      window.history.replaceState(window.history.state, '', `${cleanPath}${window.location.search}${window.location.hash}`);
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${cleanPath}${window.location.search}${window.location.hash}`
+      );
     }
 
     const onPopState = () => {
@@ -115,10 +125,23 @@ function App() {
 
   const session = getDemoSession();
   const Page = pageComponents[file] ?? pageComponents['login.html'];
-  if (!['login.html', 'auth_access.html', 'register.html', 'reset_password.html'].includes(file) && (!session || !canAccess(session.role, file))) {
-    return <><RoleAccessPage session={session} requestedPage={file} /><ApiErrorToasts /></>;
+  if (
+    !['login.html', 'auth_access.html', 'register.html', 'reset_password.html'].includes(file) &&
+    (!session || !canAccess(session.role, file))
+  ) {
+    return (
+      <>
+        <RoleAccessPage session={session} requestedPage={file} />
+        <ApiErrorToasts />
+      </>
+    );
   }
-  return <><Page key={locationKey} /><ApiErrorToasts /></>;
+  return (
+    <>
+      <Page key={locationKey} />
+      <ApiErrorToasts />
+    </>
+  );
 }
 
 export default App;

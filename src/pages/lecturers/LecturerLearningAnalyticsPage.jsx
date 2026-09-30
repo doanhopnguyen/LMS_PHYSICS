@@ -43,7 +43,9 @@ import { formatPercent } from '../../lib/formatPercent.js';
 const formatValue = (value, suffix = '') =>
   value === null || value === undefined
     ? 'Chưa có dữ liệu'
-    : suffix === '%' ? formatPercent(value) : `${Number(value).toFixed(1).replace(/\.0$/, '')}${suffix}`;
+    : suffix === '%'
+      ? formatPercent(value)
+      : `${Number(value).toFixed(1).replace(/\.0$/, '')}${suffix}`;
 
 function ScoreDistribution({ scores }) {
   const buckets = [
@@ -190,7 +192,15 @@ export function LecturerLearningAnalyticsPage() {
       }),
     [examFilter, labFilter, progressFilter, query, studentSummary]
   );
-  const studentPagination = usePagination(visibleStudents, [filters.classId, filters.range, filters.chapterId, query, progressFilter, examFilter, labFilter]);
+  const studentPagination = usePagination(visibleStudents, [
+    filters.classId,
+    filters.range,
+    filters.chapterId,
+    query,
+    progressFilter,
+    examFilter,
+    labFilter,
+  ]);
   const reset = () => {
     setFilters(initialFilters);
     setQuery('');
@@ -250,7 +260,10 @@ export function LecturerLearningAnalyticsPage() {
             Lớp học
             <select
               value={filters.classId}
-              onChange={(event) => { rememberAcademicClass(event.target.value); setFilters({ ...filters, classId: event.target.value }); }}
+              onChange={(event) => {
+                rememberAcademicClass(event.target.value);
+                setFilters({ ...filters, classId: event.target.value });
+              }}
               className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
             >
               <option value="ALL">Tất cả lớp</option>
@@ -407,48 +420,57 @@ export function LecturerLearningAnalyticsPage() {
                     </div>
                     {visibleStudents.length ? (
                       <>
-                      <DataTable paginate={false}
-                        columns={[
-                          'Mã sinh viên',
-                          'Họ tên',
-                          'Lớp',
-                          'Tiến độ',
-                          'Bài kiểm tra',
-                          'Điểm KT TB',
-                          'Thí nghiệm',
-                          'Điểm Lab TB',
-                          '',
-                        ]}
-                        rows={studentPagination.pageItems}
-                        renderRow={(student) => (
-                          <tr className="border-t border-[#E2E8F0]">
-                            <td className="px-3 py-3 font-mono">{student.id}</td>
-                            <td className="px-3 py-3 font-semibold whitespace-nowrap">{student.name}</td>
-                            <td className="px-3 py-3 whitespace-nowrap">{student.className}</td>
-                            <td className="min-w-[130px] px-3 py-3">
-                              <ProgressBar value={student.progress} compact />
-                              <span className="text-label-sm text-[#64748B]">{formatPercent(student.progress)} tổng hợp</span>
-                            </td>
-                            <td className="px-3 py-3">
-                              {student.examCompleted}/{student.examAssigned}
-                            </td>
-                            <td className="px-3 py-3">{formatValue(student.examAverage)}</td>
-                            <td className="px-3 py-3">
-                              {student.labCompleted}/{student.labAssigned}
-                            </td>
-                            <td className="px-3 py-3">{formatValue(student.labAverage)}</td>
-                            <td className="px-3 py-3">
-                              <a
-                                href={`lecturer_student_detail.html?student=${student.id}`}
-                                className="font-semibold text-primary whitespace-nowrap"
-                              >
-                                Xem chi tiết
-                              </a>
-                            </td>
-                          </tr>
-                        )}
-                      />
-                      <Pagination currentPage={studentPagination.currentPage} pageSize={studentPagination.pageSize} totalItems={visibleStudents.length} onPageChange={studentPagination.setCurrentPage} onPageSizeChange={studentPagination.setPageSize} />
+                        <DataTable
+                          paginate={false}
+                          columns={[
+                            'Mã sinh viên',
+                            'Họ tên',
+                            'Lớp',
+                            'Tiến độ',
+                            'Bài kiểm tra',
+                            'Điểm KT TB',
+                            'Thí nghiệm',
+                            'Điểm Lab TB',
+                            '',
+                          ]}
+                          rows={studentPagination.pageItems}
+                          renderRow={(student) => (
+                            <tr className="border-t border-[#E2E8F0]">
+                              <td className="px-3 py-3 font-mono">{student.id}</td>
+                              <td className="px-3 py-3 font-semibold whitespace-nowrap">{student.name}</td>
+                              <td className="px-3 py-3 whitespace-nowrap">{student.className}</td>
+                              <td className="min-w-[130px] px-3 py-3">
+                                <ProgressBar value={student.progress} compact />
+                                <span className="text-label-sm text-[#64748B]">
+                                  {formatPercent(student.progress)} tổng hợp
+                                </span>
+                              </td>
+                              <td className="px-3 py-3">
+                                {student.examCompleted}/{student.examAssigned}
+                              </td>
+                              <td className="px-3 py-3">{formatValue(student.examAverage)}</td>
+                              <td className="px-3 py-3">
+                                {student.labCompleted}/{student.labAssigned}
+                              </td>
+                              <td className="px-3 py-3">{formatValue(student.labAverage)}</td>
+                              <td className="px-3 py-3">
+                                <a
+                                  href={`lecturer_student_detail.html?student=${student.id}`}
+                                  className="font-semibold text-primary whitespace-nowrap"
+                                >
+                                  Xem chi tiết
+                                </a>
+                              </td>
+                            </tr>
+                          )}
+                        />
+                        <Pagination
+                          currentPage={studentPagination.currentPage}
+                          pageSize={studentPagination.pageSize}
+                          totalItems={visibleStudents.length}
+                          onPageChange={studentPagination.setCurrentPage}
+                          onPageSizeChange={studentPagination.setPageSize}
+                        />
                       </>
                     ) : (
                       <div className="py-10 text-center">
@@ -622,10 +644,7 @@ export function LecturerLearningAnalyticsPage() {
                         />
                         <div className="mt-4 space-y-3">
                           {supportSignals.map((signal) => (
-                            <Card as="div"
-                              key={`${signal.type}-${signal.title}`}
-                              className="p-4"
-                            >
+                            <Card as="div" key={`${signal.type}-${signal.title}`} className="p-4">
                               <StatusBadge tone="warning">{signal.type}</StatusBadge>
                               <h3 className="mt-2 font-bold">{signal.title}</h3>
                               <p className="mt-1 text-body-sm">{signal.metric}</p>

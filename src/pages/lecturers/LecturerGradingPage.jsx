@@ -8,17 +8,10 @@ import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { usePagination } from '../../hooks/usePagination.js';
-import {
-  assessmentAttempts,
-  assessments,
-  attemptStatusMeta,
-  lecturerStudents,
-} from '../../data/lecturerData.js';
+import { assessmentAttempts, assessments, attemptStatusMeta, lecturerStudents } from '../../data/lecturerData.js';
 
 const formatDateTime = (value) =>
-  value
-    ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
-    : '—';
+  value ? new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '—';
 
 export function LecturerGradingPage() {
   const [classFilter, setClassFilter] = useAcademicClass();
@@ -32,10 +25,7 @@ export function LecturerGradingPage() {
           return { ...attempt, assessment, student };
         })
         .filter(
-          (row) =>
-            row.assessment &&
-            row.student &&
-            (classFilter === 'ALL' || row.student.className === classFilter)
+          (row) => row.assessment && row.student && (classFilter === 'ALL' || row.student.className === classFilter)
         ),
     [classFilter]
   );
@@ -76,37 +66,57 @@ export function LecturerGradingPage() {
             >
               <option value="ALL">Tất cả lớp</option>
               {[...new Set(lecturerStudents.map((student) => student.className))].map((className) => (
-                <option key={className} value={className}>{className}</option>
+                <option key={className} value={className}>
+                  {className}
+                </option>
               ))}
             </select>
           </label>
         </div>
         {rows.length ? (
           <>
-          <DataTable paginate={false}
-            columns={['Sinh viên', 'Bài đánh giá', 'Lớp', 'Thời gian nộp', 'Trạng thái', 'Điểm', 'Hành động']}
-            rows={pagination.pageItems}
-            renderRow={(row) => (
-              <tr className="border-t border-[#E2E8F0]">
-                <td className="min-w-[170px] px-3 py-4"><strong>{row.student.name}</strong><span className="mt-1 block text-body-sm text-[#64748B]">{row.student.id}</span></td>
-                <td className="min-w-[220px] px-3 py-4">{row.assessment.title}</td>
-                <td className="whitespace-nowrap px-3 py-4">{row.student.className}</td>
-                <td className="whitespace-nowrap px-3 py-4">{formatDateTime(row.submittedAt)}</td>
-                <td className="px-3 py-4"><StatusBadge tone={attemptStatusMeta[row.status].tone}>{attemptStatusMeta[row.status].label}</StatusBadge></td>
-                <td className="whitespace-nowrap px-3 py-4 font-semibold">{row.adjustedScore ?? row.autoScore} / {row.assessment.totalScore}</td>
-                <td className="px-3 py-4">
-                  <a href={`lecturer_attempt_detail.html?assessment=${row.assessment.id}&attempt=${row.id}`}>
-                    <Button variant="secondary">Xem bài</Button>
-                  </a>
-                </td>
-              </tr>
-            )}
-          />
-          <Pagination currentPage={pagination.currentPage} pageSize={pagination.pageSize} totalItems={rows.length} onPageChange={pagination.setCurrentPage} onPageSizeChange={pagination.setPageSize} />
+            <DataTable
+              paginate={false}
+              columns={['Sinh viên', 'Bài đánh giá', 'Lớp', 'Thời gian nộp', 'Trạng thái', 'Điểm', 'Hành động']}
+              rows={pagination.pageItems}
+              renderRow={(row) => (
+                <tr className="border-t border-[#E2E8F0]">
+                  <td className="min-w-[170px] px-3 py-4">
+                    <strong>{row.student.name}</strong>
+                    <span className="mt-1 block text-body-sm text-[#64748B]">{row.student.id}</span>
+                  </td>
+                  <td className="min-w-[220px] px-3 py-4">{row.assessment.title}</td>
+                  <td className="whitespace-nowrap px-3 py-4">{row.student.className}</td>
+                  <td className="whitespace-nowrap px-3 py-4">{formatDateTime(row.submittedAt)}</td>
+                  <td className="px-3 py-4">
+                    <StatusBadge tone={attemptStatusMeta[row.status].tone}>
+                      {attemptStatusMeta[row.status].label}
+                    </StatusBadge>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 font-semibold">
+                    {row.adjustedScore ?? row.autoScore} / {row.assessment.totalScore}
+                  </td>
+                  <td className="px-3 py-4">
+                    <a href={`lecturer_attempt_detail.html?assessment=${row.assessment.id}&attempt=${row.id}`}>
+                      <Button variant="secondary">Xem bài</Button>
+                    </a>
+                  </td>
+                </tr>
+              )}
+            />
+            <Pagination
+              currentPage={pagination.currentPage}
+              pageSize={pagination.pageSize}
+              totalItems={rows.length}
+              onPageChange={pagination.setCurrentPage}
+              onPageSizeChange={pagination.setPageSize}
+            />
           </>
         ) : (
           <div className="py-10 text-center">
-            <span className="material-symbols-outlined text-4xl text-[#94A3B8]" aria-hidden="true">inbox</span>
+            <span className="material-symbols-outlined text-4xl text-[#94A3B8]" aria-hidden="true">
+              inbox
+            </span>
             <h3 className="mt-3 text-headline-sm font-bold">Chưa có bài nộp phù hợp</h3>
             <p className="mt-1 text-body-md text-[#64748B]">Hãy chọn lớp khác để xem các lượt làm đã nộp.</p>
           </div>

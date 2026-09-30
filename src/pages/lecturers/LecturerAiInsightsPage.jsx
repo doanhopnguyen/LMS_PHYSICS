@@ -1,4 +1,4 @@
-import { PaginatedList } from "../../components/Pagination.jsx";
+import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useMemo, useState } from 'react';
 import { readAcademicScope, rememberAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
@@ -187,7 +187,10 @@ export function LecturerAiInsightsPage() {
             Lớp học
             <select
               value={filters.classId}
-              onChange={(event) => { rememberAcademicClass(event.target.value); setFilters({ ...filters, classId: event.target.value }); }}
+              onChange={(event) => {
+                rememberAcademicClass(event.target.value);
+                setFilters({ ...filters, classId: event.target.value });
+              }}
               className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
             >
               <option value="ALL">Tất cả lớp</option>

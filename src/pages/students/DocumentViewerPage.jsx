@@ -5,7 +5,12 @@ import { ImmersiveShell } from '../../components/ImmersiveShell.jsx';
 
 const outline = [
   { id: 'document-intro', label: 'Định luật II Newton', detail: 'Kiến thức trọng tâm', icon: 'menu_book' },
-  { id: 'document-formula', label: 'Công thức và đại lượng', detail: 'Mối liên hệ giữa lực và gia tốc', icon: 'functions' },
+  {
+    id: 'document-formula',
+    label: 'Công thức và đại lượng',
+    detail: 'Mối liên hệ giữa lực và gia tốc',
+    icon: 'functions',
+  },
   { id: 'document-example', label: 'Ví dụ minh họa', detail: 'Vận dụng công thức', icon: 'lightbulb' },
   { id: 'document-steps', label: 'Các bước giải bài toán', detail: 'Phương pháp thực hiện', icon: 'checklist' },
 ];
@@ -18,7 +23,15 @@ export function DocumentViewerPage() {
   const reader = useRef(null);
   const jumpTo = (id) => {
     const target = document.getElementById(id);
-    if (target && reader.current) reader.current.scrollTo({ top: target.getBoundingClientRect().top - reader.current.getBoundingClientRect().top + reader.current.scrollTop - 24, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    if (target && reader.current)
+      reader.current.scrollTo({
+        top:
+          target.getBoundingClientRect().top -
+          reader.current.getBoundingClientRect().top +
+          reader.current.scrollTop -
+          24,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      });
     setActiveSection(id);
     setTocOpen(false);
   };
@@ -28,9 +41,14 @@ export function DocumentViewerPage() {
     const update = () => {
       let current = outline[0].id;
       for (const item of outline) {
-        if (document.getElementById(item.id)?.getBoundingClientRect().top <= container.getBoundingClientRect().top + 100) current = item.id;
+        if (
+          document.getElementById(item.id)?.getBoundingClientRect().top <=
+          container.getBoundingClientRect().top + 100
+        )
+          current = item.id;
       }
-      if (container.scrollTop > 0 && container.scrollTop + container.clientHeight >= container.scrollHeight - 4) current = outline.at(-1).id;
+      if (container.scrollTop > 0 && container.scrollTop + container.clientHeight >= container.scrollHeight - 4)
+        current = outline.at(-1).id;
       setActiveSection(current);
     };
     container.addEventListener('scroll', update, { passive: true });
@@ -85,17 +103,58 @@ export function DocumentViewerPage() {
               </>
             }
           />
-          
         </>
       }
     >
       <div className="document-reader">
-        <button type="button" className="document-outline-toggle" aria-expanded={tocOpen} aria-controls="document-outline" onClick={() => setTocOpen(!tocOpen)}><span className="material-symbols-outlined" aria-hidden="true">format_list_bulleted</span>Mục lục<span className="material-symbols-outlined" aria-hidden="true">{tocOpen ? 'expand_less' : 'expand_more'}</span></button>
-        <Card as="aside" id="document-outline" className={`document-outline ${tocOpen ? 'is-open' : ''}`} aria-label="Mục lục tài liệu">
-          <nav aria-label="Các phần trong trang tài liệu">{outline.map((item, index) => <button key={item.id} type="button" onClick={() => jumpTo(item.id)} aria-current={activeSection === item.id ? 'location' : undefined}>
-            <span className="document-outline__number">{String(index + 1).padStart(2, '0')}</span><span><strong>{item.label}</strong><small>{item.detail}</small></span><span className="material-symbols-outlined document-outline__arrow" aria-hidden="true">chevron_right</span>
-          </button>)}</nav>
-          <div className="document-outline__footer"><span className="material-symbols-outlined" aria-hidden="true">auto_stories</span><span>Trang <strong>{page}</strong> / 280</span></div>
+        <button
+          type="button"
+          className="document-outline-toggle"
+          aria-expanded={tocOpen}
+          aria-controls="document-outline"
+          onClick={() => setTocOpen(!tocOpen)}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            format_list_bulleted
+          </span>
+          Mục lục
+          <span className="material-symbols-outlined" aria-hidden="true">
+            {tocOpen ? 'expand_less' : 'expand_more'}
+          </span>
+        </button>
+        <Card
+          as="aside"
+          id="document-outline"
+          className={`document-outline ${tocOpen ? 'is-open' : ''}`}
+          aria-label="Mục lục tài liệu"
+        >
+          <nav aria-label="Các phần trong trang tài liệu">
+            {outline.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => jumpTo(item.id)}
+                aria-current={activeSection === item.id ? 'location' : undefined}
+              >
+                <span className="document-outline__number">{String(index + 1).padStart(2, '0')}</span>
+                <span>
+                  <strong>{item.label}</strong>
+                  <small>{item.detail}</small>
+                </span>
+                <span className="material-symbols-outlined document-outline__arrow" aria-hidden="true">
+                  chevron_right
+                </span>
+              </button>
+            ))}
+          </nav>
+          <div className="document-outline__footer">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              auto_stories
+            </span>
+            <span>
+              Trang <strong>{page}</strong> / 280
+            </span>
+          </div>
         </Card>
         <main ref={reader} className="document-reader__content flex-1 overflow-y-auto p-4 md:p-8 flex justify-center">
           <article
@@ -114,7 +173,11 @@ export function DocumentViewerPage() {
             </div>
             <div className="space-y-5 mt-8 text-body-lg leading-relaxed">
               <p>Định luật II Newton mô tả mối liên hệ giữa gia tốc của vật, khối lượng và hợp lực tác dụng lên vật.</p>
-              <Card as="div" id="document-formula" className="p-6 bg-[#F8FAFC] text-center font-mono text-2xl text-primary">
+              <Card
+                as="div"
+                id="document-formula"
+                className="p-6 bg-[#F8FAFC] text-center font-mono text-2xl text-primary"
+              >
                 ΣF = m · a
               </Card>
               <p>
@@ -127,7 +190,9 @@ export function DocumentViewerPage() {
                   Một vật có khối lượng 2 kg chịu tác dụng của lực 10 N. Gia tốc của vật là a = 10 / 2 = 5 m/s².
                 </p>
               </Card>
-              <h2 id="document-steps" className="text-headline-md font-bold">Các bước giải bài toán</h2>
+              <h2 id="document-steps" className="text-headline-md font-bold">
+                Các bước giải bài toán
+              </h2>
               <ol className="list-decimal pl-6 space-y-2">
                 <li>Chọn hệ quy chiếu và biểu diễn các lực.</li>
                 <li>Viết phương trình định luật II Newton theo từng phương.</li>
