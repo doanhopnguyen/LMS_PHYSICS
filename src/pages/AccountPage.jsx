@@ -59,7 +59,16 @@ export function AccountPage() {
         await api.users.changePassword({ oldPassword: body.oldPassword, newPassword: body.newPassword });
         form.reset();
       } else if (kind === 'profile') {
-        const updated = await api.users.updateProfile({ ...profile.data, ...body });
+        const source = { ...profile.data, ...body };
+        const updated = await api.users.updateProfile({
+          fullName: source.fullName,
+          avatarUrl: source.avatarUrl,
+          dateOfBirth: source.dateOfBirth,
+          gender: source.gender,
+          phone: source.phone,
+          studentCode: source.studentCode,
+          bio: source.bio,
+        });
         setAuthenticatedSession(account.data, updated);
         profile.updateData(updated);
         setEditing('');

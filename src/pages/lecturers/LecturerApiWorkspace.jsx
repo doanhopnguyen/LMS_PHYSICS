@@ -99,6 +99,9 @@ function useAction() {
 
 function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClose, onChanged }) {
   const [tab, setTab] = useState(initialTab);
+  const [questionTopicId, setQuestionTopicId] = useState('');
+  const [questionDifficulty, setQuestionDifficulty] = useState('');
+  const [questionSearch, setQuestionSearch] = useState('');
   const [gradingAttempt, setGradingAttempt] = useState(null);
   const [viewAttempt, setViewAttempt] = useState(null);
   const [removeTarget, setRemoveTarget] = useState(null);
@@ -117,9 +120,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
   );
   const roster = useApiData(`/api/v1/exams/${encodeURIComponent(exam.examId)}/roster`);
   const classOptions = useResource('/api/v1/classes', true);
-  const candidates = useApiData(
-    subjectId ? `/api/v1/questions?subjectId=${encodeURIComponent(subjectId)}&page=0&size=100` : null
-  );
+  const candidateTopics = useApiData(subjectId ? `/api/v1/subjects/${encodeURIComponent(subjectId)}/topics` : null);
+  const candidateQuery = new URLSearchParams({ subjectId, page: '0', size: '100' });
+  if (questionTopicId) candidateQuery.set('topicId', questionTopicId);
+  if (questionDifficulty) candidateQuery.set('difficultyLevel', questionDifficulty);
+  const candidates = useApiData(subjectId ? `/api/v1/questions?${candidateQuery}` : null);
   const action = useAction();
   const questions = listItems(examQuestions.data);
   useEffect(() => {
@@ -168,7 +173,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
       { method: 'POST', body: { questionId: question.questionId } },
       'Đã thêm câu hỏi vào đề.'
     );
-    if (result) examQuestions.reload();
+    if (result) {
+      examQuestions.reload();
+      detail.reload();
+      onChanged?.();
+    }
   };
   const generate = async () => {
     const result = await action.run(
@@ -176,7 +185,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
       { method: 'POST' },
       'Đã sinh câu hỏi theo ma trận.'
     );
-    if (result) examQuestions.reload();
+    if (result) {
+      examQuestions.reload();
+      detail.reload();
+      onChanged?.();
+    }
   };
   const removeQuestion = async () => {
     if (!removeTarget) return;
@@ -188,6 +201,8 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
     if (result) {
       setRemoveTarget(null);
       examQuestions.reload();
+      detail.reload();
+      onChanged?.();
     }
   };
   const grade = async (event) => {
@@ -278,7 +293,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                       cells={(item) => [
                         item.content || item.questionText || '—',
                         item.topicName || '—',
-                        item.difficultyLevel || '—',
+                        <span>{item.difficultyLevel || '—'}{item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}</span>,
                         <Button variant="secondary" disabled={action.busy} onClick={() => setRemoveTarget(item)}>
                           Gỡ
                         </Button>,
@@ -287,24 +302,38 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                   )}
                 </Resource>
                 {subjectId ? (
-                  <Resource resource={candidates}>
-                    {(rows) => (
-                      <Table
-                        rows={rows.filter(
-                          (item) => !questions.some((question) => question.questionId === item.questionId)
-                        )}
-                        columns={['Ngân hàng câu hỏi', 'Chủ đề', 'Độ khó', '']}
-                        cells={(item) => [
-                          item.content || '—',
-                          item.topicName || '—',
-                          item.difficultyLevel || '—',
-                          <Button disabled={action.busy} onClick={() => addQuestion(item)}>
-                            Thêm vào đề
-                          </Button>,
-                        ]}
-                      />
-                    )}
-                  </Resource>
+                  <>
+                    <Card className="mt-5 grid gap-3 p-4 md:grid-cols-3">
+                      <label className="text-body-sm font-semibold md:col-span-3">
+                        Tìm câu hỏi
+                        <input value={questionSearch} onChange={(event) => setQuestionSearch(event.target.value)} placeholder="Nhập nội dung câu hỏi" className="mt-2 block w-full rounded-xl border p-3" />
+                      </label>
+                      <SelectField label="Chủ đề" value={questionTopicId} onChange={(event) => setQuestionTopicId(event.target.value)}>
+                        <option value="">Tất cả chủ đề</option>
+                        {listItems(candidateTopics.data).map((topic) => <option key={topic.topicId} value={topic.topicId}>{topic.topicName}</option>)}
+                      </SelectField>
+                      <SelectField label="Độ khó" value={questionDifficulty} onChange={(event) => setQuestionDifficulty(event.target.value)}>
+                        <option value="">Tất cả độ khó</option>
+                        {['EASY', 'MEDIUM', 'HARD'].map((level) => <option key={level} value={level}>{level}</option>)}
+                      </SelectField>
+                      <p className="self-end pb-3 text-body-sm text-[#64748B]">Chỉ hiển thị câu hỏi đã được duyệt.</p>
+                    </Card>
+                    <Resource resource={candidates}>
+                      {(rows) => {
+                        const available = rows.filter((item) =>
+                          item.approvalStatus === 'APPROVED' &&
+                          !questions.some((question) => question.questionId === item.questionId) &&
+                          (!questionSearch.trim() || item.content?.toLowerCase().includes(questionSearch.trim().toLowerCase()))
+                        );
+                        return available.length ? (
+                          <Table rows={available} columns={['Ngân hàng câu hỏi', 'Chủ đề', 'Độ khó', '']} cells={(item) => [
+                            item.content || '—', item.topicName || item.topicId || '—', item.difficultyLevel || '—',
+                            <Button disabled={action.busy} onClick={() => addQuestion(item)}>Thêm vào đề</Button>,
+                          ]} />
+                        ) : <Card className="mt-5 p-5 text-body-sm text-[#64748B]">Không có câu hỏi đã duyệt phù hợp để thêm vào đề.</Card>;
+                      }}
+                    </Resource>
+                  </>
                 ) : (
                   <Card className="mt-4 p-4">Chưa có dữ liệu học phần của lớp để tải Ngân hàng câu hỏi.</Card>
                 )}
@@ -1022,6 +1051,7 @@ export function LecturerAssessmentApiPage({ grading = false }) {
       setCreating(false);
       setEditing(null);
       exams.reload();
+      if (!editing) setManaging(result);
     }
   };
   const editExam = async (exam) => {
@@ -1419,9 +1449,9 @@ export function LecturerExperimentsApiPage() {
   const subjectRows = listItems(subjects.data);
   const classRows = listItems(classes.data);
   const [subjectId, setSubjectId] = useState('');
-  const selectedSubject = subjectId || subjectRows[0]?.subjectId || '';
+  const selectedSubject = subjectId;
   const experiments = useApiData(
-    selectedSubject ? `/api/v1/experiments?subjectId=${encodeURIComponent(selectedSubject)}` : null
+    `/api/v1/experiments${selectedSubject ? `?subjectId=${encodeURIComponent(selectedSubject)}` : ''}`
   );
   const [modal, setModal] = useState(null);
   const [lastAssignment, setLastAssignment] = useState(null);
@@ -1430,9 +1460,10 @@ export function LecturerExperimentsApiPage() {
     event.preventDefault();
     if (action.busy) return;
     const values = Object.fromEntries(new FormData(event.currentTarget));
+    let sceneAssetsJson;
     if (modal === 'create' && values.sceneAssetsJson?.trim()) {
       try {
-        JSON.parse(values.sceneAssetsJson);
+        sceneAssetsJson = JSON.parse(values.sceneAssetsJson);
       } catch {
         action.setError('Cấu hình tài nguyên phải là JSON hợp lệ.');
         return;
@@ -1451,10 +1482,10 @@ export function LecturerExperimentsApiPage() {
           body: {
             subjectId: selectedSubject,
             title: values.title,
-            description: values.description,
-            sceneAssetUrl: values.sceneAssetUrl,
-            sceneAssetsJson: values.sceneAssetsJson || '',
-            instructions: values.instructions || '',
+            ...(values.description.trim() && { description: values.description.trim() }),
+            ...(values.sceneAssetUrl.trim() && { sceneAssetUrl: values.sceneAssetUrl.trim() }),
+            ...(sceneAssetsJson !== undefined && { sceneAssetsJson }),
+            ...(values.instructions.trim() && { instructions: values.instructions.trim() }),
             orderIndex: Number(values.orderIndex),
           },
         },
@@ -1487,7 +1518,7 @@ export function LecturerExperimentsApiPage() {
       value={selectedSubject}
       onChange={(event) => setSubjectId(event.target.value)}
     >
-      <option value="">Chọn học phần</option>
+      <option value="">Tất cả học phần</option>
       {subjectRows.map((item) => (
         <option key={item.subjectId} value={item.subjectId}>
           {item.subjectCode ? `${item.subjectCode} · ` : ''}

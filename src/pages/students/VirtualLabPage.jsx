@@ -61,15 +61,25 @@ export function VirtualLabPage() {
       (item) => !selectedClass || String(item.classId) === String(selectedClass.classId)
     );
     if (assigned.length) {
-      setExperiments(
-        assigned.map((item) => ({
-          ...item.experiment,
-          ...item,
-          experimentId: item.experimentId || item.experiment?.experimentId,
+      Promise.all(
+        assigned.map(async (assignment) => ({
+          ...assignment,
+          ...(await api.experiments.get(assignment.experimentId)),
+          experimentId: assignment.experimentId,
         }))
-      );
-      setLoading(false);
-      return undefined;
+      )
+        .then((items) => {
+          if (alive) setExperiments(items);
+        })
+        .catch((loadError) => {
+          if (alive) setError(loadError.message || 'Không thể tải chi tiết thí nghiệm được giao.');
+        })
+        .finally(() => {
+          if (alive) setLoading(false);
+        });
+      return () => {
+        alive = false;
+      };
     }
     const subjectIds = [
       ...new Set((selectedClass ? [selectedClass] : classes).map((item) => item.subjectId).filter(Boolean)),

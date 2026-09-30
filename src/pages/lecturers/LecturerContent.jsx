@@ -1,5 +1,5 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/apiClient.js';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { queryPath, validateOptions } from '../../lib/lecturerUtils.js';
@@ -24,6 +24,35 @@ import {
   useResource,
   useQueryState,
 } from './LecturerShared.jsx';
+
+function useAllMaterials(enabled, subjectsData, subjectFilter) {
+  const [version, setVersion] = useState(0);
+  const [state, setState] = useState({ loading: false, error: '', data: null });
+  const subjectIds = itemsOf(subjectsData)
+    .filter((subject) => !subjectFilter || subject.subjectId === subjectFilter)
+    .map((subject) => subject.subjectId)
+    .filter(Boolean)
+    .join('|');
+  useEffect(() => {
+    let active = true;
+    if (!enabled) {
+      setState({ loading: false, error: '', data: null });
+      return () => { active = false; };
+    }
+    setState({ loading: true, error: '', data: null });
+    (async () => {
+      const topicsBySubject = await Promise.all(subjectIds.split('|').filter(Boolean).map((id) => api.subjects.topics(id)));
+      const topicRows = topicsBySubject.flatMap((data) => itemsOf(data));
+      const materialGroups = await Promise.all(topicRows.map(async (topic) => ({ topicId: topic.topicId, rows: itemsOf(await api.materials.list(topic.topicId)) })));
+      return materialGroups.flatMap(({ topicId, rows }) => rows.map((row) => ({ ...row, _topicId: topicId })));
+    })().then(
+      (data) => active && setState({ loading: false, error: '', data }),
+      (requestError) => active && setState({ loading: false, error: requestError.message, data: null })
+    );
+    return () => { active = false; };
+  }, [enabled, subjectIds, version]);
+  return { ...state, enabled, reload: () => setVersion((value) => value + 1) };
+}
 
 function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
   const [type, setType] = useState(initial.questionType || 'MCQ_SINGLE');
@@ -164,25 +193,25 @@ export function LecturerAuthoringApiPage({ kind }) {
   const [tab, setTab] = useState(materialMode ? 'materials' : 'questions');
   const topics = useResource(subjectId ? `/api/v1/subjects/${idPath(subjectId)}/topics` : null);
   const validTopic = itemsOf(topics.data).some((t) => t.topicId === topicId) ? topicId : '';
+  const allMaterials = useAllMaterials(materialMode && tab === 'materials' && !validTopic, subjects.data, subjectId);
   const resource = useResource(
     materialMode
       ? validTopic
         ? `/api/v1/topics/${idPath(validTopic)}/materials`
         : null
-      : subjectId
-        ? queryPath('/api/v1/questions', {
+      : queryPath('/api/v1/questions', {
             subjectId,
             topicId: validTopic,
             difficultyLevel: difficulty,
             page,
             size: 20,
           })
-        : null
   );
+  const displayedResource = materialMode && !validTopic ? allMaterials : resource;
   const [modal, setModal] = useState(null);
   const [newTopicName, setNewTopicName] = useState('');
   const action = useMutation();
-  const formTopicId = modal?.row.topicId || validTopic;
+  const formTopicId = modal?.row.topicId || modal?.row._topicId || validTopic;
   const validSubject = itemsOf(subjects.data).some((s) => s.subjectId === subjectId);
   const changeSubject = (value) => {
     setSubject(value);
@@ -239,7 +268,7 @@ export function LecturerAuthoringApiPage({ kind }) {
         type.startsWith('topic')
           ? api.subjects.getTopic(subjectId, row.topicId)
           : materialMode
-            ? api.materials.get(validTopic, row.materialId)
+            ? api.materials.get(row.topicId || row._topicId || validTopic, row.materialId)
             : api.questions.get(row.questionId),
       ''
     );
@@ -255,7 +284,7 @@ export function LecturerAuthoringApiPage({ kind }) {
   const remove = (row) =>
     action.confirm(
       `Xóa ${materialMode ? 'học liệu' : 'câu hỏi'} “${(row.title || row.content || '').slice(0, 90)}”?`,
-      () => (materialMode ? api.materials.remove(validTopic, row.materialId) : api.questions.remove(row.questionId)),
+      () => (materialMode ? api.materials.remove(row.topicId || row._topicId || validTopic, row.materialId) : api.questions.remove(row.questionId)),
       () => {
         setPage(0);
         resource.reload();
@@ -276,9 +305,10 @@ export function LecturerAuthoringApiPage({ kind }) {
   };
   const saveMaterial = async (e) => {
     e.preventDefault();
-    if (!checkScope()) return;
+    const materialTopicId = modal.row.topicId || modal.row._topicId || validTopic;
+    if (!materialTopicId || (!modal.row.materialId && !checkScope())) return;
     const data = new FormData(e.currentTarget);
-    data.set('topicId', validTopic);
+    data.set('topicId', materialTopicId);
     const title = String(data.get('title') || '').trim();
     if (!title) {
       action.setError('Vui lòng nhập tiêu đề học liệu.');
@@ -294,8 +324,8 @@ export function LecturerAuthoringApiPage({ kind }) {
     saved(
       await action.run(() =>
         modal.row.materialId
-          ? api.materials.update(validTopic, modal.row.materialId, data)
-          : api.materials.create(validTopic, data)
+          ? api.materials.update(materialTopicId, modal.row.materialId, data)
+          : api.materials.create(materialTopicId, data)
       )
     );
   };
@@ -320,7 +350,7 @@ export function LecturerAuthoringApiPage({ kind }) {
         }
         actions={
           <>
-            <Lookup label="Học phần" idKey="subjectId" resource={subjects} value={subjectId} onChange={changeSubject} />
+            <Lookup label="Học phần" idKey="subjectId" resource={subjects} value={subjectId} onChange={changeSubject} placeholder={materialMode ? 'Tất cả học phần' : 'Chọn học phần'} />
             {tab !== 'topics' && (
               <Lookup
                 label="Chủ đề"
@@ -407,7 +437,7 @@ export function LecturerAuthoringApiPage({ kind }) {
               )}
             </Resource>
           ) : (
-            <Resource value={resource}>
+            <Resource value={displayedResource} empty="Đang tải tất cả học liệu…">
               {(data) => (
                 <>
                   <Table
@@ -416,12 +446,12 @@ export function LecturerAuthoringApiPage({ kind }) {
                     asCards
                     columns={['Nội dung', 'Loại', materialMode ? 'Phiên bản' : 'Độ khó', 'Trạng thái', 'Thao tác']}
                     cells={(row) => [
-                      row.title || row.content,
+                      materialMode ? row.title : row.content,
                       labelOf(row.type || row.questionType),
                       materialMode ? row.version : labelOf(row.difficultyLevel),
                       labelOf(row.approvalStatus),
                       <ActionMenu
-                        label={`Thao tác với ${row.title || 'câu hỏi'}`}
+                        label={`Thao tác với ${materialMode ? row.title : row.content || 'câu hỏi'}`}
                         disabled={action.busy}
                         items={[
                           { label: 'Xem chi tiết', onSelect: () => open('view', row) },
@@ -432,8 +462,8 @@ export function LecturerAuthoringApiPage({ kind }) {
                               onSelect: () =>
                                 action.confirm(
                                   `Duyệt học liệu “${row.title || 'này'}”?`,
-                                  () => api.materials.approve(validTopic, row.materialId),
-                                  resource.reload
+                                  () => api.materials.approve(row.topicId || row._topicId || validTopic, row.materialId),
+                                  displayedResource.reload
                                 ),
                             },
                           { label: 'Xóa', danger: true, onSelect: () => remove(row) },
@@ -620,6 +650,9 @@ export function LecturerAuthoringApiPage({ kind }) {
               <p className="text-body-sm text-[#64748B]">
                 Chọn tệp Excel theo mẫu để nhập hàng loạt câu hỏi vào chủ đề đã chọn.
               </p>
+              <p className="rounded-xl bg-[#F8FAFC] p-3 text-body-sm text-[#475569]">
+                Cột theo thứ tự: STT · Nội dung câu hỏi (*) · Loại câu hỏi · Mức độ nhận thức (Bloom) · Mức độ khó · Đáp án A (*) · Đáp án B (*) · Đáp án C · Đáp án D · Đáp án đúng (*) · Giải thích chi tiết.
+              </p>
               <Field
                 label="Tệp Excel *"
                 name="file"
@@ -633,11 +666,11 @@ export function LecturerAuthoringApiPage({ kind }) {
             </Form>
           ) : (
             <div className="grid gap-3">
-              <h3 className="font-bold">{modal.row.title || modal.row.content}</h3>
+              <h3 className="font-bold">{materialMode ? modal.row.title : modal.row.content}</h3>
               <p>
                 {labelOf(modal.row.type || modal.row.questionType)} · {labelOf(modal.row.approvalStatus)}
               </p>
-              <p className="whitespace-pre-wrap">{modal.row.contentText || modal.row.sourceCitation}</p>
+              <p className="whitespace-pre-wrap">{materialMode ? modal.row.contentText || modal.row.sourceCitation : modal.row.content}</p>
               {modal.row.fileUrl && <FileLink url={modal.row.fileUrl} />}
               {modal.row.mediaUrl && <FileLink url={modal.row.mediaUrl}>Xem hình ảnh</FileLink>}
               {itemsOf(modal.row.options).map((o, i) => (

@@ -38,6 +38,7 @@ export const routeFiles = [
   'admin_dashboard.html',
   'admin_users.html',
   'admin_academics.html',
+  'admin_questions.html',
   'admin_operations.html',
   'ta_dashboard.html',
   'ta_work_queue.html',

@@ -9,30 +9,6 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { useCurrentUser } from '../../hooks/useCurrentUser.js';
 import { api } from '../../lib/apiClient.js';
 
-const tasks = [
-  {
-    title: 'Bài kiểm tra trắc nghiệm Chương 2',
-    description: '45 phút · 30 câu hỏi tính toán',
-    due: 'Hạn: 23:59 ngày mai',
-    tone: 'primary',
-    status: 'Khẩn cấp',
-  },
-  {
-    title: 'Báo cáo thí nghiệm số 01: Khảo sát rơi tự do',
-    description: 'Nộp file báo cáo số liệu thực hành phòng Lab 3D',
-    due: 'Hạn: 3 ngày nữa',
-    tone: 'warning',
-    status: 'Đang mở',
-  },
-  {
-    title: 'Luyện tập trắc nghiệm Định luật bảo toàn',
-    description: 'Bộ câu hỏi tự luyện nâng cao · Chương 3',
-    due: 'Hạn: 5 ngày nữa',
-    tone: 'neutral',
-    status: 'Đang mở',
-  },
-];
-
 function getSkyPeriod(hour) {
   if (hour >= 5 && hour < 8) return 'dawn';
   if (hour >= 8 && hour < 12) return 'morning';
@@ -70,6 +46,7 @@ export function DashboardPage() {
   const [weather, setWeather] = useState({ loading: true, ...weatherMeta(-1), location: '' });
   const [snapshot, setSnapshot] = useState(null);
   const [upcomingTasks, setUpcomingTasks] = useState([]);
+  const [dashboardError, setDashboardError] = useState('');
   const user = useCurrentUser();
 
   useEffect(() => {
@@ -123,31 +100,35 @@ export function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    setDashboardError('');
     api.dashboard
       .me()
-      .then(setSnapshot)
-      .catch(() => {});
+      .then((data) => active && setSnapshot(data))
+      .catch((error) => active && setDashboardError(error.message || 'Không thể tải dữ liệu bảng điều khiển.'));
     Promise.all([api.students.myUpcomingTasks().catch(() => []), api.students.myAgenda().catch(() => [])]).then(
       ([taskData, agendaData]) => {
+        if (!active) return;
         const rows = (data) => (Array.isArray(data) ? data : data?.content || []);
         setUpcomingTasks([...rows(taskData), ...rows(agendaData)]);
       }
     );
+    return () => {
+      active = false;
+    };
   }, []);
 
   const stats = snapshot?.data || {};
-  const visibleTasks = upcomingTasks.length
-    ? upcomingTasks.map((item) => ({
-        title: item.title || item.taskName || item.name || 'Nhiệm vụ học tập',
-        description: item.description || item.content || item.referenceType || '',
-        due:
-          item.dueDate || item.deadline || item.endTime
-            ? `Hạn: ${new Date(item.dueDate || item.deadline || item.endTime).toLocaleString('vi-VN')}`
-            : 'Đang mở',
-        tone: item.urgent ? 'primary' : 'warning',
-        status: item.status || 'Đang mở',
-      }))
-    : tasks;
+  const visibleTasks = upcomingTasks.map((item) => ({
+    title: item.title || item.taskName || item.name || 'Nhiệm vụ học tập',
+    description: item.description || item.content || [item.courseName, item.classCode, item.taskType].filter(Boolean).join(' · '),
+    due:
+      item.dueDate || item.deadline || item.endTime
+        ? `Hạn: ${new Date(item.dueDate || item.deadline || item.endTime).toLocaleString('vi-VN')}`
+        : 'Đang mở',
+    tone: ['HIGH', 'URGENT'].includes(String(item.priority).toUpperCase()) ? 'primary' : 'warning',
+    status: item.status || 'Đang mở',
+  }));
   const displayName = user?.name || user?.username || 'Sinh viên';
   const skyPeriod = getSkyPeriod(now.getHours());
   const timeText = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(
@@ -268,17 +249,21 @@ export function DashboardPage() {
           />
         </DashboardOverview>
 
+        {dashboardError && <p role="alert" className="text-body-sm text-primary">{dashboardError}</p>}
+
         <Card as="aside" className="dashboard-resume" aria-label="Bài học đang học dở">
           <span className="material-symbols-outlined dashboard-resume__icon" aria-hidden="true">
             play_circle
           </span>
           <div className="dashboard-resume__text">
-            <span>Đang học dở</span>
-            <strong>Bài 4: Các định luật Newton</strong>
+            <span>Tiến độ học tập hiện tại</span>
+            <strong>{stats.completedTopics ?? 0} / {stats.totalTopics ?? 0} chủ đề đã hoàn thành</strong>
           </div>
-          <span className="dashboard-resume__progress">75% hoàn thành</span>
-          <a href="interactive_lesson.html">
-            Tiếp tục học{' '}
+          <span className="dashboard-resume__progress">
+            {stats.totalTopics ? `${Math.round((stats.completedTopics / stats.totalTopics) * 100)}% hoàn thành` : 'Chưa có dữ liệu'}
+          </span>
+          <a href="learning_results.html">
+            Xem kết quả{' '}
             <span className="material-symbols-outlined" aria-hidden="true">
               arrow_forward
             </span>
@@ -292,11 +277,12 @@ export function DashboardPage() {
               title="Nhiệm vụ sắp tới"
               action={
                 <a href="notifications_help.html" className="text-body-sm text-primary hover:underline font-semibold">
-                  Xem tất cả (3)
+                  Xem tất cả ({visibleTasks.length})
                 </a>
               }
             />
             <div className="space-y-3.5 pt-5">
+              {!visibleTasks.length && <p className="py-5 text-body-sm text-[#64748B]">Không có nhiệm vụ sắp tới.</p>}
               {visibleTasks.map((task) => (
                 <Card
                   as="div"

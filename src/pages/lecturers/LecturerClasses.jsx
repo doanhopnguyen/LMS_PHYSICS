@@ -71,8 +71,8 @@ export function LecturerDashboardApiPage() {
   const classes = useResource('/api/v1/classes', true);
   const [selected, select] = useState(routeParam('classId'));
   const rows = itemsOf(classes.data);
-  const classId = selected || rows[0]?.classId || '';
-  const snapshot = useResource(classId ? `/api/v1/dashboard/class/${idPath(classId)}` : null);
+  const classId = selected;
+  const snapshot = useResource(classId ? `/api/v1/dashboard/class/${idPath(classId)}` : '/api/v1/dashboard/me');
   const students = useResource(classId ? `/api/v1/classes/${idPath(classId)}/students?page=0&size=1` : null);
   return (
     <LecturerPageShell
@@ -83,7 +83,12 @@ export function LecturerDashboardApiPage() {
     >
       <Tabs
         items={[{ id: 'overview', label: 'Tổng quan' }]}
-        actions={<Lookup label="Lớp học" resource={classes} idKey="classId" value={classId} onChange={select} />}
+        actions={
+          <SelectField label="Lớp học" value={classId || 'ALL'} onChange={(event) => select(event.target.value === 'ALL' ? '' : event.target.value)}>
+            <option value="ALL">Tất cả lớp</option>
+            {rows.map((item) => <option key={item.classId} value={item.classId}>{displayName(item)}</option>)}
+          </SelectField>
+        }
       >
         {() => (
           <>

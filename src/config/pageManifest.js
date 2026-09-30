@@ -40,6 +40,7 @@ export const pageManifest = [
   { file: 'admin_dashboard.html', component: 'AdminDashboardPage', layout: 'AppShell' },
   { file: 'admin_users.html', component: 'UsersPage', layout: 'AppShell' },
   { file: 'admin_academics.html', component: 'AdminAcademicsPage', layout: 'AppShell' },
+  { file: 'admin_questions.html', component: 'AdminQuestionsApiPage', layout: 'AppShell' },
   { file: 'admin_analytics.html', component: 'AdminAnalyticsPage', layout: 'AppShell' },
   { file: 'admin_operations.html', component: 'OperationsPage', layout: 'AppShell' },
   { file: 'student_evidence.html', component: 'StudentEvidencePage', layout: 'AppShell' },

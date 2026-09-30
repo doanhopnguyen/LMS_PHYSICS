@@ -246,14 +246,15 @@ export function AiTutorPage() {
                 <option value="VOICE">Chế độ giọng nói</option>
               </select>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={endConversation}
               disabled={ended}
-              className="text-body-sm font-semibold text-primary disabled:text-[#94A3B8]"
+              className="h-9 px-3 text-body-sm font-semibold"
             >
               {ended ? 'Đã kết thúc phiên' : 'Kết thúc phiên'}
-            </button>
+            </Button>
           </div>
           <div
             className="chat-page__messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-6"
@@ -272,7 +273,10 @@ export function AiTutorPage() {
                     <span className="material-symbols-outlined text-lg">smart_toy</span>
                   </span>
                 )}
-                <div className={`chat-message ${message.role === 'user' ? 'is-user' : ''}`}>
+                <Card
+                  as="article"
+                  className={`chat-message ${message.role === 'user' ? 'is-user' : ''}`}
+                >
                   {message.role === 'assistant' && (
                     <div className="mb-1.5 text-label-md font-bold text-primary">PTIT Tutor</div>
                   )}
@@ -280,42 +284,45 @@ export function AiTutorPage() {
                   {message.role === 'assistant' && message.messageId && !message.isError && (
                     <div className="mt-3 flex items-center gap-2 text-label-sm text-[#64748B]">
                       <span>Phản hồi hữu ích?</span>
-                      <button
+                      <Button
                         onClick={() => submitFeedback(message.messageId, 'UP')}
-                        className={`rounded-full px-2 py-1 ${rated[message.messageId] === 'UP' ? 'bg-[#DCFCE7] text-[#15803D]' : 'hover:bg-[#F1F5F9]'}`}
+                        variant="ghost"
+                        className={`h-8 min-w-8 px-2 ${rated[message.messageId] === 'UP' ? 'bg-[#DCFCE7] text-[#15803D]' : ''}`}
                         aria-label="Hữu ích"
                       >
                         👍
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => submitFeedback(message.messageId, 'DOWN')}
-                        className={`rounded-full px-2 py-1 ${rated[message.messageId] === 'DOWN' ? 'bg-[#FEE2E2] text-primary' : 'hover:bg-[#F1F5F9]'}`}
+                        variant="ghost"
+                        className={`h-8 min-w-8 px-2 ${rated[message.messageId] === 'DOWN' ? 'bg-[#FEE2E2] text-primary' : ''}`}
                         aria-label="Chưa hữu ích"
                       >
                         👎
-                      </button>
+                      </Button>
                     </div>
                   )}
-                </div>
+                </Card>
               </div>
             ))}
             <div className="flex flex-wrap gap-2 pt-1">
               {starterQuestions.map((question) => (
-                <button
+                <Button
                   key={question}
                   onClick={() => setValue(question)}
-                  className="rounded-full border border-[#CBD5E1] bg-white px-3 py-2 text-body-sm text-[#475569] hover:border-primary hover:text-primary"
+                  variant="secondary"
+                  className="h-auto min-h-9 px-3 py-2 text-left text-body-sm text-[#475569]"
                 >
                   {question}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
           <div className="border-t border-[#E2E8F0] bg-white p-3 md:p-4">
             {ended && (
-              <p className="mb-3 rounded-xl bg-[#F1F5F9] px-3 py-2 text-body-sm text-[#475569]">
+              <Card as="p" className="mb-3 border-0 bg-[#F1F5F9] px-3 py-2 text-body-sm text-[#475569] shadow-none">
                 Phiên trao đổi đã kết thúc. Chọn “Chat mới” để bắt đầu phiên khác.
-              </p>
+              </Card>
             )}
             <div className="chat-composer">
               <textarea
@@ -333,14 +340,14 @@ export function AiTutorPage() {
                 className="max-h-28 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-body-md focus:ring-0"
                 placeholder="Đặt câu hỏi cho trợ giảng AI..."
               />
-              <button
+              <Button
                 onClick={send}
                 disabled={ended || !value.trim() || sending}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-white hover:bg-[#C41E1A] disabled:opacity-50"
+                className="h-10 w-10 shrink-0 px-0"
                 aria-label="Gửi câu hỏi"
               >
                 <span className="material-symbols-outlined">{sending ? 'pending' : 'send'}</span>
-              </button>
+              </Button>
             </div>
             <p className="mt-1.5 text-center text-label-sm text-[#94A3B8]">
               AI có thể mắc lỗi. Hãy kiểm tra lại với giáo trình chính thức.
@@ -370,12 +377,12 @@ export function AiTutorPage() {
           <Card className="p-4">
             <h2 className="text-body-md font-bold">Công cụ nhanh</h2>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button className="rounded-xl bg-[#F8FAFC] p-3 text-body-sm text-[#475569]">
+              <Button variant="secondary" className="h-auto min-h-20 rounded-xl bg-[#F8FAFC] p-3 text-body-sm text-[#475569]">
                 <span className="material-symbols-outlined block text-primary">functions</span>Công thức
-              </button>
-              <button className="rounded-xl bg-[#F8FAFC] p-3 text-body-sm text-[#475569]">
+              </Button>
+              <Button variant="secondary" className="h-auto min-h-20 rounded-xl bg-[#F8FAFC] p-3 text-body-sm text-[#475569]">
                 <span className="material-symbols-outlined block text-primary">bookmark</span>Đã lưu
-              </button>
+              </Button>
             </div>
           </Card>
         </aside>

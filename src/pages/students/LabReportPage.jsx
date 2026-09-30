@@ -46,13 +46,20 @@ export function LabReportPage() {
     setError('');
     setMessage('');
     try {
+      const parsedRawData = rawData.trim() ? JSON.parse(rawData) : undefined;
       const formData = new FormData();
       if (file) formData.append('file', file);
       if (evidenceUrl.trim()) formData.append('evidenceUrl', evidenceUrl.trim());
-      if (rawData.trim()) formData.append('rawDataJson', rawData.trim());
+      if (parsedRawData !== undefined) {
+        formData.append('rawDataJson', new Blob([JSON.stringify(parsedRawData)], { type: 'application/json' }));
+      }
       await api.experiments.submitAssignment(assignmentId, formData);
       setMessage('Đã gửi báo cáo thí nghiệm. Bạn có thể theo dõi tệp trong Kho minh chứng.');
     } catch (submitError) {
+      if (submitError instanceof SyntaxError) {
+        setError('Dữ liệu thô phải là JSON hợp lệ.');
+        return;
+      }
       setError(submitError.message || 'Không thể nộp báo cáo thí nghiệm.');
     } finally {
       setSubmitting(false);
