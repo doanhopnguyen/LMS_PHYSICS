@@ -69,7 +69,7 @@ function ExamSelection() {
             };
           })
         );
-        if (alive) setExams(withAttempts);
+        if (alive) setExams(withAttempts.filter((exam) => exam.examType !== 'PRACTICE'));
       } catch (loadError) {
         if (alive) setError(loadError?.message || 'Không thể tải danh sách đề kiểm tra.');
       } finally {
@@ -121,7 +121,7 @@ function ExamSelection() {
                   key={exam.examId}
                   label={exam.title || 'Đề không có tiêu đề'}
                   value={`${Math.round(progress)}%`}
-                  detail={exam.examType === 'PRACTICE' ? 'Luyện tập' : 'Kiểm tra'}
+                  detail={exam.examType || 'Kiểm tra'}
                   icon="quiz"
                   ribbonLabel={exam.classLabel || 'Đề kiểm tra'}
                   ribbonPosition="bottom"
@@ -167,7 +167,10 @@ function ExamSelection() {
   );
 }
 
-function AttemptSession({ examId, attemptId, takeMode }) {
+export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam' }) {
+  const practiceWorkspace = workspace === 'practice';
+  const sessionPage = practiceWorkspace ? 'exam_practice_center.html' : 'exam_session.html';
+  const overviewPage = practiceWorkspace ? 'exam_practice_center.html' : 'exam_session.html';
   const [exam, setExam] = useState(null);
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -210,6 +213,13 @@ function AttemptSession({ examId, attemptId, takeMode }) {
       alive = false;
     };
   }, [examId, attemptId]);
+  useEffect(() => {
+    if (!practiceWorkspace && exam?.examType === 'PRACTICE') {
+      navigate(
+        `exam_practice_center.html?examId=${encodeURIComponent(examId)}${attemptId ? `&attemptId=${encodeURIComponent(attemptId)}` : ''}${takeMode ? '&mode=take' : ''}`
+      );
+    }
+  }, [attemptId, exam?.examType, examId, practiceWorkspace, takeMode]);
   useEffect(() => {
     if (!takeMode || !attempt?.attemptId || finished(attempt)) {
       setQuestions([]);
@@ -358,7 +368,7 @@ function AttemptSession({ examId, attemptId, takeMode }) {
     if (!window.confirm('Quay về trang tổng quan đề? Các câu trả lời đã lưu vẫn được giữ lại.')) return;
     canLeaveAttempt.current = true;
     navigate(
-      `exam_session.html?examId=${encodeURIComponent(examId)}${attempt?.attemptId ? `&attemptId=${encodeURIComponent(attempt.attemptId)}` : ''}`
+      `${sessionPage}?examId=${encodeURIComponent(examId)}${attempt?.attemptId ? `&attemptId=${encodeURIComponent(attempt.attemptId)}` : ''}`
     );
   };
   const start = async () => {
@@ -368,7 +378,7 @@ function AttemptSession({ examId, attemptId, takeMode }) {
       const created = await api.exams.startAttempt(examId);
       setAttempt(created);
       navigate(
-        `exam_session.html?examId=${encodeURIComponent(examId)}${created?.attemptId ? `&attemptId=${encodeURIComponent(created.attemptId)}` : ''}&mode=take`
+        `${sessionPage}?examId=${encodeURIComponent(examId)}${created?.attemptId ? `&attemptId=${encodeURIComponent(created.attemptId)}` : ''}&mode=take`
       );
     } catch (startError) {
       setError(startError?.message || 'Không thể bắt đầu lượt làm bài.');
@@ -378,6 +388,7 @@ function AttemptSession({ examId, attemptId, takeMode }) {
   };
   const title = exam?.title || 'Phiên kiểm tra';
   const isCompleted = finished(attempt);
+  const isGraded = attempt?.status === 'GRADED';
   const statusLabel = isCompleted ? 'Đã nộp bài' : attempt ? 'Phiên đang mở' : 'Chưa bắt đầu';
   const metrics = [
     {
@@ -402,16 +413,16 @@ function AttemptSession({ examId, attemptId, takeMode }) {
       tone: isCompleted ? 'success' : 'primary',
     },
     {
-      label: 'Điểm số',
-      value: attempt?.totalScore ?? '—',
-      detail: isCompleted ? 'Kết quả lượt làm bài' : 'Có sau khi nộp bài',
-      icon: 'emoji_events',
-      tone: 'success',
+      label: 'Kết quả',
+      value: isGraded ? 'Đã chấm' : isCompleted ? 'Chờ chấm' : '—',
+      detail: isGraded ? 'Mở bài đã nộp để xem kết quả.' : isCompleted ? 'Giảng viên sẽ chấm và công bố điểm sau.' : 'Điểm không hiển thị trong khi làm bài.',
+      icon: isGraded ? 'task_alt' : 'pending_actions',
+      tone: isGraded ? 'success' : 'warning',
     },
   ];
   return (
     <AppShell
-      currentPage="exam_session.html"
+      currentPage={sessionPage}
       title={`${title} · PTIT Physics LMS`}
       footer={false}
       showChrome={!takeMode}
@@ -425,10 +436,10 @@ function AttemptSession({ examId, attemptId, takeMode }) {
           }
           backHref={
             takeMode
-              ? `exam_session.html?examId=${encodeURIComponent(examId)}${attemptId ? `&attemptId=${encodeURIComponent(attemptId)}` : ''}`
-              : 'exam_practice_center.html'
+              ? `${sessionPage}?examId=${encodeURIComponent(examId)}${attemptId ? `&attemptId=${encodeURIComponent(attemptId)}` : ''}`
+              : overviewPage
           }
-          backLabel={takeMode ? 'Về tổng quan đề' : 'Về ôn luyện'}
+          backLabel={takeMode ? 'Về tổng quan đề' : practiceWorkspace ? 'Về ôn luyện' : 'Về kiểm tra'}
           onBack={takeMode ? returnToOverview : undefined}
           showBack
           actions={
@@ -457,8 +468,8 @@ function AttemptSession({ examId, attemptId, takeMode }) {
             <p role="alert" className="text-primary">
               {error}
             </p>
-            <a href="exam_practice_center.html" className="mt-4 inline-block">
-              <Button>Quay lại ôn luyện</Button>
+            <a href={overviewPage} className="mt-4 inline-block">
+              <Button>Quay lại danh sách đề</Button>
             </a>
           </Card>
         ) : (
@@ -482,7 +493,7 @@ function AttemptSession({ examId, attemptId, takeMode }) {
                     )}
                     {attempt && !isCompleted && (
                       <a
-                        href={`exam_session.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}&mode=take`}
+                        href={`${sessionPage}?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}&mode=take`}
                       >
                         <Button icon="play_arrow">Vào làm bài</Button>
                       </a>
@@ -491,7 +502,7 @@ function AttemptSession({ examId, attemptId, takeMode }) {
                       <a
                         href={`exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}
                       >
-                        <Button icon="visibility">Xem kết quả</Button>
+                          <Button icon="visibility">Xem bài đã nộp</Button>
                       </a>
                     )}
                   </div>
@@ -719,7 +730,7 @@ function AttemptSession({ examId, attemptId, takeMode }) {
                 {attempt && !isCompleted && (
                   <a
                     className="mt-6 inline-block"
-                    href={`exam_session.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}&mode=take`}
+                    href={`${sessionPage}?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}&mode=take`}
                   >
                     <Button icon="play_arrow">Vào làm bài</Button>
                   </a>

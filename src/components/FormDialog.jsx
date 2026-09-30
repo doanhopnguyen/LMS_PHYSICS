@@ -10,7 +10,7 @@ export function FormDialog({ title, onClose, busy, wide = false, children }) {
   }, []);
   return (
     <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-4"
+      className="fixed inset-0 z-[1100] flex items-center justify-center bg-transparent p-4"
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}
     >
       <section
@@ -19,7 +19,7 @@ export function FormDialog({ title, onClose, busy, wide = false, children }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`form-dialog max-h-[calc(100dvh-32px)] w-full ${wide ? 'max-w-6xl' : 'max-w-2xl'} overflow-auto rounded-2xl bg-white p-6 shadow-xl`}
+        className={`form-dialog flex h-[min(760px,calc(100dvh-32px))] w-full flex-col overflow-hidden rounded-2xl border-2 border-primary bg-white shadow-xl ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}
         onKeyDown={(e) => {
           if (e.key === 'Escape' && !busy) onClose();
           if (e.key === 'Tab') {
@@ -40,15 +40,13 @@ export function FormDialog({ title, onClose, busy, wide = false, children }) {
           }
         }}
       >
-        <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#FECACA] px-6 py-4">
           <h2 id={titleId} className="text-headline-sm font-medium">
             {title}
           </h2>
-          <Button variant="secondary" disabled={busy} onClick={onClose}>
-            Đóng
-          </Button>
+          <button type="button" aria-label="Đóng" disabled={busy} onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-primary hover:bg-[#FEF2F2] disabled:opacity-60"><span className="material-symbols-outlined">close</span></button>
         </div>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">{children}</div>
       </section>
     </div>
   );

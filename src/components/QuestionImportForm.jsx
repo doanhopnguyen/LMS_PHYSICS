@@ -5,7 +5,7 @@ import { AuthAlert } from './AuthLayout.jsx';
 import { api } from '../lib/apiClient.js';
 import { listItems, useApiData } from '../hooks/useApiData.js';
 
-export function QuestionImportForm() {
+export function QuestionImportForm({ onImported }) {
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [busy, setBusy] = useState(false);
@@ -26,7 +26,9 @@ export function QuestionImportForm() {
     }
     setBusy(true);
     try {
-      setResult(await api.questions.importExcel(form, { subjectId: subject, topicId: topic }));
+      const imported = await api.questions.importExcel(form, { subjectId: subject, topicId: topic });
+      setResult(imported);
+      onImported?.(imported);
     } catch (requestError) {
       setError(requestError.message);
     } finally {

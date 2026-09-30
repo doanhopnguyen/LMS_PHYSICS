@@ -90,6 +90,8 @@ function useAction() {
     busy,
     run,
     setError,
+    setNotice,
+    feedback: <><AuthAlert>{notice}</AuthAlert><AuthAlert error>{error}</AuthAlert></>,
     clear: () => {
       setNotice('');
       setError('');
@@ -371,7 +373,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                           </Button>
                           <Button
                             variant="secondary"
-                            disabled={action.busy || item.status !== 'SUBMITTED'}
+                            disabled={action.busy || !['SUBMITTED', 'GRADED', 'COMPLETED'].includes(item.status)}
                             onClick={() => setGradingAttempt(item)}
                           >
                             {item.totalScore == null ? 'Chấm bài' : 'Sửa điểm'}
@@ -621,7 +623,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
   );
 }
 
-function MatrixManager({ classes }) {
+export function MatrixManager({ classes }) {
   const [subjectId, setSubjectId] = useState('');
   const [modal, setModal] = useState(null);
   const [details, setDetails] = useState([
@@ -647,19 +649,33 @@ function MatrixManager({ classes }) {
   const save = async (event) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
+    const totalPoints = Number(values.totalPoints);
+    const weightTotal = details.reduce((total, item) => total + Number(item.weightPercent || 0), 0);
+    const duplicateCriteria = new Set();
     if (
       !details.length ||
-      details.some((item) => !item.topicId || Number(item.numQuestions) < 1 || Number(item.weightPercent) <= 0)
+      !values.matrixName.trim() ||
+      !Number.isFinite(totalPoints) || totalPoints <= 0 ||
+      details.some((item) => {
+        const key = `${item.topicId}:${item.difficultyLevel}`;
+        const duplicate = duplicateCriteria.has(key);
+        duplicateCriteria.add(key);
+        return !item.topicId || Number(item.numQuestions) < 1 || Number(item.weightPercent) <= 0 || duplicate;
+      })
     ) {
-      action.setError('Hoàn thiện các dòng chủ đề, số câu và trọng số trước khi lưu.');
+      action.setError('Nhập tên, tổng điểm; mỗi dòng cần chủ đề, mức khó, ít nhất 1 câu và trọng số hợp lệ. Không lặp cùng chủ đề và mức khó.');
+      return;
+    }
+    if (Math.abs(weightTotal - 100) > 0.01) {
+      action.setError(`Tổng trọng số hiện là ${weightTotal}%; cần bằng 100%.`);
       return;
     }
     const body = {
-      subjectId,
+      subjectId: modal.row?.subjectId || subjectId,
       matrixName: values.matrixName.trim(),
       examType: values.examType,
       description: values.description.trim(),
-      totalPoints: Number(values.totalPoints),
+      totalPoints,
       details: details.map((item) => ({
         ...item,
         numQuestions: Number(item.numQuestions),
@@ -839,63 +855,18 @@ function MatrixManager({ classes }) {
             </label>
             <Card className="p-4">
               <h3 className="font-bold">Cấu trúc đề</h3>
+              <p className="mt-1 text-body-sm text-[#64748B]">
+                Mỗi dòng xác định số câu cần lấy từ một chủ đề ở một mức độ khó. Tổng trọng số của các dòng phải bằng 100%.
+              </p>
               {details.map((item, index) => (
                 <div className="mt-3 grid gap-2 md:grid-cols-4" key={index}>
-                  <select
-                    value={item.topicId}
-                    onChange={(event) =>
-                      setDetails((rows) =>
-                        rows.map((row, i) => (i === index ? { ...row, topicId: event.target.value } : row))
-                      )
-                    }
-                    className="rounded-xl border p-2"
-                  >
-                    <option value="">Chọn chủ đề</option>
-                    {listItems(topics.data).map((topic) => (
-                      <option key={topic.topicId} value={topic.topicId}>
-                        {topic.topicName}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={item.difficultyLevel}
-                    onChange={(event) =>
-                      setDetails((rows) =>
-                        rows.map((row, i) => (i === index ? { ...row, difficultyLevel: event.target.value } : row))
-                      )
-                    }
-                    className="rounded-xl border p-2"
-                  >
-                    <option value="EASY">Dễ</option>
-                    <option value="MEDIUM">Trung bình</option>
-                    <option value="HARD">Khó</option>
-                  </select>
-                  <input
-                    aria-label="Số câu"
-                    type="number"
-                    min="1"
-                    value={item.numQuestions}
-                    onChange={(event) =>
-                      setDetails((rows) =>
-                        rows.map((row, i) => (i === index ? { ...row, numQuestions: event.target.value } : row))
-                      )
-                    }
-                    className="rounded-xl border p-2"
-                  />
-                  <input
-                    aria-label="Trọng số"
-                    type="number"
-                    min="1"
-                    value={item.weightPercent}
-                    onChange={(event) =>
-                      setDetails((rows) =>
-                        rows.map((row, i) => (i === index ? { ...row, weightPercent: event.target.value } : row))
-                      )
-                    }
-                    className="rounded-xl border p-2"
-                  />
+                  <label className="grid gap-1 text-body-sm"><span>Chủ đề *</span><select value={item.topicId} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, topicId: event.target.value } : row)))} className="rounded-xl border p-2"><option value="">Chọn chủ đề</option>{listItems(topics.data).map((topic) => <option key={topic.topicId} value={topic.topicId}>{topic.topicName}</option>)}</select></label>
+                  <label className="grid gap-1 text-body-sm"><span>Mức độ khó *</span><select value={item.difficultyLevel} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, difficultyLevel: event.target.value } : row)))} className="rounded-xl border p-2"><option value="EASY">Dễ</option><option value="MEDIUM">Trung bình</option><option value="HARD">Khó</option></select></label>
+                  <label className="grid gap-1 text-body-sm"><span>Số câu *</span><input aria-label="Số câu" type="number" min="1" value={item.numQuestions} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, numQuestions: event.target.value } : row)))} className="rounded-xl border p-2" /></label>
+                  <label className="grid gap-1 text-body-sm"><span>Trọng số (%) *</span><input aria-label="Trọng số" type="number" min="1" max="100" value={item.weightPercent} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, weightPercent: event.target.value } : row)))} className="rounded-xl border p-2" /></label>
                 </div>
               ))}
+              <p className="mt-3 text-body-sm font-semibold text-[#475569]">Tổng số câu: {details.reduce((total, item) => total + (Number(item.numQuestions) || 0), 0)} · Tổng trọng số: {details.reduce((total, item) => total + (Number(item.weightPercent) || 0), 0)}%</p>
               <div className="mt-3 flex gap-2">
                 <Button
                   type="button"

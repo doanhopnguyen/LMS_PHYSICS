@@ -7,8 +7,13 @@ import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { ProgressBar } from '../../components/ProgressBar.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
+import { FormDialog } from '../../components/FormDialog.jsx';
+import { DataTable } from '../../components/DataTable.jsx';
+import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { api } from '../../lib/apiClient.js';
 import { navigate } from '../../lib/navigation.js';
+import { AttemptSession } from './ExamSessionPage.jsx';
 
 const rowsOf = (value) =>
   Array.isArray(value)
@@ -23,7 +28,7 @@ const isFinished = (attempt) =>
 const statusText = (attempt) => (isFinished(attempt) ? 'Đã nộp' : attempt ? 'Đang làm' : 'Chưa làm');
 const hasActiveAttempt = (exam) => exam.attempts?.some((attempt) => !isFinished(attempt));
 const examTypeText = (value) =>
-  value === 'PRACTICE' ? 'Luyện tập' : value === 'EXAM' ? 'Kỳ thi' : value || 'Đề kiểm tra';
+  ({ PRACTICE: 'Luyện tập', QUIZ: 'Kiểm tra ngắn', MIDTERM: 'Kiểm tra giữa kỳ', FINAL: 'Thi cuối kỳ' }[value] || value || 'Đề kiểm tra');
 const examProgress = (exam, latest, active) => {
   if (isFinished(latest)) return 100;
   const progress = exam.activeProgress || active;
@@ -35,12 +40,23 @@ const examProgress = (exam, latest, active) => {
 };
 
 export function ExamPracticePage() {
+  const params = new URLSearchParams(window.location.search);
+  const examId = params.get('examId');
+  if (examId) {
+    return <AttemptSession examId={examId} attemptId={params.get('attemptId')} takeMode={params.get('mode') === 'take'} workspace="practice" />;
+  }
+  return <PracticeCenter />;
+}
+
+function PracticeCenter() {
   const [examRows, setExamRows] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [historyExam, setHistoryExam] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -67,7 +83,11 @@ export function ExamPracticePage() {
         ].forEach((exam) => unique.set(String(exam.examId), exam));
         const withAttempts = await Promise.all(
           [...unique.values()].map(async (exam) => {
-            const attempts = rowsOf(await api.exams.myAttempts(exam.examId).catch(() => []));
+            const [attemptData, policy] = await Promise.all([
+              api.exams.myAttempts(exam.examId).catch(() => []),
+              api.exams.attemptPolicy(exam.examId).catch(() => null),
+            ]);
+            const attempts = rowsOf(attemptData);
             const active = attempts.find((attempt) => !isFinished(attempt));
             return {
               ...exam,
@@ -77,6 +97,7 @@ export function ExamPracticePage() {
                 exam.classLabel ||
                 'Đề được chuyển',
               attempts,
+              policy,
               activeProgress: active?.attemptId
                 ? await api.exams.attemptProgress(active.attemptId).catch(() => null)
                 : null,
@@ -111,7 +132,18 @@ export function ExamPracticePage() {
   const averageScore = scored.length
     ? (scored.reduce((sum, item) => sum + Number(item.totalScore), 0) / scored.length).toFixed(1)
     : '—';
+  const displayedExamRows = examRows.filter((exam) => exam.examType === 'PRACTICE');
   const start = async (exam) => {
+    const policy = exam.policy;
+    const ended = Boolean(policy?.ended || policy?.isEnded || (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now()));
+    if (ended) {
+      setNotice('Đề thi đã hết thời gian làm bài, bạn không thể bắt đầu lượt mới.');
+      return;
+    }
+    if (policy && !policy.canStartAttempt) {
+      setNotice(policy.remainingAttempts <= 0 ? 'Bạn đã sử dụng hết số lượt làm bài cho đề này.' : 'Hiện không thể bắt đầu lượt làm bài mới theo chính sách của đề.');
+      return;
+    }
     if (!Number(exam.totalQuestions)) {
       setError('Đề thi chưa có câu hỏi nên chưa thể bắt đầu làm bài.');
       return;
@@ -121,7 +153,7 @@ export function ExamPracticePage() {
     try {
       const attempt = await api.exams.startAttempt(exam.examId);
       navigate(
-        `exam_session.html?examId=${encodeURIComponent(exam.examId)}${attempt?.attemptId ? `&attemptId=${encodeURIComponent(attempt.attemptId)}` : ''}&mode=take`
+        `exam_practice_center.html?examId=${encodeURIComponent(exam.examId)}${attempt?.attemptId ? `&attemptId=${encodeURIComponent(attempt.attemptId)}` : ''}&mode=take`
       );
     } catch (startError) {
       setError(startError?.message || 'Không thể bắt đầu lượt làm đề.');
@@ -133,7 +165,7 @@ export function ExamPracticePage() {
     const activeAttempt = exam.attempts?.find((attempt) => !isFinished(attempt));
     if (activeAttempt?.attemptId) {
       navigate(
-        `exam_session.html?examId=${encodeURIComponent(exam.examId)}&attemptId=${encodeURIComponent(activeAttempt.attemptId)}&mode=take`
+        `exam_practice_center.html?examId=${encodeURIComponent(exam.examId)}&attemptId=${encodeURIComponent(activeAttempt.attemptId)}&mode=take`
       );
       return;
     }
@@ -163,6 +195,7 @@ export function ExamPracticePage() {
           title="Trung tâm ôn luyện"
           description="Chọn đề được cấp quyền, theo dõi lượt làm và tiếp tục ôn tập."
         />
+        <AuthAlert>{notice}</AuthAlert>
         <MetricGrid
           items={[
             {
@@ -213,18 +246,19 @@ export function ExamPracticePage() {
                 {error}
               </p>
             )}
-            <p className="text-body-sm text-[#64748B]">Hiển thị {examRows.length} đề</p>
+            <p className="mt-5 text-body-sm text-[#64748B]">Các đề dưới đây dành riêng cho ôn luyện. Hiển thị {displayedExamRows.length} đề.</p>
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-              {examRows.map((exam, index) => {
+              {displayedExamRows.map((exam, index) => {
                 const latest = exam.attempts?.[0];
                 const active = exam.attempts?.find((item) => !isFinished(item));
+                const policy = exam.policy;
+                const ended = Boolean(policy?.ended || policy?.isEnded || (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now()));
                 const hasQuestions = Number(exam.totalQuestions) > 0;
-                const progress = examProgress(exam, latest, active);
                 return (
                   <StatCard
                     key={exam.examId}
                     label={exam.title || 'Đề không có tiêu đề'}
-                    value={`${Math.round(progress)}%`}
+                    value="Ôn luyện"
                     detail={examTypeText(exam.examType)}
                     icon="quiz"
                     ribbonLabel={exam.classLabel || 'Đề kiểm tra'}
@@ -239,7 +273,8 @@ export function ExamPracticePage() {
                         <div className="mt-2 grid grid-cols-2 gap-2 text-body-sm text-[#64748B]">
                           <span>{exam.totalQuestions ?? '—'} câu hỏi</span>
                           <span>{exam.durationMinutes ? `${exam.durationMinutes} phút` : '—'}</span>
-                          {latest?.totalScore !== undefined && <span>Điểm: {latest.totalScore ?? '—'}</span>}
+                          {policy && <span>Lượt: {policy.usedAttempts ?? 0}/{policy.maxAttempts ?? '—'}</span>}
+                          {latest?.status === 'GRADED' && <span>Điểm: {latest.totalScore ?? '—'}</span>}
                           {latest?.attemptNumber && <span>Lần làm: {latest.attemptNumber}</span>}
                         </div>
                         {!hasQuestions && <p className="mt-2 text-body-sm text-[#B45309]">Đề chưa có câu hỏi.</p>}
@@ -254,19 +289,35 @@ export function ExamPracticePage() {
                             : active
                               ? 'Tiếp tục làm'
                               : hasQuestions
-                                ? 'Bắt đầu làm đề'
+                                ? ended ? 'Đã hết thời gian' : policy?.canStartAttempt === false ? (policy?.remainingAttempts <= 0 ? 'Đã hết lượt làm' : 'Chưa thể bắt đầu') : 'Bắt đầu ôn luyện'
                                 : 'Chưa thể làm đề'}
                         </Button>
+                        <Button variant="secondary" className="mt-2 w-full" icon="history" onClick={() => setHistoryExam(exam)}>Lịch sử lần thi</Button>
                       </>
                     }
                   />
                 );
               })}
             </div>
-            {!examRows.length && (
-              <Card className="p-10 text-center text-[#64748B]">Không có đề phù hợp với bộ lọc hiện tại.</Card>
+            {!displayedExamRows.length && (
+              <Card className="p-10 text-center text-[#64748B]">Chưa có đề ôn luyện phù hợp.</Card>
             )}
           </>
+        )}
+        {historyExam && (
+          <FormDialog title={`Lịch sử làm bài · ${historyExam.title || 'Đề thi'}`} onClose={() => setHistoryExam(null)} wide>
+            <p className="mb-4 text-body-sm text-[#64748B]">Các lượt làm bài của bạn cho đề này. Điểm chỉ hiển thị sau khi giảng viên hoặc hệ thống hoàn tất chấm.</p>
+            <DataTable
+              paginate={false}
+              columns={['Lần làm', 'Bắt đầu', 'Nộp bài', 'Trạng thái', 'Điểm', '']}
+              rows={historyExam.attempts || []}
+              renderRow={(attempt) => {
+                const graded = attempt.status === 'GRADED' && attempt.totalScore !== null && attempt.totalScore !== undefined;
+                return <tr className="border-t border-[#E2E8F0]" key={attempt.attemptId}><td className="p-3">{attempt.attemptNumber || '—'}</td><td className="p-3">{attempt.startedAt ? new Date(attempt.startedAt).toLocaleString('vi-VN') : '—'}</td><td className="p-3">{attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleString('vi-VN') : 'Chưa nộp'}</td><td className="p-3"><StatusBadge tone={graded ? 'success' : isFinished(attempt) ? 'warning' : 'neutral'}>{graded ? 'Đã chấm' : isFinished(attempt) ? 'Chờ chấm' : 'Đang làm'}</StatusBadge></td><td className="p-3">{graded ? attempt.totalScore : '—'}</td><td className="p-3">{isFinished(attempt) && <a href={`exam_results.html?examId=${encodeURIComponent(historyExam.examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}><Button variant="secondary">Xem</Button></a>}</td></tr>;
+              }}
+            />
+            {!historyExam.attempts?.length && <p className="py-6 text-center text-[#64748B]">Bạn chưa có lượt làm bài nào cho đề này.</p>}
+          </FormDialog>
         )}
         <Card className="p-6">
           <div className="flex items-center justify-between">

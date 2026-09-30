@@ -12,8 +12,7 @@ import { api } from '../../lib/apiClient.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
-const scoreText = (value) =>
-  value === null || value === undefined ? '—' : Number(value).toFixed(2).replace(/\.00$/, '');
+const scoreText = (value) => Number(value).toFixed(2).replace(/\.00$/, '');
 const durationText = (startedAt, submittedAt) => {
   if (!startedAt || !submittedAt) return '—';
   return `${Math.max(0, Math.round((new Date(submittedAt) - new Date(startedAt)) / 60000))} phút`;
@@ -51,7 +50,9 @@ export function ExamResultsPage() {
       setLoading(true);
       setError('');
       try {
-        const attemptData = await api.exams.getAttempt(attemptId);
+        const ownAttempts = examId ? rowsOf(await api.exams.myAttempts(examId)) : [];
+        const attemptData = ownAttempts.find((item) => item.attemptId === attemptId) || (examId ? await api.exams.myAttempt(examId) : null);
+        if (!attemptData?.attemptId) throw new Error('Không tìm thấy lượt làm bài của bạn.');
         const [examData, progressData, questionData] = await Promise.all([
           examId ? api.exams.get(examId).catch(() => null) : Promise.resolve(null),
           api.exams.attemptProgress(attemptId).catch(() => null),
@@ -82,12 +83,15 @@ export function ExamResultsPage() {
     progress?.answeredQuestions ??
     questions.filter((question) => (question.selectedOptionIds || []).length || question.answerText).length;
   const submitted = Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
+  const graded = attempt?.status === 'GRADED' && attempt?.totalScore !== null && attempt?.totalScore !== undefined;
+  const hasManualQuestions = questions.some((question) => question.questionType === 'SHORT_ANSWER');
+  const canShowAutoScore = graded && questions.length > 0 && !hasManualQuestions;
 
   return (
     <AppShell currentPage="exam_results.html" title={`${title} · PTIT Physics LMS`}>
       <PageContainer>
         <PageTitle
-          eyebrow="KẾT QUẢ BÀI LÀM"
+          eyebrow={canShowAutoScore ? 'KẾT QUẢ BÀI THI' : 'BÀI LÀM ĐÃ NỘP'}
           title={title}
           description={
             attempt?.submittedAt
@@ -122,10 +126,9 @@ export function ExamResultsPage() {
             <Card variant="accent" className="p-6">
               <div className="flex flex-wrap items-end justify-between gap-5">
                 <div>
-                  <span className="text-body-sm text-[#64748B]">Điểm tự động chấm</span>
-                  <strong className="mt-1 block text-display-lg-mobile text-primary">
-                    {scoreText(attempt?.totalScore)}
-                  </strong>
+                  <span className="text-body-sm text-[#64748B]">{canShowAutoScore ? 'Điểm tự chấm' : 'Trạng thái chấm điểm'}</span>
+                  <strong className="mt-1 block text-headline-md text-primary">{canShowAutoScore ? scoreText(attempt.totalScore) : 'Chờ giảng viên chấm'}</strong>
+                  <p className="mt-2 text-body-sm text-[#64748B]">{canShowAutoScore ? 'Kết quả trắc nghiệm được hệ thống tự chấm.' : hasManualQuestions ? 'Bài có câu tự luận, đang chờ giảng viên chấm hoặc điều chỉnh điểm.' : 'Điểm sẽ được công bố theo quyết định của giảng viên.'}</p>
                 </div>
                 <StatusBadge tone={submitted ? 'success' : 'warning'}>
                   {submitted ? 'Đã nộp bài' : attempt?.status || 'Đang cập nhật'}
@@ -171,18 +174,19 @@ export function ExamResultsPage() {
                 className="mb-5"
               />
               <DataTable
-                columns={['Câu', 'Nội dung', 'Câu trả lời', 'Trạng thái']}
+                columns={['Câu', 'Nội dung', 'Câu trả lời', canShowAutoScore ? 'Kết quả' : 'Trạng thái']}
                 rows={questions}
                 renderRow={(question, index) => {
                   const answered = Boolean((question.selectedOptionIds || []).length || question.answerText);
+                  const hasCorrectness = canShowAutoScore && typeof question.isCorrect === 'boolean';
                   return (
                     <tr className="border-t border-[#E2E8F0]" key={question.questionId}>
                       <td className="px-4 py-3 font-mono">{question.orderIndex || index + 1}</td>
                       <td className="max-w-sm px-4 py-3">{question.content || '—'}</td>
                       <td className="px-4 py-3">{answerText(question)}</td>
                       <td className="px-4 py-3">
-                        <StatusBadge tone={answered ? 'success' : 'warning'}>
-                          {answered ? 'Đã trả lời' : 'Bỏ trống'}
+                        <StatusBadge tone={hasCorrectness ? (question.isCorrect ? 'success' : 'primary') : answered ? 'success' : 'warning'}>
+                          {hasCorrectness ? (question.isCorrect ? `Đúng${question.score != null ? ` · ${scoreText(question.score)} điểm` : ''}` : 'Sai') : answered ? 'Đã trả lời' : 'Bỏ trống'}
                         </StatusBadge>
                       </td>
                     </tr>

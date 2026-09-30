@@ -4,46 +4,14 @@ import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
-import { Tabs } from '../../components/Tabs.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { api, apiRequest } from '../../lib/apiClient.js';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 
-function Setting({ item, onSave, busy }) {
-  return (
-    <Card className="p-5">
-      <Form
-        onSubmit={(event) => {
-          event.preventDefault();
-          onSave(item.settingKey, Object.fromEntries(new FormData(event.currentTarget)));
-        }}
-      >
-        <label className="block font-semibold">
-          {item.settingKey}
-          <input
-            name="settingValue"
-            defaultValue={item.settingValue ?? ''}
-            className="mt-2 block w-full rounded-xl border p-3 font-normal"
-            required
-            disabled={busy}
-          />
-        </label>
-        <label className="mt-3 block">
-          Mô tả
-          <input
-            name="description"
-            defaultValue={item.description ?? ''}
-            className="mt-2 block w-full rounded-xl border p-3"
-            disabled={busy}
-          />
-        </label>
-        <SubmitButton className="mt-4" type="submit" disabled={busy}>
-          Lưu cấu hình
-        </SubmitButton>
-      </Form>
-    </Card>
-  );
-}
+const settingTitle = (key) =>
+  String(key || 'Cấu hình hệ thống')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 function BulkSettingsEditor({ rows, busy, onSave }) {
   const [values, setValues] = useState({});
@@ -52,8 +20,8 @@ function BulkSettingsEditor({ rows, busy, onSave }) {
   }, [rows]);
   return (
     <Card className="mt-5 p-5">
-      <h2 className="text-lg font-bold">Lưu nhiều cấu hình</h2>
-      <p className="mt-1 text-sm text-slate-600">Cập nhật các giá trị bên dưới rồi lưu đồng thời.</p>
+      <h2 className="text-lg font-bold">Thiết lập hệ thống</h2>
+      <p className="mt-1 text-sm text-slate-600">Điều chỉnh giá trị cho từng cấu hình, sau đó nhấn lưu một lần ở cuối trang.</p>
       <Form
         className="mt-4 grid gap-4 md:grid-cols-2"
         onSubmit={(event) => {
@@ -62,12 +30,14 @@ function BulkSettingsEditor({ rows, busy, onSave }) {
         }}
       >
         {rows.map((item) => (
-          <label key={item.settingKey} className="block text-sm font-semibold">
-            {item.settingKey}
+          <label key={item.settingKey} className="block rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold">
+            <span className="block text-base text-slate-900">{settingTitle(item.settingKey)}</span>
+            <span className="mt-1 block font-mono text-xs font-normal text-slate-500">{item.settingKey}</span>
+            {item.description && <span className="mt-2 block font-normal text-slate-600">{item.description}</span>}
             <input
               value={values[item.settingKey] ?? ''}
               onChange={(event) => setValues((current) => ({ ...current, [item.settingKey]: event.target.value }))}
-              className="mt-1 block w-full rounded-xl border p-3 font-normal"
+              className="mt-3 block w-full rounded-xl border p-3 font-normal"
               disabled={busy}
               required
             />
@@ -234,6 +204,11 @@ export function OperationsPage() {
     setFilters({ userId: '', actionType: '', entity: '', startDate: '', endDate: '' });
     setAppliedFilters({ userId: '', actionType: '', entity: '', startDate: '', endDate: '' });
   }
+  const navigation = [
+    { id: 'settings', icon: 'settings', label: 'Cấu hình hệ thống', description: 'Quy tắc và giá trị vận hành' },
+    { id: 'activity-logs', icon: 'history', label: 'Nhật ký hoạt động', description: 'Các thao tác diễn ra trong hệ thống' },
+    { id: 'audit-logs', icon: 'fact_check', label: 'Nhật ký kiểm toán', description: 'Lịch sử thay đổi dữ liệu' },
+  ];
 
   return (
     <AdminPageShell
@@ -244,34 +219,40 @@ export function OperationsPage() {
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
       {change && <ChangeDialog item={change} onClose={() => setChange(null)} />}
-      <div className="mt-6">
-        <Tabs
-          items={[
-            ['settings', 'Cấu hình'],
-            ['activity-logs', 'Nhật ký hoạt động'],
-            ['audit-logs', 'Nhật ký kiểm toán'],
-          ].map(([id, label]) => ({ id, label }))}
-          activeId={tab}
-          onChange={changeTab}
-          actions={
-            <Button
-              disabled={busy}
-              onClick={() =>
-                mutate('/api/v1/analytics/trigger', { method: 'POST' }, 'Đã gửi yêu cầu tổng hợp dữ liệu.')
-              }
-            >
-              Chạy tổng hợp analytics
-            </Button>
-          }
-        >
-          {() => (
-            <>
-              {tab === 'settings' && (
-                <>
-                  <BulkSettingsEditor rows={rows} busy={busy} onSave={saveAllSettings} />
-                  <DashboardRegenerator classes={classes} busy={busy} onRegenerate={regenerateDashboard} />
-                </>
-              )}
+      <div className="mt-6 flex flex-col gap-5 lg:flex-row">
+        <aside className="lg:w-72 lg:shrink-0">
+          <Card className="p-3">
+            <p className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-wide text-slate-500">Quản trị hệ thống</p>
+            <div className="space-y-1">
+              {navigation.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => changeTab(item.id)}
+                  className={`flex w-full items-start gap-3 rounded-xl p-3 text-left transition ${tab === item.id ? 'bg-primary text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}`}
+                >
+                  <span className="material-symbols-outlined mt-0.5 text-xl">{item.icon}</span>
+                  <span>
+                    <span className="block font-semibold">{item.label}</span>
+                    <span className={`mt-0.5 block text-xs ${tab === item.id ? 'text-white/80' : 'text-slate-500'}`}>{item.description}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 border-t border-slate-200 pt-3">
+              <p className="px-3 text-sm font-semibold text-slate-800">Dữ liệu dashboard</p>
+              <p className="px-3 pt-1 text-xs text-slate-500">Cập nhật số liệu phân tích mới nhất.</p>
+              <Button
+                className="mx-3 mb-3 mt-3 w-[calc(100%_-_1.5rem)]"
+                disabled={busy}
+                onClick={() => mutate('/api/v1/analytics/trigger', { method: 'POST' }, 'Đã gửi yêu cầu tổng hợp dữ liệu.')}
+              >
+                Tổng hợp analytics
+              </Button>
+            </div>
+          </Card>
+        </aside>
+        <section className="min-w-0 flex-1">
               {tab !== 'settings' && (
                 <Card className="mt-4 p-4">
                   <Form className="grid gap-3 md:grid-cols-3" onSubmit={applyFilters}>
@@ -345,22 +326,10 @@ export function OperationsPage() {
               ) : rows.length === 0 ? (
                 <Card className="mt-5 p-6">Chưa có dữ liệu.</Card>
               ) : tab === 'settings' ? (
-                <div className="mt-5 grid gap-5 lg:grid-cols-2">
-                  {rows.map((item) => (
-                    <Setting
-                      key={`${item.settingKey}-${item.updatedAt}`}
-                      item={item}
-                      busy={busy}
-                      onSave={(key, body) =>
-                        mutate(
-                          `/api/v1/admin/settings/${encodeURIComponent(key)}`,
-                          { method: 'PUT', body },
-                          'Đã lưu cấu hình.'
-                        )
-                      }
-                    />
-                  ))}
-                </div>
+                <>
+                  <BulkSettingsEditor rows={rows} busy={busy} onSave={saveAllSettings} />
+                  <DashboardRegenerator classes={classes} busy={busy} onRegenerate={regenerateDashboard} />
+                </>
               ) : (
                 <Card className="mt-5 overflow-x-auto p-5">
                   <table className="w-full text-left text-sm">
@@ -411,9 +380,7 @@ export function OperationsPage() {
                   />
                 </Card>
               )}
-            </>
-          )}
-        </Tabs>
+        </section>
       </div>
     </AdminPageShell>
   );

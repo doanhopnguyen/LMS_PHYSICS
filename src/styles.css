@@ -202,12 +202,37 @@
 }
 .select-field { display: flex; flex-wrap: wrap; flex: none; width: var(--select-field-width, 248px); max-width: 100%; min-width: 0; align-items: center; gap: 8px; font-size: 14px; font-weight: 400; color: #334155; }
 .select-field__label { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.select-field__control { flex: 1 1 0; width: 0; min-width: 0; height: 36px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #CBD5E1; border-radius: 12px; background: #fff; padding: 0 28px 0 10px; color: #0F172A; font: inherit; font-weight: 400; outline: none; transition: border-color 150ms, box-shadow 150ms; }
-.select-field__control:hover { border-color: #94A3B8; }
-.select-field__control:focus { border-color: #E52220; box-shadow: 0 0 0 3px #FEE2E2; }
+.select-field__control { flex: 1 1 0; width: 0; min-width: 0; height: 36px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid #CBD5E1; border-radius: 14px; background: #fff; padding: 0 28px 0 10px; color: #0F172A; font: inherit; font-weight: 400; outline: none; transition: border-color 150ms, box-shadow 150ms; }
+.select-field__control { border-color: #E52220; }
+.select-field__control:hover { border-color: #C41E1A; }
+.select-field__control:focus { border-color: #E52220; background-color: #FEF2F2; box-shadow: 0 0 0 3px #FECACA; }
 .select-field__control:disabled { cursor: not-allowed; background: #F1F5F9; color: #64748B; }
 .select-field__hint { flex-basis: 100%; font-size: 12px; font-weight: 400; color: #64748B; }
 .select-field__hint--error { color: #B91C1C; }
+/* Native selects and date/time pickers used directly in legacy forms follow the same red control treatment. */
+:where(main, [role="dialog"], [role="alertdialog"]) select:not(.select-field__control),
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="time"],
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="date"],
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="datetime-local"] {
+  border: 1px solid #E52220;
+  border-radius: 14px;
+  background-color: #fff;
+  color: #0F172A;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+:where(main, [role="dialog"], [role="alertdialog"]) select:not(.select-field__control):hover,
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="time"]:hover,
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="date"]:hover,
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="datetime-local"]:hover { border-color: #C41E1A; }
+:where(main, [role="dialog"], [role="alertdialog"]) select:not(.select-field__control):focus,
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="time"]:focus,
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="date"]:focus,
+:where(main, [role="dialog"], [role="alertdialog"]) input[type="datetime-local"]:focus { border-color: #E52220; background-color: #FEF2F2; box-shadow: 0 0 0 3px #FECACA; }
+/* Keep option text in its normal color; Chromium uses these rules for the selected row in the native popup. */
+select { overflow: hidden; }
+select option { margin: 3px 4px; border-radius: 10px; color: inherit; background: #fff; }
+select option:checked { border-radius: 10px; color: #fff; background: #E52220; }
 .tabs { min-width: 0; max-width: 100%; }
 .tabs-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; border-bottom: 1px solid #E2E8F0; }
 .tabs-list { display: flex; flex: 0 1 auto; align-items: center; gap: 4px; min-width: 0; max-width: 100%; overflow-x: auto; }
