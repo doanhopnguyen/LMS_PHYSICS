@@ -45,6 +45,7 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage.jsx';
 import { TADashboardApiPage, TAWorkQueueApiPage } from './pages/ta/TAPagesApi.jsx';
 import { TAClassSupportTabsPage } from './pages/ta/TAClassSupportTabsPage.jsx';
 import { RoleAccessPage } from './pages/RoleAccessPage.jsx';
+import { ErrorPage } from './pages/ErrorPage.jsx';
 import { canAccess, getDemoSession } from './lib/demoSession.js';
 
 const pageComponents = {
@@ -98,6 +99,8 @@ const pageComponents = {
   'register.html': RegisterPage,
   'reset_password.html': ResetPasswordPage,
   'ta_class_support.html': TAClassSupportTabsPage,
+  '403.html': () => <ErrorPage status={403} session={getDemoSession()} />,
+  '404.html': () => <ErrorPage status={404} session={getDemoSession()} />,
 };
 
 function App() {
@@ -131,7 +134,7 @@ function App() {
   const session = getDemoSession();
   const Page = pageComponents[file] ?? pageComponents['login.html'];
   if (
-    !['login.html', 'auth_access.html', 'register.html', 'reset_password.html'].includes(file) &&
+    !['login.html', 'auth_access.html', 'register.html', 'reset_password.html', '403.html', '404.html'].includes(file) &&
     (!session || !canAccess(session.role, file))
   ) {
     return (

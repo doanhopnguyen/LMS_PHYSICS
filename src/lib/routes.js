@@ -49,13 +49,15 @@ export const routeFiles = [
   'register.html',
   'reset_password.html',
   'ta_class_support.html',
+  '403.html',
+  '404.html',
 ];
 
 export function getPageFile(pathname = window.location.pathname) {
   const route = pathname.split('/').filter(Boolean).pop();
   if (!route || route === 'index.html') return 'login.html';
   const file = route.endsWith('.html') ? route : `${route}.html`;
-  return routeFiles.includes(file) ? file : 'dashboard.html';
+  return routeFiles.includes(file) ? file : '404.html';
 }
 
 export function getCleanRoute(path = window.location.pathname) {
