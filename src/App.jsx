@@ -5,6 +5,7 @@ import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getCleanRoute, getPageFile } from './lib/routes.js';
 import { LoginPage } from './pages/LoginPage.jsx';
 import { AccountPage } from './pages/AccountPage.jsx';
+import { NotificationDetailPage } from './pages/NotificationDetailPage.jsx';
 import { OperationsPage } from './pages/admin/OperationsPage.jsx';
 import { UsersPage } from './pages/admin/UsersPage.jsx';
 import { DashboardPage } from './pages/students/DashboardPage.jsx';
@@ -59,6 +60,7 @@ const pageComponents = {
   'my_courses.html': MyCoursesPage,
   'profile_settings.html': AccountPage,
   'account.html': AccountPage,
+  'notification_detail.html': NotificationDetailPage,
   'virtual_lab.html': VirtualLabPage,
   'voice_citations.html': VoiceCitationsPage,
   '3d_workspace.html': WorkspacePage,

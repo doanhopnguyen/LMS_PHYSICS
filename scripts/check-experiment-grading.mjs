@@ -39,12 +39,18 @@ try{
     const summary={submissionId:'11111111-1111-4111-8111-111111111111',experimentTitle:'Khảo sát chuyển động',status:'PENDING',totalScore:0,totalMaxScore:10,rubrics:[{rubricId:'r1',criteriaName:'Số liệu',maxScore:4,score:null,isGraded:false},{rubricId:'r2',criteriaName:'Phân tích',maxScore:6,score:null,isGraded:false}]};
     window.fetch=async(input,options={})=>{
       const path=new URL(input,location.origin).pathname,method=options.method||'GET',body=options.body?JSON.parse(options.body):null;
-      testCalls.push({path,method,body});let data=[];
-      if(path==='/api/v1/users/me')data={userId:'teacher',role:'INSTRUCTOR'};
+      testCalls.push({path,query:new URL(input,location.origin).search,method,body});let data=[];
+      if(path==='/api/v1/users/me')data={userId:'teacher',role:JSON.parse(localStorage.getItem('ptit-physics-demo-session')).role};
       if(path==='/api/v1/notifications/summary')data={unreadCount:0};
       if(path==='/api/v1/classes')data={content:[{classId:'c1',classCode:'PHY101-01',subjectId:'s1'}],last:true};
       if(path==='/api/v1/subjects')data={content:[{subjectId:'s1',subjectName:'Vật lý'}],last:true};
       if(path==='/api/v1/experiments')data=[{experimentId:'e1',subjectId:'s1',title:'Khảo sát chuyển động'}];
+      const submission={...summary,studentFullName:'Nguyễn Minh An',studentCode:'B26D001',classId:'c1',classCode:'PHY101-01',submittedAt:'2026-10-02T03:00:00Z',evidenceUrl:'https://example.test/report.pdf',rawDataJson:{distance:1.25}};
+      if(path==='/api/v1/experiments/submissions'||path.endsWith('/experiment-submissions')){
+        if(window.failList)return Response.json({message:'Không có quyền xem lớp'},{status:403});
+        data=window.emptyList ? [] : [submission];
+      }
+      if(path==='/api/v1/experiments/submissions/11111111-1111-4111-8111-111111111111')data=submission;
       if(path.endsWith('/rubric-summary'))data=summary;
       if(path.endsWith('/scores')&&method==='POST'){
         if(failSave)return Response.json({message:'Lỗi lưu thử nghiệm'},{status:500});
@@ -60,10 +66,12 @@ try{
   await send('Page.navigate',{url:origin+'/lecturer_labs.html'});
   await waitFor(`!!document.querySelector('[role=tab]')`);
   await evaluate(`[...document.querySelectorAll('[role=tab]')].find(e=>e.textContent==='Chấm bài thí nghiệm').click()`);
-  await waitFor(`!!document.querySelector('input[name=link]')`);
-  await setInput('input[name=link]','/lecturer_lab_grading.html?submissionId=11111111-1111-4111-8111-111111111111');
-  await evaluate(`document.querySelector('form').requestSubmit()`);
+  await waitFor(`document.querySelector('tbody')?.textContent.includes('Nguyễn Minh An')`);
+  assert.equal(await evaluate(`!!document.querySelector('input[name=link]')`),false);
+  assert.ok(await evaluate(`testCalls.some(c=>c.path==='/api/v1/experiments/submissions'&&c.query.includes('myClassesOnly=true'))`));
+  await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Chấm bài')&&!e.hasAttribute('role')).click()`);
   await waitFor(`document.querySelectorAll('input[name=score]').length===2`);
+  assert.ok(await evaluate(`document.body.textContent.includes('B26D001') && document.body.textContent.includes('1.25') && document.body.textContent.includes('Mở tệp')`));
   assert.equal(await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Xác nhận kết quả')).disabled`),true);
   await setInput('input[name=score]','5');
   assert.equal(await evaluate(`document.querySelector('input[name=score]').checkValidity()`),false);
@@ -77,6 +85,9 @@ try{
   assert.equal(await evaluate(`document.querySelector('input[name=score]').value`),'1');
   assert.equal(await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Xác nhận kết quả')).disabled`),true);
   await evaluate(`window.failSave=false;(()=>{const e=document.querySelectorAll('input[name=score]')[1];Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'6');e.dispatchEvent(new Event('input',{bubbles:true}));document.querySelectorAll('form')[1].requestSubmit();})()`);
+  await waitFor(`!document.querySelector('input[name=score]').disabled`);
+  assert.equal(await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Xác nhận kết quả')).disabled`),true,'unsaved criterion must block confirmation');
+  await evaluate(`document.querySelector('form').requestSubmit()`);
   await waitFor(`![...document.querySelectorAll('button')].find(e=>e.textContent.includes('Xác nhận kết quả')).disabled`);
   await evaluate(`window.failConfirm=true;[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Xác nhận kết quả')).click()`);
   await waitFor(`!!document.querySelector('[role=alertdialog]')`);
@@ -84,7 +95,7 @@ try{
   assert.ok(await evaluate(`!!document.querySelector('[role=alertdialog]')`));
   await evaluate(`window.failConfirm=false;[...document.querySelectorAll('[role=alertdialog] button')].find(e=>e.textContent==='Chốt điểm').click()`);
   await waitFor(`!document.querySelector('[role=alertdialog]') && document.querySelector('input[name=score]').disabled`);
-  console.log('Grading: link selection, rubric payload/zero, bounds, failure recovery, confirmation and readonly passed.');
+  console.log('Grading: API submission selection, detail/evidence/raw data, unsaved-edit guard, rubric payload/zero, bounds, failure recovery, confirmation and readonly passed.');
   await send('Page.navigate',{url:origin+'/lecturer_labs.html'});
   await waitFor(`!!document.querySelector('button') && document.body.textContent.includes('Giao cho lớp')`);
   await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent==='Giao cho lớp').click()`);
@@ -95,4 +106,29 @@ try{
   assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`));
   assert.deepEqual(errors,[]);
   console.log('Date/time: compact desktop field and mobile width passed.');
+
+  await send('Page.addScriptToEvaluateOnNewDocument',{source:`localStorage.setItem('ptit-physics-demo-session',JSON.stringify({role:'TA'}));`});
+  await send('Page.navigate',{url:origin+'/ta_class_support.html?classId=c1'});
+  await waitFor(`!!document.querySelector('[role=tab]')`);
+  await evaluate(`[...document.querySelectorAll('[role=tab]')].find(e=>e.textContent==='Chấm rubric').click()`);
+  await waitFor(`document.querySelector('tbody')?.textContent.includes('Nguyễn Minh An')`);
+  assert.ok(await evaluate(`testCalls.some(c=>c.path==='/api/v1/classes/c1/experiment-submissions')`));
+  assert.equal(await evaluate(`document.body.textContent.includes('UUID')`),false);
+  await evaluate(`(()=>{const el=[...document.querySelectorAll('select')].find(e=>e.textContent.includes('Tất cả trạng thái'));Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(el,'PENDING');el.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  await waitFor(`testCalls.some(c=>c.path.endsWith('/experiment-submissions')&&c.query.includes('status=PENDING'))`);
+  await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Chấm bài')&&!e.hasAttribute('role')).click()`);
+  await waitFor(`document.querySelectorAll('input[name=score]').length===2`);
+  assert.equal(await evaluate(`document.body.textContent.includes('Xác nhận kết quả') || document.body.textContent.includes('Nhận xét chung khi chốt điểm')`),false);
+  await setInput('input[name=score]','2');
+  await evaluate(`document.querySelector('form').requestSubmit()`);
+  await waitFor(`testCalls.some(c=>c.path.endsWith('/scores')&&c.body.score===2)`);
+  assert.equal(await evaluate(`testCalls.some(c=>c.path.endsWith('/confirmation'))`),false);
+  await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Danh sách bài nộp')).click()`);
+  await waitFor(`!!document.querySelector('tbody')`);
+  await evaluate(`window.failList=true;[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Tải lại')).click()`);
+  await waitFor(`document.body.textContent.includes('Không có quyền xem lớp')`);
+  await evaluate(`window.failList=false;window.emptyList=true;[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Tải lại')).click()`);
+  await waitFor(`document.body.textContent.includes('Chưa có bài nộp phù hợp')`);
+  assert.deepEqual(errors,[]);
+  console.log('TA: API class list, status filter, shared grader, no UUID/confirmation, save, empty and permission-error states passed.');
 }finally{await send('Browser.close').catch(()=>{});socket.close();}

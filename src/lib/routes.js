@@ -1,6 +1,7 @@
 export const routeFiles = [
   'login.html',
   'account.html',
+  'notification_detail.html',
   'dashboard.html',
   'course_detail.html',
   'learning_module.html',

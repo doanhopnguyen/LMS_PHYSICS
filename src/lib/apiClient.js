@@ -294,6 +294,11 @@ export const api = {
 
   // ─── Experiments (Virtual Lab) ───────────────────────────────────────────────
   experiments: {
+    submissions: (query) => apiRequest('/api/v1/experiments/submissions', { query }),
+    classSubmissions: (classId, query) => apiRequest(`/api/v1/classes/${classId}/experiment-submissions`, { query }),
+    getSubmission: (submissionId) => apiRequest(`/api/v1/experiments/submissions/${submissionId}`),
+    submissionRubrics: (submissionId) => apiRequest(`/api/v1/experiments/submissions/${submissionId}/rubrics`),
+    rubricSummary: (submissionId) => apiRequest(`/api/v1/experiments/submissions/${submissionId}/rubric-summary`),
     list: (subjectId) => apiRequest('/api/v1/experiments', { query: { subjectId } }),
     get: (experimentId) => apiRequest(`/api/v1/experiments/${experimentId}`),
     create: (body) => apiRequest('/api/v1/experiments', { method: 'POST', body }),

@@ -2058,13 +2058,22 @@ button {
 .chat-page__conversation > :last-child { flex-shrink: 0; }
 .chat-page.ai-chat { max-width: 1440px; gap: 16px; height: calc(100dvh - 80px); min-height: 600px; padding-block: 16px 12px; }
 .ai-chat__history { width: 260px; flex-shrink: 0; min-height: 0; }
+.ai-chat .ai-chat__history { background-color: #e52220; background-image: var(--shell-red-gradient); border-color: #e52220; color: #fff; }
+.ai-chat__history :is(button, a, p),
+.ai-chat__history-item > span { color: #fff; }
+.ai-chat__history button:hover:not(:disabled) { background: #ffffff24; }
+.ai-chat__history-item[aria-current='true'],
+.ai-chat__history-item[aria-current='true']:hover:not(:disabled) { background: #fff; color: #c41e1a; }
+.ai-chat__history-item[aria-current='true'] > span { color: #c41e1a; }
+.ai-chat .ai-chat__history :is(button, a):focus-visible { outline-color: #fff; }
 .ai-chat__history-list { min-height: 0; flex: 1; overflow-y: auto; }
 .ai-chat__history-item { display: block; width: 100%; margin-bottom: 4px; }
 .ai-chat__context { display: flex; align-items: center; flex-wrap: nowrap; gap: 16px; overflow-x: auto; }
 .ai-chat__context .select-field { flex: 1 0 240px; min-width: 240px; flex-direction: row; align-items: center; gap: 8px; }
 .ai-chat__context .select-field__label { flex-shrink: 0; white-space: nowrap; }
 .ai-chat__context .select-field__control { width: auto; min-width: 0; flex: 1; }
-.ai-chat .chat-composer .form-field__control { min-height: 44px; max-height: 120px; padding: 10px 12px; border: 0; background: transparent; resize: none; }
+.ai-chat .chat-composer .form-field__control,
+.ai-chat .chat-composer .form-field__control:focus-visible { min-height: 44px; max-height: 120px; padding: 10px 12px; border: 0; outline: none; box-shadow: none; background: transparent; resize: none; }
 .ai-chat .chat-composer.lms-card { border-radius: 32px; padding: 6px; box-shadow: none; }
 .ai-chat .chat-composer .ai-chat__send { width: 44px; height: 44px; border-radius: 50%; background: #e52220; color: #fff; }
 .ai-chat .chat-composer .ai-chat__send:hover:not(:disabled) { background: #c41e1a; }

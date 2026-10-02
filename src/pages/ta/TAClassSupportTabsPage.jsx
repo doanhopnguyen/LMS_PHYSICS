@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
-import { AuthAlert } from '../../components/AuthLayout.jsx';
+import { ExperimentSubmissionList, ExperimentSubmissionGrader } from '../../components/ExperimentGrading.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
-import { Form, SubmitButton } from '../../components/Form.jsx';
-import { FormField } from '../../components/FormField.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { SelectField } from '../../components/SelectField.jsx';
@@ -12,7 +10,6 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
 import { taNavigation, taUtilityNavigation } from '../../data/taNavigation.js';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
-import { api } from '../../lib/apiClient.js';
 import { demoRoles } from '../../lib/demoSession.js';
 
 const user = { ...demoRoles.TA, role: demoRoles.TA.label };
@@ -56,9 +53,12 @@ function ResourceTable({ resource, loadingLabel, emptyLabel, columns, renderRow 
 export function TAClassSupportTabsPage() {
   const [classId, setClassId] = useState(() => new URLSearchParams(window.location.search).get('classId') || '');
   const [examId, setExamId] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [submissionId, setSubmissionId] = useState(
+    () => new URLSearchParams(window.location.search).get('submissionId') || ''
+  );
+  const [activeTab, setActiveTab] = useState(() =>
+    new URLSearchParams(window.location.search).get('submissionId') ? 'grading' : 'students'
+  );
   const classes = useApiData('/api/v1/classes?page=0&size=50');
   const classPath = classId ? `/api/v1/classes/${encodeURIComponent(classId)}` : null;
   const students = useApiData(classPath && `${classPath}/students?page=0&size=50`);
@@ -73,35 +73,19 @@ export function TAClassSupportTabsPage() {
   function changeClass(nextClassId) {
     setClassId(nextClassId);
     setExamId('');
-    setMessage('');
-    setError('');
+    setSubmissionId('');
     const url = new URL(window.location.href);
+    url.searchParams.delete('submissionId');
     if (nextClassId) url.searchParams.set('classId', nextClassId);
     else url.searchParams.delete('classId');
     window.history.replaceState(window.history.state, '', url);
   }
-  async function grade(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const fields = Object.fromEntries(new FormData(form));
-    const score = fields.score === '' ? undefined : Number(fields.score);
-    setBusy(true);
-    setMessage('');
-    setError('');
-    try {
-      await api.experiments.gradeSubmission(fields.submissionId, {
-        ...(fields.rubricId && { rubricId: fields.rubricId }),
-        ...(Number.isFinite(score) && { score }),
-        ...(fields.feedback && { feedback: fields.feedback }),
-        ...(fields.comment && { comment: fields.comment }),
-      });
-      form.reset();
-      setMessage('Đã gửi kết quả chấm bài nộp thí nghiệm.');
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setBusy(false);
-    }
+  function selectSubmission(row) {
+    setSubmissionId(row?.submissionId || '');
+    const url = new URL(window.location.href);
+    if (row) url.searchParams.set('submissionId', row.submissionId);
+    else url.searchParams.delete('submissionId');
+    window.history.replaceState(window.history.state, '', url);
   }
   const selectClass = (
     <SelectField
@@ -152,10 +136,10 @@ export function TAClassSupportTabsPage() {
           title="Hỗ trợ lớp học"
           description="Theo dõi lớp được phân công, kỳ thi và chấm bài nộp thí nghiệm trong đúng phạm vi quyền TA."
         />
-        <AuthAlert>{message}</AuthAlert>
-        <AuthAlert error>{error}</AuthAlert>
         <div className="mt-6">
           <Tabs
+            activeId={activeTab}
+            onChange={setActiveTab}
             items={[
               { id: 'students', label: 'Sinh viên' },
               { id: 'staff', label: 'Nhân sự' },
@@ -270,22 +254,23 @@ export function TAClassSupportTabsPage() {
                   )}
                 </>
               ) : (
-                <Card className="mt-5 p-5">
-                  <p className="text-body-sm text-[#64748B]">
-                    Nhập mã bài nộp do sinh viên hoặc giảng viên cung cấp. API không cung cấp danh sách bài nộp thí
-                    nghiệm cho TA, nên không hiển thị dữ liệu suy đoán ở đây.
-                  </p>
-                  <Form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={grade} busy={busy}>
-                    <FormField label="UUID bài nộp" name="submissionId" required />
-                    <FormField label="UUID rubric (nếu có)" name="rubricId" />
-                    <FormField label="Điểm" name="score" type="number" step="0.1" min="0" />
-                    <FormField label="Nhận xét ngắn" name="feedback" />
-                    <FormField label="Ghi chú" name="comment" multiline rows="3" className="md:col-span-2" />
-                    <div className="md:col-span-2">
-                      <SubmitButton busy={busy}>Gửi điểm rubric</SubmitButton>
-                    </div>
-                  </Form>
-                </Card>
+                <div className="mt-5">
+                  {submissionId ? (
+                    <ExperimentSubmissionGrader
+                      key={submissionId}
+                      submissionId={submissionId}
+                      onBack={() => selectSubmission(null)}
+                    />
+                  ) : (
+                    <ExperimentSubmissionList
+                      key={classId}
+                      classes={classes}
+                      classId={classId}
+                      requireClass
+                      onSelect={selectSubmission}
+                    />
+                  )}
+                </div>
               )
             }
           </Tabs>

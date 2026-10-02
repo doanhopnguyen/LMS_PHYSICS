@@ -62,6 +62,7 @@ try {
         {materialId:'m3',topicId:'t2',title:'Điện trường tĩnh',type:'VIDEO',fileUrl:'https://example.com/video'}
       ].filter(m=>(!url.searchParams.get('type')||m.type===url.searchParams.get('type'))&&(!url.searchParams.get('topicId')||m.topicId===url.searchParams.get('topicId'))&&(!url.searchParams.get('classId')||m.topicId===(url.searchParams.get('classId')==='c1'?'t1':'t2')));
       if(path==='/api/v1/materials/m1')data={materialId:'m1',title:'Định luật Newton',type:'TEXT',version:2,contentText:'Nội dung bài đọc Newton',sourceCitation:'Giáo trình Vật lý'};
+      if(path==='/api/v1/experiments/e1')data={experimentId:'e1',title:'Rơi tự do',instructions:'1. Đặt quả cầu thép ở độ cao s. 2. Đo thời gian rơi t qua cổng quang. 3. Vẽ đồ thị s = f(t^2) và tính sai số gia tốc g.'};
       if(path==='/api/v1/ai-tutor/conversations/my')data=[{conversationId:'old',classId:'c2',topicId:'t2',mode:'TEXT',startedAt:'2026-10-01',endedAt:'2026-10-02',messageCount:2}];
       if(path==='/api/v1/ai-tutor/conversations/old/messages')data=[{messageId:'old-user',sender:'USER',contentText:'Điện trường là gì?'},{messageId:'old-ai',sender:'AI',contentText:'Hãy xét lực tác dụng lên điện tích.'}];
       if(path==='/api/v1/ai-tutor/conversations'&&method==='POST')data={conversationId:'new',classId:body.classId,topicId:body.topicId,mode:body.mode,startedAt:'2026-10-02',messageCount:0};
@@ -125,6 +126,19 @@ try {
   assert.equal(chatStyle.round, '32px');
   assert.equal(chatStyle.send, chatStyle.header);
   assert.equal(chatStyle.bubble, chatStyle.header);
+  const chatSurfaces=await evaluate(`(() => {
+    const history=document.querySelector('.ai-chat__history');
+    const header=document.querySelector('.app-header');
+    const input=document.querySelector('.chat-composer textarea');
+    input.focus();
+    return {history:getComputedStyle(history).backgroundColor,gradient:getComputedStyle(history).backgroundImage,headerGradient:getComputedStyle(header).backgroundImage,title:getComputedStyle(history.querySelector('h2')).color,inputBorder:getComputedStyle(input).borderTopWidth,inputOutline:getComputedStyle(input).outlineStyle,inputShadow:getComputedStyle(input).boxShadow};
+  })()`);
+  assert.equal(chatSurfaces.history,chatStyle.header);
+  assert.equal(chatSurfaces.gradient,chatSurfaces.headerGradient);
+  assert.equal(chatSurfaces.title,'rgb(255, 255, 255)');
+  assert.equal(chatSurfaces.inputBorder,'0px');
+  assert.equal(chatSurfaces.inputOutline,'none');
+  assert.equal(chatSurfaces.inputShadow,'none');
   await evaluate(`window.failSend=true`);await enterText('Tin nhắn lỗi');
   await evaluate(`document.querySelector('.chat-composer').requestSubmit()`);
   await waitFor(`!document.querySelector('textarea').disabled && document.querySelector('textarea').value==='Tin nhắn lỗi'`);
@@ -138,4 +152,13 @@ try {
   assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`));
   assert.deepEqual(errors,[]);
   console.log('Chat: ended history, correct context/payload, send recovery, end errors and mobile width passed.');
+  await send('Page.navigate',{url:origin+'/3d_workspace.html?experimentId=e1'});
+  await waitFor(`document.querySelector('.lab-instructions')?.textContent.includes('Đặt quả cầu thép')`);
+  const instructionsStyle=await evaluate(`(() => {const card=document.querySelector('.lab-instructions');return {heading:getComputedStyle(card.querySelector('h2')).color,text:getComputedStyle(card.querySelector('.whitespace-pre-wrap')).color,background:getComputedStyle(card).backgroundColor};})()`);
+  assert.equal(instructionsStyle.heading,'rgb(30, 41, 59)');
+  assert.equal(instructionsStyle.text,'rgb(51, 65, 85)');
+  assert.notEqual(instructionsStyle.text,instructionsStyle.background);
+  assert.ok(await evaluate(`document.documentElement.scrollWidth<=innerWidth`));
+  assert.deepEqual(errors,[]);
+  console.log('Chat surfaces: header-red history, single composer outline; lab instructions: dark readable text passed.');
 } finally { await send('Browser.close').catch(()=>{});socket.close(); }

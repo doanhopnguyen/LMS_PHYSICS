@@ -30,3 +30,9 @@ Use these three components for content cards throughout the application:
 Keep radius, default border, background and shadow in the shared components. At call sites, use `className` for spacing, layout and intentional state colors. Do not create independent card surfaces with native elements and duplicated base styles.
 
 Dialogs, menus, form controls, alerts, chat messages, tables and simulation/chart graphics retain their functional styles; they are not content cards.
+
+## Experiment grading
+
+`ExperimentSubmissionList` and `ExperimentSubmissionGrader` in `ExperimentGrading.jsx` are shared by lecturer and TA pages. Select real submissions from `GET /api/v1/experiments/submissions` or `GET /api/v1/classes/{id}/experiment-submissions`, filtered by experiment and status. Do not use the evidence archive as a pending-submission queue or ask users for UUIDs.
+
+The grader loads submission detail (student, class, file and raw measurement data) and rubric summary. Each criterion saves to `POST /api/v1/experiments/submissions/{id}/scores`. Confirmation is opt-in (`canConfirm`), enabled only for the lecturer page; the backend remains authoritative for permissions. Block confirmation while a criterion is ungraded or has unsaved edits. Confirmed submissions are read-only.

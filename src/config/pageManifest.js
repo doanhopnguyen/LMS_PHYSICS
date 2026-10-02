@@ -48,4 +48,5 @@ export const pageManifest = [
   { file: 'register.html', component: 'RegisterPage', layout: 'Standalone' },
   { file: 'reset_password.html', component: 'ResetPasswordPage', layout: 'Standalone' },
   { file: 'ta_class_support.html', component: 'TAClassSupportPage', layout: 'AppShell' },
+  { file: 'notification_detail.html', component: 'NotificationDetailPage', layout: 'AppShell' },
 ];

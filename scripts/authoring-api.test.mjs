@@ -62,6 +62,49 @@ test('successful empty response is accepted', async () => {
   assert.equal(await api.materials.create('topic-one', new FormData()), null);
 });
 
+test('experiment submissions use documented class and global filters', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    assert.equal(options.method, 'GET');
+    calls.push(new URL(url));
+    return Response.json({ data: [{ submissionId: 'submission-one', status: 'PENDING' }] });
+  };
+  assert.equal((await api.experiments.classSubmissions('class-one', { status: 'PENDING', experimentId: 'lab-one' })).length, 1);
+  await api.experiments.submissions({ myClassesOnly: true });
+  assert.equal(calls[0].pathname, '/api/v1/classes/class-one/experiment-submissions');
+  assert.equal(calls[0].searchParams.get('status'), 'PENDING');
+  assert.equal(calls[0].searchParams.get('experimentId'), 'lab-one');
+  assert.equal(calls[1].pathname, '/api/v1/experiments/submissions');
+  assert.equal(calls[1].searchParams.get('myClassesOnly'), 'true');
+});
+
+test('experiment detail and rubric summary use submission IDs from selection', async () => {
+  const calls = [];
+  globalThis.fetch = async (url) => { calls.push(new URL(url).pathname); return Response.json({ data: { submissionId: 'submission-one' } }); };
+  await api.experiments.getSubmission('submission-one');
+  await api.experiments.submissionRubrics('submission-one');
+  await api.experiments.rubricSummary('submission-one');
+  assert.deepEqual(calls, [
+    '/api/v1/experiments/submissions/submission-one',
+    '/api/v1/experiments/submissions/submission-one/rubrics',
+    '/api/v1/experiments/submissions/submission-one/rubric-summary',
+  ]);
+});
+
+test('experiment rubric save preserves zero and confirmation sends the note', async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options) => {
+    calls.push({ path: new URL(url).pathname, method: options.method, body: JSON.parse(options.body) });
+    return new Response(null, { status: 204 });
+  };
+  await api.experiments.gradeSubmission('submission-one', { rubricId: 'criterion-one', score: 0, comment: 'Chưa đạt' });
+  await api.experiments.confirmSubmission('submission-one', { note: 'Đã kiểm tra' });
+  assert.deepEqual(calls, [
+    { path: '/api/v1/experiments/submissions/submission-one/scores', method: 'POST', body: { rubricId: 'criterion-one', score: 0, comment: 'Chưa đạt' } },
+    { path: '/api/v1/experiments/submissions/submission-one/confirmation', method: 'POST', body: { note: 'Đã kiểm tra' } },
+  ]);
+});
+
 test('Excel import summary uses the shared alert instead of a page card', async () => {
   const source = readFileSync('src/pages/lecturers/LecturerContent.jsx', 'utf8');
   assert.doesNotMatch(source, /importResult/);

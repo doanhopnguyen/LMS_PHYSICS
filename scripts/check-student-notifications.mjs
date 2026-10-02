@@ -64,6 +64,17 @@ try {
     await evaluate(`document.querySelector('.notification-bell').click()`);
     await until(`document.querySelector('.notification-title')?.textContent === 'Thông báo từ API'`);
     assert.equal(await evaluate(`document.querySelector('.notification-content').textContent`), 'Nội dung từ backend');
+    await evaluate(`document.querySelector('.notification-row > button:first-child').click()`);
+    await until(`document.querySelector('article.notification-detail')?.textContent.includes('Nội dung từ backend')`);
+    await until(`document.querySelector('article.notification-detail')?.textContent.includes('Đã đọc') && !document.querySelector('.notification-count')`);
+    assert.ok(await evaluate(`location.pathname==='/notification_detail' && new URLSearchParams(location.search).get('notificationId')==='note-one'`));
+    assert.ok(await evaluate(`testCalls.some(c=>c.path==='/api/v1/notifications/note-one/read'&&c.method==='PUT')`));
+    assert.equal(await evaluate(`!!document.querySelector('.notification-panel')`),false);
+    assert.equal(await evaluate(`testCalls.some(c=>c.path==='/api/v1/notifications/note-one'&&c.method==='GET')`),false);
+    await send('Page.navigate',{url:`${origin}/${route}`});
+    await until(`document.querySelector('.notification-count')?.textContent === '1'`);
+    await evaluate(`document.querySelector('.notification-bell').click()`);
+    await until(`!!document.querySelector('.notification-title')`);
     await clickText('Đọc tất cả');
     await until(`!document.querySelector('.notification-count')`);
     assert.ok(await evaluate(`testCalls.some(c=>c.path==='/api/v1/notifications/read-all' && c.method==='PUT')`));

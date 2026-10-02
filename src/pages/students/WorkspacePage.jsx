@@ -52,23 +52,23 @@ export function WorkspacePage() {
       }
     >
       <div className="mx-auto grid min-h-[calc(100dvh-64px)] max-w-[1440px] gap-5 p-4 lg:grid-cols-[320px_minmax(0,1fr)] lg:p-6">
-        <Card className="h-fit border-slate-700 bg-[#0C121E] p-5 text-slate-100">
+        <Card className="lab-instructions h-fit p-5 text-slate-800">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-emerald-400">science</span>
+            <span className="material-symbols-outlined text-primary">science</span>
             <h2 className="font-bold">Hướng dẫn thực hành</h2>
           </div>
           {loading ? (
-            <p className="mt-4 text-body-sm text-slate-400">Đang tải hướng dẫn…</p>
+            <p className="mt-4 text-body-sm text-slate-500">Đang tải hướng dẫn…</p>
           ) : error ? (
-            <p role="alert" className="mt-4 text-body-sm text-red-300">
+            <p role="alert" className="mt-4 text-body-sm text-red-700">
               {error}
             </p>
           ) : experiment?.instructions ? (
-            <div className="mt-4 whitespace-pre-wrap text-body-sm leading-7 text-slate-300">
+            <div className="mt-4 whitespace-pre-wrap text-body-sm leading-7 text-slate-700">
               {experiment.instructions}
             </div>
           ) : (
-            <p className="mt-4 text-body-sm text-slate-400">Giảng viên chưa bổ sung hướng dẫn chi tiết.</p>
+            <p className="mt-4 text-body-sm text-slate-500">Giảng viên chưa bổ sung hướng dẫn chi tiết.</p>
           )}
         </Card>
         <section className="flex min-h-[560px] items-center justify-center overflow-hidden rounded-2xl border border-slate-700 bg-[#0C121E] p-4">
