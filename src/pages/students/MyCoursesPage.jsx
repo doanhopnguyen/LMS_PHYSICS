@@ -71,11 +71,7 @@ export function MyCoursesPage() {
       filterActions={<Button icon="add">Tham gia học phần</Button>}
     >
       <PageContainer>
-        <PageTitle
-          eyebrow="NĂM HỌC 2026–2027"
-          title="Học phần của tôi"
-          description="Tổng quan tiến độ các học phần bạn đang theo học."
-        />
+        <PageTitle title="Học phần của tôi" description="Tổng quan tiến độ các học phần bạn đang theo học." />
         {loading && <p className="text-body-md text-[#64748B] py-10 text-center">Đang tải danh sách lớp học...</p>}
         {error && <p className="text-body-md text-primary py-10 text-center">{error}</p>}
         {!loading && !error && classes.length === 0 && (

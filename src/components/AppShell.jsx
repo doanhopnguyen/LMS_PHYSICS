@@ -86,7 +86,11 @@ export function AppShell({
   }, []);
 
   return (
-    <PageHeaderProvider>
+    <PageHeaderProvider
+      enabled={
+        !['dashboard.html', 'lecturer_dashboard.html', 'ta_dashboard.html', 'admin_dashboard.html'].includes(actualPage)
+      }
+    >
       <div
         className="app-shell app-shell-white min-h-screen flex flex-col"
         onClick={(event) => {
@@ -139,16 +143,18 @@ export function AppShell({
               />
             ))}
           <AcademicFilters page={actualPage} actions={filterActions} />
-          {academicPages[actualPage] && !readAcademicScope().available ? (
-            <main className="mx-auto w-full max-w-[1440px] p-6">
-              <Card as="div" className="p-10 text-center" role="status">
-                <h1 className="text-headline-sm font-bold">Chưa có dữ liệu trong phạm vi đã chọn</h1>
-                <p className="mt-2 text-[#64748B]">Chọn học kỳ hoặc môn học khác.</p>
-              </Card>
-            </main>
-          ) : (
-            children
-          )}
+          <div className="page-body">
+            {academicPages[actualPage] && !readAcademicScope().available ? (
+              <main className="mx-auto w-full max-w-[1440px] p-6">
+                <Card as="div" className="p-10 text-center" role="status">
+                  <h1 className="text-headline-sm font-bold">Chưa có dữ liệu trong phạm vi đã chọn</h1>
+                  <p className="mt-2 text-[#64748B]">Chọn học kỳ hoặc môn học khác.</p>
+                </Card>
+              </main>
+            ) : (
+              children
+            )}
+          </div>
         </div>
         {footer && <Footer />}
         {showChatLauncher && <ChatLauncher />}

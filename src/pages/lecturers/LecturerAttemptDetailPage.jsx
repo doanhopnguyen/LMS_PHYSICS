@@ -1,3 +1,4 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -264,27 +265,26 @@ export function LecturerAttemptDetailPage() {
                 </p>
               )}
             </Card>
-            <label className="mt-4 block text-body-sm font-semibold">
-              Điểm cuối cùng
-              <input
-                type="number"
-                min="0"
-                max={assessment.totalScore}
-                step="0.1"
-                value={adjustedScore}
-                onChange={(event) => setAdjustedScore(event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="mt-4 block text-body-sm font-semibold">
-              Lý do điều chỉnh
-              <textarea
-                rows="3"
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] p-3"
-              />
-            </label>
+            <SharedFormField
+              type="number"
+              min="0"
+              max={assessment.totalScore}
+              step="0.1"
+              value={adjustedScore}
+              onChange={(event) => setAdjustedScore(event.target.value)}
+              className="mt-2 w-full"
+              label={<>Điểm cuối cùng</>}
+              wrapperClassName="mt-4 block text-body-sm font-semibold"
+            />
+            <SharedFormField
+              rows="3"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              className="mt-2 w-full"
+              multiline
+              label={<>Lý do điều chỉnh</>}
+              wrapperClassName="mt-4 block text-body-sm font-semibold"
+            />
             {error && (
               <p className="mt-2 text-body-sm font-semibold text-primary" role="alert">
                 {error}
@@ -296,16 +296,16 @@ export function LecturerAttemptDetailPage() {
           </Card>
           <Card className="p-5 md:p-6">
             <SectionHeader title="Nhận xét" description="Nhận xét được lưu cục bộ trong phiên giao diện hiện tại." />
-            <label className="mt-4 block text-body-sm font-semibold">
-              Nhận xét của giảng viên
-              <textarea
-                rows="7"
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                placeholder="Nhập nhận xét dựa trên dữ liệu bài làm..."
-                className="mt-2 w-full border border-[#CBD5E1] p-3"
-              />
-            </label>
+            <SharedFormField
+              rows="7"
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              placeholder="Nhập nhận xét dựa trên dữ liệu bài làm..."
+              className="mt-2 w-full"
+              multiline
+              label={<>Nhận xét của giảng viên</>}
+              wrapperClassName="mt-4 block text-body-sm font-semibold"
+            />
             {savedComment && (
               <p className="mt-3 rounded-xl bg-[#F8FAFC] p-3 text-body-sm">
                 <strong>Đã lưu:</strong> {savedComment}

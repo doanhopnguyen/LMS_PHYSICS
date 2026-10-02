@@ -1,3 +1,4 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '../../components/Card.jsx';
@@ -74,18 +75,16 @@ export function DocumentViewerPage() {
                 >
                   ‹
                 </button>
-                <label>
-                  Trang{' '}
-                  <input
-                    aria-label="Trang tài liệu"
-                    type="number"
-                    min="1"
-                    max="280"
-                    value={page}
-                    onChange={(event) => setPage(Math.min(280, Math.max(1, Number(event.target.value) || 1)))}
-                    className="w-14 text-center text-slate-800"
-                  />
-                </label>
+                <SharedFormField
+                  aria-label="Trang tài liệu"
+                  type="number"
+                  min="1"
+                  max="280"
+                  value={page}
+                  onChange={(event) => setPage(Math.min(280, Math.max(1, Number(event.target.value) || 1)))}
+                  className="w-14 text-center"
+                  label={<>Trang </>}
+                />
                 <button
                   aria-label="Trang tiếp"
                   disabled={Number(page) >= 280}

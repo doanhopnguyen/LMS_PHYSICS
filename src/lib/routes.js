@@ -10,7 +10,6 @@ export const routeFiles = [
   'learning_results.html',
   'library.html',
   'my_courses.html',
-  'notifications_help.html',
   'profile_settings.html',
   'virtual_lab.html',
   'voice_citations.html',

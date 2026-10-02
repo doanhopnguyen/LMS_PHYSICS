@@ -1,3 +1,5 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import React, { useEffect, useState } from 'react';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -108,16 +110,16 @@ function AcademicForm({ modal, busy, onClose, onSubmit }) {
           </>
         )}
         {!semester && (
-          <label className="block md:col-span-2">
-            Mô tả
-            <textarea
-              name="description"
-              defaultValue={item.description || ''}
-              rows={4}
-              disabled={busy}
-              className="mt-2 block w-full rounded-xl border p-3"
-            />
-          </label>
+          <SharedFormField
+            name="description"
+            defaultValue={item.description || ''}
+            rows={4}
+            disabled={busy}
+            className="mt-2 block w-full"
+            multiline
+            label={<>Mô tả</>}
+            wrapperClassName="block md:col-span-2"
+          />
         )}
         <div className="flex justify-end gap-3 md:col-span-2">
           <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>
@@ -351,21 +353,19 @@ export function AdminAcademicsApiPage() {
                 </p>
               ) : (
                 <>
-                  <label className="mb-4 block text-body-sm">
-                    Trạng thái
-                    <select
-                      value={activeFilter}
-                      onChange={(event) => {
-                        setActiveFilter(event.target.value);
-                        setSubjectPage(0);
-                      }}
-                      className="ml-2 rounded-lg border p-2"
-                    >
-                      <option value="">Tất cả</option>
-                      <option value="true">Đang hoạt động</option>
-                      <option value="false">Đã tắt</option>
-                    </select>
-                  </label>
+                  <SharedSelectField
+                    value={activeFilter}
+                    onChange={(event) => {
+                      setActiveFilter(event.target.value);
+                      setSubjectPage(0);
+                    }}
+                    label={<>Trạng thái</>}
+                    className="mb-4 block text-body-sm"
+                  >
+                    <option value="">Tất cả</option>
+                    <option value="true">Đang hoạt động</option>
+                    <option value="false">Đã tắt</option>
+                  </SharedSelectField>
                   <DataTable
                     paginate={false}
                     columns={['Mã', 'Tên học phần', 'Mô tả', 'Trạng thái', 'Thao tác']}
@@ -400,22 +400,20 @@ export function AdminAcademicsApiPage() {
             </Card>
           ) : (
             <Card className="mt-5 overflow-x-auto p-5">
-              <label className="block max-w-xl">
-                Học phần
-                <select
-                  value={topicSubjectId}
-                  onChange={(event) => setTopicSubjectId(event.target.value)}
-                  className="mt-2 block w-full rounded-xl border p-3"
-                  disabled={subjectOptions.loading}
-                >
-                  <option value="">{subjectOptions.loading ? 'Đang tải…' : 'Chọn học phần'}</option>
-                  {listItems(subjectOptions.data).map((item) => (
-                    <option key={item.subjectId} value={item.subjectId}>
-                      {item.subjectCode} · {item.subjectName}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SharedSelectField
+                value={topicSubjectId}
+                onChange={(event) => setTopicSubjectId(event.target.value)}
+                disabled={subjectOptions.loading}
+                label={<>Học phần</>}
+                className="block max-w-xl"
+              >
+                <option value="">{subjectOptions.loading ? 'Đang tải…' : 'Chọn học phần'}</option>
+                {listItems(subjectOptions.data).map((item) => (
+                  <option key={item.subjectId} value={item.subjectId}>
+                    {item.subjectCode} · {item.subjectName}
+                  </option>
+                ))}
+              </SharedSelectField>
               {!topicSubjectId ? (
                 <p className="mt-5 text-[#64748B]">Chọn học phần để quản lý chủ đề.</p>
               ) : topics.loading ? (

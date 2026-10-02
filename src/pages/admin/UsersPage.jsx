@@ -1,3 +1,6 @@
+import { DataTable as SharedDataTable } from '../../components/DataTable.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import { FormDialog as UserModal } from '../../components/FormDialog.jsx';
 import React, { useState } from 'react';
@@ -8,6 +11,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
 import { api } from '../../lib/apiClient.js';
 import { getDemoSession } from '../../lib/demoSession.js';
 import { useApiData, listItems } from '../../hooks/useApiData.js';
@@ -258,15 +262,14 @@ export function UsersPage() {
       <AuthAlert error>{error}</AuthAlert>
       <Card className="mt-5 p-5">
         <Form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={findUser}>
-          <label className="flex-1 font-semibold">
-            Tìm theo tên đăng nhập
-            <input
-              name="username"
-              autoComplete="off"
-              placeholder="Nhập username chính xác"
-              className="mt-2 block w-full rounded-xl border p-3 font-normal"
-            />
-          </label>
+          <SharedFormField
+            name="username"
+            autoComplete="off"
+            placeholder="Nhập username chính xác"
+            className="mt-2 block w-full"
+            label={<>Tìm theo tên đăng nhập</>}
+            wrapperClassName="flex-1 font-semibold"
+          />
           <SubmitButton type="submit" disabled={busy} icon="search">
             Tìm kiếm
           </SubmitButton>
@@ -300,44 +303,38 @@ export function UsersPage() {
             </Button>
           </div>
           <Form className="mt-5 grid gap-4" onSubmit={importStudents}>
-            <label>
-              Tệp Excel *
-              <input
-                name="file"
-                type="file"
-                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                required
-                disabled={busy}
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
-            <label>
-              Mật khẩu mặc định
-              <input
-                name="defaultPassword"
-                type="password"
-                minLength={8}
-                defaultValue="Vatly1@123"
-                required
-                disabled={busy}
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
-            <label>
-              Ghi danh vào lớp (không bắt buộc)
-              <select
-                name="classId"
-                disabled={busy || classes.loading}
-                className="mt-2 block w-full rounded-xl border p-3"
-              >
-                <option value="">Không ghi danh lớp</option>
-                {listItems(classes.data).map((item) => (
-                  <option key={item.classId} value={item.classId}>
-                    {item.classCode || item.className}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SharedFormField
+              name="file"
+              type="file"
+              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              required
+              disabled={busy}
+              className="mt-2 block w-full"
+              label={<>Tệp Excel *</>}
+            />
+            <SharedFormField
+              name="defaultPassword"
+              type="password"
+              minLength={8}
+              defaultValue="Vatly1@123"
+              required
+              disabled={busy}
+              className="mt-2 block w-full"
+              label={<>Mật khẩu mặc định</>}
+            />
+            <SharedSelectField
+              name="classId"
+              disabled={busy || classes.loading}
+              className="mt-2 block w-full"
+              label={<>Ghi danh vào lớp (không bắt buộc)</>}
+            >
+              <option value="">Không ghi danh lớp</option>
+              {listItems(classes.data).map((item) => (
+                <option key={item.classId} value={item.classId}>
+                  {item.classCode || item.className}
+                </option>
+              ))}
+            </SharedSelectField>
             {importResult && (
               <Card className="p-4">
                 <strong>Kết quả nhập</strong>
@@ -374,42 +371,32 @@ export function UsersPage() {
               createUser(Object.fromEntries(new FormData(event.currentTarget)));
             }}
           >
-            <label>
-              Tên đăng nhập
-              <input
-                name="username"
-                minLength={4}
-                maxLength={255}
-                required
-                autoComplete="off"
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
-            <label>
-              Email
-              <input name="email" type="email" required className="mt-2 block w-full rounded-xl border p-3" />
-            </label>
-            <label>
-              Mật khẩu ban đầu
-              <input
-                name="password"
-                type="password"
-                minLength={8}
-                required
-                autoComplete="new-password"
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
-            <label>
-              Vai trò
-              <select name="role" className="mt-2 block w-full rounded-xl border p-3">
-                {Object.entries(roles).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SharedFormField
+              name="username"
+              minLength={4}
+              maxLength={255}
+              required
+              autoComplete="off"
+              className="mt-2 block w-full"
+              label={<>Tên đăng nhập</>}
+            />
+            <SharedFormField name="email" type="email" required className="mt-2 block w-full" label={<>Email</>} />
+            <SharedFormField
+              name="password"
+              type="password"
+              minLength={8}
+              required
+              autoComplete="new-password"
+              className="mt-2 block w-full"
+              label={<>Mật khẩu ban đầu</>}
+            />
+            <SharedSelectField name="role" className="mt-2 block w-full" label={<>Vai trò</>}>
+              {Object.entries(roles).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </SharedSelectField>
             <div className="flex justify-end gap-3 md:col-span-2">
               <Button type="button" variant="secondary" disabled={busy} onClick={() => setCreating(false)}>
                 Hủy
@@ -424,32 +411,29 @@ export function UsersPage() {
       {editing && (
         <UserModal busy={busy} title={`Cập nhật · ${editing.username}`} onClose={() => !busy && setEditing(null)}>
           <Form className="space-y-4" onSubmit={updateUser}>
-            <label className="block">
-              Email
-              <input
-                name="email"
-                type="email"
-                defaultValue={editing.email}
-                required
-                disabled={busy}
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
-            <label className="block">
-              Vai trò
-              <select
-                name="role"
-                defaultValue={editing.role}
-                disabled={busy}
-                className="mt-2 block w-full rounded-xl border p-3"
-              >
-                {Object.entries(roles).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <SharedFormField
+              name="email"
+              type="email"
+              defaultValue={editing.email}
+              required
+              disabled={busy}
+              className="mt-2 block w-full"
+              label={<>Email</>}
+              wrapperClassName="block"
+            />
+            <SharedSelectField
+              name="role"
+              defaultValue={editing.role}
+              disabled={busy}
+              label={<>Vai trò</>}
+              className="block"
+            >
+              {Object.entries(roles).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </SharedSelectField>
             <div className="flex justify-end gap-3">
               <Button type="button" variant="secondary" disabled={busy} onClick={() => setEditing(null)}>
                 Hủy
@@ -509,82 +493,91 @@ export function UsersPage() {
                   ? 'Kết quả tìm kiếm theo username'
                   : `${resource.data?.totalElements ?? rows.length} người dùng`}
               </p>
-              <label className="text-body-sm">
-                Sắp xếp username
-                <select
-                  value={sortDirection}
-                  disabled={busy || Boolean(searchedUser)}
-                  onChange={(event) => {
-                    setSortDirection(event.target.value);
-                    setPage(0);
-                  }}
-                  className="ml-2 rounded-lg border p-2"
-                >
-                  <option value="asc">A → Z</option>
-                  <option value="desc">Z → A</option>
-                </select>
-              </label>
+              <SharedSelectField
+                value={sortDirection}
+                disabled={busy || Boolean(searchedUser)}
+                onChange={(event) => {
+                  setSortDirection(event.target.value);
+                  setPage(0);
+                }}
+                label={<>Sắp xếp username</>}
+                className="text-body-sm"
+              >
+                <option value="asc">A → Z</option>
+                <option value="desc">Z → A</option>
+              </SharedSelectField>
             </div>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr>
-                  {['Tên đăng nhập', 'Email', 'Vai trò', 'Trạng thái', 'Thao tác'].map((label) => (
-                    <th className="p-3" key={label}>
-                      {label}
-                    </th>
-                  ))}
+            <SharedDataTable
+              rows={rows}
+              renderRow={(user) => (
+                <tr key={user.userId} className="border-t">
+                  <td className="p-3 font-medium">{user.username}</td>
+                  <td className="p-3">{user.email}</td>
+                  <td className="p-3">{roles[user.role] || user.role}</td>
+                  <td className="p-3">
+                    <StatusBadge tone={user.status === 'ACTIVE' ? 'success' : 'primary'}>
+                      {user.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
+                    </StatusBadge>
+                  </td>
+                  <td className="p-3">
+                    <ActionMenu
+                      label={`Thao tác với ${user.username}`}
+                      disabled={busy}
+                      items={[
+                        {
+                          label: 'Xem hồ sơ',
+                          onSelect: () => openProfile(user),
+                        },
+                        !isCurrentUser(user) && {
+                          label: 'Chỉnh sửa',
+                          onSelect: () => setEditing(user),
+                        },
+                        !isCurrentUser(user) && {
+                          label: user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
+                          onSelect: () =>
+                            setConfirm({
+                              type: 'status',
+                              user,
+                            }),
+                        },
+                        !isCurrentUser(user) && {
+                          label: 'Xóa tài khoản',
+                          danger: true,
+                          onSelect: () =>
+                            setConfirm({
+                              type: 'delete',
+                              user,
+                            }),
+                        },
+                      ]}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {rows.map((user) => (
-                  <tr key={user.userId} className="border-t">
-                    <td className="p-3 font-medium">{user.username}</td>
-                    <td className="p-3">{user.email}</td>
-                    <td className="p-3">{roles[user.role] || user.role}</td>
-                    <td className="p-3">
-                      <StatusBadge tone={user.status === 'ACTIVE' ? 'success' : 'primary'}>
-                        {user.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
-                      </StatusBadge>
-                    </td>
-                    <td className="p-3">
-                      <ActionMenu
-                        label={`Thao tác với ${user.username}`}
-                        disabled={busy}
-                        items={[
-                          { label: 'Xem hồ sơ', onSelect: () => openProfile(user) },
-                          !isCurrentUser(user) && { label: 'Chỉnh sửa', onSelect: () => setEditing(user) },
-                          !isCurrentUser(user) && {
-                            label: user.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản',
-                            onSelect: () => setConfirm({ type: 'status', user }),
-                          },
-                          !isCurrentUser(user) && {
-                            label: 'Xóa tài khoản',
-                            danger: true,
-                            onSelect: () => setConfirm({ type: 'delete', user }),
-                          },
-                        ]}
-                      />
-                    </td>
+              )}
+              paginate={false}
+              headerRows={
+                <>
+                  <tr>
+                    {['Tên đăng nhập', 'Email', 'Vai trò', 'Trạng thái', 'Thao tác'].map((label) => (
+                      <th className="p-3" key={label}>
+                        {label}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </>
+              }
+              tableClassName="w-full text-left text-sm"
+            />
             {rows.length === 0 && <p className="p-3">Chưa có người dùng.</p>}
             {!searchedUser && (
-              <div className="mt-4 flex items-center gap-3">
-                <Button disabled={!page || busy} onClick={() => setPage(page - 1)}>
-                  Trước
-                </Button>
-                <span>
-                  Trang {page + 1} / {resource.data?.totalPages || 1}
-                </span>
-                <Button
-                  disabled={busy || page + 1 >= (resource.data?.totalPages || 1)}
-                  onClick={() => setPage(page + 1)}
-                >
-                  Sau
-                </Button>
-              </div>
+              <Pagination
+                currentPage={page + 1}
+                pageSize={resource.data?.size || 20}
+                totalItems={resource.data?.totalElements ?? rows.length}
+                onPageChange={(nextPage) => {
+                  if (!busy) setPage(nextPage - 1);
+                }}
+              />
             )}
           </>
         )}

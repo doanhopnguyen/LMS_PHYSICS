@@ -1,3 +1,6 @@
+import { FormDialog as SharedFormDialog } from '../../components/FormDialog.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
@@ -48,38 +51,11 @@ function formatDate(value) {
 
 function MaterialCreateModal({ onClose }) {
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-3 md:p-6"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <section
-        className="max-h-[calc(100dvh-24px)] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="material-create-title"
-      >
-        <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white p-5 md:px-6">
-          <h2 id="material-create-title" className="text-headline-md font-bold">
-            Thêm học liệu
-          </h2>
-          <button
-            type="button"
-            autoFocus
-            onClick={onClose}
-            aria-label="Đóng biểu mẫu"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              close
-            </span>
-          </button>
-        </div>
-        <div className="px-4 pb-6 md:px-6">
-          <MaterialCreateForm />
-        </div>
-      </section>
-    </div>
+    <SharedFormDialog title={<>Thêm học liệu</>} onClose={onClose} wide>
+      <div className="px-4 pb-6 md:px-6">
+        <MaterialCreateForm />
+      </div>
+    </SharedFormDialog>
   );
 }
 
@@ -118,254 +94,209 @@ function MaterialFormModal({ material, onClose, onSave }) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-3 md:p-6"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <section
-        className="max-h-[calc(100dvh-24px)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="material-form-title"
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white p-5">
-          <h2 id="material-form-title" className="text-headline-md font-bold">
-            {material ? 'Chỉnh sửa học liệu' : 'Thêm học liệu'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng biểu mẫu"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"
+    <SharedFormDialog title={<>{material ? 'Chỉnh sửa học liệu' : 'Thêm học liệu'}</>} onClose={onClose} wide>
+      <Form onSubmit={submit} className="space-y-5 p-5 md:p-6">
+        <SharedFormField
+          value={form.title}
+          onChange={(event) => update('title', event.target.value)}
+          className="mt-2 w-full focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+          aria-invalid={Boolean(errors.title)}
+          label={
+            <>
+              Tên học liệu *
+              {errors.title && <span className="mt-1 block text-body-sm text-primary">{errors.title}</span>}
+            </>
+          }
+          wrapperClassName="block text-body-sm font-semibold"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <SharedSelectField
+            value={form.type}
+            onChange={(event) => update('type', event.target.value)}
+            label={<>Loại học liệu *</>}
+            className="text-body-sm font-semibold"
           >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+            {Object.entries(materialTypeLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={form.chapter}
+            onChange={(event) => update('chapter', event.target.value)}
+            label={<>Chương *</>}
+            className="text-body-sm font-semibold"
+          >
+            {Object.entries(materialChapterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
         </div>
-        <Form onSubmit={submit} className="space-y-5 p-5 md:p-6">
-          <label className="block text-body-sm font-semibold">
-            Tên học liệu *
-            <input
-              value={form.title}
-              onChange={(event) => update('title', event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] px-4 focus:border-primary focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
-              aria-invalid={Boolean(errors.title)}
-            />
-            {errors.title && <span className="mt-1 block text-body-sm text-primary">{errors.title}</span>}
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <label className="text-body-sm font-semibold">
-              Loại học liệu *
-              <select
-                value={form.type}
-                onChange={(event) => update('type', event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-              >
-                {Object.entries(materialTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-body-sm font-semibold">
-              Chương *
-              <select
-                value={form.chapter}
-                onChange={(event) => update('chapter', event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-              >
-                {Object.entries(materialChapterLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label className="block text-body-sm font-semibold">
-            Mô tả
-            <textarea
-              value={form.description}
-              onChange={(event) => update('description', event.target.value)}
-              rows="3"
-              className="mt-2 w-full border border-[#CBD5E1] p-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
-            />
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <label className="text-body-sm font-semibold">
-              Từ khóa
-              <input
-                value={form.keywords}
-                onChange={(event) => update('keywords', event.target.value)}
-                placeholder="Phân cách bằng dấu phẩy"
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="text-body-sm font-semibold">
-              Nguồn/Tác giả
-              <input
-                value={form.source}
-                onChange={(event) => update('source', event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-          </div>
-          <div>
-            <label className="block text-body-sm font-semibold">
-              File hoặc URL *
-              <input
-                value={form.fileName}
-                onChange={(event) => update('fileName', event.target.value)}
-                placeholder="Tên file hoặc https://..."
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-                aria-invalid={Boolean(errors.fileName)}
-              />
-              {errors.fileName && <span className="mt-1 block text-body-sm text-primary">{errors.fileName}</span>}
-            </label>
-            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-5 text-body-sm text-[#64748B] hover:border-primary">
-              <span className="material-symbols-outlined">upload_file</span>
-              <span>Chọn file minh họa từ thiết bị</span>
-              <input
-                type="file"
-                className="sr-only"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file)
-                    setForm((current) => ({
-                      ...current,
-                      fileName: file.name,
-                      fileSize: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-                    }));
-                }}
-              />
-            </label>
-          </div>
-          <label className="block text-body-sm font-semibold">
-            Trạng thái
-            <select
-              value={form.status}
-              onChange={(event) => update('status', event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="DRAFT">Bản nháp</option>
-              <option value="PENDING_APPROVAL">Chờ phê duyệt</option>
-              {material && (
-                <>
-                  <option value="APPROVED">Đã phê duyệt</option>
-                  <option value="ARCHIVED">Đã lưu trữ</option>
-                </>
-              )}
-            </select>
-          </label>
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-[#E2E8F0] pt-5">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Hủy
-            </Button>
-            <SubmitButton type="submit" icon="save">
-              Lưu học liệu
-            </SubmitButton>
-          </div>
-        </Form>
-      </section>
-    </div>
+        <SharedFormField
+          value={form.description}
+          onChange={(event) => update('description', event.target.value)}
+          rows="3"
+          className="mt-2 w-full focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+          multiline
+          label={<>Mô tả</>}
+          wrapperClassName="block text-body-sm font-semibold"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <SharedFormField
+            value={form.keywords}
+            onChange={(event) => update('keywords', event.target.value)}
+            placeholder="Phân cách bằng dấu phẩy"
+            className="mt-2 w-full"
+            label={<>Từ khóa</>}
+            wrapperClassName="text-body-sm font-semibold"
+          />
+          <SharedFormField
+            value={form.source}
+            onChange={(event) => update('source', event.target.value)}
+            className="mt-2 w-full"
+            label={<>Nguồn/Tác giả</>}
+            wrapperClassName="text-body-sm font-semibold"
+          />
+        </div>
+        <div>
+          <SharedFormField
+            value={form.fileName}
+            onChange={(event) => update('fileName', event.target.value)}
+            placeholder="Tên file hoặc https://..."
+            className="mt-2 w-full"
+            aria-invalid={Boolean(errors.fileName)}
+            label={
+              <>
+                File hoặc URL *
+                {errors.fileName && <span className="mt-1 block text-body-sm text-primary">{errors.fileName}</span>}
+              </>
+            }
+            wrapperClassName="block text-body-sm font-semibold"
+          />
+          <SharedFormField
+            type="file"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file)
+                setForm((current) => ({
+                  ...current,
+                  fileName: file.name,
+                  fileSize: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+                }));
+            }}
+            label={
+              <>
+                <span className="material-symbols-outlined">upload_file</span>
+                <span>Chọn file minh họa từ thiết bị</span>
+              </>
+            }
+            wrapperClassName="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-5 text-body-sm text-[#64748B] hover:border-primary"
+          />
+        </div>
+        <SharedSelectField
+          value={form.status}
+          onChange={(event) => update('status', event.target.value)}
+          label={<>Trạng thái</>}
+          className="block text-body-sm font-semibold"
+        >
+          <option value="DRAFT">Bản nháp</option>
+          <option value="PENDING_APPROVAL">Chờ phê duyệt</option>
+          {material && (
+            <>
+              <option value="APPROVED">Đã phê duyệt</option>
+              <option value="ARCHIVED">Đã lưu trữ</option>
+            </>
+          )}
+        </SharedSelectField>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 border-t border-[#E2E8F0] pt-5">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Hủy
+          </Button>
+          <SubmitButton type="submit" icon="save">
+            Lưu học liệu
+          </SubmitButton>
+        </div>
+      </Form>
+    </SharedFormDialog>
   );
 }
 
 function MaterialDetailModal({ material, onClose }) {
   const status = materialStatusMeta[material.status];
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-3 md:p-6"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <section
-        className="max-h-[calc(100dvh-24px)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="material-detail-title"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-[#E2E8F0] p-5 md:p-6">
-          <div className="flex gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FEE2E2] text-primary">
-              <span className="material-symbols-outlined">{typeIcons[material.type]}</span>
-            </span>
-            <div>
-              <p className="text-label-md font-bold text-primary">{materialTypeLabels[material.type]}</p>
-              <h2 id="material-detail-title" className="text-headline-md font-bold">
-                {material.title}
-              </h2>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng chi tiết"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div className="space-y-5 p-5 md:p-6">
-          <div className="flex flex-wrap gap-2">
-            <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
-            <StatusBadge tone="neutral">{materialChapterLabels[material.chapter]}</StatusBadge>
-          </div>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-body-sm">
-            <div>
-              <dt className="text-[#64748B]">Nguồn/Tác giả</dt>
-              <dd className="mt-1 font-semibold">{material.source || 'Chưa cập nhật'}</dd>
-            </div>
-            <div>
-              <dt className="text-[#64748B]">Thông tin file</dt>
-              <dd className="mt-1 break-all font-semibold">
-                {material.fileName} · {material.fileSize || 'Không xác định'}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[#64748B]">Ngày tạo</dt>
-              <dd className="mt-1 font-semibold">{formatDate(material.createdAt)}</dd>
-            </div>
-            <div>
-              <dt className="text-[#64748B]">Ngày cập nhật</dt>
-              <dd className="mt-1 font-semibold">{formatDate(material.updatedAt)}</dd>
-            </div>
-          </dl>
+    <SharedFormDialog title={<>{material.title}</>} onClose={onClose}>
+      <div>
+        <div className="flex gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FEE2E2] text-primary">
+            <span className="material-symbols-outlined">{typeIcons[material.type]}</span>
+          </span>
           <div>
-            <h3 className="font-semibold">Mô tả</h3>
-            <p className="mt-2 text-body-md text-[#64748B]">{material.description || 'Chưa có mô tả.'}</p>
-          </div>
-          <div>
-            <h3 className="font-semibold">Từ khóa</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {material.keywords.length ? (
-                material.keywords.map((keyword) => (
-                  <span key={keyword} className="rounded-full bg-[#F1F5F9] px-3 py-1 text-label-md text-[#475569]">
-                    {keyword}
-                  </span>
-                ))
-              ) : (
-                <span className="text-body-sm text-[#64748B]">Chưa có từ khóa.</span>
-              )}
-            </div>
-          </div>
-          <Card className={`p-4 ${material.status === 'APPROVED' ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'bg-[#F8FAFC]'}`}>
-            <h3 className="font-semibold">Sử dụng bởi AI</h3>
-            <p className={`mt-2 text-body-sm ${material.status === 'APPROVED' ? 'text-[#15803D]' : 'text-[#64748B]'}`}>
-              {material.status === 'APPROVED'
-                ? '✓ Học liệu này có thể được sử dụng làm nguồn tham chiếu cho Trợ giảng AI.'
-                : 'Học liệu này chưa được sử dụng làm nguồn chính thức cho Trợ giảng AI.'}
-            </p>
-          </Card>
-          <div className="flex justify-end">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Đóng
-            </Button>
+            <p className="text-label-md font-bold text-primary">{materialTypeLabels[material.type]}</p>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+      <div className="space-y-5 p-5 md:p-6">
+        <div className="flex flex-wrap gap-2">
+          <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+          <StatusBadge tone="neutral">{materialChapterLabels[material.chapter]}</StatusBadge>
+        </div>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-body-sm">
+          <div>
+            <dt className="text-[#64748B]">Nguồn/Tác giả</dt>
+            <dd className="mt-1 font-semibold">{material.source || 'Chưa cập nhật'}</dd>
+          </div>
+          <div>
+            <dt className="text-[#64748B]">Thông tin file</dt>
+            <dd className="mt-1 break-all font-semibold">
+              {material.fileName} · {material.fileSize || 'Không xác định'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[#64748B]">Ngày tạo</dt>
+            <dd className="mt-1 font-semibold">{formatDate(material.createdAt)}</dd>
+          </div>
+          <div>
+            <dt className="text-[#64748B]">Ngày cập nhật</dt>
+            <dd className="mt-1 font-semibold">{formatDate(material.updatedAt)}</dd>
+          </div>
+        </dl>
+        <div>
+          <h3 className="font-semibold">Mô tả</h3>
+          <p className="mt-2 text-body-md text-[#64748B]">{material.description || 'Chưa có mô tả.'}</p>
+        </div>
+        <div>
+          <h3 className="font-semibold">Từ khóa</h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {material.keywords.length ? (
+              material.keywords.map((keyword) => (
+                <span key={keyword} className="rounded-full bg-[#F1F5F9] px-3 py-1 text-label-md text-[#475569]">
+                  {keyword}
+                </span>
+              ))
+            ) : (
+              <span className="text-body-sm text-[#64748B]">Chưa có từ khóa.</span>
+            )}
+          </div>
+        </div>
+        <Card className={`p-4 ${material.status === 'APPROVED' ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'bg-[#F8FAFC]'}`}>
+          <h3 className="font-semibold">Sử dụng bởi AI</h3>
+          <p className={`mt-2 text-body-sm ${material.status === 'APPROVED' ? 'text-[#15803D]' : 'text-[#64748B]'}`}>
+            {material.status === 'APPROVED'
+              ? '✓ Học liệu này có thể được sử dụng làm nguồn tham chiếu cho Trợ giảng AI.'
+              : 'Học liệu này chưa được sử dụng làm nguồn chính thức cho Trợ giảng AI.'}
+          </p>
+        </Card>
+        <div className="flex justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Đóng
+          </Button>
+        </div>
+      </div>
+    </SharedFormDialog>
   );
 }
 
@@ -502,47 +433,52 @@ export function LecturerMaterialsPage() {
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]">
                 search
               </span>
-              <input
+              <SharedFormField
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 type="search"
                 placeholder="Tìm kiếm học liệu..."
-                className="w-full border border-[#CBD5E1] bg-[#F8FAFC] pl-11 pr-4 focus:border-primary focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+                className="w-full pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+                bare
               />
             </span>
           </label>
-          <label className="text-body-sm font-semibold">
-            <span className="mb-2 block">Chương</span>
-            <select
-              value={chapter}
-              onChange={(event) => setChapter(event.target.value)}
-              className="w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL_FILTER">Tất cả</option>
-              {Object.entries(materialChapterLabels)
-                .filter(([value]) => value !== 'ALL')
-                .map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            <span className="mb-2 block">Trạng thái</span>
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              className="w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả</option>
-              {Object.entries(materialStatusMeta).map(([value, meta]) => (
+          <SharedSelectField
+            value={chapter}
+            onChange={(event) => setChapter(event.target.value)}
+            label={
+              <>
+                <span className="mb-2 block">Chương</span>
+              </>
+            }
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL_FILTER">Tất cả</option>
+            {Object.entries(materialChapterLabels)
+              .filter(([value]) => value !== 'ALL')
+              .map(([value, label]) => (
                 <option key={value} value={value}>
-                  {meta.label}
+                  {label}
                 </option>
               ))}
-            </select>
-          </label>
+          </SharedSelectField>
+          <SharedSelectField
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+            label={
+              <>
+                <span className="mb-2 block">Trạng thái</span>
+              </>
+            }
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(materialStatusMeta).map(([value, meta]) => (
+              <option key={value} value={value}>
+                {meta.label}
+              </option>
+            ))}
+          </SharedSelectField>
         </div>
       </Card>
       <Tabs key={tabsKey} items={tabItems}>

@@ -1,3 +1,4 @@
+import { FormField as SharedFormField } from '../components/FormField.jsx';
 import { Form, SubmitButton } from '../components/Form.jsx';
 import React, { useState } from 'react';
 import { AppShell } from '../components/AppShell.jsx';
@@ -94,7 +95,8 @@ export function AccountPage() {
           *
         </span>
       )}
-      <input
+      <SharedFormField
+        bare
         name={name}
         type={type}
         defaultValue={value ?? ''}
@@ -250,17 +252,17 @@ export function AccountPage() {
                               {field('Họ và tên', 'fullName', profile.data?.fullName)}
                               {field('Số điện thoại', 'phone', profile.data?.phone, 'tel')}
                             </div>
-                            <label className="account-field mt-5">
-                              Giới thiệu
-                              <textarea
-                                name="bio"
-                                defaultValue={profile.data?.bio ?? ''}
-                                rows={3}
-                                disabled={busy}
-                                className="rounded-xl"
-                                placeholder="Viết vài dòng giới thiệu về bạn…"
-                              />
-                            </label>
+                            <SharedFormField
+                              name="bio"
+                              defaultValue={profile.data?.bio ?? ''}
+                              rows={3}
+                              disabled={busy}
+                              className=""
+                              placeholder="Viết vài dòng giới thiệu về bạn…"
+                              multiline
+                              label={<>Giới thiệu</>}
+                              wrapperClassName="account-field mt-5"
+                            />
                             <div className="account-form-actions">
                               <Button type="button" variant="secondary" disabled={busy} onClick={() => setEditing('')}>
                                 Hủy

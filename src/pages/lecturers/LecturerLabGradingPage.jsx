@@ -1,3 +1,5 @@
+import { FormDialog as SharedFormDialog } from '../../components/FormDialog.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -440,34 +442,33 @@ export function LecturerLabGradingPage() {
               </div>
               <StatusBadge tone="neutral">Tối đa {criterion.maxScore}</StatusBadge>
             </div>
-            <label className="mt-4 block text-body-sm font-semibold">
-              Điểm đánh giá
-              <input
-                type="number"
-                min="0"
-                max={criterion.maxScore}
-                step={rubric.scoreStep}
-                disabled={readOnly}
-                value={item.score}
-                onChange={(event) => updateCriterion(criterion.id, 'score', event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] px-4 disabled:bg-[#F1F5F9]"
-              />
-            </label>
+            <SharedFormField
+              type="number"
+              min="0"
+              max={criterion.maxScore}
+              step={rubric.scoreStep}
+              disabled={readOnly}
+              value={item.score}
+              onChange={(event) => updateCriterion(criterion.id, 'score', event.target.value)}
+              className="mt-2 w-full"
+              label={<>Điểm đánh giá</>}
+              wrapperClassName="mt-4 block text-body-sm font-semibold"
+            />
             {errors[criterion.id] && (
               <p className="mt-2 text-body-sm font-semibold text-primary" role="alert">
                 {errors[criterion.id]}
               </p>
             )}
-            <label className="mt-4 block text-body-sm font-semibold">
-              Nhận xét tiêu chí
-              <textarea
-                rows="2"
-                disabled={readOnly}
-                value={item.comment}
-                onChange={(event) => updateCriterion(criterion.id, 'comment', event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] p-3 disabled:bg-[#F1F5F9]"
-              />
-            </label>
+            <SharedFormField
+              rows="2"
+              disabled={readOnly}
+              value={item.comment}
+              onChange={(event) => updateCriterion(criterion.id, 'comment', event.target.value)}
+              className="mt-2 w-full"
+              multiline
+              label={<>Nhận xét tiêu chí</>}
+              wrapperClassName="mt-4 block text-body-sm font-semibold"
+            />
           </Card>
         );
       })}
@@ -482,17 +483,17 @@ export function LecturerLabGradingPage() {
             </strong>
           </div>
         </div>
-        <label className="mt-5 block text-body-sm font-semibold">
-          Nhận xét của giảng viên
-          <textarea
-            rows="5"
-            disabled={readOnly}
-            value={result.lecturerComment}
-            onChange={(event) => updateLecturerComment(event.target.value)}
-            placeholder="Nhập nhận xét tổng thể về báo cáo thí nghiệm..."
-            className="mt-2 w-full border border-[#CBD5E1] p-3 disabled:bg-[#F1F5F9]"
-          />
-        </label>
+        <SharedFormField
+          rows="5"
+          disabled={readOnly}
+          value={result.lecturerComment}
+          onChange={(event) => updateLecturerComment(event.target.value)}
+          placeholder="Nhập nhận xét tổng thể về báo cáo thí nghiệm..."
+          className="mt-2 w-full"
+          multiline
+          label={<>Nhận xét của giảng viên</>}
+          wrapperClassName="mt-5 block text-body-sm font-semibold"
+        />
         <div className="mt-5 flex flex-wrap gap-2">
           {!readOnly && (
             <>
@@ -598,31 +599,25 @@ export function LecturerLabGradingPage() {
         )}
       </Card>
       {adjusting && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-[#0F172A]/45 p-4">
-          <Card className="w-full max-w-lg p-6">
-            <h2 className="text-headline-md font-bold">Yêu cầu điều chỉnh</h2>
-            <p className="mt-2 text-body-sm text-[#64748B]">
-              Kết quả sẽ quay về trạng thái đang chấm và cần xác nhận lại.
-            </p>
-            <label className="mt-5 block text-body-sm font-semibold">
-              Lý do điều chỉnh
-              <textarea
-                rows="4"
-                value={adjustmentReason}
-                onChange={(event) => setAdjustmentReason(event.target.value)}
-                className="mt-2 w-full border border-[#CBD5E1] p-3"
-              />
-            </label>
-            <div className="mt-5 flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setAdjusting(false)}>
-                Hủy
-              </Button>
-              <Button disabled={!adjustmentReason.trim()} onClick={requestAdjustment}>
-                Xác nhận điều chỉnh
-              </Button>
-            </div>
-          </Card>
-        </div>
+        <SharedFormDialog title={<>Yêu cầu điều chỉnh</>} onClose={() => setAdjusting(false)}>
+          <p className="mt-2 text-body-sm text-[#64748B]">
+            Kết quả sẽ quay về trạng thái đang chấm và cần xác nhận lại.
+          </p>
+          <SharedFormField
+            rows="4"
+            value={adjustmentReason}
+            onChange={(event) => setAdjustmentReason(event.target.value)}
+            className="mt-2 w-full"
+            multiline
+            label={<>Lý do điều chỉnh</>}
+            wrapperClassName="mt-5 block text-body-sm font-semibold"
+          />
+          <div>
+            <Button disabled={!adjustmentReason.trim()} onClick={requestAdjustment}>
+              Xác nhận điều chỉnh
+            </Button>
+          </div>
+        </SharedFormDialog>
       )}
       {confirmAction === 'CONFIRM' && (
         <ConfirmDialog

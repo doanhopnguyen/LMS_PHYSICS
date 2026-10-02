@@ -121,7 +121,8 @@ export function DashboardPage() {
   const stats = snapshot?.data || {};
   const visibleTasks = upcomingTasks.map((item) => ({
     title: item.title || item.taskName || item.name || 'Nhiệm vụ học tập',
-    description: item.description || item.content || [item.courseName, item.classCode, item.taskType].filter(Boolean).join(' · '),
+    description:
+      item.description || item.content || [item.courseName, item.classCode, item.taskType].filter(Boolean).join(' · '),
     due:
       item.dueDate || item.deadline || item.endTime
         ? `Hạn: ${new Date(item.dueDate || item.deadline || item.endTime).toLocaleString('vi-VN')}`
@@ -249,7 +250,11 @@ export function DashboardPage() {
           />
         </DashboardOverview>
 
-        {dashboardError && <p role="alert" className="text-body-sm text-primary">{dashboardError}</p>}
+        {dashboardError && (
+          <p role="alert" className="text-body-sm text-primary">
+            {dashboardError}
+          </p>
+        )}
 
         <Card as="aside" className="dashboard-resume" aria-label="Bài học đang học dở">
           <span className="material-symbols-outlined dashboard-resume__icon" aria-hidden="true">
@@ -257,10 +262,14 @@ export function DashboardPage() {
           </span>
           <div className="dashboard-resume__text">
             <span>Tiến độ học tập hiện tại</span>
-            <strong>{stats.completedTopics ?? 0} / {stats.totalTopics ?? 0} chủ đề đã hoàn thành</strong>
+            <strong>
+              {stats.completedTopics ?? 0} / {stats.totalTopics ?? 0} chủ đề đã hoàn thành
+            </strong>
           </div>
           <span className="dashboard-resume__progress">
-            {stats.totalTopics ? `${Math.round((stats.completedTopics / stats.totalTopics) * 100)}% hoàn thành` : 'Chưa có dữ liệu'}
+            {stats.totalTopics
+              ? `${Math.round((stats.completedTopics / stats.totalTopics) * 100)}% hoàn thành`
+              : 'Chưa có dữ liệu'}
           </span>
           <a href="learning_results.html">
             Xem kết quả{' '}
@@ -272,15 +281,7 @@ export function DashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <Card className="lg:col-span-7 p-6">
-            <SectionHeader
-              icon="assignment_late"
-              title="Nhiệm vụ sắp tới"
-              action={
-                <a href="notifications_help.html" className="text-body-sm text-primary hover:underline font-semibold">
-                  Xem tất cả ({visibleTasks.length})
-                </a>
-              }
-            />
+            <SectionHeader icon="assignment_late" title="Nhiệm vụ sắp tới" />
             <div className="space-y-3.5 pt-5">
               {!visibleTasks.length && <p className="py-5 text-body-sm text-[#64748B]">Không có nhiệm vụ sắp tới.</p>}
               {visibleTasks.map((task) => (

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
-import { addNotification } from '../lib/notifications.js';
 
 export function AuthLayout({ title, description, children }) {
   useDocumentMeta({ title: `${title} · PTIT Physics`, bodyClass: 'login-body' });
@@ -29,7 +28,6 @@ export function AuthAlert({ error, children }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
     setVisible(true);
-    if (!error && children) addNotification(children);
     const timer = setTimeout(() => setVisible(false), 5000);
     return () => clearTimeout(timer);
   }, [children, error]);

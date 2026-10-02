@@ -28,7 +28,9 @@ const isFinished = (attempt) =>
 const statusText = (attempt) => (isFinished(attempt) ? 'Đã nộp' : attempt ? 'Đang làm' : 'Chưa làm');
 const hasActiveAttempt = (exam) => exam.attempts?.some((attempt) => !isFinished(attempt));
 const examTypeText = (value) =>
-  ({ PRACTICE: 'Luyện tập', QUIZ: 'Kiểm tra ngắn', MIDTERM: 'Kiểm tra giữa kỳ', FINAL: 'Thi cuối kỳ' }[value] || value || 'Đề kiểm tra');
+  ({ PRACTICE: 'Luyện tập', QUIZ: 'Kiểm tra ngắn', MIDTERM: 'Kiểm tra giữa kỳ', FINAL: 'Thi cuối kỳ' })[value] ||
+  value ||
+  'Đề kiểm tra';
 const examProgress = (exam, latest, active) => {
   if (isFinished(latest)) return 100;
   const progress = exam.activeProgress || active;
@@ -43,7 +45,14 @@ export function ExamPracticePage() {
   const params = new URLSearchParams(window.location.search);
   const examId = params.get('examId');
   if (examId) {
-    return <AttemptSession examId={examId} attemptId={params.get('attemptId')} takeMode={params.get('mode') === 'take'} workspace="practice" />;
+    return (
+      <AttemptSession
+        examId={examId}
+        attemptId={params.get('attemptId')}
+        takeMode={params.get('mode') === 'take'}
+        workspace="practice"
+      />
+    );
   }
   return <PracticeCenter />;
 }
@@ -135,13 +144,19 @@ function PracticeCenter() {
   const displayedExamRows = examRows.filter((exam) => exam.examType === 'PRACTICE');
   const start = async (exam) => {
     const policy = exam.policy;
-    const ended = Boolean(policy?.ended || policy?.isEnded || (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now()));
+    const ended = Boolean(
+      policy?.ended || policy?.isEnded || (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now())
+    );
     if (ended) {
       setNotice('Đề thi đã hết thời gian làm bài, bạn không thể bắt đầu lượt mới.');
       return;
     }
     if (policy && !policy.canStartAttempt) {
-      setNotice(policy.remainingAttempts <= 0 ? 'Bạn đã sử dụng hết số lượt làm bài cho đề này.' : 'Hiện không thể bắt đầu lượt làm bài mới theo chính sách của đề.');
+      setNotice(
+        policy.remainingAttempts <= 0
+          ? 'Bạn đã sử dụng hết số lượt làm bài cho đề này.'
+          : 'Hiện không thể bắt đầu lượt làm bài mới theo chính sách của đề.'
+      );
       return;
     }
     if (!Number(exam.totalQuestions)) {
@@ -246,13 +261,19 @@ function PracticeCenter() {
                 {error}
               </p>
             )}
-            <p className="mt-5 text-body-sm text-[#64748B]">Các đề dưới đây dành riêng cho ôn luyện. Hiển thị {displayedExamRows.length} đề.</p>
+            <p className="mt-5 text-body-sm text-[#64748B]">
+              Các đề dưới đây dành riêng cho ôn luyện. Hiển thị {displayedExamRows.length} đề.
+            </p>
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
               {displayedExamRows.map((exam, index) => {
                 const latest = exam.attempts?.[0];
                 const active = exam.attempts?.find((item) => !isFinished(item));
                 const policy = exam.policy;
-                const ended = Boolean(policy?.ended || policy?.isEnded || (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now()));
+                const ended = Boolean(
+                  policy?.ended ||
+                  policy?.isEnded ||
+                  (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now())
+                );
                 const hasQuestions = Number(exam.totalQuestions) > 0;
                 return (
                   <StatCard
@@ -273,7 +294,11 @@ function PracticeCenter() {
                         <div className="mt-2 grid grid-cols-2 gap-2 text-body-sm text-[#64748B]">
                           <span>{exam.totalQuestions ?? '—'} câu hỏi</span>
                           <span>{exam.durationMinutes ? `${exam.durationMinutes} phút` : '—'}</span>
-                          {policy && <span>Lượt: {policy.usedAttempts ?? 0}/{policy.maxAttempts ?? '—'}</span>}
+                          {policy && (
+                            <span>
+                              Lượt: {policy.usedAttempts ?? 0}/{policy.maxAttempts ?? '—'}
+                            </span>
+                          )}
                           {latest?.status === 'GRADED' && <span>Điểm: {latest.totalScore ?? '—'}</span>}
                           {latest?.attemptNumber && <span>Lần làm: {latest.attemptNumber}</span>}
                         </div>
@@ -289,10 +314,23 @@ function PracticeCenter() {
                             : active
                               ? 'Tiếp tục làm'
                               : hasQuestions
-                                ? ended ? 'Đã hết thời gian' : policy?.canStartAttempt === false ? (policy?.remainingAttempts <= 0 ? 'Đã hết lượt làm' : 'Chưa thể bắt đầu') : 'Bắt đầu ôn luyện'
+                                ? ended
+                                  ? 'Đã hết thời gian'
+                                  : policy?.canStartAttempt === false
+                                    ? policy?.remainingAttempts <= 0
+                                      ? 'Đã hết lượt làm'
+                                      : 'Chưa thể bắt đầu'
+                                    : 'Bắt đầu ôn luyện'
                                 : 'Chưa thể làm đề'}
                         </Button>
-                        <Button variant="secondary" className="mt-2 w-full" icon="history" onClick={() => setHistoryExam(exam)}>Lịch sử lần thi</Button>
+                        <Button
+                          variant="secondary"
+                          className="mt-2 w-full"
+                          icon="history"
+                          onClick={() => setHistoryExam(exam)}
+                        >
+                          Lịch sử lần thi
+                        </Button>
                       </>
                     }
                   />
@@ -305,18 +343,49 @@ function PracticeCenter() {
           </>
         )}
         {historyExam && (
-          <FormDialog title={`Lịch sử làm bài · ${historyExam.title || 'Đề thi'}`} onClose={() => setHistoryExam(null)} wide>
-            <p className="mb-4 text-body-sm text-[#64748B]">Các lượt làm bài của bạn cho đề này. Điểm chỉ hiển thị sau khi giảng viên hoặc hệ thống hoàn tất chấm.</p>
+          <FormDialog
+            title={`Lịch sử làm bài · ${historyExam.title || 'Đề thi'}`}
+            onClose={() => setHistoryExam(null)}
+            wide
+          >
             <DataTable
               paginate={false}
               columns={['Lần làm', 'Bắt đầu', 'Nộp bài', 'Trạng thái', 'Điểm', '']}
               rows={historyExam.attempts || []}
               renderRow={(attempt) => {
-                const graded = attempt.status === 'GRADED' && attempt.totalScore !== null && attempt.totalScore !== undefined;
-                return <tr className="border-t border-[#E2E8F0]" key={attempt.attemptId}><td className="p-3">{attempt.attemptNumber || '—'}</td><td className="p-3">{attempt.startedAt ? new Date(attempt.startedAt).toLocaleString('vi-VN') : '—'}</td><td className="p-3">{attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleString('vi-VN') : 'Chưa nộp'}</td><td className="p-3"><StatusBadge tone={graded ? 'success' : isFinished(attempt) ? 'warning' : 'neutral'}>{graded ? 'Đã chấm' : isFinished(attempt) ? 'Chờ chấm' : 'Đang làm'}</StatusBadge></td><td className="p-3">{graded ? attempt.totalScore : '—'}</td><td className="p-3">{isFinished(attempt) && <a href={`exam_results.html?examId=${encodeURIComponent(historyExam.examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}><Button variant="secondary">Xem</Button></a>}</td></tr>;
+                const graded =
+                  attempt.status === 'GRADED' && attempt.totalScore !== null && attempt.totalScore !== undefined;
+                return (
+                  <tr className="border-t border-[#E2E8F0]" key={attempt.attemptId}>
+                    <td className="p-3">{attempt.attemptNumber || '—'}</td>
+                    <td className="p-3">
+                      {attempt.startedAt ? new Date(attempt.startedAt).toLocaleString('vi-VN') : '—'}
+                    </td>
+                    <td className="p-3">
+                      {attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleString('vi-VN') : 'Chưa nộp'}
+                    </td>
+                    <td className="p-3">
+                      <StatusBadge tone={graded ? 'success' : isFinished(attempt) ? 'warning' : 'neutral'}>
+                        {graded ? 'Đã chấm' : isFinished(attempt) ? 'Chờ chấm' : 'Đang làm'}
+                      </StatusBadge>
+                    </td>
+                    <td className="p-3">{graded ? attempt.totalScore : '—'}</td>
+                    <td className="p-3">
+                      {isFinished(attempt) && (
+                        <a
+                          href={`exam_results.html?examId=${encodeURIComponent(historyExam.examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}
+                        >
+                          <Button variant="secondary">Xem</Button>
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                );
               }}
             />
-            {!historyExam.attempts?.length && <p className="py-6 text-center text-[#64748B]">Bạn chưa có lượt làm bài nào cho đề này.</p>}
+            {!historyExam.attempts?.length && (
+              <p className="py-6 text-center text-[#64748B]">Bạn chưa có lượt làm bài nào cho đề này.</p>
+            )}
           </FormDialog>
         )}
         <Card className="p-6">

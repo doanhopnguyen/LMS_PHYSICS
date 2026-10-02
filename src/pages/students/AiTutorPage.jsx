@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { SelectField } from '../../components/SelectField.jsx';
+import { FormField } from '../../components/FormField.jsx';
+import { Form, SubmitButton } from '../../components/Form.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
-import { ProgressBar } from '../../components/ProgressBar.jsx';
+import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { useChatAutoScroll } from '../../hooks/useChatAutoScroll.js';
-import { api } from '../../lib/apiClient.js';
-import { useApiData } from '../../hooks/useApiData.js';
+import { useApiData, listItems } from '../../hooks/useApiData.js';
+import { api, apiRequest } from '../../lib/apiClient.js';
+import { loadAllPages, safeUrl } from '../../lib/lecturerUtils.js';
 
-const starterQuestions = [
+const questions = [
   'Giải thích định luật II Newton',
   'Tại sao vật rơi tự do có gia tốc g?',
-  'Cho tôi một bài tập về lực ma sát',
+  'Gợi ý cách giải bài tập về lực ma sát',
 ];
-
-const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
+const dateLabel = (value) =>
+  value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleDateString('vi-VN') : 'Hội thoại';
 
 export function AiTutorPage() {
   const [messages, setMessages] = useState([]);
@@ -22,370 +26,411 @@ export function AiTutorPage() {
   const [classes, setClasses] = useState([]);
   const [classId, setClassId] = useState('');
   const [topics, setTopics] = useState([]);
-  const [topic, setTopic] = useState('');
-  const [mode, setMode] = useState('TEXT');
-  const [ended, setEnded] = useState(false);
-  const [rated, setRated] = useState({});
+  const [topicId, setTopicId] = useState('');
+  const [conversation, setConversation] = useState(null);
+  const [busy, setBusy] = useState(false);
   const [sending, setSending] = useState(false);
-  const [conversationId, setConversationId] = useState(null);
-  const [lastMessageId, setLastMessageId] = useState(null);
+  const [error, setError] = useState('');
+  const [rated, setRated] = useState({});
+  const [ratingId, setRatingId] = useState(null);
+  const lock = useRef(false);
+  const composer = useRef(null);
   const messagesRef = useChatAutoScroll(messages);
+  const history = useApiData('/api/v1/ai-tutor/conversations/my');
+  const conversations = [...listItems(history.data)].sort(
+    (a, b) => (Date.parse(b.startedAt) || 0) - (Date.parse(a.startedAt) || 0)
+  );
+  const ended = Boolean(conversation?.endedAt);
+  const selectedClass = classes.find((row) => row.classId === classId);
+  const selectedTopic = topics.find((row) => row.topicId === topicId);
+  useEffect(() => {
+    const input = composer.current;
+    if (!input) return;
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+  }, [value]);
 
   useEffect(() => {
     let alive = true;
-    api.students
-      .myClasses()
-      .then((data) => {
-        if (!alive) return;
-        const classRows = rowsOf(data);
-        setClasses(classRows);
-        setClassId((current) => current || classRows[0]?.classId || '');
+    loadAllPages(apiRequest, '/api/v1/students/me/classes')
+      .then((rows) => {
+        if (alive) {
+          setClasses(rows);
+          setClassId((current) => current || rows[0]?.classId || '');
+        }
       })
-      .catch(() => alive && setClasses([]));
+      .catch((err) => alive && setError(err.message));
     return () => {
       alive = false;
     };
   }, []);
-
   useEffect(() => {
     let alive = true;
-    const selectedClass = classes.find((item) => String(item.classId) === String(classId));
-    const subjectId = selectedClass?.subjectId;
-    setTopic('');
-    if (!subjectId) {
-      setTopics([]);
-      return () => {
-        alive = false;
-      };
-    }
-    api.subjects
-      .topics(subjectId)
-      .then((data) => alive && setTopics(rowsOf(data)))
-      .catch(() => alive && setTopics([]));
+    setTopics([]);
+    if (selectedClass?.subjectId)
+      api.subjects
+        .topics(selectedClass.subjectId)
+        .then((data) => alive && setTopics(listItems(data)))
+        .catch((err) => alive && setError(err.message));
     return () => {
       alive = false;
     };
-  }, [classes, classId]);
+  }, [selectedClass?.subjectId]);
 
-  const startPayload = () => ({ classId, topicId: topic || null, mode });
-
-  // Load my conversations list
-  const { data: conversationsData } = useApiData('/api/v1/ai-tutor/conversations/my');
-  const conversations = Array.isArray(conversationsData) ? conversationsData : [];
-
-  // Start a new conversation
-  const startNewConversation = async () => {
+  const remember = (conv) => {
+    setConversation(conv);
+    history.updateData((data) => [
+      conv,
+      ...listItems(data).filter((row) => row.conversationId !== conv.conversationId),
+    ]);
+  };
+  const newChat = () => {
+    if (lock.current) return;
+    setConversation(null);
+    setMessages([]);
+    setValue('');
+    setRated({});
+    setError('');
+    composer.current?.focus();
+  };
+  const loadConversation = async (conv) => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError('');
     try {
-      if (!classId) return;
-      const conv = await api.aiTutor.start(startPayload());
-      setConversationId(conv.conversationId);
-      setMessages([]);
-      setEnded(false);
+      const data = await api.aiTutor.messages(conv.conversationId);
+      setMessages(listItems(data));
+      setConversation(conv);
+      setClassId(conv.classId);
+      setTopicId(conv.topicId || '');
       setRated({});
       setValue('');
     } catch (err) {
-      console.error('Cannot start conversation:', err);
-    }
-  };
-
-  // Load messages for an existing conversation
-  const loadConversation = async (convId) => {
-    try {
-      const msgs = await api.aiTutor.messages(convId);
-      const list = Array.isArray(msgs) ? msgs : [];
-      setMessages(
-        list.map((m) => ({
-          role: m.sender === 'USER' ? 'user' : 'assistant',
-          text: m.contentText,
-          messageId: m.messageId,
-        }))
-      );
-      setConversationId(convId);
-      setEnded(false);
-    } catch (err) {
-      console.error('Cannot load messages:', err);
-    }
-  };
-
-  const send = async () => {
-    if (!value.trim() || ended || sending) return;
-    const userText = value;
-    setValue('');
-    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
-    setSending(true);
-    try {
-      let convId = conversationId;
-      if (!convId) {
-        if (!classId) throw new Error('Chọn lớp học trước khi bắt đầu trao đổi.');
-        const conv = await api.aiTutor.start(startPayload());
-        convId = conv.conversationId;
-        setConversationId(convId);
-      }
-      const reply = await api.aiTutor.send(convId, { content: userText });
-      setLastMessageId(reply.messageId);
-      setMessages((prev) => [...prev, { role: 'assistant', text: reply.contentText, messageId: reply.messageId }]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', text: 'Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.', isError: true },
-      ]);
+      setError(err.message || 'Không thể tải hội thoại.');
     } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+  const send = async () => {
+    const content = value.trim();
+    if (!content || ended || lock.current || !classId) return;
+    lock.current = true;
+    setBusy(true);
+    setSending(true);
+    setError('');
+    setValue('');
+    try {
+      let conv = conversation;
+      if (!conv) {
+        conv = await api.aiTutor.start({ classId, topicId: topicId || null, mode: 'TEXT' });
+        remember(conv);
+      }
+      const reply = await api.aiTutor.send(conv.conversationId, { content });
+      setMessages((rows) => [...rows, { sender: 'USER', contentText: content }, reply]);
+      remember({ ...conv, messageCount: (conv.messageCount || 0) + 2 });
+    } catch (err) {
+      setValue(content);
+      setError(err.message || 'Không thể gửi tin nhắn. Vui lòng thử lại.');
+    } finally {
+      lock.current = false;
+      setBusy(false);
       setSending(false);
+      composer.current?.focus();
     }
   };
-
   const endConversation = async () => {
-    if (!conversationId) {
-      setEnded(true);
-      return;
-    }
+    if (!conversation || ended || lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError('');
     try {
-      await api.aiTutor.end(conversationId);
+      remember(await api.aiTutor.end(conversation.conversationId));
     } catch (err) {
-      /* ignore */
-    }
-    setEnded(true);
-  };
-
-  const submitFeedback = async (messageId, rating) => {
-    setRated((prev) => ({ ...prev, [messageId]: rating }));
-    try {
-      await api.aiTutor.sendFeedback(messageId, { rating: rating === 'UP' ? 5 : 1 });
-    } catch (err) {
-      /* ignore */
+      setError(err.message || 'Không thể kết thúc phiên.');
+    } finally {
+      lock.current = false;
+      setBusy(false);
     }
   };
-
+  const feedback = async (messageId, rating) => {
+    if (ratingId) return;
+    setRatingId(messageId);
+    try {
+      await api.aiTutor.sendFeedback(messageId, { rating });
+      setRated((current) => ({ ...current, [messageId]: rating }));
+    } catch (err) {
+      setError(err.message || 'Không thể gửi đánh giá.');
+    } finally {
+      setRatingId(null);
+    }
+  };
   return (
     <AppShell
       currentPage="ai_tutor.html"
-      title="Trợ giảng AI Socratic · PTIT Physics 1"
-      breadcrumbs={['Trợ giảng AI']}
-      current="Trợ giảng AI"
+      title="Trợ giảng AI · PTIT Physics LMS"
       footer={false}
       contentClass="chat-page-content"
       showChatLauncher={false}
       toolbar={
         <DetailToolbar
           title="Trợ giảng AI"
-          subtitle="PTIT Tutor · Hỏi đáp Vật lý 1"
+          subtitle="Hỏi đáp và gợi mở cách giải"
           backHref="dashboard.html"
           backLabel="Về trang chủ"
           actions={
-            <>
-              <a href="document_viewer.html">Học liệu</a>
-              <Button icon="add" onClick={startNewConversation}>
-                Chat mới
-              </Button>
-            </>
+            <Button icon="add" onClick={newChat} disabled={busy}>
+              Chat mới
+            </Button>
           }
         />
       }
     >
-      <div className="chat-page">
-        <Card as="aside" className="chat-page__history hidden w-[230px] shrink-0 flex-col gap-4 p-4 lg:flex">
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <span className="text-label-sm uppercase text-[#94A3B8]">Lịch sử gần đây</span>
-            <div className="mt-2 space-y-1">
-              {(conversations.length > 0 ? conversations.slice(0, 6) : []).map((conv, index) => (
+      <AuthAlert error>{error}</AuthAlert>
+      <div className="chat-page ai-chat">
+        <Card as="aside" className="chat-page__history ai-chat__history flex flex-col p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-body-md font-semibold">Lịch sử hội thoại</h2>
+            <Button
+              variant="ghost"
+              icon="refresh"
+              aria-label="Tải lại lịch sử"
+              disabled={history.loading || busy}
+              onClick={history.reload}
+              className="px-2"
+            />
+          </div>
+          {history.loading ? (
+            <p role="status" className="mt-3 text-body-sm text-slate-500">
+              Đang tải…
+            </p>
+          ) : history.error ? (
+            <p role="alert" className="mt-3 text-body-sm text-primary">
+              Không thể tải lịch sử. Bấm tải lại để thử.
+            </p>
+          ) : (
+            <div className="ai-chat__history-list mt-3">
+              {conversations.map((conv) => (
                 <button
+                  type="button"
                   key={conv.conversationId}
-                  onClick={() => loadConversation(conv.conversationId)}
-                  className={`w-full rounded-xl px-3 py-2.5 text-left text-body-sm transition-colors ${conversationId === conv.conversationId ? 'bg-[#FEF2F2] font-semibold text-primary' : 'text-[#64748B] hover:bg-[#F8FAFC]'}`}
+                  disabled={busy}
+                  aria-current={conversation?.conversationId === conv.conversationId ? 'true' : undefined}
+                  onClick={() => loadConversation(conv)}
+                  className={
+                    'ai-chat__history-item rounded-xl p-3 text-left text-body-sm transition-colors disabled:opacity-50 ' +
+                    (conversation?.conversationId === conv.conversationId
+                      ? 'bg-red-50 text-primary'
+                      : 'text-slate-600 hover:bg-slate-50')
+                  }
                 >
-                  <span className="material-symbols-outlined mr-2 align-middle text-sm">chat_bubble_outline</span>
-                  {`Phiên ${index + 1} • ${conv.messageCount || 0} tin`}
+                  <span className="block font-medium">
+                    {classes.find((row) => row.classId === conv.classId)?.classCode ||
+                      classes.find((row) => row.classId === conv.classId)?.className ||
+                      'Hỏi đáp Vật lý'}
+                  </span>
+                  <span className="mt-1 block text-xs text-slate-500">
+                    {dateLabel(conv.startedAt)} · {conv.messageCount || 0} tin{conv.endedAt ? ' · Đã kết thúc' : ''}
+                  </span>
                 </button>
               ))}
-              {conversations.length === 0 && <p className="text-body-sm text-[#94A3B8] px-3 py-2">Chưa có phiên nào</p>}
+              {!conversations.length && (
+                <p className="text-body-sm text-slate-500">Chưa có hội thoại. Gửi câu hỏi để bắt đầu.</p>
+              )}
             </div>
-          </div>
-          <Card as="div" className="bg-[#F8FAFC] p-3 text-body-sm text-[#64748B]">
-            <span className="material-symbols-outlined mr-1 align-middle text-sm text-primary">tips_and_updates</span>
-            Hỏi từng bước để AI gợi mở cách giải.
-          </Card>
+          )}
+          <a
+            href="library.html"
+            className="mt-4 inline-flex items-center gap-2 text-body-sm font-medium text-primary hover:underline"
+          >
+            <span className="material-symbols-outlined text-base" aria-hidden="true">
+              menu_book
+            </span>
+            Kho học liệu
+          </a>
         </Card>
-
-        <Card
-          as="section"
-          className="chat-page__conversation flex min-w-0 flex-1 flex-col overflow-hidden bg-[#F8FAFC]"
-        >
-          <div className="flex flex-col gap-2 border-b border-[#E2E8F0] bg-white p-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-2 text-body-sm">
-              <select
-                value={classId}
-                onChange={(event) => setClassId(event.target.value)}
-                className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"
-              >
-                <option value="">Chọn lớp học</option>
-                {classes.map((item) => (
-                  <option key={item.classId} value={item.classId}>
-                    {item.classCode || item.className || item.subjectName}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={topic}
-                onChange={(event) => setTopic(event.target.value)}
-                disabled={!topics.length}
-                className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm disabled:bg-[#F1F5F9]"
-              >
-                <option value="">Tất cả chủ đề</option>
-                {topics.map((item) => (
-                  <option key={item.topicId} value={item.topicId}>
-                    {item.topicName}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={mode}
-                onChange={(event) => setMode(event.target.value)}
-                className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 text-body-sm"
-              >
-                <option value="TEXT">Trao đổi văn bản</option>
-                <option value="VOICE">Chế độ giọng nói</option>
-              </select>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={endConversation}
-              disabled={ended}
-              className="h-9 px-3 text-body-sm font-semibold"
-            >
-              {ended ? 'Đã kết thúc phiên' : 'Kết thúc phiên'}
-            </Button>
+        <Card className="chat-page__conversation flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 border-b border-slate-200 p-4">
+            {!conversation ? (
+              <div className="ai-chat__context">
+                <SelectField
+                  label="Lớp học"
+                  value={classId}
+                  disabled={busy}
+                  onChange={(e) => {
+                    setClassId(e.target.value);
+                    setTopicId('');
+                  }}
+                >
+                  <option value="">Chọn lớp học</option>
+                  {classes.map((row) => (
+                    <option key={row.classId} value={row.classId}>
+                      {row.classCode || row.className || row.subjectName}
+                    </option>
+                  ))}
+                </SelectField>
+                <SelectField
+                  label="Chủ đề"
+                  value={topicId}
+                  disabled={busy || !topics.length}
+                  onChange={(e) => setTopicId(e.target.value)}
+                >
+                  <option value="">Trao đổi chung</option>
+                  {topics.map((row) => (
+                    <option key={row.topicId} value={row.topicId}>
+                      {row.topicName || row.name}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <h2 className="shrink-0 text-body-md font-semibold">
+                    {selectedClass?.classCode || selectedClass?.className || 'Hội thoại'}
+                  </h2>
+                  <p
+                    className="min-w-0 truncate text-body-sm text-slate-500"
+                    title={selectedTopic?.topicName || selectedTopic?.name || 'Trao đổi chung'}
+                  >
+                    {selectedTopic?.topicName || selectedTopic?.name || 'Trao đổi chung'}
+                    {ended ? ' · Đã kết thúc' : ''}
+                  </p>
+                </div>
+                <Button className="shrink-0" variant="ghost" disabled={busy || ended} onClick={endConversation}>
+                  {ended ? 'Đã kết thúc' : 'Kết thúc phiên'}
+                </Button>
+              </div>
+            )}
           </div>
           <div
-            className="chat-page__messages min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:p-6"
             ref={messagesRef}
+            className="chat-page__messages min-h-0 flex-1 space-y-5 overflow-y-auto bg-slate-50 p-4 md:p-6"
             role="log"
             aria-label="Tin nhắn trợ giảng AI"
             aria-live="polite"
           >
+            {!messages.length && !busy && (
+              <div className="mx-auto flex max-w-lg flex-col items-center py-8 text-center">
+                <span className="material-symbols-outlined text-4xl text-primary" aria-hidden="true">
+                  forum
+                </span>
+                <h2 className="mt-4 text-title-lg font-medium">Bạn muốn tìm hiểu điều gì?</h2>
+                <p className="mt-2 text-body-sm text-slate-500">
+                  Chọn lớp và chủ đề, rồi đặt câu hỏi. AI sẽ gợi mở từng bước để bạn tự tìm lời giải.
+                </p>
+                {!ended && (
+                  <div className="mt-5 grid w-full gap-2">
+                    {questions.map((question) => (
+                      <Button
+                        key={question}
+                        variant="secondary"
+                        onClick={() => {
+                          setValue(question);
+                          composer.current?.focus();
+                        }}
+                        className="h-auto min-h-10 py-2 text-body-sm"
+                      >
+                        {question}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {messages.map((message, index) => (
               <div
-                key={`${message.role}-${index}`}
-                className={`flex gap-2.5 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                key={message.messageId || index}
+                className={'flex ' + (message.sender === 'USER' ? 'justify-end' : 'justify-start')}
               >
-                {message.role === 'assistant' && (
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
-                    <span className="material-symbols-outlined text-lg">smart_toy</span>
-                  </span>
-                )}
                 <Card
                   as="article"
-                  className={`chat-message ${message.role === 'user' ? 'is-user' : ''}`}
+                  data-fixed-corners="true"
+                  className={'chat-message ' + (message.sender === 'USER' ? 'is-user' : '')}
                 >
-                  {message.role === 'assistant' && (
-                    <div className="mb-1.5 text-label-md font-bold text-primary">PTIT Tutor</div>
+                  <span
+                    className={
+                      'mb-2 block text-label-sm font-medium ' +
+                      (message.sender === 'USER' ? 'text-white' : 'text-primary')
+                    }
+                  >
+                    {message.sender === 'USER' ? 'Bạn' : 'PTIT Tutor'}
+                  </span>
+                  <p className="text-body-md leading-relaxed">{message.contentText}</p>
+                  {safeUrl(message.audioUrl) && (
+                    <audio controls preload="none" src={safeUrl(message.audioUrl)} className="mt-3 max-w-full" />
                   )}
-                  <p className="text-body-md leading-relaxed">{message.text}</p>
-                  {message.role === 'assistant' && message.messageId && !message.isError && (
-                    <div className="mt-3 flex items-center gap-2 text-label-sm text-[#64748B]">
-                      <span>Phản hồi hữu ích?</span>
-                      <Button
-                        onClick={() => submitFeedback(message.messageId, 'UP')}
-                        variant="ghost"
-                        className={`h-8 min-w-8 px-2 ${rated[message.messageId] === 'UP' ? 'bg-[#DCFCE7] text-[#15803D]' : ''}`}
-                        aria-label="Hữu ích"
-                      >
-                        👍
-                      </Button>
-                      <Button
-                        onClick={() => submitFeedback(message.messageId, 'DOWN')}
-                        variant="ghost"
-                        className={`h-8 min-w-8 px-2 ${rated[message.messageId] === 'DOWN' ? 'bg-[#FEE2E2] text-primary' : ''}`}
-                        aria-label="Chưa hữu ích"
-                      >
-                        👎
-                      </Button>
+                  {message.sender === 'AI' && message.messageId && (
+                    <div className="mt-3 flex gap-1">
+                      {[5, 1].map((rating) => (
+                        <Button
+                          key={rating}
+                          variant="ghost"
+                          icon={rating === 5 ? 'thumb_up' : 'thumb_down'}
+                          aria-label={rating === 5 ? 'Hữu ích' : 'Chưa hữu ích'}
+                          aria-pressed={rated[message.messageId] === rating}
+                          disabled={Boolean(ratingId)}
+                          onClick={() => feedback(message.messageId, rating)}
+                          className={'h-8 px-2 ' + (rated[message.messageId] === rating ? 'bg-red-50' : '')}
+                        />
+                      ))}
                     </div>
                   )}
                 </Card>
               </div>
             ))}
-            <div className="flex flex-wrap gap-2 pt-1">
-              {starterQuestions.map((question) => (
-                <Button
-                  key={question}
-                  onClick={() => setValue(question)}
-                  variant="secondary"
-                  className="h-auto min-h-9 px-3 py-2 text-left text-body-sm text-[#475569]"
-                >
-                  {question}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div className="border-t border-[#E2E8F0] bg-white p-3 md:p-4">
-            {ended && (
-              <Card as="p" className="mb-3 border-0 bg-[#F1F5F9] px-3 py-2 text-body-sm text-[#475569] shadow-none">
-                Phiên trao đổi đã kết thúc. Chọn “Chat mới” để bắt đầu phiên khác.
-              </Card>
+            {busy && (
+              <p role="status" className="text-body-sm text-slate-500">
+                {sending ? 'AI đang trả lời…' : 'Đang tải hội thoại…'}
+              </p>
             )}
-            <div className="chat-composer">
-              <textarea
+          </div>
+          <div className="shrink-0 border-t border-slate-200 p-3 md:p-4">
+            {ended && (
+              <p className="mb-3 text-body-sm text-slate-500">
+                Phiên đã kết thúc. Chọn “Chat mới” để tiếp tục trao đổi.
+              </p>
+            )}
+            <Card
+              as={Form}
+              data-fixed-corners="true"
+              className="chat-composer"
+              onSubmit={(e) => {
+                e.preventDefault();
+                send();
+              }}
+            >
+              <FormField
+                ref={composer}
+                bare
+                multiline
+                rows={1}
                 value={value}
-                onChange={(event) => setValue(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
+                aria-label="Câu hỏi cho trợ giảng AI"
+                onChange={(e) => setValue(e.target.value)}
+                disabled={ended || busy || !classId}
+                placeholder={classId ? 'Nhập câu hỏi…' : 'Chọn lớp học để bắt đầu…'}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
                     send();
                   }
                 }}
-                rows="1"
-                aria-label="Đặt câu hỏi cho trợ giảng AI"
-                disabled={ended}
-                className="max-h-28 min-h-[40px] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-body-md focus:ring-0"
-                placeholder="Đặt câu hỏi cho trợ giảng AI..."
+                className="min-w-0 flex-1 resize-none"
               />
-              <Button
-                onClick={send}
-                disabled={ended || !value.trim() || sending}
-                className="h-10 w-10 shrink-0 px-0"
+              <SubmitButton
                 aria-label="Gửi câu hỏi"
-              >
-                <span className="material-symbols-outlined">{sending ? 'pending' : 'send'}</span>
-              </Button>
-            </div>
-            <p className="mt-1.5 text-center text-label-sm text-[#94A3B8]">
-              AI có thể mắc lỗi. Hãy kiểm tra lại với giáo trình chính thức.
+                disabled={ended || busy || !classId || !value.trim()}
+                icon="send"
+                className="ai-chat__send h-11 w-11 shrink-0 px-0"
+              />
+            </Card>
+            <p className="mt-2 text-center text-xs text-slate-400">
+              Enter để gửi · Shift+Enter xuống dòng. Kiểm tra câu trả lời với giáo trình.
             </p>
           </div>
         </Card>
-
-        <aside className="hidden w-[250px] shrink-0 flex-col gap-4 xl:flex">
-          <Card className="p-4">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">menu_book</span>
-              <strong className="text-body-md">Nguồn học liệu</strong>
-            </div>
-            <p className="mt-3 text-body-sm text-[#64748B]">Giáo trình Vật lý đại cương 1 · Chương 2</p>
-            <a href="document_viewer.html" className="mt-3 inline-block text-body-sm font-semibold text-primary">
-              Mở tài liệu →
-            </a>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <strong className="text-body-md">Tiến độ chương</strong>
-              <span className="font-bold text-primary">75%</span>
-            </div>
-            <ProgressBar value={75} className="mt-3" />
-            <p className="mt-3 text-body-sm text-[#64748B]">Bạn đang học tốt. Tiếp tục duy trì nhé!</p>
-          </Card>
-          <Card className="p-4">
-            <h2 className="text-body-md font-bold">Công cụ nhanh</h2>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button variant="secondary" className="h-auto min-h-20 rounded-xl bg-[#F8FAFC] p-3 text-body-sm text-[#475569]">
-                <span className="material-symbols-outlined block text-primary">functions</span>Công thức
-              </Button>
-              <Button variant="secondary" className="h-auto min-h-20 rounded-xl bg-[#F8FAFC] p-3 text-body-sm text-[#475569]">
-                <span className="material-symbols-outlined block text-primary">bookmark</span>Đã lưu
-              </Button>
-            </div>
-          </Card>
-        </aside>
       </div>
     </AppShell>
   );

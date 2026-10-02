@@ -1,3 +1,6 @@
+import { FormDialog as SharedFormDialog } from '../../components/FormDialog.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
@@ -148,292 +151,272 @@ function QuestionFormModal({ question, questions, approvedMaterials, onClose, on
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-2 md:p-6"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <section
-        className="authoring-form question-authoring max-h-[calc(100dvh-16px)] w-full max-w-5xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="question-form-title"
-      >
-        <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-white p-5 md:px-6">
-          <h2 id="question-form-title" className="text-headline-md font-bold">
-            {question ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng biểu mẫu"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"
+    <SharedFormDialog title={<>{question ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'}</>} onClose={onClose} wide>
+      {!question && (
+        <div
+          className="flex gap-2 border-b border-[#E2E8F0] bg-white px-5 py-4 md:px-6"
+          role="group"
+          aria-label="Cách tạo câu hỏi"
+        >
+          <Button
+            variant={entryMode === 'manual' ? 'primary' : 'secondary'}
+            aria-pressed={entryMode === 'manual'}
+            onClick={() => setEntryMode('manual')}
           >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+            Nhập thủ công
+          </Button>
+          <Button
+            variant={entryMode === 'excel' ? 'primary' : 'secondary'}
+            aria-pressed={entryMode === 'excel'}
+            icon="upload_file"
+            onClick={() => setEntryMode('excel')}
+          >
+            Nhập từ Excel
+          </Button>
         </div>
-        {!question && (
-          <div
-            className="flex gap-2 border-b border-[#E2E8F0] bg-white px-5 py-4 md:px-6"
-            role="group"
-            aria-label="Cách tạo câu hỏi"
-          >
-            <Button
-              variant={entryMode === 'manual' ? 'primary' : 'secondary'}
-              aria-pressed={entryMode === 'manual'}
-              onClick={() => setEntryMode('manual')}
-            >
-              Nhập thủ công
-            </Button>
-            <Button
-              variant={entryMode === 'excel' ? 'primary' : 'secondary'}
-              aria-pressed={entryMode === 'excel'}
-              icon="upload_file"
-              onClick={() => setEntryMode('excel')}
-            >
-              Nhập từ Excel
-            </Button>
-          </div>
-        )}
-        {entryMode === 'excel' && (
-          <div className="p-5 md:p-6">
-            <QuestionImportForm />
-          </div>
-        )}
-        <div className="question-manual-fields space-y-6 p-5 md:p-6" hidden={entryMode !== 'manual'}>
-          <section>
-            <h3 className="text-headline-sm font-bold">Thông tin cơ bản</h3>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <label className="text-body-sm font-semibold">
-                Mã câu hỏi
-                <input
-                  value={
-                    form.id ||
-                    (form.chapterId ? nextQuestionId(questions, form.chapterId) : 'Tự sinh sau khi chọn chương')
-                  }
-                  readOnly
-                  className="mt-2 w-full border border-[#CBD5E1] bg-[#F8FAFC] px-4"
-                />
-              </label>
-              <label className="text-body-sm font-semibold">
-                Chương *
-                <select
-                  value={form.chapterId}
-                  onChange={(event) => update('chapterId', event.target.value)}
-                  className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                  aria-invalid={Boolean(errors.chapterId)}
-                >
-                  <option value="">Chọn chương</option>
-                  {Object.entries(questionChapterLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                {errors.chapterId && <span className="mt-1 block text-body-sm text-primary">{errors.chapterId}</span>}
-              </label>
-              <label className="text-body-sm font-semibold">
-                Chủ đề *
-                <input
-                  value={form.topic}
-                  onChange={(event) => update('topic', event.target.value)}
-                  className="mt-2 w-full border border-[#CBD5E1] px-4"
-                  aria-invalid={Boolean(errors.topic)}
-                />
-                {errors.topic && <span className="mt-1 block text-body-sm text-primary">{errors.topic}</span>}
-              </label>
-              <label className="text-body-sm font-semibold">
-                Mức độ nhận thức *
-                <select
-                  value={form.cognitiveLevel}
-                  onChange={(event) => update('cognitiveLevel', event.target.value)}
-                  className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                >
-                  <option value="">Chọn mức độ</option>
-                  {Object.entries(cognitiveLevelLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                {errors.cognitiveLevel && (
-                  <span className="mt-1 block text-body-sm text-primary">{errors.cognitiveLevel}</span>
-                )}
-              </label>
-              <label className="text-body-sm font-semibold">
-                CLO *
-                <select
-                  value={form.clo}
-                  onChange={(event) => update('clo', event.target.value)}
-                  className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                >
-                  <option value="">Chọn CLO</option>
-                  {clos.map((clo) => (
-                    <option key={clo}>{clo}</option>
-                  ))}
-                </select>
-                {errors.clo && <span className="mt-1 block text-body-sm text-primary">{errors.clo}</span>}
-              </label>
-              <label className="text-body-sm font-semibold">
-                Loại câu hỏi *
-                <select
-                  value={form.type}
-                  onChange={(event) => update('type', event.target.value)}
-                  className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                >
-                  {Object.entries(questionTypeLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <label className="mt-4 block text-body-sm font-semibold">
-              Từ khóa
-              <input
-                value={form.keywords}
-                onChange={(event) => update('keywords', event.target.value)}
-                placeholder="Ví dụ: newton, gia tốc, hợp lực"
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-          </section>
-
-          <section className="border-t border-[#E2E8F0] pt-6">
-            <h3 className="text-headline-sm font-bold">Nội dung câu hỏi</h3>
-            <label className="mt-4 block text-body-sm font-semibold">
-              Nội dung *
-              <textarea
-                value={form.content}
-                onChange={(event) => update('content', event.target.value)}
-                rows="4"
-                placeholder="Nhập nội dung câu hỏi..."
-                className="mt-2 w-full border border-[#CBD5E1] p-3 focus:border-primary focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
-                aria-invalid={Boolean(errors.content)}
-              />
-              {errors.content && <span className="mt-1 block text-body-sm text-primary">{errors.content}</span>}
-            </label>
-            <label className="mt-4 block text-body-sm font-semibold">
-              Giải thích/Hướng dẫn
-              <textarea
-                value={form.guidance}
-                onChange={(event) => update('guidance', event.target.value)}
-                rows="2"
-                className="mt-2 w-full border border-[#CBD5E1] p-3"
-              />
-            </label>
-          </section>
-
-          <section className="border-t border-[#E2E8F0] pt-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-headline-sm font-bold">Quản lý đáp án</h3>
-                <p className="mt-1 text-body-sm text-[#64748B]">
-                  {form.type === 'SINGLE_CHOICE' ? 'Chọn đúng một đáp án.' : 'Có thể chọn nhiều đáp án đúng.'}
-                </p>
-              </div>
-              <Button type="button" variant="secondary" icon="add" onClick={addAnswer}>
-                Thêm đáp án
-              </Button>
-            </div>
-            <div className="mt-4 space-y-3">
-              {form.answers.map((answer, index) => (
-                <Card
-                  as="div"
-                  key={`${answer.id}-${index}`}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3"
-                >
-                  <label className="flex flex-1 items-center gap-3">
-                    <input
-                      type={form.type === 'SINGLE_CHOICE' ? 'radio' : 'checkbox'}
-                      name="correct-answer"
-                      checked={answer.correct}
-                      onChange={(event) => updateAnswer(index, 'correct', event.target.checked)}
-                      className="h-5 w-5 accent-[#E52220]"
-                      aria-label={`Đánh dấu đáp án ${answer.id} là đúng`}
-                    />
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] font-bold">
-                      {answer.id}
-                    </span>
-                    <input
-                      value={answer.content}
-                      onChange={(event) => updateAnswer(index, 'content', event.target.value)}
-                      placeholder={`Nội dung đáp án ${answer.id}`}
-                      className="w-full border border-[#CBD5E1] px-4"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => removeAnswer(index)}
-                    aria-label={`Xóa đáp án ${answer.id}`}
-                    className="self-end text-[#64748B] hover:text-primary sm:self-auto"
-                  >
-                    <span className="material-symbols-outlined">delete</span>
-                  </button>
-                </Card>
-              ))}
-            </div>
-            {errors.answers && <p className="mt-2 text-body-sm text-primary">{errors.answers}</p>}
-          </section>
-
-          <section className="border-t border-[#E2E8F0] pt-6">
-            <h3 className="text-headline-sm font-bold">Lời giải / Giải thích đáp án</h3>
-            <textarea
-              aria-label="Lời giải hoặc giải thích đáp án"
-              value={form.explanation}
-              onChange={(event) => update('explanation', event.target.value)}
-              rows="5"
-              placeholder="Nhập lời giải để sinh viên xem sau khi làm bài..."
-              className="mt-4 w-full border border-[#CBD5E1] p-3"
+      )}
+      {entryMode === 'excel' && (
+        <div className="p-5 md:p-6">
+          <QuestionImportForm />
+        </div>
+      )}
+      <div className="question-manual-fields space-y-6 p-5 md:p-6" hidden={entryMode !== 'manual'}>
+        <section>
+          <h3 className="text-headline-sm font-bold">Thông tin cơ bản</h3>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <SharedFormField
+              value={
+                form.id || (form.chapterId ? nextQuestionId(questions, form.chapterId) : 'Tự sinh sau khi chọn chương')
+              }
+              readOnly
+              className="mt-2 w-full"
+              label={<>Mã câu hỏi</>}
+              wrapperClassName="text-body-sm font-semibold"
             />
-          </section>
+            <SharedSelectField
+              value={form.chapterId}
+              onChange={(event) => update('chapterId', event.target.value)}
+              aria-invalid={Boolean(errors.chapterId)}
+              label={
+                <>
+                  Chương *
+                  {errors.chapterId && <span className="mt-1 block text-body-sm text-primary">{errors.chapterId}</span>}
+                </>
+              }
+              className="text-body-sm font-semibold"
+            >
+              <option value="">Chọn chương</option>
+              {Object.entries(questionChapterLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SharedSelectField>
+            <SharedFormField
+              value={form.topic}
+              onChange={(event) => update('topic', event.target.value)}
+              className="mt-2 w-full"
+              aria-invalid={Boolean(errors.topic)}
+              label={
+                <>
+                  Chủ đề *{errors.topic && <span className="mt-1 block text-body-sm text-primary">{errors.topic}</span>}
+                </>
+              }
+              wrapperClassName="text-body-sm font-semibold"
+            />
+            <SharedSelectField
+              value={form.cognitiveLevel}
+              onChange={(event) => update('cognitiveLevel', event.target.value)}
+              label={
+                <>
+                  Mức độ nhận thức *
+                  {errors.cognitiveLevel && (
+                    <span className="mt-1 block text-body-sm text-primary">{errors.cognitiveLevel}</span>
+                  )}
+                </>
+              }
+              className="text-body-sm font-semibold"
+            >
+              <option value="">Chọn mức độ</option>
+              {Object.entries(cognitiveLevelLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SharedSelectField>
+            <SharedSelectField
+              value={form.clo}
+              onChange={(event) => update('clo', event.target.value)}
+              label={
+                <>CLO *{errors.clo && <span className="mt-1 block text-body-sm text-primary">{errors.clo}</span>}</>
+              }
+              className="text-body-sm font-semibold"
+            >
+              <option value="">Chọn CLO</option>
+              {clos.map((clo) => (
+                <option key={clo}>{clo}</option>
+              ))}
+            </SharedSelectField>
+            <SharedSelectField
+              value={form.type}
+              onChange={(event) => update('type', event.target.value)}
+              label={<>Loại câu hỏi *</>}
+              className="text-body-sm font-semibold"
+            >
+              {Object.entries(questionTypeLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SharedSelectField>
+          </div>
+          <SharedFormField
+            value={form.keywords}
+            onChange={(event) => update('keywords', event.target.value)}
+            placeholder="Ví dụ: newton, gia tốc, hợp lực"
+            className="mt-2 w-full"
+            label={<>Từ khóa</>}
+            wrapperClassName="mt-4 block text-body-sm font-semibold"
+          />
+        </section>
 
-          <section className="border-t border-[#E2E8F0] pt-6">
-            <h3 className="text-headline-sm font-bold">Nguồn tham khảo</h3>
-            <p className="mt-1 text-body-sm text-[#64748B]">Chỉ hiển thị học liệu đã được phê duyệt.</p>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="text-body-sm font-semibold">
-                Học liệu
-                <select
-                  value={form.sourceMaterialId}
-                  onChange={(event) => update('sourceMaterialId', event.target.value)}
-                  className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                >
-                  <option value="">Không chọn nguồn</option>
-                  {approvedMaterials.map((material) => (
-                    <option key={material.id} value={material.id}>
-                      {material.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-body-sm font-semibold">
-                Trang
-                <input
-                  value={form.sourcePage}
-                  onChange={(event) => update('sourcePage', event.target.value)}
-                  placeholder="Ví dụ: 52"
-                  className="mt-2 w-full border border-[#CBD5E1] px-4"
-                />
-              </label>
+        <section className="border-t border-[#E2E8F0] pt-6">
+          <h3 className="text-headline-sm font-bold">Nội dung câu hỏi</h3>
+          <SharedFormField
+            value={form.content}
+            onChange={(event) => update('content', event.target.value)}
+            rows="4"
+            placeholder="Nhập nội dung câu hỏi..."
+            className="mt-2 w-full focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+            aria-invalid={Boolean(errors.content)}
+            multiline
+            label={
+              <>
+                Nội dung *
+                {errors.content && <span className="mt-1 block text-body-sm text-primary">{errors.content}</span>}
+              </>
+            }
+            wrapperClassName="mt-4 block text-body-sm font-semibold"
+          />
+          <SharedFormField
+            value={form.guidance}
+            onChange={(event) => update('guidance', event.target.value)}
+            rows="2"
+            className="mt-2 w-full"
+            multiline
+            label={<>Giải thích/Hướng dẫn</>}
+            wrapperClassName="mt-4 block text-body-sm font-semibold"
+          />
+        </section>
+
+        <section className="border-t border-[#E2E8F0] pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-headline-sm font-bold">Quản lý đáp án</h3>
+              <p className="mt-1 text-body-sm text-[#64748B]">
+                {form.type === 'SINGLE_CHOICE' ? 'Chọn đúng một đáp án.' : 'Có thể chọn nhiều đáp án đúng.'}
+              </p>
             </div>
-          </section>
-
-          <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-[#E2E8F0] bg-white p-5 sm:flex-row sm:justify-end md:-mx-6 md:-mb-6 md:px-6">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Hủy
-            </Button>
-            <Button type="button" variant="secondary" icon="save" onClick={() => save('DRAFT')}>
-              Lưu bản nháp
-            </Button>
-            <Button type="button" icon="send" onClick={() => save('PENDING_APPROVAL')}>
-              Lưu & gửi phê duyệt
+            <Button type="button" variant="secondary" icon="add" onClick={addAnswer}>
+              Thêm đáp án
             </Button>
           </div>
+          <div className="mt-4 space-y-3">
+            {form.answers.map((answer, index) => (
+              <Card
+                as="div"
+                key={`${answer.id}-${index}`}
+                className="flex flex-col sm:flex-row sm:items-center gap-3 p-3"
+              >
+                <label className="flex flex-1 items-center gap-3">
+                  <input
+                    type={form.type === 'SINGLE_CHOICE' ? 'radio' : 'checkbox'}
+                    name="correct-answer"
+                    checked={answer.correct}
+                    onChange={(event) => updateAnswer(index, 'correct', event.target.checked)}
+                    className="h-5 w-5 accent-[#E52220]"
+                    aria-label={`Đánh dấu đáp án ${answer.id} là đúng`}
+                  />
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] font-bold">
+                    {answer.id}
+                  </span>
+                  <SharedFormField
+                    value={answer.content}
+                    onChange={(event) => updateAnswer(index, 'content', event.target.value)}
+                    placeholder={`Nội dung đáp án ${answer.id}`}
+                    className="w-full"
+                    bare
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => removeAnswer(index)}
+                  aria-label={`Xóa đáp án ${answer.id}`}
+                  className="self-end text-[#64748B] hover:text-primary sm:self-auto"
+                >
+                  <span className="material-symbols-outlined">delete</span>
+                </button>
+              </Card>
+            ))}
+          </div>
+          {errors.answers && <p className="mt-2 text-body-sm text-primary">{errors.answers}</p>}
+        </section>
+
+        <section className="border-t border-[#E2E8F0] pt-6">
+          <h3 className="text-headline-sm font-bold">Lời giải / Giải thích đáp án</h3>
+          <SharedFormField
+            aria-label="Lời giải hoặc giải thích đáp án"
+            value={form.explanation}
+            onChange={(event) => update('explanation', event.target.value)}
+            rows="5"
+            placeholder="Nhập lời giải để sinh viên xem sau khi làm bài..."
+            className="mt-4 w-full"
+            bare
+            multiline
+          />
+        </section>
+
+        <section className="border-t border-[#E2E8F0] pt-6">
+          <h3 className="text-headline-sm font-bold">Nguồn tham khảo</h3>
+          <p className="mt-1 text-body-sm text-[#64748B]">Chỉ hiển thị học liệu đã được phê duyệt.</p>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SharedSelectField
+              value={form.sourceMaterialId}
+              onChange={(event) => update('sourceMaterialId', event.target.value)}
+              label={<>Học liệu</>}
+              className="text-body-sm font-semibold"
+            >
+              <option value="">Không chọn nguồn</option>
+              {approvedMaterials.map((material) => (
+                <option key={material.id} value={material.id}>
+                  {material.title}
+                </option>
+              ))}
+            </SharedSelectField>
+            <SharedFormField
+              value={form.sourcePage}
+              onChange={(event) => update('sourcePage', event.target.value)}
+              placeholder="Ví dụ: 52"
+              className="mt-2 w-full"
+              label={<>Trang</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
+          </div>
+        </section>
+
+        <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-[#E2E8F0] bg-white p-5 sm:flex-row sm:justify-end md:-mx-6 md:-mb-6 md:px-6">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Hủy
+          </Button>
+          <Button type="button" variant="secondary" icon="save" onClick={() => save('DRAFT')}>
+            Lưu bản nháp
+          </Button>
+          <Button type="button" icon="send" onClick={() => save('PENDING_APPROVAL')}>
+            Lưu & gửi phê duyệt
+          </Button>
         </div>
-      </section>
-    </div>
+      </div>
+    </SharedFormDialog>
   );
 }
 
@@ -441,107 +424,85 @@ function QuestionDetailModal({ question, materials, onClose }) {
   const source = materials.find((item) => item.id === question.sourceMaterialId);
   const status = materialStatusMeta[question.status];
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-2 md:p-6"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <section
-        className="max-h-[calc(100dvh-16px)] w-full max-w-3xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="question-detail-title"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-[#E2E8F0] p-5 md:p-6">
-          <div>
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
-              <StatusBadge tone="neutral">{question.id}</StatusBadge>
-            </div>
-            <h2 id="question-detail-title" className="mt-3 text-headline-md font-bold">
-              Chi tiết câu hỏi
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng chi tiết"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <div className="space-y-5 p-5 md:p-6">
-          <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-body-sm">
-            <div>
-              <dt className="text-[#64748B]">Chương</dt>
-              <dd className="mt-1 font-semibold">{questionChapterLabels[question.chapterId]}</dd>
-            </div>
-            <div>
-              <dt className="text-[#64748B]">Chủ đề</dt>
-              <dd className="mt-1 font-semibold">{question.topic}</dd>
-            </div>
-            <div>
-              <dt className="text-[#64748B]">Mức độ</dt>
-              <dd className="mt-1 font-semibold">{cognitiveLevelLabels[question.cognitiveLevel]}</dd>
-            </div>
-            <div>
-              <dt className="text-[#64748B]">CLO · Loại</dt>
-              <dd className="mt-1 font-semibold">
-                {question.clo} · {questionTypeLabels[question.type]}
-              </dd>
-            </div>
-          </dl>
-          <Card className="p-5">
-            <h3 className="text-body-lg font-semibold leading-7">{question.content}</h3>
-            <div className="mt-5 space-y-2">
-              {question.answers.map((answer) => (
-                <Card
-                  as="div"
-                  key={answer.id}
-                  className={`flex gap-3 border p-3 ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}
-                >
-                  <strong>{answer.id}.</strong>
-                  <span className={answer.correct ? 'font-semibold text-[#15803D]' : ''}>
-                    {answer.content}
-                    {answer.correct && ' — Đáp án đúng'}
-                  </span>
-                </Card>
-              ))}
-            </div>
-          </Card>
-          <div>
-            <h3 className="font-semibold">Lời giải</h3>
-            <p className="mt-2 whitespace-pre-line text-body-md text-[#64748B]">
-              {question.explanation || 'Chưa có lời giải.'}
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold">Nguồn tham khảo</h3>
-            <p className="mt-2 text-body-md text-[#64748B]">
-              {source
-                ? `${source.title} — ${materialChapterLabels[source.chapter]}${question.sourcePage ? ` — Trang ${question.sourcePage}` : ''}`
-                : 'Chưa gắn nguồn tham khảo.'}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-body-sm">
-            <div>
-              <span className="text-[#64748B]">Ngày tạo</span>
-              <strong className="mt-1 block">{formatDate(question.createdAt)}</strong>
-            </div>
-            <div>
-              <span className="text-[#64748B]">Ngày cập nhật</span>
-              <strong className="mt-1 block">{formatDate(question.updatedAt)}</strong>
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Đóng
-            </Button>
+    <SharedFormDialog title={<>Chi tiết câu hỏi</>} onClose={onClose} wide>
+      <div>
+        <div>
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+            <StatusBadge tone="neutral">{question.id}</StatusBadge>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+      <div className="space-y-5 p-5 md:p-6">
+        <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-body-sm">
+          <div>
+            <dt className="text-[#64748B]">Chương</dt>
+            <dd className="mt-1 font-semibold">{questionChapterLabels[question.chapterId]}</dd>
+          </div>
+          <div>
+            <dt className="text-[#64748B]">Chủ đề</dt>
+            <dd className="mt-1 font-semibold">{question.topic}</dd>
+          </div>
+          <div>
+            <dt className="text-[#64748B]">Mức độ</dt>
+            <dd className="mt-1 font-semibold">{cognitiveLevelLabels[question.cognitiveLevel]}</dd>
+          </div>
+          <div>
+            <dt className="text-[#64748B]">CLO · Loại</dt>
+            <dd className="mt-1 font-semibold">
+              {question.clo} · {questionTypeLabels[question.type]}
+            </dd>
+          </div>
+        </dl>
+        <Card className="p-5">
+          <h3 className="text-body-lg font-semibold leading-7">{question.content}</h3>
+          <div className="mt-5 space-y-2">
+            {question.answers.map((answer) => (
+              <Card
+                as="div"
+                key={answer.id}
+                className={`flex gap-3 border p-3 ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}
+              >
+                <strong>{answer.id}.</strong>
+                <span className={answer.correct ? 'font-semibold text-[#15803D]' : ''}>
+                  {answer.content}
+                  {answer.correct && ' — Đáp án đúng'}
+                </span>
+              </Card>
+            ))}
+          </div>
+        </Card>
+        <div>
+          <h3 className="font-semibold">Lời giải</h3>
+          <p className="mt-2 whitespace-pre-line text-body-md text-[#64748B]">
+            {question.explanation || 'Chưa có lời giải.'}
+          </p>
+        </div>
+        <div>
+          <h3 className="font-semibold">Nguồn tham khảo</h3>
+          <p className="mt-2 text-body-md text-[#64748B]">
+            {source
+              ? `${source.title} — ${materialChapterLabels[source.chapter]}${question.sourcePage ? ` — Trang ${question.sourcePage}` : ''}`
+              : 'Chưa gắn nguồn tham khảo.'}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-4 text-body-sm">
+          <div>
+            <span className="text-[#64748B]">Ngày tạo</span>
+            <strong className="mt-1 block">{formatDate(question.createdAt)}</strong>
+          </div>
+          <div>
+            <span className="text-[#64748B]">Ngày cập nhật</span>
+            <strong className="mt-1 block">{formatDate(question.updatedAt)}</strong>
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Đóng
+          </Button>
+        </div>
+      </div>
+    </SharedFormDialog>
   );
 }
 
@@ -702,89 +663,80 @@ export function LecturerQuestionBankPage() {
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]">
             search
           </span>
-          <input
+          <SharedFormField
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             type="search"
             placeholder="Tìm theo nội dung hoặc mã câu hỏi..."
             aria-label="Tìm câu hỏi"
-            className="w-full border border-[#CBD5E1] bg-[#F8FAFC] pl-11 pr-4 focus:border-primary focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+            className="w-full pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+            bare
           />
         </div>
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <label className="text-body-sm font-semibold">
-            Chương
-            <select
-              value={chapter}
-              onChange={(event) => setChapter(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-3"
-            >
-              <option value="ALL">Tất cả chương</option>
-              {Object.entries(questionChapterLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Mức độ
-            <select
-              value={level}
-              onChange={(event) => setLevel(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-3"
-            >
-              <option value="ALL">Tất cả</option>
-              {Object.entries(cognitiveLevelLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            CLO
-            <select
-              value={clo}
-              onChange={(event) => setClo(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-3"
-            >
-              <option value="ALL">Tất cả</option>
-              {clos.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Trạng thái
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-3"
-            >
-              <option value="ALL">Tất cả</option>
-              {Object.entries(materialStatusMeta).map(([value, meta]) => (
-                <option key={value} value={value}>
-                  {meta.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Loại câu hỏi
-            <select
-              value={type}
-              onChange={(event) => setType(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-3"
-            >
-              <option value="ALL">Tất cả</option>
-              {Object.entries(questionTypeLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SharedSelectField
+            value={chapter}
+            onChange={(event) => setChapter(event.target.value)}
+            label={<>Chương</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả chương</option>
+            {Object.entries(questionChapterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={level}
+            onChange={(event) => setLevel(event.target.value)}
+            label={<>Mức độ</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(cognitiveLevelLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={clo}
+            onChange={(event) => setClo(event.target.value)}
+            label={<>CLO</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {clos.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+            label={<>Trạng thái</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(materialStatusMeta).map(([value, meta]) => (
+              <option key={value} value={value}>
+                {meta.label}
+              </option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={type}
+            onChange={(event) => setType(event.target.value)}
+            label={<>Loại câu hỏi</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(questionTypeLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
         </div>
       </Card>
       <Card className="p-5">

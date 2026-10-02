@@ -50,7 +50,7 @@ export function ImmersiveShell({
           className={`immersive-shell-content ${!showChrome ? 'immersive-shell-content-no-chrome' : ''} flex-1 min-h-0`}
         >
           <div className="detail-toolbar-shell">{topbar}</div>
-          {children}
+          <div className="page-body">{children}</div>
         </div>
         {showChatLauncher && <ChatLauncher />}
       </div>

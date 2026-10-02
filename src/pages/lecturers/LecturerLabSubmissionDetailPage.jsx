@@ -91,7 +91,7 @@ export function LecturerLabSubmissionDetailPage() {
       </Card>
       <div className="mt-5 grid grid-cols-1 xl:grid-cols-2 gap-5">
         <Card className="p-5 md:p-6">
-          <SectionHeader title="Báo cáo thí nghiệm" description="Metadata tệp do sinh viên nộp." />
+          <SectionHeader title="Báo cáo thí nghiệm" />
           {submission.evidence.report ? (
             <Card as="div" className="mt-4 bg-[#F8FAFC] p-4">
               <div className="flex items-start gap-3">
@@ -116,7 +116,7 @@ export function LecturerLabSubmissionDetailPage() {
           )}
         </Card>
         <Card className="p-5 md:p-6">
-          <SectionHeader title="Ảnh minh chứng" description="Ảnh chụp kết quả mô phỏng." />
+          <SectionHeader title="Ảnh minh chứng" />
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {submission.evidence.screenshots.length ? (
               submission.evidence.screenshots.map((image) => (
@@ -138,7 +138,7 @@ export function LecturerLabSubmissionDetailPage() {
         </Card>
       </div>
       <Card className="mt-5 p-5 md:p-6">
-        <SectionHeader title="Bảng số liệu" description="Các giá trị được lưu trong minh chứng của bài nộp." />
+        <SectionHeader title="Bảng số liệu" />
         <div className="mt-5">
           <DataTable
             columns={Object.keys(measurements[0] ?? {}).map(

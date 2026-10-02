@@ -1,3 +1,4 @@
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
@@ -110,21 +111,19 @@ export function VirtualLabPage() {
       current="Danh sách thí nghiệm"
       filterActions={
         <>
-          <label className="flex shrink-0 items-center gap-2 whitespace-nowrap text-body-sm font-semibold">
-            Học phần
-            <select
-              value={classId}
-              onChange={(event) => setClassId(event.target.value)}
-              className="h-11 rounded-full border border-[#CBD5E1] bg-white px-4 font-normal"
-            >
-              <option value="">Tất cả học phần</option>
-              {classes.map((item) => (
-                <option key={item.classId} value={item.classId}>
-                  {item.subjectName || item.subjectCode || item.classCode}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SharedSelectField
+            value={classId}
+            onChange={(event) => setClassId(event.target.value)}
+            label={<>Học phần</>}
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap text-body-sm font-semibold"
+          >
+            <option value="">Tất cả học phần</option>
+            {classes.map((item) => (
+              <option key={item.classId} value={item.classId}>
+                {item.subjectName || item.subjectCode || item.classCode}
+              </option>
+            ))}
+          </SharedSelectField>
           <a href="student_evidence.html">
             <Button icon="history">Minh chứng của tôi</Button>
           </a>

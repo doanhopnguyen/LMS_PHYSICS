@@ -13,7 +13,6 @@ export const studentNavItems = [
 ];
 
 export const studentFooterItems = [
-  ['notifications_help.html', 'help', 'Trợ giúp'],
   ['profile_settings.html', 'settings', 'Cài đặt'],
 ];
 

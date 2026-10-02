@@ -15,7 +15,7 @@ const bundle = await build({
 const { api } = await import(
   `data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`
 );
-globalThis.window = { location: { origin: 'https://lms.example' }, localStorage: { getItem: () => null } };
+globalThis.window = { location: { origin: 'https://lms.example' }, localStorage: { getItem: () => null }, dispatchEvent() {} };
 
 test('material create sends multipart with file and topic, without a JSON Content-Type', async () => {
   const form = new FormData();

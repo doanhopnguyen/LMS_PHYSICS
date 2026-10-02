@@ -1,3 +1,6 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { ExperimentGradingPanel } from './LecturerExperimentGrading.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import { FormDialog as Modal } from '../../components/FormDialog.jsx';
 import React, { useEffect, useRef, useState } from 'react';
@@ -13,8 +16,10 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
+import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api, apiRequest } from '../../lib/apiClient.js';
+import { questionTopicName } from '../../lib/topicLabels.js';
 
 const nameOf = (row) =>
   row?.className || row?.classCode || row?.title || row?.name || row?.subjectName || row?.username || '—';
@@ -91,7 +96,12 @@ function useAction() {
     run,
     setError,
     setNotice,
-    feedback: <><AuthAlert>{notice}</AuthAlert><AuthAlert error>{error}</AuthAlert></>,
+    feedback: (
+      <>
+        <AuthAlert>{notice}</AuthAlert>
+        <AuthAlert error>{error}</AuthAlert>
+      </>
+    ),
     clear: () => {
       setNotice('');
       setError('');
@@ -108,12 +118,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
   const [viewAttempt, setViewAttempt] = useState(null);
   const [removeTarget, setRemoveTarget] = useState(null);
   const [transferOpen, setTransferOpen] = useState(false);
-  const [transferUsername, setTransferUsername] = useState('');
-  const [searchedUsername, setSearchedUsername] = useState('');
-  const [transferStudentId, setTransferStudentId] = useState('');
-  const [transferStudents, setTransferStudents] = useState([]);
-  const [transferLoading, setTransferLoading] = useState(false);
-  const [transferError, setTransferError] = useState('');
+  const [transferStudent, setTransferStudent] = useState(null);
   const detail = useApiData(`/api/v1/exams/${encodeURIComponent(exam.examId)}`);
   const examQuestions = useApiData(`/api/v1/exams/${encodeURIComponent(exam.examId)}/questions`);
   const attempts = useApiData(`/api/v1/exams/${encodeURIComponent(exam.examId)}/attempts`);
@@ -129,46 +134,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
   const candidates = useApiData(subjectId ? `/api/v1/questions?${candidateQuery}` : null);
   const action = useAction();
   const questions = listItems(examQuestions.data);
-  useEffect(() => {
-    if (!transferOpen || classOptions.loading) return;
-    const sourceClasses = listItems(classOptions.data).filter(
-      (item) => item.classId !== exam.classId && (!subjectId || item.subjectId === subjectId)
-    );
-    let cancelled = false;
-    setTransferLoading(true);
-    setTransferError('');
-    setTransferStudents([]);
-    setTransferStudentId('');
-    Promise.all(
-      sourceClasses.map(async (item) => ({
-        classItem: item,
-        data: await apiRequest(`/api/v1/classes/${encodeURIComponent(item.classId)}/students`, {
-          query: { status: 'ACTIVE', page: 0, size: 100 },
-        }),
-      }))
-    )
-      .then((groups) => {
-        if (!cancelled)
-          setTransferStudents(
-            groups.flatMap(({ classItem, data }) =>
-              listItems(data).map((student) => ({
-                ...student,
-                originalClassId: classItem.classId,
-                originalClassCode: classItem.classCode || classItem.className,
-              }))
-            )
-          );
-      })
-      .catch((error) => {
-        if (!cancelled) setTransferError(error.message || 'Không thể tải danh sách sinh viên.');
-      })
-      .finally(() => {
-        if (!cancelled) setTransferLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [transferOpen, classOptions.data, classOptions.loading, subjectId, exam.classId]);
+  const topicNameOf = (question) => questionTopicName(question, listItems(candidateTopics.data));
   const addQuestion = async (question) => {
     const result = await action.run(
       `/api/v1/exams/${encodeURIComponent(exam.examId)}/questions`,
@@ -223,7 +189,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
   const addTransfer = async (event) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
-    const student = transferStudents.find((item) => (item.studentId || item.userId) === transferStudentId);
+    const student = transferStudent;
     if (!student) {
       action.setError('Chọn một sinh viên từ kết quả tìm kiếm.');
       return;
@@ -233,7 +199,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
       {
         method: 'POST',
         body: {
-          studentId: transferStudentId,
+          studentId: student.userId,
           originalClassId: student.originalClassId,
           reason: values.reason.trim() || null,
         },
@@ -242,9 +208,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
     );
     if (result) {
       setTransferOpen(false);
-      setTransferUsername('');
-      setSearchedUsername('');
-      setTransferStudentId('');
+      setTransferStudent(null);
       roster.reload();
     }
   };
@@ -294,8 +258,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                       columns={['Câu hỏi', 'Chủ đề', 'Độ khó', '']}
                       cells={(item) => [
                         item.content || item.questionText || '—',
-                        item.topicName || '—',
-                        <span>{item.difficultyLevel || '—'}{item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}</span>,
+                        topicNameOf(item),
+                        <span>
+                          {item.difficultyLevel || '—'}
+                          {item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}
+                        </span>,
                         <Button variant="secondary" disabled={action.busy} onClick={() => setRemoveTarget(item)}>
                           Gỡ
                         </Button>,
@@ -306,33 +273,67 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                 {subjectId ? (
                   <>
                     <Card className="mt-5 grid gap-3 p-4 md:grid-cols-3">
-                      <label className="text-body-sm font-semibold md:col-span-3">
-                        Tìm câu hỏi
-                        <input value={questionSearch} onChange={(event) => setQuestionSearch(event.target.value)} placeholder="Nhập nội dung câu hỏi" className="mt-2 block w-full rounded-xl border p-3" />
-                      </label>
-                      <SelectField label="Chủ đề" value={questionTopicId} onChange={(event) => setQuestionTopicId(event.target.value)}>
+                      <SharedFormField
+                        value={questionSearch}
+                        onChange={(event) => setQuestionSearch(event.target.value)}
+                        placeholder="Nhập nội dung câu hỏi"
+                        className="mt-2 block w-full"
+                        label={<>Tìm câu hỏi</>}
+                        wrapperClassName="text-body-sm font-semibold md:col-span-3"
+                      />
+                      <SelectField
+                        label="Chủ đề"
+                        value={questionTopicId}
+                        onChange={(event) => setQuestionTopicId(event.target.value)}
+                      >
                         <option value="">Tất cả chủ đề</option>
-                        {listItems(candidateTopics.data).map((topic) => <option key={topic.topicId} value={topic.topicId}>{topic.topicName}</option>)}
+                        {listItems(candidateTopics.data).map((topic) => (
+                          <option key={topic.topicId} value={topic.topicId}>
+                            {topic.topicName}
+                          </option>
+                        ))}
                       </SelectField>
-                      <SelectField label="Độ khó" value={questionDifficulty} onChange={(event) => setQuestionDifficulty(event.target.value)}>
+                      <SelectField
+                        label="Độ khó"
+                        value={questionDifficulty}
+                        onChange={(event) => setQuestionDifficulty(event.target.value)}
+                      >
                         <option value="">Tất cả độ khó</option>
-                        {['EASY', 'MEDIUM', 'HARD'].map((level) => <option key={level} value={level}>{level}</option>)}
+                        {['EASY', 'MEDIUM', 'HARD'].map((level) => (
+                          <option key={level} value={level}>
+                            {level}
+                          </option>
+                        ))}
                       </SelectField>
                       <p className="self-end pb-3 text-body-sm text-[#64748B]">Chỉ hiển thị câu hỏi đã được duyệt.</p>
                     </Card>
                     <Resource resource={candidates}>
                       {(rows) => {
-                        const available = rows.filter((item) =>
-                          item.approvalStatus === 'APPROVED' &&
-                          !questions.some((question) => question.questionId === item.questionId) &&
-                          (!questionSearch.trim() || item.content?.toLowerCase().includes(questionSearch.trim().toLowerCase()))
+                        const available = rows.filter(
+                          (item) =>
+                            item.approvalStatus === 'APPROVED' &&
+                            !questions.some((question) => question.questionId === item.questionId) &&
+                            (!questionSearch.trim() ||
+                              item.content?.toLowerCase().includes(questionSearch.trim().toLowerCase()))
                         );
                         return available.length ? (
-                          <Table rows={available} columns={['Ngân hàng câu hỏi', 'Chủ đề', 'Độ khó', '']} cells={(item) => [
-                            item.content || '—', item.topicName || item.topicId || '—', item.difficultyLevel || '—',
-                            <Button disabled={action.busy} onClick={() => addQuestion(item)}>Thêm vào đề</Button>,
-                          ]} />
-                        ) : <Card className="mt-5 p-5 text-body-sm text-[#64748B]">Không có câu hỏi đã duyệt phù hợp để thêm vào đề.</Card>;
+                          <Table
+                            rows={available}
+                            columns={['Ngân hàng câu hỏi', 'Chủ đề', 'Độ khó', '']}
+                            cells={(item) => [
+                              item.content || '—',
+                              topicNameOf(item),
+                              item.difficultyLevel || '—',
+                              <Button disabled={action.busy} onClick={() => addQuestion(item)}>
+                                Thêm vào đề
+                              </Button>,
+                            ]}
+                          />
+                        ) : (
+                          <Card className="mt-5 p-5 text-body-sm text-[#64748B]">
+                            Không có câu hỏi đã duyệt phù hợp để thêm vào đề.
+                          </Card>
+                        );
                       }}
                     </Resource>
                   </>
@@ -403,9 +404,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                         <Button
                           disabled={action.busy}
                           onClick={() => {
-                            setTransferUsername('');
-                            setSearchedUsername('');
-                            setTransferStudentId('');
+                            setTransferStudent(null);
                             setTransferOpen(true);
                           }}
                         >
@@ -457,87 +456,44 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
       </Modal>
       {transferOpen && (
         <Modal
+          wide
           title="Thêm sinh viên thi ghép"
           busy={action.busy}
           onClose={() => !action.busy && setTransferOpen(false)}
         >
           <Form className="grid gap-4" onSubmit={addTransfer}>
-            <p className="text-body-sm text-[#64748B]">
-              Tìm trong toàn bộ sinh viên đang học các lớp cùng học phần mà bạn được cấp quyền.
-            </p>
-            <div>
-              <label className="text-body-sm font-semibold">
-                Tìm theo tên đăng nhập
-                <input
-                  value={transferUsername}
-                  onChange={(event) => setTransferUsername(event.target.value)}
-                  placeholder="Nhập username sinh viên"
-                  className="mt-2 block w-full rounded-xl border p-3"
-                />
-              </label>
-              <Button
-                type="button"
-                variant="secondary"
-                className="mt-3"
-                disabled={transferLoading}
-                onClick={() => {
-                  setSearchedUsername(transferUsername.trim());
-                  setTransferStudentId('');
-                }}
-              >
-                Tìm kiếm
-              </Button>
-            </div>
-            {transferError && (
-              <p role="alert" className="text-red-700">
-                {transferError}
-              </p>
-            )}
-            <SelectField
-              label="Kết quả tìm kiếm"
-              value={transferStudentId}
-              onChange={(event) => setTransferStudentId(event.target.value)}
-              disabled={transferLoading || !searchedUsername}
-              required
-            >
-              <option value="">
-                {transferLoading
-                  ? 'Đang tải danh sách sinh viên…'
-                  : searchedUsername
-                    ? 'Chọn sinh viên'
-                    : 'Nhập username và bấm Tìm kiếm'}
-              </option>
-              {transferStudents
-                .filter(
+            <p className="text-body-sm text-[#64748B]">Tìm sinh viên, chọn lớp gốc rồi thêm vào danh sách thi ghép.</p>
+            <StudentSearchField
+              disabled={action.busy}
+              onSelect={setTransferStudent}
+              mapResults={(student) => {
+                const classes = new Map(listItems(classOptions.data).map((item) => [item.classId, item]));
+                const matches = (student.enrolledClasses || []).filter(
                   (item) =>
-                    searchedUsername &&
-                    String(item.username || '')
-                      .toLowerCase()
-                      .includes(searchedUsername.toLowerCase())
-                )
-                .map((item) => (
-                  <option
-                    key={`${item.originalClassId}:${item.studentId || item.userId}`}
-                    value={item.studentId || item.userId}
-                  >
-                    {item.username ? `${item.username} · ` : ''}
-                    {item.fullName || item.studentName || item.studentCode || 'Sinh viên'}
-                    {item.originalClassCode ? ` · ${item.originalClassCode}` : ''}
-                  </option>
-                ))}
-            </SelectField>
-            {searchedUsername &&
-              !transferLoading &&
-              !transferStudents.some((item) =>
-                String(item.username || '')
-                  .toLowerCase()
-                  .includes(searchedUsername.toLowerCase())
-              ) && <p className="text-body-sm text-[#64748B]">Không tìm thấy sinh viên phù hợp.</p>}
-            <label className="text-body-sm font-semibold">
-              Lý do
-              <textarea name="reason" rows={3} className="mt-2 block w-full rounded-xl border p-3" />
-            </label>
-            <SubmitButton busy={action.busy || transferLoading || !transferStudentId}>Thêm vào đề thi</SubmitButton>
+                    item.status === 'ACTIVE' &&
+                    item.classId !== exam.classId &&
+                    (!subjectId || item.subjectId === subjectId || classes.get(item.classId)?.subjectId === subjectId)
+                );
+                return matches.length
+                  ? matches.map((item) => ({
+                      ...student,
+                      originalClassId: item.classId,
+                      originalClassCode: item.classCode || classes.get(item.classId)?.classCode,
+                    }))
+                  : [{ ...student, originalClassId: null, originalClassCode: 'Hệ thống tự xác định' }];
+              }}
+            />
+            <SharedFormField
+              name="reason"
+              rows={3}
+              className="mt-2 block w-full"
+              multiline
+              label={<>Lý do</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
+            <SubmitButton type="submit" busy={action.busy} disabled={!transferStudent}>
+              Thêm vào đề thi
+            </SubmitButton>
           </Form>
         </Modal>
       )}
@@ -594,27 +550,24 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
           onClose={() => !action.busy && setGradingAttempt(null)}
         >
           <Form className="grid gap-4" onSubmit={grade}>
-            <label>
-              Điểm tổng
-              <input
-                name="totalScore"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                defaultValue={gradingAttempt.totalScore ?? ''}
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
-            <label>
-              Nhận xét
-              <textarea
-                name="feedback"
-                defaultValue={gradingAttempt.feedback || ''}
-                rows={4}
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
+            <SharedFormField
+              name="totalScore"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+              defaultValue={gradingAttempt.totalScore ?? ''}
+              className="mt-2 block w-full"
+              label={<>Điểm tổng</>}
+            />
+            <SharedFormField
+              name="feedback"
+              defaultValue={gradingAttempt.feedback || ''}
+              rows={4}
+              className="mt-2 block w-full"
+              multiline
+              label={<>Nhận xét</>}
+            />
             <SubmitButton busy={action.busy}>Lưu điểm</SubmitButton>
           </Form>
         </Modal>
@@ -655,7 +608,8 @@ export function MatrixManager({ classes }) {
     if (
       !details.length ||
       !values.matrixName.trim() ||
-      !Number.isFinite(totalPoints) || totalPoints <= 0 ||
+      !Number.isFinite(totalPoints) ||
+      totalPoints <= 0 ||
       details.some((item) => {
         const key = `${item.topicId}:${item.difficultyLevel}`;
         const duplicate = duplicateCriteria.has(key);
@@ -663,7 +617,9 @@ export function MatrixManager({ classes }) {
         return !item.topicId || Number(item.numQuestions) < 1 || Number(item.weightPercent) <= 0 || duplicate;
       })
     ) {
-      action.setError('Nhập tên, tổng điểm; mỗi dòng cần chủ đề, mức khó, ít nhất 1 câu và trọng số hợp lệ. Không lặp cùng chủ đề và mức khó.');
+      action.setError(
+        'Nhập tên, tổng điểm; mỗi dòng cần chủ đề, mức khó, ít nhất 1 câu và trọng số hợp lệ. Không lặp cùng chủ đề và mức khó.'
+      );
       return;
     }
     if (Math.abs(weightTotal - 100) > 0.01) {
@@ -808,65 +764,162 @@ export function MatrixManager({ classes }) {
           onClose={() => !action.busy && setModal(null)}
         >
           <Form className="grid gap-4" onSubmit={save}>
-            <label>
-              Tên ma trận
-              <input
-                name="matrixName"
-                required
-                defaultValue={modal.row?.matrixName || ''}
-                className="mt-2 block w-full rounded-xl border p-3"
-              />
-            </label>
+            <SharedFormField
+              name="matrixName"
+              required
+              defaultValue={modal.row?.matrixName || ''}
+              className="mt-2 block w-full"
+              label={<>Tên ma trận</>}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
-              <label>
-                Loại đề
-                <select
-                  name="examType"
-                  defaultValue={modal.row?.examType || 'QUIZ'}
-                  className="mt-2 block w-full rounded-xl border p-3"
-                >
-                  <option value="PRACTICE">Luyện tập</option>
-                  <option value="QUIZ">Kiểm tra ngắn</option>
-                  <option value="MIDTERM">Giữa kỳ</option>
-                  <option value="FINAL">Cuối kỳ</option>
-                </select>
-              </label>
-              <label>
-                Tổng điểm
-                <input
-                  name="totalPoints"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  required
-                  defaultValue={modal.row?.totalPoints ?? 10}
-                  className="mt-2 block w-full rounded-xl border p-3"
-                />
-              </label>
-            </div>
-            <label>
-              Mô tả
-              <textarea
-                name="description"
-                rows={3}
-                defaultValue={modal.row?.description || ''}
-                className="mt-2 block w-full rounded-xl border p-3"
+              <SharedSelectField
+                name="examType"
+                defaultValue={modal.row?.examType || 'QUIZ'}
+                className="mt-2 block w-full"
+                label={<>Loại đề</>}
+              >
+                <option value="PRACTICE">Luyện tập</option>
+                <option value="QUIZ">Kiểm tra ngắn</option>
+                <option value="MIDTERM">Giữa kỳ</option>
+                <option value="FINAL">Cuối kỳ</option>
+              </SharedSelectField>
+              <SharedFormField
+                name="totalPoints"
+                type="number"
+                min="0"
+                step="0.5"
+                required
+                defaultValue={modal.row?.totalPoints ?? 10}
+                className="mt-2 block w-full"
+                label={<>Tổng điểm</>}
               />
-            </label>
+            </div>
+            <SharedFormField
+              name="description"
+              rows={3}
+              defaultValue={modal.row?.description || ''}
+              className="mt-2 block w-full"
+              multiline
+              label={<>Mô tả</>}
+            />
             <Card className="p-4">
               <h3 className="font-bold">Cấu trúc đề</h3>
               <p className="mt-1 text-body-sm text-[#64748B]">
-                Mỗi dòng xác định số câu cần lấy từ một chủ đề ở một mức độ khó. Tổng trọng số của các dòng phải bằng 100%.
+                Mỗi dòng xác định số câu cần lấy từ một chủ đề ở một mức độ khó. Tổng trọng số của các dòng phải bằng
+                100%.
               </p>
               {details.map((item, index) => (
                 <div className="mt-3 grid gap-2 md:grid-cols-4" key={index}>
-                  <label className="grid gap-1 text-body-sm"><span>Chủ đề *</span><select value={item.topicId} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, topicId: event.target.value } : row)))} className="rounded-xl border p-2"><option value="">Chọn chủ đề</option>{listItems(topics.data).map((topic) => <option key={topic.topicId} value={topic.topicId}>{topic.topicName}</option>)}</select></label>
-                  <label className="grid gap-1 text-body-sm"><span>Mức độ khó *</span><select value={item.difficultyLevel} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, difficultyLevel: event.target.value } : row)))} className="rounded-xl border p-2"><option value="EASY">Dễ</option><option value="MEDIUM">Trung bình</option><option value="HARD">Khó</option></select></label>
-                  <label className="grid gap-1 text-body-sm"><span>Số câu *</span><input aria-label="Số câu" type="number" min="1" value={item.numQuestions} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, numQuestions: event.target.value } : row)))} className="rounded-xl border p-2" /></label>
-                  <label className="grid gap-1 text-body-sm"><span>Trọng số (%) *</span><input aria-label="Trọng số" type="number" min="1" max="100" value={item.weightPercent} onChange={(event) => setDetails((rows) => rows.map((row, i) => (i === index ? { ...row, weightPercent: event.target.value } : row)))} className="rounded-xl border p-2" /></label>
+                  <SharedSelectField
+                    value={item.topicId}
+                    onChange={(event) =>
+                      setDetails((rows) =>
+                        rows.map((row, i) =>
+                          i === index
+                            ? {
+                                ...row,
+                                topicId: event.target.value,
+                              }
+                            : row
+                        )
+                      )
+                    }
+                    label={
+                      <>
+                        <span>Chủ đề *</span>
+                      </>
+                    }
+                    className="grid gap-1 text-body-sm"
+                  >
+                    <option value="">Chọn chủ đề</option>
+                    {listItems(topics.data).map((topic) => (
+                      <option key={topic.topicId} value={topic.topicId}>
+                        {topic.topicName}
+                      </option>
+                    ))}
+                  </SharedSelectField>
+                  <SharedSelectField
+                    value={item.difficultyLevel}
+                    onChange={(event) =>
+                      setDetails((rows) =>
+                        rows.map((row, i) =>
+                          i === index
+                            ? {
+                                ...row,
+                                difficultyLevel: event.target.value,
+                              }
+                            : row
+                        )
+                      )
+                    }
+                    label={
+                      <>
+                        <span>Mức độ khó *</span>
+                      </>
+                    }
+                    className="grid gap-1 text-body-sm"
+                  >
+                    <option value="EASY">Dễ</option>
+                    <option value="MEDIUM">Trung bình</option>
+                    <option value="HARD">Khó</option>
+                  </SharedSelectField>
+                  <SharedFormField
+                    aria-label="Số câu"
+                    type="number"
+                    min="1"
+                    value={item.numQuestions}
+                    onChange={(event) =>
+                      setDetails((rows) =>
+                        rows.map((row, i) =>
+                          i === index
+                            ? {
+                                ...row,
+                                numQuestions: event.target.value,
+                              }
+                            : row
+                        )
+                      )
+                    }
+                    className=""
+                    label={
+                      <>
+                        <span>Số câu *</span>
+                      </>
+                    }
+                    wrapperClassName="grid gap-1 text-body-sm"
+                  />
+                  <SharedFormField
+                    aria-label="Trọng số"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={item.weightPercent}
+                    onChange={(event) =>
+                      setDetails((rows) =>
+                        rows.map((row, i) =>
+                          i === index
+                            ? {
+                                ...row,
+                                weightPercent: event.target.value,
+                              }
+                            : row
+                        )
+                      )
+                    }
+                    className=""
+                    label={
+                      <>
+                        <span>Trọng số (%) *</span>
+                      </>
+                    }
+                    wrapperClassName="grid gap-1 text-body-sm"
+                  />
                 </div>
               ))}
-              <p className="mt-3 text-body-sm font-semibold text-[#475569]">Tổng số câu: {details.reduce((total, item) => total + (Number(item.numQuestions) || 0), 0)} · Tổng trọng số: {details.reduce((total, item) => total + (Number(item.weightPercent) || 0), 0)}%</p>
+              <p className="mt-3 text-body-sm font-semibold text-[#475569]">
+                Tổng số câu: {details.reduce((total, item) => total + (Number(item.numQuestions) || 0), 0)} · Tổng trọng
+                số: {details.reduce((total, item) => total + (Number(item.weightPercent) || 0), 0)}%
+              </p>
               <div className="mt-3 flex gap-2">
                 <Button
                   type="button"
@@ -940,19 +993,50 @@ export function LecturerDashboardApiPage() {
             },
           ]}
         />
-        <Card className="col-span-full p-6">
-          <h2 className="font-bold">Lớp được cấp quyền</h2>
+        <Card className="col-span-full p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-title-lg font-medium">Lớp được cấp quyền</h2>
+            <a
+              href="lecturer_courses.html"
+              className="inline-flex items-center gap-1 text-body-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Xem tất cả lớp
+              <span className="material-symbols-outlined text-base" aria-hidden="true">
+                arrow_forward
+              </span>
+            </a>
+          </div>
           <Resource resource={classes}>
             {(items) => (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {items.slice(0, 8).map((item) => (
-                  <a
+                  <Card
+                    as="a"
                     key={item.classId}
-                    href={`lecturer_courses.html?classId=${item.classId}`}
-                    className="rounded-xl border border-[#E2E8F0] px-3 py-2 font-semibold hover:border-primary"
+                    href={`lecturer_courses.html?classId=${encodeURIComponent(item.classId)}`}
+                    className="group flex min-w-0 items-center gap-3 p-4 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   >
-                    {nameOf(item)}
-                  </a>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FEF2F2] text-primary">
+                      <span className="material-symbols-outlined" aria-hidden="true">
+                        school
+                      </span>
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words text-body-md font-semibold text-slate-900">{nameOf(item)}</h3>
+                      {item.subjectName && item.subjectName !== nameOf(item) && (
+                        <p className="mt-1 truncate text-body-sm text-slate-500" title={item.subjectName}>
+                          {item.subjectName}
+                        </p>
+                      )}
+                      {item.status && <div className="mt-2">{state(item.status)}</div>}
+                    </div>
+                    <span
+                      className="material-symbols-outlined shrink-0 text-slate-400 group-hover:text-primary"
+                      aria-hidden="true"
+                    >
+                      chevron_right
+                    </span>
+                  </Card>
                 ))}
               </div>
             )}
@@ -1127,15 +1211,14 @@ export function LecturerAssessmentApiPage({ grading = false }) {
           }}
         >
           <Form className="grid gap-4" busy={action.busy} onSubmit={createExam}>
-            <label className="text-body-sm font-semibold">
-              Tên đề thi
-              <input
-                name="title"
-                defaultValue={editing?.title || ''}
-                required
-                className="mt-2 w-full rounded-xl border p-3"
-              />
-            </label>
+            <SharedFormField
+              name="title"
+              defaultValue={editing?.title || ''}
+              required
+              className="mt-2 w-full"
+              label={<>Tên đề thi</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
             <SelectField label="Ma trận đề" name="matrixId" defaultValue={editing?.matrixId || ''}>
               <option value="">Không sử dụng ma trận</option>
               {listItems(matrices.data).map((matrix) => (
@@ -1145,50 +1228,45 @@ export function LecturerAssessmentApiPage({ grading = false }) {
               ))}
             </SelectField>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-body-sm font-semibold">
-                Loại đề
-                <select
-                  name="examType"
-                  defaultValue={editing?.examType || 'PRACTICE'}
-                  className="mt-2 w-full rounded-xl border bg-white p-3"
-                >
-                  <option value="PRACTICE">Luyện tập</option>
-                  <option value="QUIZ">Kiểm tra ngắn</option>
-                  <option value="MIDTERM">Giữa kỳ</option>
-                  <option value="FINAL">Cuối kỳ</option>
-                </select>
-              </label>
-              <label className="text-body-sm font-semibold">
-                Thời lượng (phút)
-                <input
-                  name="durationMinutes"
-                  type="number"
-                  min="1"
-                  defaultValue={editing?.durationMinutes || ''}
-                  required
-                  className="mt-2 w-full rounded-xl border p-3"
-                />
-              </label>
-              <label className="text-body-sm font-semibold">
-                Bắt đầu
-                <input
-                  name="startTime"
-                  type="datetime-local"
-                  defaultValue={editing?.startTime?.slice(0, 16) || ''}
-                  required
-                  className="mt-2 w-full rounded-xl border p-3"
-                />
-              </label>
-              <label className="text-body-sm font-semibold">
-                Kết thúc
-                <input
-                  name="endTime"
-                  type="datetime-local"
-                  defaultValue={editing?.endTime?.slice(0, 16) || ''}
-                  required
-                  className="mt-2 w-full rounded-xl border p-3"
-                />
-              </label>
+              <SharedSelectField
+                name="examType"
+                defaultValue={editing?.examType || 'PRACTICE'}
+                label={<>Loại đề</>}
+                className="text-body-sm font-semibold"
+              >
+                <option value="PRACTICE">Luyện tập</option>
+                <option value="QUIZ">Kiểm tra ngắn</option>
+                <option value="MIDTERM">Giữa kỳ</option>
+                <option value="FINAL">Cuối kỳ</option>
+              </SharedSelectField>
+              <SharedFormField
+                name="durationMinutes"
+                type="number"
+                min="1"
+                defaultValue={editing?.durationMinutes || ''}
+                required
+                className="mt-2 w-full"
+                label={<>Thời lượng (phút)</>}
+                wrapperClassName="text-body-sm font-semibold"
+              />
+              <SharedFormField
+                name="startTime"
+                type="datetime-local"
+                defaultValue={editing?.startTime?.slice(0, 16) || ''}
+                required
+                className="mt-2 w-full"
+                label={<>Bắt đầu</>}
+                wrapperClassName="text-body-sm font-semibold"
+              />
+              <SharedFormField
+                name="endTime"
+                type="datetime-local"
+                defaultValue={editing?.endTime?.slice(0, 16) || ''}
+                required
+                className="mt-2 w-full"
+                label={<>Kết thúc</>}
+                wrapperClassName="text-body-sm font-semibold"
+              />
             </div>
             <div className="flex justify-end gap-3">
               <Button
@@ -1226,13 +1304,22 @@ export function LecturerGradingApiPage() {
 
 function LecturerAnalyticsTable({ tab, rows }) {
   const percent = (value) => (typeof value === 'number' ? `${Math.round(value * 100)}%` : '—');
+  const monthLabel = (value) => {
+    const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(value || '');
+    return match ? `${match[2]}/${match[1]}` : value === 'ALL_TIME' ? 'Tất cả thời gian' : value || '—';
+  };
   if (tab === 'difficulty')
     return (
       <Table
         asCards
         rows={rows}
-        columns={['Chủ đề', 'Điểm trung bình', 'Tỷ lệ lỗi', 'Kỳ dữ liệu']}
-        cells={(item) => [item.topicName || '—', item.avgScore ?? '—', percent(item.errorRate), item.period || '—']}
+        columns={['Chủ đề', 'Điểm trung bình', 'Tỷ lệ lỗi', 'Tháng thống kê']}
+        cells={(item) => [
+          item.topicName || '—',
+          item.avgScore ?? '—',
+          percent(item.errorRate),
+          monthLabel(item.period),
+        ]}
       />
     );
   if (tab === 'questions')
@@ -1269,12 +1356,12 @@ function LecturerAnalyticsTable({ tab, rows }) {
     <Table
       asCards
       rows={rows}
-      columns={['Chủ đề', 'Lần AI từ chối', 'Câu hỏi thường gặp', 'Kỳ dữ liệu']}
+      columns={['Chủ đề', 'Lần AI từ chối', 'Câu hỏi thường gặp', 'Tháng thống kê']}
       cells={(item) => [
         item.topicName || '—',
         item.refusalCount ?? 0,
         item.frequentQuerySample || '—',
-        item.period || '—',
+        monthLabel(item.period),
       ]}
     />
   );
@@ -1378,26 +1465,29 @@ export function LecturerAnalyticsApiPage() {
                 </SelectField>
               )}
               {tab === 'questions' ? (
-                <label className="text-body-sm font-semibold">
-                  Số lần dùng tối thiểu
-                  <input
-                    type="number"
-                    min="0"
-                    value={minUsed}
-                    onChange={(event) => setMinUsed(event.target.value)}
-                    className="mt-2 block w-32 rounded-xl border p-3"
-                  />
-                </label>
+                <SharedFormField
+                  type="number"
+                  min="0"
+                  value={minUsed}
+                  onChange={(event) => setMinUsed(event.target.value)}
+                  className="mt-2 block w-32"
+                  label={<>Số lần dùng tối thiểu</>}
+                  wrapperClassName="text-body-sm font-semibold"
+                />
               ) : (
-                <label className="text-body-sm font-semibold">
-                  Kỳ dữ liệu
-                  <input
+                <div className="flex items-end gap-2">
+                  <SharedFormField
+                    type="month"
+                    name="statistics-month"
                     value={period}
                     onChange={(event) => setPeriod(event.target.value)}
-                    placeholder="VD: 2026-09"
-                    className="mt-2 block w-36 rounded-xl border p-3"
+                    label="Tháng thống kê"
+                    title="Để trống để xem tất cả các tháng"
                   />
-                </label>
+                  <Button variant="ghost" disabled={!period} onClick={() => setPeriod('')} title="Bỏ lọc theo tháng">
+                    Tất cả tháng
+                  </Button>
+                </div>
               )}
               <Button variant="secondary" onClick={resource.reload}>
                 Làm mới
@@ -1542,27 +1632,25 @@ export function LecturerExperimentsApiPage() {
           <Form className="grid gap-4" onSubmit={submit}>
             {modal === 'create' ? (
               <>
-                <input name="title" required placeholder="Tên thí nghiệm" className="rounded-xl border p-3" />
-                <textarea name="description" required placeholder="Mô tả" className="rounded-xl border p-3" />
-                <input
-                  name="sceneAssetUrl"
-                  required
-                  placeholder="URL tài nguyên 3D"
-                  className="rounded-xl border p-3"
-                />
-                <textarea
+                <SharedFormField name="title" required placeholder="Tên thí nghiệm" className="" bare />
+                <SharedFormField name="description" required placeholder="Mô tả" className="" bare multiline />
+                <SharedFormField name="sceneAssetUrl" required placeholder="URL tài nguyên 3D" className="" bare />
+                <SharedFormField
                   name="sceneAssetsJson"
                   placeholder="Cấu hình tài nguyên (nếu có)"
-                  className="rounded-xl border p-3"
+                  className=""
+                  bare
+                  multiline
                 />
-                <textarea name="instructions" placeholder="Hướng dẫn" className="rounded-xl border p-3" />
-                <input
+                <SharedFormField name="instructions" placeholder="Hướng dẫn" className="" bare multiline />
+                <SharedFormField
                   name="orderIndex"
                   type="number"
                   min="0"
                   required
                   placeholder="Thứ tự"
-                  className="rounded-xl border p-3"
+                  className=""
+                  bare
                 />
               </>
             ) : (
@@ -1577,11 +1665,13 @@ export function LecturerExperimentsApiPage() {
                       </option>
                     ))}
                 </SelectField>
-                <input name="dueDate" required type="datetime-local" className="rounded-xl border p-3" />
-                <textarea
+                <SharedFormField label="Hạn nộp" name="dueDate" required type="datetime-local" />
+                <SharedFormField
                   name="instructionsOverride"
                   placeholder="Hướng dẫn bổ sung"
-                  className="rounded-xl border p-3"
+                  className=""
+                  bare
+                  multiline
                 />
               </>
             )}
@@ -1593,7 +1683,10 @@ export function LecturerExperimentsApiPage() {
       )}
       <div className="mt-6">
         <Tabs
-          items={[{ id: 'experiments', label: 'Danh sách thí nghiệm' }]}
+          items={[
+            { id: 'experiments', label: 'Danh sách thí nghiệm' },
+            { id: 'grading', label: 'Chấm bài thí nghiệm' },
+          ]}
           actions={
             <>
               {subjectSelect}
@@ -1603,27 +1696,31 @@ export function LecturerExperimentsApiPage() {
             </>
           }
         >
-          {() => (
-            <Resource resource={experiments}>
-              {(items) => (
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  {items.length ? (
-                    items.map((item) => (
-                      <Card key={item.experimentId} className="p-5">
-                        <h2 className="font-bold">{item.title}</h2>
-                        <p className="mt-2 text-body-sm text-[#64748B]">{item.description || 'Chưa có mô tả.'}</p>
-                        <Button className="mt-4" variant="secondary" onClick={() => setModal(item)}>
-                          Giao cho lớp
-                        </Button>
-                      </Card>
-                    ))
-                  ) : (
-                    <Card className="p-5 text-[#64748B]">Chưa có thí nghiệm cho học phần đã chọn.</Card>
-                  )}
-                </div>
-              )}
-            </Resource>
-          )}
+          {(activeTab) =>
+            activeTab === 'grading' ? (
+              <ExperimentGradingPanel classes={classes} />
+            ) : (
+              <Resource resource={experiments}>
+                {(items) => (
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    {items.length ? (
+                      items.map((item) => (
+                        <Card key={item.experimentId} className="p-5">
+                          <h2 className="font-bold">{item.title}</h2>
+                          <p className="mt-2 text-body-sm text-[#64748B]">{item.description || 'Chưa có mô tả.'}</p>
+                          <Button className="mt-4" variant="secondary" onClick={() => setModal(item)}>
+                            Giao cho lớp
+                          </Button>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="p-5 text-[#64748B]">Chưa có thí nghiệm cho học phần đã chọn.</Card>
+                    )}
+                  </div>
+                )}
+              </Resource>
+            )
+          }
         </Tabs>
       </div>
     </LecturerPageShell>

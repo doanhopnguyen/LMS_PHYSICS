@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { LecturerExperimentGradingPage } from './pages/lecturers/LecturerExperimentGrading.jsx';
 import { ApiErrorToasts } from './components/ApiErrorToasts.jsx';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getCleanRoute, getPageFile } from './lib/routes.js';
@@ -15,7 +16,6 @@ import { LabReportPage } from './pages/students/LabReportPage.jsx';
 import { LearningResultsPage } from './pages/students/LearningResultsPage.jsx';
 import { LibraryPage } from './pages/students/LibraryPage.jsx';
 import { MyCoursesPage } from './pages/students/MyCoursesPage.jsx';
-import { NotificationsPage } from './pages/students/NotificationsPage.jsx';
 import { VirtualLabPage } from './pages/students/VirtualLabPage.jsx';
 import { VoiceCitationsPage } from './pages/students/VoiceCitationsPage.jsx';
 import { WorkspacePage } from './pages/students/WorkspacePage.jsx';
@@ -57,7 +57,6 @@ const pageComponents = {
   'learning_results.html': LearningResultsPage,
   'library.html': LibraryPage,
   'my_courses.html': MyCoursesPage,
-  'notifications_help.html': NotificationsPage,
   'profile_settings.html': AccountPage,
   'account.html': AccountPage,
   'virtual_lab.html': VirtualLabPage,
@@ -79,8 +78,8 @@ const pageComponents = {
   'lecturer_grading.html': LecturerGradingApiPage,
   'lecturer_labs.html': LecturerExperimentsApiPage,
   'lecturer_lab_assignment_detail.html': LecturerExperimentsApiPage,
-  'lecturer_lab_submission_detail.html': LecturerExperimentsApiPage,
-  'lecturer_lab_grading.html': LecturerExperimentsApiPage,
+  'lecturer_lab_submission_detail.html': LecturerExperimentGradingPage,
+  'lecturer_lab_grading.html': LecturerExperimentGradingPage,
   'lecturer_ai_insights.html': LecturerAnalyticsApiPage,
   'lecturer_analytics.html': LecturerAnalyticsApiPage,
   'admin_dashboard.html': AdminDashboardPage,

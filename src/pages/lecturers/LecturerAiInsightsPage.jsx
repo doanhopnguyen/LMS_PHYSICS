@@ -1,3 +1,6 @@
+import { FormDialog as SharedFormDialog } from '../../components/FormDialog.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useMemo, useState } from 'react';
 import { readAcademicScope, rememberAcademicClass } from '../../lib/academicScope.js';
@@ -78,64 +81,48 @@ function TopicDetail({ topic, approvedMaterials, onClose }) {
   const citationRate = topic.responses ? (topic.cited / topic.responses) * 100 : 0;
   const refusalRate = topic.responses ? (topic.insufficient / topic.responses) * 100 : 0;
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-2 md:p-6"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <section
-        className="max-h-[calc(100dvh-16px)] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="topic-detail-title"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-[#E2E8F0] p-5 md:p-6">
-          <div>
-            <p className="text-label-md font-bold text-primary">{questionChapterLabels[topic.chapterId]}</p>
-            <h2 id="topic-detail-title" className="mt-1 text-headline-md font-bold">
-              {topic.name}
-            </h2>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Đóng chi tiết chủ đề" className="p-2 text-[#64748B]">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+    <SharedFormDialog title={<>{topic.name}</>} onClose={onClose} wide>
+      <div>
+        <div>
+          <p className="text-label-md font-bold text-primary">{questionChapterLabels[topic.chapterId]}</p>
         </div>
-        <div className="space-y-6 p-5 md:p-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              ['Tổng lượt hỏi', topic.questions],
-              ['Sinh viên sử dụng', topic.students],
-              ['Có dẫn nguồn', formatPercent(citationRate)],
-              ['Từ chối', formatPercent(refusalRate)],
-            ].map(([label, value]) => (
-              <Card as="div" key={label} className="bg-[#F8FAFC] p-4">
-                <span className="text-body-sm text-[#64748B]">{label}</span>
-                <strong className="mt-1 block text-headline-sm">{value}</strong>
-              </Card>
+      </div>
+      <div className="space-y-6 p-5 md:p-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            ['Tổng lượt hỏi', topic.questions],
+            ['Sinh viên sử dụng', topic.students],
+            ['Có dẫn nguồn', formatPercent(citationRate)],
+            ['Từ chối', formatPercent(refusalRate)],
+          ].map(([label, value]) => (
+            <Card as="div" key={label} className="bg-[#F8FAFC] p-4">
+              <span className="text-body-sm text-[#64748B]">{label}</span>
+              <strong className="mt-1 block text-headline-sm">{value}</strong>
+            </Card>
+          ))}
+        </div>
+        <div>
+          <h3 className="font-bold">Nhóm câu hỏi thường gặp</h3>
+          <ul className="mt-3 space-y-2">
+            {topic.frequentQuestionGroups.map((group) => (
+              <li key={group} className="flex gap-2 text-body-md">
+                <span className="material-symbols-outlined text-primary">help</span>
+                {group}
+              </li>
             ))}
-          </div>
-          <div>
-            <h3 className="font-bold">Nhóm câu hỏi thường gặp</h3>
-            <ul className="mt-3 space-y-2">
-              {topic.frequentQuestionGroups.map((group) => (
-                <li key={group} className="flex gap-2 text-body-md">
-                  <span className="material-symbols-outlined text-primary">help</span>
-                  {group}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-body-sm text-[#64748B]">
-              Các nhóm câu hỏi đã được tổng hợp và loại bỏ thông tin định danh; không hiển thị hội thoại cá nhân.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-bold">Học liệu liên quan đã phê duyệt</h3>
-            <div className="mt-3">
-              <MaterialsList ids={topic.materialIds.filter((id) => approvedMaterials.some((item) => item.id === id))} />
-            </div>
+          </ul>
+          <p className="mt-3 text-body-sm text-[#64748B]">
+            Các nhóm câu hỏi đã được tổng hợp và loại bỏ thông tin định danh; không hiển thị hội thoại cá nhân.
+          </p>
+        </div>
+        <div>
+          <h3 className="font-bold">Học liệu liên quan đã phê duyệt</h3>
+          <div className="mt-3">
+            <MaterialsList ids={topic.materialIds.filter((id) => approvedMaterials.some((item) => item.id === id))} />
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </SharedFormDialog>
   );
 }
 
@@ -177,78 +164,90 @@ export function LecturerAiInsightsPage() {
     >
       <Card className="mt-5 p-5 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <label className="text-body-sm font-semibold">
-            Học phần
-            <select className="mt-2 w-full border border-[#CBD5E1] bg-white px-4" value="BAS1201" disabled>
-              <option value="BAS1201">Vật lý đại cương 1 · BAS1201</option>
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Lớp học
-            <select
-              value={filters.classId}
-              onChange={(event) => {
-                rememberAcademicClass(event.target.value);
-                setFilters({ ...filters, classId: event.target.value });
-              }}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả lớp</option>
-              {lecturerCourses.map((course) => (
-                <option key={course.className}>{course.className}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Khoảng thời gian
-            <select
-              value={filters.range}
-              onChange={(event) => setFilters({ ...filters, range: event.target.value })}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả thời gian</option>
-              <option value="7D">7 ngày gần nhất</option>
-              <option value="30D">30 ngày gần nhất</option>
-              <option value="SEMESTER">Học kỳ hiện tại</option>
-              <option value="CUSTOM">Tùy chỉnh</option>
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Chương
-            <select
-              value={filters.chapterId}
-              onChange={(event) => setFilters({ ...filters, chapterId: event.target.value })}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả chương</option>
-              {Object.entries(questionChapterLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SharedSelectField value="BAS1201" disabled label={<>Học phần</>} className="text-body-sm font-semibold">
+            <option value="BAS1201">Vật lý đại cương 1 · BAS1201</option>
+          </SharedSelectField>
+          <SharedSelectField
+            value={filters.classId}
+            onChange={(event) => {
+              rememberAcademicClass(event.target.value);
+              setFilters({
+                ...filters,
+                classId: event.target.value,
+              });
+            }}
+            label={<>Lớp học</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả lớp</option>
+            {lecturerCourses.map((course) => (
+              <option key={course.className}>{course.className}</option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={filters.range}
+            onChange={(event) =>
+              setFilters({
+                ...filters,
+                range: event.target.value,
+              })
+            }
+            label={<>Khoảng thời gian</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả thời gian</option>
+            <option value="7D">7 ngày gần nhất</option>
+            <option value="30D">30 ngày gần nhất</option>
+            <option value="SEMESTER">Học kỳ hiện tại</option>
+            <option value="CUSTOM">Tùy chỉnh</option>
+          </SharedSelectField>
+          <SharedSelectField
+            value={filters.chapterId}
+            onChange={(event) =>
+              setFilters({
+                ...filters,
+                chapterId: event.target.value,
+              })
+            }
+            label={<>Chương</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả chương</option>
+            {Object.entries(questionChapterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
         </div>
         {filters.range === 'CUSTOM' && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="text-body-sm font-semibold">
-              Từ ngày
-              <input
-                type="date"
-                value={filters.customStart}
-                onChange={(event) => setFilters({ ...filters, customStart: event.target.value })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="text-body-sm font-semibold">
-              Đến ngày
-              <input
-                type="date"
-                value={filters.customEnd}
-                onChange={(event) => setFilters({ ...filters, customEnd: event.target.value })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
+            <SharedFormField
+              type="date"
+              value={filters.customStart}
+              onChange={(event) =>
+                setFilters({
+                  ...filters,
+                  customStart: event.target.value,
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Từ ngày</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
+            <SharedFormField
+              type="date"
+              value={filters.customEnd}
+              onChange={(event) =>
+                setFilters({
+                  ...filters,
+                  customEnd: event.target.value,
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Đến ngày</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
           </div>
         )}
       </Card>
@@ -379,7 +378,7 @@ export function LecturerAiInsightsPage() {
                         </div>
                       </div>
                       <div>
-                        <SectionHeader title="Chủ đề được quan tâm" description="Sắp xếp theo số lượt hỏi giảm dần." />
+                        <SectionHeader title="Chủ đề được quan tâm" />
                         <PaginatedList className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {topics.map((topic) => (
                             <Card key={topic.id} className="p-5">

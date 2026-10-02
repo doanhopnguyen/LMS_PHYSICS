@@ -1,3 +1,4 @@
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import React, { useMemo, useState } from 'react';
 import { useAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
@@ -57,21 +58,19 @@ export function LecturerGradingPage() {
             <h2 className="text-headline-md font-bold">Bài nộp gần đây</h2>
             <p className="mt-1 text-body-sm text-[#64748B]">Dữ liệu lấy từ các lượt làm bài kiểm tra đã nộp.</p>
           </div>
-          <label className="text-body-sm font-semibold">
-            Lọc theo lớp
-            <select
-              value={classFilter}
-              onChange={(event) => setClassFilter(event.target.value)}
-              className="mt-2 block w-full border border-[#CBD5E1] bg-white px-3 sm:mt-0 sm:ml-2 sm:inline-block sm:w-auto"
-            >
-              <option value="ALL">Tất cả lớp</option>
-              {[...new Set(lecturerStudents.map((student) => student.className))].map((className) => (
-                <option key={className} value={className}>
-                  {className}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SharedSelectField
+            value={classFilter}
+            onChange={(event) => setClassFilter(event.target.value)}
+            label={<>Lọc theo lớp</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả lớp</option>
+            {[...new Set(lecturerStudents.map((student) => student.className))].map((className) => (
+              <option key={className} value={className}>
+                {className}
+              </option>
+            ))}
+          </SharedSelectField>
         </div>
         {rows.length ? (
           <>

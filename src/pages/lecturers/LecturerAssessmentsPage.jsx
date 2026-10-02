@@ -1,3 +1,7 @@
+import { FormDialog as SharedFormDialog } from '../../components/FormDialog.jsx';
+import { DataTable as SharedDataTable } from '../../components/DataTable.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { formatPercent } from '../../lib/formatPercent.js';
 import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -88,65 +92,71 @@ function MatrixTable({ matrix, onChange, questions, readOnly = false }) {
   );
   return (
     <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">
-      <table className="w-full min-w-[760px] text-left text-body-sm">
-        <thead className="bg-[#F8FAFC] text-[#64748B]">
-          <tr>
-            <th className="px-3 py-3">Nội dung</th>
-            {levels.map((level) => (
-              <th key={level} className="px-3 py-3 text-center">
-                {cognitiveLevelLabels[level]}
-              </th>
-            ))}
-            <th className="px-3 py-3 text-center">Tổng</th>
+      <SharedDataTable
+        rows={Object.entries(matrix)}
+        renderRow={([chapterId, row]) => (
+          <tr key={chapterId} className="border-t border-[#E2E8F0]">
+            <td className="px-3 py-3 font-semibold">{questionChapterLabels[chapterId]}</td>
+            {levels.map((level) => {
+              const available = questions.filter(
+                (question) =>
+                  question.status === 'APPROVED' &&
+                  question.chapterId === chapterId &&
+                  question.cognitiveLevel === level
+              ).length;
+              const required = Number(row[level]) || 0;
+              return (
+                <td key={level} className="px-3 py-3 text-center">
+                  <SharedFormField
+                    type="number"
+                    min="0"
+                    value={required}
+                    disabled={readOnly}
+                    onChange={(event) => onChange?.(chapterId, level, Math.max(0, Number(event.target.value) || 0))}
+                    aria-label={`${questionChapterLabels[chapterId]} ${cognitiveLevelLabels[level]}`}
+                    className="mx-auto w-16 text-center"
+                    bare
+                  />
+                  {required > available && (
+                    <span className="mt-1 block text-label-sm text-[#B45309]">
+                      Có {available}/{required}
+                    </span>
+                  )}
+                </td>
+              );
+            })}
+            <td className="px-3 py-3 text-center font-bold">{chapterTotals[chapterId]}</td>
           </tr>
-        </thead>
-        <tbody>
-          {Object.entries(matrix).map(([chapterId, row]) => (
-            <tr key={chapterId} className="border-t border-[#E2E8F0]">
-              <td className="px-3 py-3 font-semibold">{questionChapterLabels[chapterId]}</td>
-              {levels.map((level) => {
-                const available = questions.filter(
-                  (question) =>
-                    question.status === 'APPROVED' &&
-                    question.chapterId === chapterId &&
-                    question.cognitiveLevel === level
-                ).length;
-                const required = Number(row[level]) || 0;
-                return (
-                  <td key={level} className="px-3 py-3 text-center">
-                    <input
-                      type="number"
-                      min="0"
-                      value={required}
-                      disabled={readOnly}
-                      onChange={(event) => onChange?.(chapterId, level, Math.max(0, Number(event.target.value) || 0))}
-                      aria-label={`${questionChapterLabels[chapterId]} ${cognitiveLevelLabels[level]}`}
-                      className="mx-auto w-16 border border-[#CBD5E1] bg-white px-2 text-center disabled:bg-[#F8FAFC]"
-                    />
-                    {required > available && (
-                      <span className="mt-1 block text-label-sm text-[#B45309]">
-                        Có {available}/{required}
-                      </span>
-                    )}
-                  </td>
-                );
-              })}
-              <td className="px-3 py-3 text-center font-bold">{chapterTotals[chapterId]}</td>
+        )}
+        paginate={false}
+        headerRows={
+          <>
+            <tr>
+              <th className="px-3 py-3">Nội dung</th>
+              {levels.map((level) => (
+                <th key={level} className="px-3 py-3 text-center">
+                  {cognitiveLevelLabels[level]}
+                </th>
+              ))}
+              <th className="px-3 py-3 text-center">Tổng</th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot className="border-t-2 border-[#CBD5E1] bg-[#F8FAFC] font-bold">
-          <tr>
-            <td className="px-3 py-3">Tổng</td>
-            {levels.map((level) => (
-              <td key={level} className="px-3 py-3 text-center">
-                {levelTotals[level]}
-              </td>
-            ))}
-            <td className="px-3 py-3 text-center text-primary">{matrixTotal(matrix)}</td>
-          </tr>
-        </tfoot>
-      </table>
+          </>
+        }
+        tableClassName="w-full min-w-[760px] text-left text-body-sm"
+        footer={
+          <tfoot className="border-t-2 border-[#CBD5E1] bg-[#F8FAFC] font-bold">
+            <tr>
+              <td className="px-3 py-3">Tổng</td>
+              {levels.map((level) => (
+                <td key={level} className="px-3 py-3 text-center">
+                  {levelTotals[level]}
+                </td>
+              ))}
+              <td className="px-3 py-3 text-center text-primary">{matrixTotal(matrix)}</td>
+            </tr>
+          </tfoot>
+        }
+      />
     </div>
   );
 }
@@ -357,38 +367,50 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
         <Card className="p-5 md:p-6">
           <h2 className="text-headline-md font-bold">Thông tin bài kiểm tra</h2>
           <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-            <label className="text-body-sm font-semibold md:col-span-2">
-              Tên bài kiểm tra *
-              <input
-                value={data.title}
-                onChange={(event) => setData({ ...data, title: event.target.value })}
-                placeholder="Kiểm tra Chương 2 — Động lực học"
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="text-body-sm font-semibold">
-              Loại
-              <select
-                value={data.type}
-                onChange={(event) => setData({ ...data, type: event.target.value })}
-                className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-              >
-                {Object.entries(assessmentTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="text-body-sm font-semibold md:col-span-2">
-              Mô tả
-              <textarea
-                value={data.description}
-                onChange={(event) => setData({ ...data, description: event.target.value })}
-                rows="3"
-                className="mt-2 w-full border border-[#CBD5E1] p-3"
-              />
-            </label>
+            <SharedFormField
+              value={data.title}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  title: event.target.value,
+                })
+              }
+              placeholder="Kiểm tra Chương 2 — Động lực học"
+              className="mt-2 w-full"
+              label={<>Tên bài kiểm tra *</>}
+              wrapperClassName="text-body-sm font-semibold md:col-span-2"
+            />
+            <SharedSelectField
+              value={data.type}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  type: event.target.value,
+                })
+              }
+              label={<>Loại</>}
+              className="text-body-sm font-semibold"
+            >
+              {Object.entries(assessmentTypeLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SharedSelectField>
+            <SharedFormField
+              value={data.description}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  description: event.target.value,
+                })
+              }
+              rows="3"
+              className="mt-2 w-full"
+              multiline
+              label={<>Mô tả</>}
+              wrapperClassName="text-body-sm font-semibold md:col-span-2"
+            />
           </div>
           <fieldset className="mt-5">
             <legend className="text-body-sm font-semibold">Lớp được giao *</legend>
@@ -515,30 +537,27 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                   ) : (
                     <div className="pt-5">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                        <label className="md:col-span-2 text-body-sm font-semibold">
-                          Tìm câu hỏi
-                          <input
-                            value={questionQuery}
-                            onChange={(event) => setQuestionQuery(event.target.value)}
-                            type="search"
-                            className="mt-2 w-full border border-[#CBD5E1] px-4"
-                          />
-                        </label>
-                        <label className="text-body-sm font-semibold">
-                          Chương
-                          <select
-                            value={questionChapter}
-                            onChange={(event) => setQuestionChapter(event.target.value)}
-                            className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                          >
-                            <option value="ALL">Tất cả</option>
-                            {data.chapters.map((chapterId) => (
-                              <option key={chapterId} value={chapterId}>
-                                {questionChapterLabels[chapterId]}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                        <SharedFormField
+                          value={questionQuery}
+                          onChange={(event) => setQuestionQuery(event.target.value)}
+                          type="search"
+                          className="mt-2 w-full"
+                          label={<>Tìm câu hỏi</>}
+                          wrapperClassName="md:col-span-2 text-body-sm font-semibold"
+                        />
+                        <SharedSelectField
+                          value={questionChapter}
+                          onChange={(event) => setQuestionChapter(event.target.value)}
+                          label={<>Chương</>}
+                          className="text-body-sm font-semibold"
+                        >
+                          <option value="ALL">Tất cả</option>
+                          {data.chapters.map((chapterId) => (
+                            <option key={chapterId} value={chapterId}>
+                              {questionChapterLabels[chapterId]}
+                            </option>
+                          ))}
+                        </SharedSelectField>
                       </div>
                       <DataTable
                         columns={['', 'Mã', 'Câu hỏi', 'Chương', 'Mức độ', 'CLO']}
@@ -638,62 +657,76 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
         <Card className="p-5 md:p-6">
           <h2 className="text-headline-md font-bold">Cấu hình bài kiểm tra</h2>
           <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            <label className="text-body-sm font-semibold">
-              Thời gian làm bài (phút) *
-              <input
-                type="number"
-                min="1"
-                value={data.duration}
-                onChange={(event) => setData({ ...data, duration: Number(event.target.value) })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="text-body-sm font-semibold">
-              Thời gian bắt đầu *
-              <input
-                type="datetime-local"
-                value={data.startAt}
-                onChange={(event) => setData({ ...data, startAt: event.target.value })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="text-body-sm font-semibold">
-              Thời gian kết thúc *
-              <input
-                type="datetime-local"
-                value={data.endAt}
-                onChange={(event) => setData({ ...data, endAt: event.target.value })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="text-body-sm font-semibold">
-              Số lần làm bài
-              <select
-                value={data.attemptsAllowed}
-                onChange={(event) =>
-                  setData({
-                    ...data,
-                    attemptsAllowed: event.target.value === 'UNLIMITED' ? 'UNLIMITED' : Number(event.target.value),
-                  })
-                }
-                className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-              >
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="UNLIMITED">Không giới hạn</option>
-              </select>
-            </label>
-            <label className="text-body-sm font-semibold">
-              Tổng điểm
-              <input
-                type="number"
-                min="1"
-                value={data.totalScore}
-                onChange={(event) => setData({ ...data, totalScore: Number(event.target.value) })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
+            <SharedFormField
+              type="number"
+              min="1"
+              value={data.duration}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  duration: Number(event.target.value),
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Thời gian làm bài (phút) *</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
+            <SharedFormField
+              type="datetime-local"
+              value={data.startAt}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  startAt: event.target.value,
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Thời gian bắt đầu *</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
+            <SharedFormField
+              type="datetime-local"
+              value={data.endAt}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  endAt: event.target.value,
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Thời gian kết thúc *</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
+            <SharedSelectField
+              value={data.attemptsAllowed}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  attemptsAllowed: event.target.value === 'UNLIMITED' ? 'UNLIMITED' : Number(event.target.value),
+                })
+              }
+              label={<>Số lần làm bài</>}
+              className="text-body-sm font-semibold"
+            >
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="UNLIMITED">Không giới hạn</option>
+            </SharedSelectField>
+            <SharedFormField
+              type="number"
+              min="1"
+              value={data.totalScore}
+              onChange={(event) =>
+                setData({
+                  ...data,
+                  totalScore: Number(event.target.value),
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Tổng điểm</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
             <Card as="div" className="bg-[#F8FAFC] p-4">
               <span className="text-body-sm text-[#64748B]">Chia đều điểm</span>
               <strong className="mt-1 block text-headline-sm">
@@ -847,120 +880,111 @@ function AssessmentDetail({ assessment, onClose, onViewQuestion }) {
     .map((id) => lecturerQuestions.find((item) => item.id === id))
     .filter(Boolean);
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F172A]/45 p-2 md:p-6"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <section
-        className="max-h-[calc(100dvh-16px)] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="assessment-detail-title"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-[#E2E8F0] p-5 md:p-6">
-          <div>
-            <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
-            <h2 id="assessment-detail-title" className="mt-3 text-headline-md font-bold">
-              {assessment.title}
-            </h2>
-            <p className="mt-1 text-body-sm text-[#64748B]">
-              {assessmentTypeLabels[assessment.type]} · {assessment.id}
-            </p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Đóng chi tiết" className="p-2 text-[#64748B]">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+    <SharedFormDialog title={<>{assessment.title}</>} onClose={onClose} wide>
+      <div>
+        <div>
+          <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+
+          <p className="mt-1 text-body-sm text-[#64748B]">
+            {assessmentTypeLabels[assessment.type]} · {assessment.id}
+          </p>
         </div>
-        <div className="p-5 md:p-6">
-          <Tabs
-            items={[
-              { id: 'OVERVIEW', label: 'Tổng quan' },
-              { id: 'QUESTIONS', label: 'Câu hỏi' },
-              { id: 'STUDENTS', label: 'Sinh viên' },
-            ]}
-          >
-            {(tab) =>
-              tab === 'OVERVIEW' ? (
-                <div className="space-y-5 pt-5">
-                  <dl className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-body-sm">
-                    <div>
-                      <dt className="text-[#64748B]">Lớp</dt>
-                      <dd className="mt-1 font-semibold">{assessment.classIds.join(', ')}</dd>
+      </div>
+      <div className="p-5 md:p-6">
+        <Tabs
+          items={[
+            {
+              id: 'OVERVIEW',
+              label: 'Tổng quan',
+            },
+            {
+              id: 'QUESTIONS',
+              label: 'Câu hỏi',
+            },
+            {
+              id: 'STUDENTS',
+              label: 'Sinh viên',
+            },
+          ]}
+        >
+          {(tab) =>
+            tab === 'OVERVIEW' ? (
+              <div className="space-y-5 pt-5">
+                <dl className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-body-sm">
+                  <div>
+                    <dt className="text-[#64748B]">Lớp</dt>
+                    <dd className="mt-1 font-semibold">{assessment.classIds.join(', ')}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#64748B]">Số câu · Điểm</dt>
+                    <dd className="mt-1 font-semibold">
+                      {assessment.questionIds.length} · {assessment.totalScore} điểm
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#64748B]">Thời lượng</dt>
+                    <dd className="mt-1 font-semibold">{assessment.duration} phút</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#64748B]">Hoàn thành</dt>
+                    <dd className="mt-1 font-semibold">
+                      {assessment.completedCount}/{assessment.totalStudents}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#64748B]">Bắt đầu</dt>
+                    <dd className="mt-1 font-semibold">{formatDateTime(assessment.startAt)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#64748B]">Kết thúc</dt>
+                    <dd className="mt-1 font-semibold">{formatDateTime(assessment.endAt)}</dd>
+                  </div>
+                </dl>
+                <MatrixTable matrix={assessment.matrix} questions={lecturerQuestions} readOnly />
+              </div>
+            ) : tab === 'QUESTIONS' ? (
+              <PaginatedList as="ol" className="space-y-3 pt-5">
+                {questions.map((question, index) => (
+                  <Card as="li" key={question.id} className="flex gap-3 p-4">
+                    <strong className="text-primary">{index + 1}.</strong>
+                    <div className="flex-1">
+                      <span className="font-mono text-label-md">{question.id}</span>
+                      <p className="mt-1 text-body-sm">{question.content}</p>
                     </div>
-                    <div>
-                      <dt className="text-[#64748B]">Số câu · Điểm</dt>
-                      <dd className="mt-1 font-semibold">
-                        {assessment.questionIds.length} · {assessment.totalScore} điểm
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[#64748B]">Thời lượng</dt>
-                      <dd className="mt-1 font-semibold">{assessment.duration} phút</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[#64748B]">Hoàn thành</dt>
-                      <dd className="mt-1 font-semibold">
-                        {assessment.completedCount}/{assessment.totalStudents}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[#64748B]">Bắt đầu</dt>
-                      <dd className="mt-1 font-semibold">{formatDateTime(assessment.startAt)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[#64748B]">Kết thúc</dt>
-                      <dd className="mt-1 font-semibold">{formatDateTime(assessment.endAt)}</dd>
-                    </div>
-                  </dl>
-                  <MatrixTable matrix={assessment.matrix} questions={lecturerQuestions} readOnly />
-                </div>
-              ) : tab === 'QUESTIONS' ? (
-                <PaginatedList as="ol" className="space-y-3 pt-5">
-                  {questions.map((question, index) => (
-                    <Card as="li" key={question.id} className="flex gap-3 p-4">
-                      <strong className="text-primary">{index + 1}.</strong>
-                      <div className="flex-1">
-                        <span className="font-mono text-label-md">{question.id}</span>
-                        <p className="mt-1 text-body-sm">{question.content}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onViewQuestion(question)}
-                        className="text-body-sm font-semibold text-primary"
-                      >
-                        Xem
-                      </button>
-                    </Card>
-                  ))}
-                </PaginatedList>
-              ) : (
-                <div className="pt-5">
-                  <Card className="p-5">
-                    <h3 className="font-semibold">Tóm tắt sinh viên</h3>
-                    <p className="mt-2 text-body-md text-[#64748B]">
-                      Đã hoàn thành {assessment.completedCount}/{assessment.totalStudents} sinh viên. Chi tiết từng lượt
-                      làm sẽ được phát triển ở bước tiếp theo.
-                    </p>
-                    <ProgressBar
-                      value={
-                        assessment.totalStudents ? (assessment.completedCount / assessment.totalStudents) * 100 : 0
-                      }
-                      className="mt-4"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => onViewQuestion(question)}
+                      className="text-body-sm font-semibold text-primary"
+                    >
+                      Xem
+                    </button>
                   </Card>
-                </div>
-              )
-            }
-          </Tabs>
-          <div className="mt-6 flex justify-end">
-            <Button variant="secondary" onClick={onClose}>
-              Đóng
-            </Button>
-          </div>
+                ))}
+              </PaginatedList>
+            ) : (
+              <div className="pt-5">
+                <Card className="p-5">
+                  <h3 className="font-semibold">Tóm tắt sinh viên</h3>
+                  <p className="mt-2 text-body-md text-[#64748B]">
+                    Đã hoàn thành {assessment.completedCount}/{assessment.totalStudents} sinh viên. Chi tiết từng lượt
+                    làm sẽ được phát triển ở bước tiếp theo.
+                  </p>
+                  <ProgressBar
+                    value={assessment.totalStudents ? (assessment.completedCount / assessment.totalStudents) * 100 : 0}
+                    className="mt-4"
+                  />
+                </Card>
+              </div>
+            )
+          }
+        </Tabs>
+        <div className="mt-6 flex justify-end">
+          <Button variant="secondary" onClick={onClose}>
+            Đóng
+          </Button>
         </div>
-      </section>
-    </div>
+      </div>
+    </SharedFormDialog>
   );
 }
 
@@ -1099,59 +1123,52 @@ export function LecturerAssessmentsPage() {
       </section>
       <Card className="p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-          <label className="text-body-sm font-semibold xl:col-span-2">
-            Tìm bài kiểm tra
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              type="search"
-              placeholder="Tìm bài kiểm tra..."
-              className="mt-2 w-full border border-[#CBD5E1] px-4"
-            />
-          </label>
-          <label className="text-body-sm font-semibold">
-            Lớp
-            <select
-              value={classFilter}
-              onChange={(event) => setClassFilter(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả</option>
-              {lecturerCourses.map((course) => (
-                <option key={course.className}>{course.className}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Trạng thái
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả</option>
-              {Object.entries(assessmentStatusMeta).map(([value, meta]) => (
-                <option key={value} value={value}>
-                  {meta.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Chương
-            <select
-              value={chapterFilter}
-              onChange={(event) => setChapterFilter(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả</option>
-              {Object.entries(questionChapterLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SharedFormField
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            type="search"
+            placeholder="Tìm bài kiểm tra..."
+            className="mt-2 w-full"
+            label={<>Tìm bài kiểm tra</>}
+            wrapperClassName="text-body-sm font-semibold xl:col-span-2"
+          />
+          <SharedSelectField
+            value={classFilter}
+            onChange={(event) => setClassFilter(event.target.value)}
+            label={<>Lớp</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {lecturerCourses.map((course) => (
+              <option key={course.className}>{course.className}</option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            label={<>Trạng thái</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(assessmentStatusMeta).map(([value, meta]) => (
+              <option key={value} value={value}>
+                {meta.label}
+              </option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={chapterFilter}
+            onChange={(event) => setChapterFilter(event.target.value)}
+            label={<>Chương</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(questionChapterLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
         </div>
       </Card>
       <Tabs key={tabsKey} items={statusTabs}>
@@ -1319,39 +1336,29 @@ export function LecturerAssessmentsPage() {
 
 function QuestionPreview({ question, onClose }) {
   return (
-    <div
-      className="fixed inset-0 z-[1200] flex items-center justify-center bg-[#0F172A]/45 p-4"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-    >
-      <Card className="max-h-[calc(100dvh-32px)] w-full max-w-2xl overflow-y-auto p-6" as="section">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <StatusBadge tone="neutral">{question.id}</StatusBadge>
-            <h2 className="mt-3 text-headline-sm font-bold">{question.content}</h2>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Đóng câu hỏi" className="text-[#64748B]">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+    <SharedFormDialog title={<>{question.content}</>} onClose={onClose}>
+      <div>
+        <div>
+          <StatusBadge tone="neutral">{question.id}</StatusBadge>
         </div>
-        <div className="mt-5 space-y-2">
-          {question.answers.map((answer) => (
-            <Card
-              as="div"
-              key={answer.id}
-              className={`border p-3 ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}
-            >
-              <strong>{answer.id}.</strong> {answer.content}
-              {answer.correct && <span className="ml-2 font-semibold text-[#15803D]">— Đáp án đúng</span>}
-            </Card>
-          ))}
-        </div>
-        <div className="mt-6 flex justify-end">
-          <Button variant="secondary" onClick={onClose}>
-            Đóng
-          </Button>
-        </div>
-      </Card>
-    </div>
+      </div>
+      <div className="mt-5 space-y-2">
+        {question.answers.map((answer) => (
+          <Card
+            as="div"
+            key={answer.id}
+            className={`border p-3 ${answer.correct ? 'border-[#86EFAC] bg-[#F0FDF4]' : 'border-[#E2E8F0]'}`}
+          >
+            <strong>{answer.id}.</strong> {answer.content}
+            {answer.correct && <span className="ml-2 font-semibold text-[#15803D]">— Đáp án đúng</span>}
+          </Card>
+        ))}
+      </div>
+      <div className="mt-6 flex justify-end">
+        <Button variant="secondary" onClick={onClose}>
+          Đóng
+        </Button>
+      </div>
+    </SharedFormDialog>
   );
 }

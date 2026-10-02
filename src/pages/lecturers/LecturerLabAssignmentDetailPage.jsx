@@ -1,3 +1,5 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import React, { useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -178,44 +180,39 @@ export function LecturerLabAssignmentDetailPage() {
       </Card>
       <Card className="mt-5 p-5 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-          <label className="text-body-sm font-semibold">
-            Tìm sinh viên
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Tìm sinh viên theo tên hoặc mã..."
-              className="mt-2 w-full border border-[#CBD5E1] px-4"
-            />
-          </label>
-          <label className="text-body-sm font-semibold">
-            Trạng thái
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả</option>
-              {Object.entries(labSubmissionStatusMeta).map(([value, meta]) => (
-                <option key={value} value={value}>
-                  {meta.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Lớp
-            <select
-              value={classFilter}
-              onChange={(event) => setClassFilter(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả</option>
-              {assignment.classIds.map((value) => (
-                <option key={value}>{value}</option>
-              ))}
-            </select>
-          </label>
+          <SharedFormField
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Tìm sinh viên theo tên hoặc mã..."
+            className="mt-2 w-full"
+            label={<>Tìm sinh viên</>}
+            wrapperClassName="text-body-sm font-semibold"
+          />
+          <SharedSelectField
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            label={<>Trạng thái</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {Object.entries(labSubmissionStatusMeta).map(([value, meta]) => (
+              <option key={value} value={value}>
+                {meta.label}
+              </option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={classFilter}
+            onChange={(event) => setClassFilter(event.target.value)}
+            label={<>Lớp</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả</option>
+            {assignment.classIds.map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </SharedSelectField>
         </div>
         {visible.length ? (
           <>

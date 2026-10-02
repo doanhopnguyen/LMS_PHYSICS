@@ -51,7 +51,9 @@ export function ExamResultsPage() {
       setError('');
       try {
         const ownAttempts = examId ? rowsOf(await api.exams.myAttempts(examId)) : [];
-        const attemptData = ownAttempts.find((item) => item.attemptId === attemptId) || (examId ? await api.exams.myAttempt(examId) : null);
+        const attemptData =
+          ownAttempts.find((item) => item.attemptId === attemptId) ||
+          (examId ? await api.exams.myAttempt(examId) : null);
         if (!attemptData?.attemptId) throw new Error('Không tìm thấy lượt làm bài của bạn.');
         const [examData, progressData, questionData] = await Promise.all([
           examId ? api.exams.get(examId).catch(() => null) : Promise.resolve(null),
@@ -126,9 +128,12 @@ export function ExamResultsPage() {
             <Card variant="accent" className="p-6">
               <div className="flex flex-wrap items-end justify-between gap-5">
                 <div>
-                  <span className="text-body-sm text-[#64748B]">{canShowAutoScore ? 'Điểm tự chấm' : 'Trạng thái chấm điểm'}</span>
-                  <strong className="mt-1 block text-headline-md text-primary">{canShowAutoScore ? scoreText(attempt.totalScore) : 'Chờ giảng viên chấm'}</strong>
-                  <p className="mt-2 text-body-sm text-[#64748B]">{canShowAutoScore ? 'Kết quả trắc nghiệm được hệ thống tự chấm.' : hasManualQuestions ? 'Bài có câu tự luận, đang chờ giảng viên chấm hoặc điều chỉnh điểm.' : 'Điểm sẽ được công bố theo quyết định của giảng viên.'}</p>
+                  <span className="text-body-sm text-[#64748B]">
+                    {canShowAutoScore ? 'Điểm tự chấm' : 'Trạng thái chấm điểm'}
+                  </span>
+                  <strong className="mt-1 block text-headline-md text-primary">
+                    {canShowAutoScore ? scoreText(attempt.totalScore) : 'Chờ giảng viên chấm'}
+                  </strong>
                 </div>
                 <StatusBadge tone={submitted ? 'success' : 'warning'}>
                   {submitted ? 'Đã nộp bài' : attempt?.status || 'Đang cập nhật'}
@@ -185,8 +190,24 @@ export function ExamResultsPage() {
                       <td className="max-w-sm px-4 py-3">{question.content || '—'}</td>
                       <td className="px-4 py-3">{answerText(question)}</td>
                       <td className="px-4 py-3">
-                        <StatusBadge tone={hasCorrectness ? (question.isCorrect ? 'success' : 'primary') : answered ? 'success' : 'warning'}>
-                          {hasCorrectness ? (question.isCorrect ? `Đúng${question.score != null ? ` · ${scoreText(question.score)} điểm` : ''}` : 'Sai') : answered ? 'Đã trả lời' : 'Bỏ trống'}
+                        <StatusBadge
+                          tone={
+                            hasCorrectness
+                              ? question.isCorrect
+                                ? 'success'
+                                : 'primary'
+                              : answered
+                                ? 'success'
+                                : 'warning'
+                          }
+                        >
+                          {hasCorrectness
+                            ? question.isCorrect
+                              ? `Đúng${question.score != null ? ` · ${scoreText(question.score)} điểm` : ''}`
+                              : 'Sai'
+                            : answered
+                              ? 'Đã trả lời'
+                              : 'Bỏ trống'}
                         </StatusBadge>
                       </td>
                     </tr>

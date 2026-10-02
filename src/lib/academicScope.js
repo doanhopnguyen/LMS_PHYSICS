@@ -5,7 +5,6 @@ export const academicPages = {
   'student_evidence.html': 'class',
   'virtual_lab.html': 'class',
   'exam_practice_center.html': 'class',
-  'library.html': 'class',
 };
 
 // Options are loaded from the semester API by AcademicFilters.

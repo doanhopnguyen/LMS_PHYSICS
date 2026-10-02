@@ -1,3 +1,4 @@
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import React from 'react';
 import { Card } from '../../components/Card.jsx';
 import { DonutChart, LineChart, ProgressFillList } from '../../components/DataCharts.jsx';
@@ -13,13 +14,10 @@ export function LecturerAnalyticsPage() {
       eyebrow="DỮ LIỆU LỚP HỌC"
       description="Phân tích mức độ tham gia, kết quả và tiến độ để điều chỉnh hoạt động giảng dạy."
       actions={
-        <label className="text-body-sm font-semibold">
-          Lớp học
-          <select className="ml-2 border border-[#CBD5E1] bg-white px-3">
-            <option>D23CQCN01-B</option>
-            <option>D23CQCN02-B</option>
-          </select>
-        </label>
+        <SharedSelectField label={<>Lớp học</>} className="text-body-sm font-semibold">
+          <option>D23CQCN01-B</option>
+          <option>D23CQCN02-B</option>
+        </SharedSelectField>
       }
     >
       <MetricGrid

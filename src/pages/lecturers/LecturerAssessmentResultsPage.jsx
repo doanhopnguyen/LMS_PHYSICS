@@ -1,3 +1,5 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { formatPercent } from '../../lib/formatPercent.js';
 import React, { useMemo, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
@@ -308,45 +310,40 @@ export function LecturerAssessmentResultsPage() {
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label className="text-body-sm font-semibold">
-                      Tìm sinh viên
-                      <input
-                        type="search"
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        placeholder="Tìm theo tên hoặc mã sinh viên..."
-                        className="mt-2 w-full border border-[#CBD5E1] px-4"
-                      />
-                    </label>
-                    <label className="text-body-sm font-semibold">
-                      Trạng thái
-                      <select
-                        value={statusFilter}
-                        onChange={(event) => setStatusFilter(event.target.value)}
-                        className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                      >
-                        <option value="ALL">Tất cả</option>
-                        {Object.entries(attemptStatusMeta).map(([value, meta]) => (
-                          <option key={value} value={value}>
-                            {meta.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="text-body-sm font-semibold">
-                      Điểm
-                      <select
-                        value={scoreFilter}
-                        onChange={(event) => setScoreFilter(event.target.value)}
-                        className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                      >
-                        <option value="ALL">Tất cả</option>
-                        <option value="GTE8">≥ 8</option>
-                        <option value="65_79">6.5 – 7.9</option>
-                        <option value="5_64">5 – 6.4</option>
-                        <option value="LT5">&lt; 5</option>
-                      </select>
-                    </label>
+                    <SharedFormField
+                      type="search"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Tìm theo tên hoặc mã sinh viên..."
+                      className="mt-2 w-full"
+                      label={<>Tìm sinh viên</>}
+                      wrapperClassName="text-body-sm font-semibold"
+                    />
+                    <SharedSelectField
+                      value={statusFilter}
+                      onChange={(event) => setStatusFilter(event.target.value)}
+                      label={<>Trạng thái</>}
+                      className="text-body-sm font-semibold"
+                    >
+                      <option value="ALL">Tất cả</option>
+                      {Object.entries(attemptStatusMeta).map(([value, meta]) => (
+                        <option key={value} value={value}>
+                          {meta.label}
+                        </option>
+                      ))}
+                    </SharedSelectField>
+                    <SharedSelectField
+                      value={scoreFilter}
+                      onChange={(event) => setScoreFilter(event.target.value)}
+                      label={<>Điểm</>}
+                      className="text-body-sm font-semibold"
+                    >
+                      <option value="ALL">Tất cả</option>
+                      <option value="GTE8">≥ 8</option>
+                      <option value="65_79">6.5 – 7.9</option>
+                      <option value="5_64">5 – 6.4</option>
+                      <option value="LT5">&lt; 5</option>
+                    </SharedSelectField>
                   </div>
                   {visibleRows.length ? (
                     <>

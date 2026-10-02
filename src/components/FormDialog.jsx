@@ -1,25 +1,37 @@
 import React, { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from './Button.jsx';
-export function FormDialog({ title, onClose, busy, wide = false, children }) {
+export function FormDialog({
+  title,
+  onClose,
+  busy,
+  wide = false,
+  compact = false,
+  children,
+  dialogRole = 'dialog',
+  describedBy,
+  initialFocusRef,
+}) {
   const ref = useRef(null);
   const titleId = useId();
   useEffect(() => {
     const previous = document.activeElement;
-    ref.current?.focus();
+    (initialFocusRef?.current || ref.current)?.focus();
     return () => previous?.focus?.();
   }, []);
-  return (
+  const dialog = (
     <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-transparent p-4"
+      className={`fixed inset-0 ${dialogRole === 'alertdialog' ? 'z-[1200]' : 'z-[1100]'} flex items-center justify-center bg-transparent p-4`}
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}
     >
       <section
         ref={ref}
         tabIndex={-1}
-        role="dialog"
+        role={dialogRole}
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`form-dialog flex h-[min(760px,calc(100dvh-32px))] w-full flex-col overflow-hidden rounded-2xl border-2 border-primary bg-white shadow-xl ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}
+        aria-describedby={describedBy}
+        className={`form-dialog flex max-h-[calc(100dvh-32px)] w-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}
         onKeyDown={(e) => {
           if (e.key === 'Escape' && !busy) onClose();
           if (e.key === 'Tab') {
@@ -44,10 +56,19 @@ export function FormDialog({ title, onClose, busy, wide = false, children }) {
           <h2 id={titleId} className="text-headline-sm font-medium">
             {title}
           </h2>
-          <button type="button" aria-label="Đóng" disabled={busy} onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-primary hover:bg-[#FEF2F2] disabled:opacity-60"><span className="material-symbols-outlined">close</span></button>
+          <button
+            type="button"
+            aria-label="Đóng"
+            disabled={busy}
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-primary hover:bg-[#FEF2F2] disabled:opacity-60"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-6">{children}</div>
       </section>
     </div>
   );
+  return typeof document === 'undefined' ? dialog : createPortal(dialog, document.body);
 }

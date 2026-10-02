@@ -1,5 +1,6 @@
 import React from 'react';
 import { PageHeaderSlot } from './PageHeaderContext.jsx';
+import { NotificationBell } from './NotificationBell.jsx';
 
 export function DetailToolbar({
   title,
@@ -37,6 +38,7 @@ export function DetailToolbar({
           {subtitle && <span>{subtitle}</span>}
         </div>
         {actions && <div className="detail-toolbar-actions">{actions}</div>}
+        <div className="floating-actions"><NotificationBell /></div>
       </header>
     </div>
   );

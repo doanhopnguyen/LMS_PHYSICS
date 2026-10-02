@@ -213,6 +213,7 @@ export const api = {
 
   // ─── Students ────────────────────────────────────────────────────────────────
   students: {
+    search: (keyword) => apiRequest('/api/v1/students/search', { query: { keyword } }),
     myClasses: (query) => apiRequest('/api/v1/students/me/classes', { query }),
     mySchedule: () => apiRequest('/api/v1/students/me/schedule'),
     myAgenda: () => apiRequest('/api/v1/students/me/agenda'),

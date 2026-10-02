@@ -19,7 +19,10 @@ export function Header({ onMenuClick, homeHref = 'dashboard.html' }) {
   const session = useCurrentUser();
   const user = session ? { ...session, role: session.label } : defaultUser;
   const home = session?.home || homeHref;
-  const isHome = getPageFile() === home;
+  const page = getPageFile();
+  const isHome =
+    page === home ||
+    ['dashboard.html', 'lecturer_dashboard.html', 'ta_dashboard.html', 'admin_dashboard.html'].includes(page);
   const handleLink = (event) => {
     const link = event.target.closest('a');
     const target = link && routeFromLink(link);
@@ -68,23 +71,6 @@ export function Header({ onMenuClick, homeHref = 'dashboard.html' }) {
       </div>
 
       <PageHeaderSlot />
-      <div className="header-search-center hidden xl:block">
-        <div className="header-search relative">
-          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8] text-xl">
-            search
-          </span>
-          <input
-            className="w-full h-10 pl-11 pr-4 bg-surface-container-low border border-[#CBD5E1] rounded-full text-body-md text-on-surface placeholder:text-[#94A3B8] focus:bg-white focus:border-primary-container focus:outline-none focus:ring-2 focus:ring-[#FEE2E2] transition-all"
-            placeholder={
-              user.role === 'Giảng viên'
-                ? 'Tìm học phần, sinh viên, học liệu...'
-                : 'Tìm kiếm bài học, tài liệu, công thức...'
-            }
-            type="search"
-            aria-label="Tìm kiếm"
-          />
-        </div>
-      </div>
 
       <div className="floating-actions">
         <NotificationBell />

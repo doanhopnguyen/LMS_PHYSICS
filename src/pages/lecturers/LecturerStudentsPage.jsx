@@ -1,3 +1,5 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { formatPercent } from '../../lib/formatPercent.js';
 import React, { useMemo, useState } from 'react';
 import { readAcademicScope } from '../../lib/academicScope.js';
@@ -52,42 +54,37 @@ export function LecturerStudentsPage() {
     >
       <Card className="p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
-          <label className="text-body-sm font-semibold xl:col-span-2">
-            Tìm sinh viên
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              type="search"
-              placeholder="Họ tên hoặc mã sinh viên"
-              className="mt-2 w-full border border-[#CBD5E1] px-4 focus:border-primary focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
-            />
-          </label>
-          <label className="text-body-sm font-semibold">
-            Trạng thái
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option>Tất cả</option>
-              <option>Đang học</option>
-              <option>Cần chú ý</option>
-              <option>Có bài quá hạn</option>
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Sắp xếp
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="progress-desc">Tiến độ: cao đến thấp</option>
-              <option value="progress-asc">Tiến độ: thấp đến cao</option>
-              <option value="score-desc">Điểm: cao đến thấp</option>
-              <option value="score-asc">Điểm: thấp đến cao</option>
-            </select>
-          </label>
+          <SharedFormField
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            type="search"
+            placeholder="Họ tên hoặc mã sinh viên"
+            className="mt-2 w-full focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+            label={<>Tìm sinh viên</>}
+            wrapperClassName="text-body-sm font-semibold xl:col-span-2"
+          />
+          <SharedSelectField
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+            label={<>Trạng thái</>}
+            className="text-body-sm font-semibold"
+          >
+            <option>Tất cả</option>
+            <option>Đang học</option>
+            <option>Cần chú ý</option>
+            <option>Có bài quá hạn</option>
+          </SharedSelectField>
+          <SharedSelectField
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+            label={<>Sắp xếp</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="progress-desc">Tiến độ: cao đến thấp</option>
+            <option value="progress-asc">Tiến độ: thấp đến cao</option>
+            <option value="score-desc">Điểm: cao đến thấp</option>
+            <option value="score-asc">Điểm: thấp đến cao</option>
+          </SharedSelectField>
         </div>
         <div className="mb-3 flex items-center justify-between gap-3 text-body-sm text-[#64748B]">
           <span>{rows.length} sinh viên</span>

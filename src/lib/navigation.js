@@ -11,7 +11,6 @@ export const navigationByLabel = [
   ['Kiểm tra', 'exam_session.html'],
   ['Phòng thí nghiệm 3D', 'virtual_lab.html'],
   ['Kết quả học tập', 'learning_results.html'],
-  ['Trợ giúp', 'notifications_help.html'],
   ['Cài đặt', 'profile_settings.html'],
 ];
 

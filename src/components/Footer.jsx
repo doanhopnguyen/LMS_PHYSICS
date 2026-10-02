@@ -37,20 +37,6 @@ export function Footer() {
               <span>Hệ thống học tập và thí nghiệm vật lý</span>
             </span>
           </div>
-          <nav className="site-footer__social" aria-label="Mạng xã hội PTIT">
-            <a href="https://www.facebook.com/HocvienPTIT/?locale=vi_VN" target="_blank" rel="noreferrer">
-              <span className="site-footer__facebook" aria-hidden="true">
-                f
-              </span>
-              Facebook
-            </a>
-            <a href="https://www.youtube.com/@PChannels" target="_blank" rel="noreferrer">
-              <span className="material-symbols-outlined" aria-hidden="true">
-                play_circle
-              </span>
-              YouTube
-            </a>
-          </nav>
         </div>
 
         <div className="site-footer__campuses">
@@ -70,6 +56,16 @@ export function Footer() {
         <div className="site-footer__bottom">
           <span>© PTIT 2026</span>
           <span>Design by Hope</span>
+          <nav className="site-footer__social" aria-label="Mạng xã hội PTIT">
+            <a href="https://www.facebook.com/HocvienPTIT/?locale=vi_VN" target="_blank" rel="noreferrer">
+              <img className="site-footer__social-icon" src={`${import.meta.env.BASE_URL}facebookwhite.png`} alt="" aria-hidden="true" width="20" height="20" />
+              Facebook
+            </a>
+            <a href="https://www.youtube.com/@PChannels" target="_blank" rel="noreferrer">
+              <img className="site-footer__social-icon" src={`${import.meta.env.BASE_URL}youtubewhite.png`} alt="" aria-hidden="true" width="20" height="20" />
+              YouTube
+            </a>
+          </nav>
         </div>
       </div>
     </footer>

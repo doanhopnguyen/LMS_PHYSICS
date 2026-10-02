@@ -1,3 +1,5 @@
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
@@ -187,22 +189,20 @@ export function TAClassSupportApiPage() {
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
       <Card className="mt-6 p-5">
-        <label className="block text-body-sm font-semibold">
-          Chọn lớp được phân công
-          <select
-            value={classId}
-            onChange={(event) => setClassId(event.target.value)}
-            className="mt-2 block w-full rounded-xl border p-3"
-          >
-            {' '}
-            <option value="">Chọn lớp</option>
-            {classRows.map((item) => (
-              <option key={item.classId} value={item.classId}>
-                {className(item)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SharedSelectField
+          value={classId}
+          onChange={(event) => setClassId(event.target.value)}
+          label={<>Chọn lớp được phân công</>}
+          className="block text-body-sm font-semibold"
+        >
+          {' '}
+          <option value="">Chọn lớp</option>
+          {classRows.map((item) => (
+            <option key={item.classId} value={item.classId}>
+              {className(item)}
+            </option>
+          ))}
+        </SharedSelectField>
       </Card>
       {!classId ? (
         <Card className="mt-5 p-6 text-[#64748B]">Chọn một lớp để xem dữ liệu được phân quyền.</Card>
@@ -286,33 +286,31 @@ export function TAClassSupportApiPage() {
                 <Card className="mt-5 p-5">
                   <p className="text-body-sm text-[#64748B]">Nhập thông tin bài nộp và tiêu chí chấm được cung cấp.</p>
                   <Form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={grade}>
-                    <label>
-                      UUID bài nộp
-                      <input name="submissionId" required className="mt-2 block w-full rounded-xl border p-3" />
-                    </label>
-                    <label>
-                      UUID rubric
-                      <input name="rubricId" required className="mt-2 block w-full rounded-xl border p-3" />
-                    </label>
-                    <label>
-                      Điểm
-                      <input
-                        name="score"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        required
-                        className="mt-2 block w-full rounded-xl border p-3"
-                      />
-                    </label>
-                    <label>
-                      Nhận xét
-                      <input name="feedback" className="mt-2 block w-full rounded-xl border p-3" />
-                    </label>
-                    <label className="md:col-span-2">
-                      Ghi chú
-                      <textarea name="comment" rows="3" className="mt-2 block w-full rounded-xl border p-3" />
-                    </label>
+                    <SharedFormField
+                      name="submissionId"
+                      required
+                      className="mt-2 block w-full"
+                      label={<>UUID bài nộp</>}
+                    />
+                    <SharedFormField name="rubricId" required className="mt-2 block w-full" label={<>UUID rubric</>} />
+                    <SharedFormField
+                      name="score"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      required
+                      className="mt-2 block w-full"
+                      label={<>Điểm</>}
+                    />
+                    <SharedFormField name="feedback" className="mt-2 block w-full" label={<>Nhận xét</>} />
+                    <SharedFormField
+                      name="comment"
+                      rows="3"
+                      className="mt-2 block w-full"
+                      multiline
+                      label={<>Ghi chú</>}
+                      wrapperClassName="md:col-span-2"
+                    />
                     <div className="md:col-span-2">
                       <SubmitButton type="submit" disabled={busy}>
                         {busy ? 'Đang gửi…' : 'Gửi điểm rubric'}

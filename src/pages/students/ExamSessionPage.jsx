@@ -1,3 +1,4 @@
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -415,7 +416,11 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
     {
       label: 'Kết quả',
       value: isGraded ? 'Đã chấm' : isCompleted ? 'Chờ chấm' : '—',
-      detail: isGraded ? 'Mở bài đã nộp để xem kết quả.' : isCompleted ? 'Giảng viên sẽ chấm và công bố điểm sau.' : 'Điểm không hiển thị trong khi làm bài.',
+      detail: isGraded
+        ? 'Mở bài đã nộp để xem kết quả.'
+        : isCompleted
+          ? 'Giảng viên sẽ chấm và công bố điểm sau.'
+          : 'Điểm không hiển thị trong khi làm bài.',
       icon: isGraded ? 'task_alt' : 'pending_actions',
       tone: isGraded ? 'success' : 'warning',
     },
@@ -480,7 +485,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                   <StatusBadge tone={isCompleted ? 'success' : 'neutral'}>{statusLabel}</StatusBadge>
                   <div className="mt-5 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                     <div>
-                      <p className="text-body-sm text-white/80">Phiên kiểm tra của bạn</p>
                       <h1 className="mt-1 text-headline-md font-bold">{title}</h1>
                       {attempt?.startedAt && (
                         <p className="mt-2 text-body-sm text-white/80">Bắt đầu lúc {formatDate(attempt.startedAt)}</p>
@@ -502,7 +506,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       <a
                         href={`exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}
                       >
-                          <Button icon="visibility">Xem bài đã nộp</Button>
+                        <Button icon="visibility">Xem bài đã nộp</Button>
                       </a>
                     )}
                   </div>
@@ -519,9 +523,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                   {!attempt && (
                     <Card as="div" className="mt-6 border-[#BFDBFE] bg-[#EFF6FF] p-5">
                       <h3 className="font-bold text-[#1E3A8A]">Sẵn sàng bắt đầu</h3>
-                      <p className="mt-2 text-body-sm text-[#1D4ED8]">
-                        Nhấn “Bắt đầu làm bài” để tạo một lượt làm mới cho đề này.
-                      </p>
                     </Card>
                   )}
                   {attempt && !isCompleted && questions.length > 0 && (
@@ -550,13 +551,19 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                             <img src={question.mediaUrl} alt="Nội dung minh họa" className="mt-3 max-h-64 rounded-lg" />
                           )}
                           {['SHORT_ANSWER'].includes(question.questionType) ? (
-                            <textarea
+                            <SharedFormField
                               defaultValue={question.answerText || ''}
-                              onBlur={(event) => saveAnswer(question, { answerText: event.target.value })}
-                              className="mt-4 w-full rounded-xl border p-3"
+                              onBlur={(event) =>
+                                saveAnswer(question, {
+                                  answerText: event.target.value,
+                                })
+                              }
+                              className="mt-4 w-full"
                               rows={3}
                               placeholder="Nhập câu trả lời"
                               disabled={savingQuestion === question.questionId}
+                              bare
+                              multiline
                             />
                           ) : (
                             <div className="mt-4 space-y-2">
@@ -594,6 +601,26 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       ))}
                     </div>
                   )}
+                  {attempt && !isCompleted && layout === 'single' && allQuestions[activeQuestion] && (
+                    <nav aria-label="Chuyển câu hỏi" className="mt-4 flex flex-wrap justify-between gap-2">
+                      <Button
+                        variant="secondary"
+                        disabled={activeQuestion === 0}
+                        onClick={() => setActiveQuestion((value) => value - 1)}
+                        icon="chevron_left"
+                      >
+                        Câu trước
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={activeQuestion >= allQuestions.length - 1}
+                        onClick={() => setActiveQuestion((value) => value + 1)}
+                        icon="chevron_right"
+                      >
+                        Câu sau
+                      </Button>
+                    </nav>
+                  )}
                   {false && attempt && !isCompleted && (
                     <Card as="div" className="mt-6 border-[#FDE68A] bg-[#FFFBEB] p-5">
                       <span className="material-symbols-outlined text-[#B45309]" aria-hidden="true">
@@ -609,9 +636,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                   {isCompleted && (
                     <Card as="div" className="mt-6 border-[#A7F3D0] bg-[#ECFDF5] p-5">
                       <h3 className="font-bold text-[#065F46]">Bạn đã hoàn thành lượt làm bài</h3>
-                      <p className="mt-2 text-body-sm text-[#047857]">
-                        Điểm số và chi tiết kết quả đã sẵn sàng để xem.
-                      </p>
                     </Card>
                   )}
                 </Card>
@@ -649,24 +673,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                           );
                         })}
                       </div>
-                      {layout === 'single' && allQuestions[activeQuestion] && (
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <Button
-                            variant="secondary"
-                            disabled={activeQuestion === 0}
-                            onClick={() => setActiveQuestion((value) => value - 1)}
-                          >
-                            Câu trước
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            disabled={activeQuestion >= allQuestions.length - 1}
-                            onClick={() => setActiveQuestion((value) => value + 1)}
-                          >
-                            Câu sau
-                          </Button>
-                        </div>
-                      )}
                       <p className="mt-3 text-body-sm text-[#64748B]">
                         Đã trả lời{' '}
                         {progress?.answeredQuestions ??
@@ -695,14 +701,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       </div>
                     </dl>
                   </Card>
-                  <Card className="border-[#DDD6FE] bg-[#F5F3FF] p-5">
-                    <span className="material-symbols-outlined text-[#6D28D9]" aria-hidden="true">
-                      tips_and_updates
-                    </span>
-                    <p className="mt-2 text-body-sm text-[#5B21B6]">
-                      Kiểm tra kỹ thời lượng và hạn kết thúc trước khi bắt đầu làm bài.
-                    </p>
-                  </Card>
                 </div>
               </div>
             ) : (
@@ -716,10 +714,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                   </span>
                   <div>
                     <h2 className="text-headline-sm font-bold">Sẵn sàng làm bài</h2>
-                    <p className="mt-1 text-body-sm text-[#64748B]">
-                      Trang này là phần tổng quan. Khi đã sẵn sàng, hãy mở không gian làm bài riêng để bắt đầu trả lời
-                      câu hỏi.
-                    </p>
                   </div>
                 </div>
                 {!attempt && (

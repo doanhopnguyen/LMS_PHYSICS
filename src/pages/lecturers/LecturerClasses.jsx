@@ -7,6 +7,7 @@ import { DashboardOverview } from '../../components/DashboardOverview.jsx';
 import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
+import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import {
   Button,
   Card,
@@ -84,9 +85,17 @@ export function LecturerDashboardApiPage() {
       <Tabs
         items={[{ id: 'overview', label: 'Tổng quan' }]}
         actions={
-          <SelectField label="Lớp học" value={classId || 'ALL'} onChange={(event) => select(event.target.value === 'ALL' ? '' : event.target.value)}>
+          <SelectField
+            label="Lớp học"
+            value={classId || 'ALL'}
+            onChange={(event) => select(event.target.value === 'ALL' ? '' : event.target.value)}
+          >
             <option value="ALL">Tất cả lớp</option>
-            {rows.map((item) => <option key={item.classId} value={item.classId}>{displayName(item)}</option>)}
+            {rows.map((item) => (
+              <option key={item.classId} value={item.classId}>
+                {displayName(item)}
+              </option>
+            ))}
           </SelectField>
         }
       >
@@ -232,9 +241,9 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
                 <>
                   <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {itemsOf(data).map((row) => (
-                      <Card as="article" variant="accent" key={row.classId} className="flex min-h-56 flex-col p-5">
+                      <Card as="article" variant="accent" key={row.classId} className="flex min-w-0 flex-col p-4">
                         <div className="flex items-start justify-between gap-3">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2] text-primary">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FEE2E2] text-primary">
                             <span className="material-symbols-outlined">school</span>
                           </span>
                           <StatusBadge
@@ -243,21 +252,31 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
                             {labelOf(row.status)}
                           </StatusBadge>
                         </div>
-                        <div className="mt-4">
+                        <div className="mt-3 min-w-0 break-words">
                           <a
                             className="text-headline-sm font-bold text-primary"
                             href={`lecturer_course_detail.html?classId=${idPath(row.classId)}`}
                           >
                             {displayName(row)}
                           </a>
-                          <p className="mt-1 text-body-sm text-[#64748B]">
-                            {displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}
-                          </p>
-                          <p className="text-body-sm text-[#64748B]">
-                            {displayName(itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId))}
-                          </p>
+                          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                            <div className="min-w-0">
+                              <dt className="text-label-sm text-[#64748B]">Học phần</dt>
+                              <dd className="mt-1 text-body-sm">
+                                {displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}
+                              </dd>
+                            </div>
+                            <div className="min-w-0">
+                              <dt className="text-label-sm text-[#64748B]">Học kỳ</dt>
+                              <dd className="mt-1 text-body-sm">
+                                {displayName(
+                                  itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId)
+                                )}
+                              </dd>
+                            </div>
+                          </dl>
                         </div>
-                        <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+                        <div className="mt-auto flex items-end justify-between gap-3 pt-3">
                           <span className="text-body-sm text-[#64748B]">
                             Sĩ số tối đa: <strong className="text-on-surface">{row.maxStudents || '—'}</strong>
                           </span>
@@ -326,7 +345,8 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
 function ClassPeople({ classId, staff = false }) {
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(0);
-  const [importing, setImporting] = useState(false);
+  const [addingStudent, setAddingStudent] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const action = useMutation();
   const resource = useResource(
     staff
@@ -355,31 +375,17 @@ function ClassPeople({ classId, staff = false }) {
           </SelectField>
         )}
         {!staff && (
-          <>
-            <Button
-              variant="secondary"
-              disabled={action.busy}
-              onClick={async () => {
-                const result = await action.run(
-                  () => api.users.downloadStudentTemplate(),
-                  'Đã tải mẫu Excel sinh viên.'
-                );
-                if (result.ok) {
-                  const url = URL.createObjectURL(result.data);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = 'mau-import-sinh-vien.xlsx';
-                  link.click();
-                  URL.revokeObjectURL(url);
-                }
-              }}
-            >
-              Tải mẫu Excel
-            </Button>
-            <Button disabled={action.busy} onClick={() => setImporting(true)}>
-              Nhập sinh viên Excel
-            </Button>
-          </>
+          <Button
+            disabled={action.busy}
+            icon="person_add"
+            onClick={() => {
+              setSelectedStudent(null);
+              action.clear();
+              setAddingStudent(true);
+            }}
+          >
+            Thêm sinh viên
+          </Button>
         )}
       </div>
       <Resource value={resource}>
@@ -438,45 +444,34 @@ function ClassPeople({ classId, staff = false }) {
           </>
         )}
       </Resource>
-      {importing && (
+      {addingStudent && (
         <Modal
-          title="Nhập và ghi danh sinh viên từ Excel"
+          wide
+          title="Thêm sinh viên vào lớp"
           busy={action.busy}
-          onClose={() => !action.busy && setImporting(false)}
+          onClose={() => !action.busy && setAddingStudent(false)}
         >
           <Form
             className="grid gap-4"
             onSubmit={async (event) => {
               event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              const file = form.get('file');
-              if (!file?.size || !/\.(xlsx|xls)$/i.test(file.name)) {
-                action.setError('Chọn tệp Excel .xlsx hoặc .xls không rỗng.');
-                return;
-              }
+              if (!selectedStudent?.userId) return;
               const result = await action.run(
-                () => api.users.importStudentsExcel(form, { classId }),
-                'Đã xử lý danh sách sinh viên.'
+                () => api.classes.enrollSingle(classId, { studentId: selectedStudent.userId }),
+                'Đã thêm sinh viên vào lớp.'
               );
               if (result.ok) {
-                setImporting(false);
+                setAddingStudent(false);
+                setSelectedStudent(null);
                 setPage(0);
                 resource.reload();
               }
             }}
           >
-            <p className="text-body-sm text-[#64748B]">
-              Các tài khoản được tạo từ tệp sẽ được ghi danh ngay vào lớp này.
-            </p>
-            <Field label="Mật khẩu mặc định (tùy chọn)" name="defaultPassword" />
-            <Field
-              label="Tệp Excel *"
-              name="file"
-              type="file"
-              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-              required
-            />
-            <SubmitButton busy={action.busy}>Nhập và ghi danh</SubmitButton>
+            <StudentSearchField disabled={action.busy} onSelect={setSelectedStudent} />
+            <SubmitButton type="submit" busy={action.busy} disabled={!selectedStudent}>
+              Thêm vào lớp
+            </SubmitButton>
           </Form>
         </Modal>
       )}

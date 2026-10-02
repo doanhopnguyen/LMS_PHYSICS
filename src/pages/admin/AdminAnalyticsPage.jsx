@@ -1,3 +1,5 @@
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useMemo, useState } from 'react';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -68,25 +70,23 @@ export function AdminAnalyticsPage() {
     }
   }
   const select = (label, name, options, disabled = false, required = false) => (
-    <label className="text-body-sm">
-      {label}
-      <select
-        required={required}
-        value={filters[name]}
-        disabled={disabled}
-        onChange={(event) => setFilter(name, event.target.value)}
-        className="mt-1 block w-full rounded-xl border p-2"
-      >
-        <option value="">
-          {name === 'topicId' && !filters.subjectId ? 'Chọn học phần trước' : `Tất cả ${label.toLowerCase()}`}
+    <SharedSelectField
+      required={required}
+      value={filters[name]}
+      disabled={disabled}
+      onChange={(event) => setFilter(name, event.target.value)}
+      label={<>{label}</>}
+      className="text-body-sm"
+    >
+      <option value="">
+        {name === 'topicId' && !filters.subjectId ? 'Chọn học phần trước' : `Tất cả ${label.toLowerCase()}`}
+      </option>
+      {options.map((item) => (
+        <option key={item.id} value={item.id}>
+          {item.label}
         </option>
-        {options.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-    </label>
+      ))}
+    </SharedSelectField>
   );
   const subjectOptions = listItems(subjects.data).map((item) => ({
     id: item.subjectId,
@@ -188,27 +188,25 @@ export function AdminAnalyticsPage() {
                 {['questions', 'materials'].includes(activeTab) &&
                   select('Chủ đề', 'topicId', topicOptions, !filters.subjectId || topics.loading)}
                 {['difficulty', 'materials', 'ai'].includes(activeTab) && (
-                  <label className="text-body-sm">
-                    Kỳ dữ liệu
-                    <input
-                      value={filters.period}
-                      onChange={(event) => setFilter('period', event.target.value)}
-                      placeholder="VD: 2026-1"
-                      className="mt-1 block w-full rounded-xl border p-2"
-                    />
-                  </label>
+                  <SharedFormField
+                    value={filters.period}
+                    onChange={(event) => setFilter('period', event.target.value)}
+                    placeholder="VD: 2026-1"
+                    className="mt-1 block w-full"
+                    label={<>Kỳ dữ liệu</>}
+                    wrapperClassName="text-body-sm"
+                  />
                 )}
                 {activeTab === 'questions' && (
-                  <label className="text-body-sm">
-                    Số lần dùng tối thiểu
-                    <input
-                      type="number"
-                      min="0"
-                      value={filters.minUsed}
-                      onChange={(event) => setFilter('minUsed', event.target.value)}
-                      className="mt-1 block w-full rounded-xl border p-2"
-                    />
-                  </label>
+                  <SharedFormField
+                    type="number"
+                    min="0"
+                    value={filters.minUsed}
+                    onChange={(event) => setFilter('minUsed', event.target.value)}
+                    className="mt-1 block w-full"
+                    label={<>Số lần dùng tối thiểu</>}
+                    wrapperClassName="text-body-sm"
+                  />
                 )}
                 <div className="flex items-end">
                   <SubmitButton type="submit" variant="secondary">

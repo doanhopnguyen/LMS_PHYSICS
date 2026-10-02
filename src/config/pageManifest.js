@@ -9,7 +9,6 @@ export const pageManifest = [
   { file: 'learning_results.html', component: 'LearningResultsPage', layout: 'AppShell' },
   { file: 'library.html', component: 'LibraryPage', layout: 'AppShell' },
   { file: 'my_courses.html', component: 'MyCoursesPage', layout: 'AppShell' },
-  { file: 'notifications_help.html', component: 'NotificationsPage', layout: 'AppShell' },
   { file: 'profile_settings.html', component: 'AccountPage', layout: 'AppShell' },
   { file: 'account.html', component: 'AccountPage', layout: 'AppShell' },
   { file: 'virtual_lab.html', component: 'VirtualLabPage', layout: 'AppShell' },

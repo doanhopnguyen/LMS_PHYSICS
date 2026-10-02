@@ -49,7 +49,7 @@ export function AcademicFilters({ page, actions }) {
   return (
     <section
       aria-label="Phạm vi học tập"
-      className="mx-auto flex w-full max-w-[1440px] flex-nowrap items-end gap-3 overflow-x-auto px-3 pt-3 md:px-5 lg:px-6"
+      className="page-academic-filters mx-auto flex w-full max-w-[1440px] flex-nowrap items-end gap-3 overflow-x-auto px-3 md:px-5 lg:px-6"
     >
       {mode !== 'subject' && (
         <SelectField

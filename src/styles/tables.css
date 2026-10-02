@@ -1,0 +1,25 @@
+/* Shared treatment for component tables and native tables in pages/dialogs. */
+.app-body table {
+  border: 1px solid #e52220;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+.app-body table > thead > tr > th {
+  background: #c41e1a;
+  color: #fff;
+}
+.app-body table > thead > tr:first-child > th:first-child { border-top-left-radius: 11px; }
+.app-body table > thead > tr:first-child > th:last-child { border-top-right-radius: 11px; }
+.app-body table > tbody > tr:nth-child(odd) { background: #fff1f2; }
+.app-body table > tbody > tr:nth-child(even) { background: #fff; }
+.app-body table > tbody > tr { border-color: #fecdd3; }
+.app-body table > tbody > tr + tr > td { border-top: 1px solid #fecdd3; }
+.app-body table > tbody > tr:last-child > td:first-child { border-bottom-left-radius: 11px; }
+.app-body table > tbody > tr:last-child > td:last-child { border-bottom-right-radius: 11px; }
+.app-body table > tbody > tr:hover { background: #ffe4e6; }
+.app-body table > tbody > tr[aria-selected="true"] { background: #fecdd3; }
+.class-operations__table { border-color: #e52220; }
+.app-body .class-operations__table table { border: 0; }
+.app-body .class-operations__table thead { background: #c41e1a; }

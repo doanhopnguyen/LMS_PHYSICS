@@ -1,3 +1,5 @@
+import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useMemo, useState } from 'react';
 import { readAcademicScope, rememberAcademicClass } from '../../lib/academicScope.js';
 import { Button } from '../../components/Button.jsx';
@@ -250,78 +252,90 @@ export function LecturerLearningAnalyticsPage() {
     >
       <Card className="mt-5 p-5 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <label className="text-body-sm font-semibold">
-            Học phần
-            <select value="BAS1201" disabled className="mt-2 w-full border border-[#CBD5E1] bg-[#F1F5F9] px-4">
-              <option value="BAS1201">Vật lý đại cương 1 · BAS1201</option>
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Lớp học
-            <select
-              value={filters.classId}
-              onChange={(event) => {
-                rememberAcademicClass(event.target.value);
-                setFilters({ ...filters, classId: event.target.value });
-              }}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả lớp</option>
-              {lecturerCourses.map((course) => (
-                <option key={course.className}>{course.className}</option>
-              ))}
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Khoảng thời gian
-            <select
-              value={filters.range}
-              onChange={(event) => setFilters({ ...filters, range: event.target.value })}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả thời gian</option>
-              <option value="7D">7 ngày gần nhất</option>
-              <option value="30D">30 ngày gần nhất</option>
-              <option value="SEMESTER">Học kỳ hiện tại</option>
-              <option value="CUSTOM">Tùy chỉnh</option>
-            </select>
-          </label>
-          <label className="text-body-sm font-semibold">
-            Chương
-            <select
-              value={filters.chapterId}
-              onChange={(event) => setFilters({ ...filters, chapterId: event.target.value })}
-              className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-            >
-              <option value="ALL">Tất cả chương</option>
-              {Object.entries(questionChapterLabels).map(([id, label]) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SharedSelectField value="BAS1201" disabled label={<>Học phần</>} className="text-body-sm font-semibold">
+            <option value="BAS1201">Vật lý đại cương 1 · BAS1201</option>
+          </SharedSelectField>
+          <SharedSelectField
+            value={filters.classId}
+            onChange={(event) => {
+              rememberAcademicClass(event.target.value);
+              setFilters({
+                ...filters,
+                classId: event.target.value,
+              });
+            }}
+            label={<>Lớp học</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả lớp</option>
+            {lecturerCourses.map((course) => (
+              <option key={course.className}>{course.className}</option>
+            ))}
+          </SharedSelectField>
+          <SharedSelectField
+            value={filters.range}
+            onChange={(event) =>
+              setFilters({
+                ...filters,
+                range: event.target.value,
+              })
+            }
+            label={<>Khoảng thời gian</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả thời gian</option>
+            <option value="7D">7 ngày gần nhất</option>
+            <option value="30D">30 ngày gần nhất</option>
+            <option value="SEMESTER">Học kỳ hiện tại</option>
+            <option value="CUSTOM">Tùy chỉnh</option>
+          </SharedSelectField>
+          <SharedSelectField
+            value={filters.chapterId}
+            onChange={(event) =>
+              setFilters({
+                ...filters,
+                chapterId: event.target.value,
+              })
+            }
+            label={<>Chương</>}
+            className="text-body-sm font-semibold"
+          >
+            <option value="ALL">Tất cả chương</option>
+            {Object.entries(questionChapterLabels).map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </SharedSelectField>
         </div>
         {filters.range === 'CUSTOM' && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="text-body-sm font-semibold">
-              Từ ngày
-              <input
-                type="date"
-                value={filters.customStart}
-                onChange={(event) => setFilters({ ...filters, customStart: event.target.value })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
-            <label className="text-body-sm font-semibold">
-              Đến ngày
-              <input
-                type="date"
-                value={filters.customEnd}
-                onChange={(event) => setFilters({ ...filters, customEnd: event.target.value })}
-                className="mt-2 w-full border border-[#CBD5E1] px-4"
-              />
-            </label>
+            <SharedFormField
+              type="date"
+              value={filters.customStart}
+              onChange={(event) =>
+                setFilters({
+                  ...filters,
+                  customStart: event.target.value,
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Từ ngày</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
+            <SharedFormField
+              type="date"
+              value={filters.customEnd}
+              onChange={(event) =>
+                setFilters({
+                  ...filters,
+                  customEnd: event.target.value,
+                })
+              }
+              className="mt-2 w-full"
+              label={<>Đến ngày</>}
+              wrapperClassName="text-body-sm font-semibold"
+            />
           </div>
         )}
       </Card>
@@ -370,53 +384,46 @@ export function LecturerLearningAnalyticsPage() {
                 tab === 'STUDENTS' ? (
                   <div className="space-y-5 pt-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                      <label className="text-body-sm font-semibold">
-                        Tìm sinh viên
-                        <input
-                          type="search"
-                          value={query}
-                          onChange={(event) => setQuery(event.target.value)}
-                          placeholder="Tìm theo tên hoặc mã sinh viên..."
-                          className="mt-2 w-full border border-[#CBD5E1] px-4"
-                        />
-                      </label>
-                      <label className="text-body-sm font-semibold">
-                        Tiến độ học liệu
-                        <select
-                          value={progressFilter}
-                          onChange={(event) => setProgressFilter(event.target.value)}
-                          className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                        >
-                          <option value="ALL">Tất cả</option>
-                          <option value="LOW">Dưới 50%</option>
-                          <option value="MEDIUM">50% – dưới 80%</option>
-                          <option value="HIGH">Từ 80%</option>
-                        </select>
-                      </label>
-                      <label className="text-body-sm font-semibold">
-                        Bài kiểm tra
-                        <select
-                          value={examFilter}
-                          onChange={(event) => setExamFilter(event.target.value)}
-                          className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                        >
-                          <option value="ALL">Tất cả</option>
-                          <option value="COMPLETE">Đã hoàn thành tất cả</option>
-                          <option value="INCOMPLETE">Chưa hoàn thành</option>
-                        </select>
-                      </label>
-                      <label className="text-body-sm font-semibold">
-                        Thí nghiệm
-                        <select
-                          value={labFilter}
-                          onChange={(event) => setLabFilter(event.target.value)}
-                          className="mt-2 w-full border border-[#CBD5E1] bg-white px-4"
-                        >
-                          <option value="ALL">Tất cả</option>
-                          <option value="COMPLETE">Đã hoàn thành tất cả</option>
-                          <option value="INCOMPLETE">Chưa hoàn thành</option>
-                        </select>
-                      </label>
+                      <SharedFormField
+                        type="search"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        placeholder="Tìm theo tên hoặc mã sinh viên..."
+                        className="mt-2 w-full"
+                        label={<>Tìm sinh viên</>}
+                        wrapperClassName="text-body-sm font-semibold"
+                      />
+                      <SharedSelectField
+                        value={progressFilter}
+                        onChange={(event) => setProgressFilter(event.target.value)}
+                        label={<>Tiến độ học liệu</>}
+                        className="text-body-sm font-semibold"
+                      >
+                        <option value="ALL">Tất cả</option>
+                        <option value="LOW">Dưới 50%</option>
+                        <option value="MEDIUM">50% – dưới 80%</option>
+                        <option value="HIGH">Từ 80%</option>
+                      </SharedSelectField>
+                      <SharedSelectField
+                        value={examFilter}
+                        onChange={(event) => setExamFilter(event.target.value)}
+                        label={<>Bài kiểm tra</>}
+                        className="text-body-sm font-semibold"
+                      >
+                        <option value="ALL">Tất cả</option>
+                        <option value="COMPLETE">Đã hoàn thành tất cả</option>
+                        <option value="INCOMPLETE">Chưa hoàn thành</option>
+                      </SharedSelectField>
+                      <SharedSelectField
+                        value={labFilter}
+                        onChange={(event) => setLabFilter(event.target.value)}
+                        label={<>Thí nghiệm</>}
+                        className="text-body-sm font-semibold"
+                      >
+                        <option value="ALL">Tất cả</option>
+                        <option value="COMPLETE">Đã hoàn thành tất cả</option>
+                        <option value="INCOMPLETE">Chưa hoàn thành</option>
+                      </SharedSelectField>
                     </div>
                     {visibleStudents.length ? (
                       <>
@@ -690,7 +697,7 @@ export function LecturerLearningAnalyticsPage() {
                           <a href="lecturer_courses.html">
                             <Button variant="secondary">Học phần</Button>
                           </a>
-                          <a href="lecturer_students.html">
+                          <a href="lecturer_courses.html">
                             <Button variant="secondary">Sinh viên</Button>
                           </a>
                           <a href="lecturer_materials.html">

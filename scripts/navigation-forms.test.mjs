@@ -92,7 +92,7 @@ for (const file of [
           child.type === 'JSXOpeningElement' &&
           ['Button', 'SubmitButton', 'button', 'input'].includes(child.name.name)
         )
-          submit ||= child.attributes.some((a) => a.name?.name === 'type' && a.value?.value === 'submit');
+          submit ||= child.name.name === 'SubmitButton' || child.attributes.some((a) => a.name?.name === 'type' && a.value?.value === 'submit');
       });
       assert.ok(submit, `Form at line ${node.loc.start.line} has no submit button`);
     });

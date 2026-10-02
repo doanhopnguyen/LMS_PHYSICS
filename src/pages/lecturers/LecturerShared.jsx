@@ -109,42 +109,7 @@ export function Lookup({ resource, label, idKey, value, onChange, placeholder = 
   );
 }
 export function Table({ columns, rows, cells, server = false, asCards = false }) {
-  if (asCards) {
-    return (
-      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {rows.length ? (
-          rows.map((row, index) => {
-            const values = cells(row);
-            const action = React.isValidElement(values.at(-1)) ? values.at(-1) : null;
-            const dataValues = action ? values.slice(0, -1) : values;
-            return (
-              <Card
-                as="article"
-                variant="accent"
-                key={row.id || row.materialId || row.questionId || index}
-                className="flex min-h-56 flex-col p-5"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEE2E2] text-primary">
-                  <span className="material-symbols-outlined">description</span>
-                </div>
-                <div className="mt-4 space-y-2">
-                  {dataValues.map((value, valueIndex) => (
-                    <div key={columns[valueIndex]}>
-                      <p className="text-label-sm text-[#64748B]">{columns[valueIndex]}</p>
-                      <div className={valueIndex === 0 ? 'font-bold' : 'text-body-sm'}>{value ?? '—'}</div>
-                    </div>
-                  ))}
-                </div>
-                {action && <div className="mt-auto flex justify-end pt-4">{action}</div>}
-              </Card>
-            );
-          })
-        ) : (
-          <Card className="p-5 text-[#64748B]">Chưa có dữ liệu phù hợp.</Card>
-        )}
-      </div>
-    );
-  }
+  if (asCards) return <DataTable asCards columns={columns} rows={rows} cells={cells} paginate={false} />;
   return (
     <Card className="mt-4 overflow-auto p-4">
       {rows.length ? (

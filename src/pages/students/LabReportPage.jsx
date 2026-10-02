@@ -1,3 +1,5 @@
+import { Form as SharedForm, SubmitButton } from '../../components/Form.jsx';
+import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -128,54 +130,52 @@ export function LabReportPage() {
                       {experiment.instructions}
                     </div>
                   )}
-                  <form className="mt-6 space-y-5" onSubmit={submit}>
-                    <label className="block text-body-sm font-semibold">
-                      Tệp báo cáo hoặc minh chứng
-                      <input
-                        type="file"
-                        onChange={(event) => setFile(event.target.files?.[0] || null)}
-                        className="mt-2 block w-full rounded-xl border border-[#CBD5E1] p-3 font-normal"
-                      />
-                    </label>
-                    <label className="block text-body-sm font-semibold">
-                      Liên kết minh chứng (nếu có)
-                      <input
-                        value={evidenceUrl}
-                        onChange={(event) => setEvidenceUrl(event.target.value)}
-                        type="url"
-                        placeholder="https://…"
-                        className="mt-2 block w-full rounded-xl border border-[#CBD5E1] p-3 font-normal"
-                      />
-                    </label>
-                    <label className="block text-body-sm font-semibold">
-                      Dữ liệu thô / ghi chú
-                      <textarea
-                        value={rawData}
-                        onChange={(event) => setRawData(event.target.value)}
-                        rows="7"
-                        placeholder="Nhập dữ liệu đo hoặc JSON dữ liệu thực nghiệm…"
-                        className="mt-2 block w-full rounded-xl border border-[#CBD5E1] p-3 font-normal"
-                      />
-                    </label>
+                  <SharedForm className="mt-6 space-y-5" onSubmit={submit}>
+                    <SharedFormField
+                      type="file"
+                      onChange={(event) => setFile(event.target.files?.[0] || null)}
+                      className="mt-2 block w-full"
+                      label={<>Tệp báo cáo hoặc minh chứng</>}
+                      wrapperClassName="block text-body-sm font-semibold"
+                    />
+                    <SharedFormField
+                      value={evidenceUrl}
+                      onChange={(event) => setEvidenceUrl(event.target.value)}
+                      type="url"
+                      placeholder="https://…"
+                      className="mt-2 block w-full"
+                      label={<>Liên kết minh chứng (nếu có)</>}
+                      wrapperClassName="block text-body-sm font-semibold"
+                    />
+                    <SharedFormField
+                      value={rawData}
+                      onChange={(event) => setRawData(event.target.value)}
+                      rows="7"
+                      placeholder="Nhập dữ liệu đo hoặc JSON dữ liệu thực nghiệm…"
+                      className="mt-2 block w-full"
+                      multiline
+                      label={<>Dữ liệu thô / ghi chú</>}
+                      wrapperClassName="block text-body-sm font-semibold"
+                    />
                     {message && <p className="text-[#15803D]">{message}</p>}
                     {error && (
                       <p role="alert" className="text-primary">
                         {error}
                       </p>
                     )}
-                    <Button
+                    <SubmitButton
                       type="submit"
                       icon="send"
                       disabled={!assignmentId || submitting || (!file && !evidenceUrl.trim() && !rawData.trim())}
                     >
                       {submitting ? 'Đang nộp…' : 'Nộp báo cáo'}
-                    </Button>
+                    </SubmitButton>
                     {!assignmentId && (
                       <p className="text-body-sm text-[#B45309]">
                         Giảng viên cần gửi liên kết bài giao có assignmentId để hệ thống xác định đúng bài nộp của bạn.
                       </p>
                     )}
-                  </form>
+                  </SharedForm>
                 </Card>
                 <Card className="h-fit p-6 lg:col-span-4">
                   <h2 className="text-headline-sm font-bold">Thông tin thí nghiệm</h2>

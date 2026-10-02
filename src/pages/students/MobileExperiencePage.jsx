@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '../../components/Button.jsx';
 import { ImmersiveShell } from '../../components/ImmersiveShell.jsx';
 import { ProgressBar } from '../../components/ProgressBar.jsx';
+import { NotificationBell } from '../../components/NotificationBell.jsx';
 
 export function MobileExperiencePage() {
   return (
@@ -15,7 +16,7 @@ export function MobileExperiencePage() {
             ← Dashboard
           </a>
           <strong className="text-body-md">Mobile preview</strong>
-          <span className="material-symbols-outlined text-[#64748B]">more_vert</span>
+          <NotificationBell />
         </header>
       }
     >
@@ -31,7 +32,7 @@ export function MobileExperiencePage() {
               </span>
               <strong className="text-primary">VẬT LÝ 1</strong>
             </div>
-            <span className="material-symbols-outlined text-[#64748B]">notifications</span>
+            <NotificationBell />
           </header>
           <main className="p-4 space-y-4">
             <Card as="section" className="p-4 bg-gradient-to-br from-[#800F0F] to-primary-container text-white">
