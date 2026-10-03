@@ -169,6 +169,12 @@
 | POST | `/experiments/{experimentId}/assign` | ADMIN, INSTRUCTOR | `{classId,dueDate?,instructionsOverride?}`; classId bắt buộc. |
 | POST | `/experiments/assignments/{assignmentId}/submit` | STUDENT, ADMIN | multipart `evidenceUrl?`, `file?`, `rawDataJson?`. |
 | POST | `/experiments/submissions/{submissionId}/scores` | ADMIN, INSTRUCTOR, TA | `{rubricId?,score?,feedback?,comment?}`. |
+| GET | `/experiments/submissions` | ADMIN, INSTRUCTOR, TA, STUDENT | Lịch sử bài nộp; hỗ trợ `assignmentId`, `experimentId`, `classId`, `status`. Với STUDENT, backend bắt buộc lọc theo tài khoản đăng nhập, bao gồm mọi lần nộp. |
+| GET | `/experiments/submissions/{submissionId}` | ADMIN, INSTRUCTOR, TA, STUDENT | Chi tiết báo cáo, số liệu, tệp, điểm và thông tin xác nhận. STUDENT chỉ được đọc bài của mình. |
+| GET | `/experiments/submissions/{submissionId}/rubric-summary` | ADMIN, INSTRUCTOR, TA, STUDENT | Tổng điểm, điểm tối đa, điểm/nhận xét từng tiêu chí. STUDENT chỉ được đọc bài của mình. |
+| GET | `/experiments/submissions` | ADMIN, INSTRUCTOR, TA, STUDENT | Lịch sử bài nộp; hỗ trợ `assignmentId`, `experimentId`, `classId`, `status`. Với STUDENT, backend bắt buộc lọc theo tài khoản đăng nhập, bao gồm mọi lần nộp. |
+| GET | `/experiments/submissions/{submissionId}` | ADMIN, INSTRUCTOR, TA, STUDENT | Chi tiết báo cáo, số liệu, tệp, điểm và thông tin xác nhận. STUDENT chỉ được đọc bài của mình. |
+| GET | `/experiments/submissions/{submissionId}/rubric-summary` | ADMIN, INSTRUCTOR, TA, STUDENT | Tổng điểm, điểm tối đa, điểm/nhận xét từng tiêu chí. STUDENT chỉ được đọc bài của mình. |
 | POST | `/experiments/submissions/{submissionId}/confirmation` | ADMIN, INSTRUCTOR | `{note?}`. |
 | POST | `/ai-tutor/conversations` | STUDENT, ADMIN | `{classId,topicId?,mode?}`; classId bắt buộc. |
 | GET | `/ai-tutor/conversations/my` | STUDENT, ADMIN | Hội thoại của tôi. |
