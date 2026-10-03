@@ -8,6 +8,7 @@ import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { api } from '../../lib/apiClient.js';
+import { experimentHref } from '../../lib/experimentContext.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const labProgressOf = (experiment) => {
@@ -153,10 +154,14 @@ export function VirtualLabPage() {
             {experiments.map((experiment, index) => {
               const progress = labProgressOf(experiment);
               const linkedClassId = selectedClass?.classId || experiment.classId || '';
-              const query = `experimentId=${encodeURIComponent(experiment.experimentId)}${linkedClassId ? `&classId=${encodeURIComponent(linkedClassId)}` : ''}`;
+              const context = {
+                experimentId: experiment.experimentId,
+                classId: linkedClassId,
+                assignmentId: experiment.assignmentId,
+              };
               return (
                 <StatCard
-                  key={experiment.experimentId}
+                  key={experiment.assignmentId || experiment.experimentId}
                   label={experiment.title || 'Thí nghiệm không có tiêu đề'}
                   value={`${Math.round(progress)}%`}
                   detail={`Thí nghiệm ${String(experiment.orderIndex || index + 1).padStart(2, '0')}`}
@@ -170,13 +175,13 @@ export function VirtualLabPage() {
                         {experiment.description || labStatus(experiment, progress)}
                       </p>
                       <div className="mt-3 flex gap-2">
-                        <a href={`3d_workspace.html?${query}`} className="flex-1">
+                        <a href={experimentHref('3d_workspace.html', context)} className="flex-1">
                           <Button className="w-full" icon="play_arrow">
                             Mở mô phỏng
                           </Button>
                         </a>
                         <a
-                          href={`lab_report_rubric.html?${query}${experiment.assignmentId ? `&assignmentId=${encodeURIComponent(experiment.assignmentId)}` : ''}`}
+                          href={experimentHref('lab_report_rubric.html', context)}
                         >
                           <button
                             className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#CBD5E1] text-[#64748B] hover:border-primary hover:text-primary"

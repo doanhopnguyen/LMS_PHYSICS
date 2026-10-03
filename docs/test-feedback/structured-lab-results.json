@@ -1,0 +1,123 @@
+{
+  "backend": "Isolated H2 test backend with proposed JSON binder; original backend unchanged",
+  "results": [
+    {
+      "id": "FREE_FALL_3D-empty",
+      "description": "Required fields block empty report",
+      "passed": true,
+      "actual": 6
+    },
+    {
+      "id": "FREE_FALL_3D-rows",
+      "description": "Add and remove measurement row",
+      "passed": true,
+      "actual": 6
+    },
+    {
+      "id": "FREE_FALL_3D-positive",
+      "description": "Nonpositive measurement blocked",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "FREE_FALL_3D-persist",
+      "description": "JSON numbers, units and notes persisted by test BE",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "SIMPLE_PENDULUM_3D-empty",
+      "description": "Required fields block empty report",
+      "passed": true,
+      "actual": 9
+    },
+    {
+      "id": "SIMPLE_PENDULUM_3D-rows",
+      "description": "Add and remove measurement row",
+      "passed": true,
+      "actual": 9
+    },
+    {
+      "id": "SIMPLE_PENDULUM_3D-positive",
+      "description": "Nonpositive measurement blocked",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "pendulum-integer",
+      "description": "Oscillation count must be integer",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "SIMPLE_PENDULUM_3D-persist",
+      "description": "JSON numbers, units and notes persisted by test BE",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "ROTATIONAL_INERTIA_3D-empty",
+      "description": "Required fields block empty report",
+      "passed": true,
+      "actual": 12
+    },
+    {
+      "id": "ROTATIONAL_INERTIA_3D-rows",
+      "description": "Add and remove measurement row",
+      "passed": true,
+      "actual": 12
+    },
+    {
+      "id": "ROTATIONAL_INERTIA_3D-positive",
+      "description": "Nonpositive measurement blocked",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "ROTATIONAL_INERTIA_3D-persist",
+      "description": "JSON numbers, units and notes persisted by test BE",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "AIR_TRACK_COLLISION_3D-empty",
+      "description": "Required fields block empty report",
+      "passed": true,
+      "actual": 18
+    },
+    {
+      "id": "AIR_TRACK_COLLISION_3D-rows",
+      "description": "Add and remove measurement row",
+      "passed": true,
+      "actual": 18
+    },
+    {
+      "id": "AIR_TRACK_COLLISION_3D-positive",
+      "description": "Nonpositive measurement blocked",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "AIR_TRACK_COLLISION_3D-persist",
+      "description": "JSON numbers, units and notes persisted by test BE",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "mobile-layout",
+      "description": "Wide table scrolls without expanding the page",
+      "passed": true,
+      "actual": {
+        "pageWidth": 390,
+        "tableWidth": 1090,
+        "containerWidth": 322
+      }
+    },
+    {
+      "id": "runtime",
+      "description": "No browser runtime errors",
+      "passed": true,
+      "actual": []
+    }
+  ]
+}

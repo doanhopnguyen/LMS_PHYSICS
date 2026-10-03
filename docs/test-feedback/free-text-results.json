@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "input": "Lần 1: 0,45 giây; quãng đường 1 mét.\nNhận xét: \"Kết quả ổn định\". Công thức {a = 2s/t²}.",
+  "storedJson": {
+    "notes": "Lần 1: 0,45 giây; quãng đường 1 mét.\nNhận xét: \"Kết quả ổn định\". Công thức {a = 2s/t²}."
+  },
+  "backend": "isolated copy with proposed String-to-JsonNode binder; original BE unchanged"
+}

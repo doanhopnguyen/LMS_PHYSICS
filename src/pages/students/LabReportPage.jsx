@@ -9,15 +9,21 @@ import { PageTitle } from '../../components/PageTitle.jsx';
 import { ProgressBar } from '../../components/ProgressBar.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
+import { experimentHref, loadStudentExperiment } from '../../lib/experimentContext.js';
+import { LabMeasurementTable } from '../../components/LabMeasurementTable.jsx';
+import { buildLabReport, emptyLabTrial, getLabReportSchema, MIN_LAB_TRIALS } from '../../lib/labReportSchema.js';
 
 export function LabReportPage() {
   const params = new URLSearchParams(window.location.search);
   const experimentId = params.get('experimentId');
   const assignmentId = params.get('assignmentId');
+  const classId = params.get('classId');
   const [experiment, setExperiment] = useState(null);
   const [file, setFile] = useState(null);
   const [evidenceUrl, setEvidenceUrl] = useState('');
   const [rawData, setRawData] = useState('');
+  const [measurements, setMeasurements] = useState([]);
+  const [measurementErrors, setMeasurementErrors] = useState({});
   const [loading, setLoading] = useState(Boolean(experimentId));
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
@@ -26,10 +32,14 @@ export function LabReportPage() {
   useEffect(() => {
     if (!experimentId) return;
     let alive = true;
-    api.experiments
-      .get(experimentId)
+    loadStudentExperiment(experimentId, assignmentId)
       .then((data) => {
-        if (alive) setExperiment(data);
+        if (alive) {
+          setExperiment(data);
+          const schema = getLabReportSchema(data);
+          setMeasurements(schema ? Array.from({ length: MIN_LAB_TRIALS }, () => emptyLabTrial(schema)) : []);
+          setMeasurementErrors({});
+        }
       })
       .catch((loadError) => {
         if (alive) setError(loadError.message || 'Không thể tải thông tin thí nghiệm.');
@@ -40,35 +50,39 @@ export function LabReportPage() {
     return () => {
       alive = false;
     };
-  }, [experimentId]);
+  }, [experimentId, assignmentId]);
   const submit = async (event) => {
     event.preventDefault();
     if (!assignmentId || submitting) return;
+    const report = buildLabReport(getLabReportSchema(experiment), measurements, rawData);
+    setMeasurementErrors(report.errors);
+    if (!report.data && Object.keys(report.errors).length) {
+      setError('Vui lòng kiểm tra các ô số liệu được đánh dấu.');
+      return;
+    }
+    if (!event.currentTarget.reportValidity()) return;
     setSubmitting(true);
     setError('');
     setMessage('');
     try {
-      const parsedRawData = rawData.trim() ? JSON.parse(rawData) : undefined;
       const formData = new FormData();
       if (file) formData.append('file', file);
       if (evidenceUrl.trim()) formData.append('evidenceUrl', evidenceUrl.trim());
-      if (parsedRawData !== undefined) {
-        formData.append('rawDataJson', new Blob([JSON.stringify(parsedRawData)], { type: 'application/json' }));
+      if (report.data) {
+        formData.append('rawDataJson', JSON.stringify(report.data));
       }
       await api.experiments.submitAssignment(assignmentId, formData);
       setMessage('Đã gửi báo cáo thí nghiệm. Bạn có thể theo dõi tệp trong Kho minh chứng.');
     } catch (submitError) {
-      if (submitError instanceof SyntaxError) {
-        setError('Dữ liệu thô phải là JSON hợp lệ.');
-        return;
-      }
       setError(submitError.message || 'Không thể nộp báo cáo thí nghiệm.');
     } finally {
       setSubmitting(false);
     }
   };
   const title = experiment?.title || 'Báo cáo thí nghiệm';
-  const completion = [file, evidenceUrl.trim(), rawData.trim()].filter(Boolean).length * 33.33;
+  const schema = getLabReportSchema(experiment);
+  const validMeasurements = schema && measurements.length >= MIN_LAB_TRIALS && !Object.keys(buildLabReport(schema, measurements, rawData).errors).length;
+  const completion = [file, evidenceUrl.trim(), schema ? validMeasurements : rawData.trim()].filter(Boolean).length * 33.33;
   return (
     <AppShell
       currentPage="lab_report_rubric.html"
@@ -114,7 +128,7 @@ export function LabReportPage() {
                     </StatusBadge>
                     <h2 className="mt-3 text-headline-md font-bold">Tiến độ chuẩn bị báo cáo</h2>
                     <p className="mt-1 text-body-md text-[#64748B]">
-                      Điền dữ liệu hoặc đính kèm tệp minh chứng trước khi gửi.
+                      {schema ? 'Điền bảng số liệu trước khi gửi. Có thể bổ sung tệp hoặc liên kết minh chứng.' : 'Điền dữ liệu hoặc đính kèm tệp minh chứng trước khi gửi.'}
                     </p>
                   </div>
                   <div className="w-full lg:w-80">
@@ -123,14 +137,18 @@ export function LabReportPage() {
                 </div>
               </Card>
               <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12">
-                <Card className="p-6 lg:col-span-8">
+                <Card className="min-w-0 p-6 lg:col-span-8">
                   <h2 className="text-headline-md font-bold">Nội dung và dữ liệu thí nghiệm</h2>
                   {experiment.instructions && (
                     <div className="mt-4 whitespace-pre-wrap rounded-xl bg-[#F8FAFC] p-4 text-body-md leading-7 text-[#475569]">
                       {experiment.instructions}
                     </div>
                   )}
-                  <SharedForm className="mt-6 space-y-5" onSubmit={submit}>
+                  <SharedForm className="mt-6 min-w-0 space-y-5" onSubmit={submit} noValidate>
+                    {schema && (
+                      <LabMeasurementTable schema={schema} rows={measurements} errors={measurementErrors} disabled={submitting}
+                        onChange={(rows) => { setMeasurements(rows); setMeasurementErrors({}); setError(''); setMessage(''); }} />
+                    )}
                     <SharedFormField
                       type="file"
                       onChange={(event) => setFile(event.target.files?.[0] || null)}
@@ -151,10 +169,11 @@ export function LabReportPage() {
                       value={rawData}
                       onChange={(event) => setRawData(event.target.value)}
                       rows="7"
-                      placeholder="Nhập dữ liệu đo hoặc JSON dữ liệu thực nghiệm…"
+                      placeholder={schema ? 'Nhận xét về kết quả đo, sai số và điều kiện thực hiện…' : 'Nhập số liệu đo và nhận xét của bạn…'}
                       className="mt-2 block w-full"
                       multiline
-                      label={<>Dữ liệu thô / ghi chú</>}
+                      label={schema ? 'Nhận xét' : 'Số liệu và ghi chú'}
+                      hint={schema ? 'Có thể bổ sung nhận xét hoặc giải thích chênh lệch giữa các lần đo.' : 'Nhập số liệu từng lần đo và nhận xét của bạn.'}
                       wrapperClassName="block text-body-sm font-semibold"
                     />
                     {message && <p className="text-[#15803D]">{message}</p>}
@@ -166,7 +185,7 @@ export function LabReportPage() {
                     <SubmitButton
                       type="submit"
                       icon="send"
-                      disabled={!assignmentId || submitting || (!file && !evidenceUrl.trim() && !rawData.trim())}
+                      disabled={!assignmentId || submitting || (!schema && !file && !evidenceUrl.trim() && !rawData.trim())}
                     >
                       {submitting ? 'Đang nộp…' : 'Nộp báo cáo'}
                     </SubmitButton>
@@ -198,7 +217,7 @@ export function LabReportPage() {
                     </div>
                   </dl>
                   <a
-                    href={`3d_workspace.html?experimentId=${encodeURIComponent(experiment.experimentId)}`}
+                    href={experimentHref('3d_workspace.html', { experimentId, classId, assignmentId })}
                     className="mt-6 inline-block"
                   >
                     <Button variant="secondary" icon="science">

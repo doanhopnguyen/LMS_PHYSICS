@@ -1,0 +1,70 @@
+{
+  "results": [
+    {
+      "id": "FIX-CLASS-FILTER",
+      "description": "All-subject view allows assigning the experiment to its subject classes",
+      "passed": true,
+      "actual": {
+        "actual": [
+          "dd5caf75-fb8b-4ece-bae9-4160a618e1c7"
+        ],
+        "expected": [
+          "dd5caf75-fb8b-4ece-bae9-4160a618e1c7"
+        ]
+      }
+    },
+    {
+      "id": "FIX-LIST-ASSIGNMENT",
+      "description": "List → workspace preserves class and assignment",
+      "passed": true,
+      "actual": {
+        "experimentId": "f27e51d5-a83c-4d3d-a30b-12d8afde4bdd",
+        "classId": "e083ff3d-0f1c-4a69-8698-27207e277de4",
+        "assignmentId": "f23fb1d2-28b6-49ff-9fc9-14e00277746e"
+      }
+    },
+    {
+      "id": "FIX-WORKSPACE-OVERRIDE",
+      "description": "Workspace uses assignment-specific guidance",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "FIX-REPORT-CONTEXT",
+      "description": "Workspace → report preserves assignment and guidance",
+      "passed": true,
+      "actual": {
+        "assignmentId": "f23fb1d2-28b6-49ff-9fc9-14e00277746e",
+        "override": true
+      }
+    },
+    {
+      "id": "FIX-RETURN-WORKSPACE",
+      "description": "Report → workspace preserves class and assignment",
+      "passed": true,
+      "actual": {
+        "experimentId": "f27e51d5-a83c-4d3d-a30b-12d8afde4bdd",
+        "classId": "e083ff3d-0f1c-4a69-8698-27207e277de4",
+        "assignmentId": "f23fb1d2-28b6-49ff-9fc9-14e00277746e"
+      }
+    },
+    {
+      "id": "FIX-MULTIPART-FIELD",
+      "description": "FE sends a JSON text field rather than a file part",
+      "passed": true,
+      "actual": {
+        "type": "string",
+        "value": "{\"measurements\":[1.2]}"
+      }
+    },
+    {
+      "id": "BACKEND-JSON-BLOCKER",
+      "blocked": true,
+      "passed": false,
+      "actual": {
+        "error": "rawDataJson: Failed to convert property value of type 'java.lang.String' to required type 'com.fasterxml.jackson.databind.JsonNode' for property 'rawDataJson'; Cannot convert value of type 'java.lang.String' to required type 'com.fasterxml.jackson.databind.JsonNode' for property 'rawDataJson': no matching editors or conversion strategy found"
+      }
+    }
+  ],
+  "runtimeErrors": []
+}

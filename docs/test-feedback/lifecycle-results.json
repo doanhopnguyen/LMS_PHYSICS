@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "id": "UI-ASSIGN-ALL-SUBJECTS",
+      "description": "Assignment dialog lists eligible classes when all subjects are selected",
+      "passed": false,
+      "actual": {
+        "classes": 0
+      }
+    },
+    {
+      "id": "UI-CREATE",
+      "passed": true,
+      "actual": {
+        "experimentId": "6864e04e-4885-445a-8644-2859b9ec3e5a"
+      }
+    },
+    {
+      "id": "UI-ASSIGN",
+      "passed": true,
+      "actual": {
+        "assignmentId": "9a1ce58f-82d7-4074-a5d5-013dd83c1074"
+      }
+    },
+    {
+      "id": "UI-FILE-SUBMIT",
+      "passed": true,
+      "actual": {
+        "submissionId": "7c261116-26a4-4de6-97cd-4937e4f66f85",
+        "fileId": "bd96da6d-19c8-43a9-a9ae-ff75949090e7"
+      }
+    },
+    {
+      "id": "UI-TA-GRADE",
+      "passed": true,
+      "actual": {
+        "score": 5.5
+      }
+    },
+    {
+      "id": "UI-CONFIRM-STUDENT-RESULT",
+      "passed": true,
+      "actual": {
+        "status": "CONFIRMED",
+        "totalScore": 5.5
+      }
+    }
+  ],
+  "runtimeErrors": []
+}

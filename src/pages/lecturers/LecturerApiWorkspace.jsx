@@ -1658,7 +1658,7 @@ export function LecturerExperimentsApiPage() {
                 <SelectField label="Lớp học" name="classId" required>
                   <option value="">Chọn lớp</option>
                   {classRows
-                    .filter((item) => !item.subjectId || item.subjectId === selectedSubject)
+                    .filter((item) => !modal.subjectId || item.subjectId === modal.subjectId)
                     .map((item) => (
                       <option key={item.classId} value={item.classId}>
                         {item.classCode || item.className || item.classId}

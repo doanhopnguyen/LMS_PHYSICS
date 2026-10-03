@@ -1,0 +1,188 @@
+[
+  {
+    "id": "LAB-RAW-BLOB",
+    "description": "Frontend multipart JSON Blob is accepted and saved",
+    "expected": "200 and matching rawDataJson",
+    "passed": false,
+    "actual": {
+      "status": 400,
+      "message": "rawDataJson: Failed to convert property value of type 'org.springframework.web.multipart.support.StandardMultipartHttpServletRequest$StandardMultipartFile' to required type 'com.fasterxml.jackson.databind.JsonNode' for property 'rawDataJson'; Cannot convert value of type 'org.springframework.web.multipart.support.StandardMultipartHttpServletRequest$StandardMultipartFile' to required type 'com.fasterxml.jackson.databind.JsonNode' for property 'rawDataJson': no matching editors or conversion strategy found"
+    }
+  },
+  {
+    "id": "LAB-EMPTY",
+    "description": "Empty report is rejected",
+    "expected": "4xx",
+    "passed": false,
+    "actual": {
+      "status": 200,
+      "message": "Success"
+    }
+  },
+  {
+    "id": "LAB-STUDENT-IDOR",
+    "description": "Other student cannot read a submission",
+    "expected": "403",
+    "passed": true,
+    "actual": {
+      "status": 403
+    }
+  },
+  {
+    "id": "LAB-STUDENT-GRADE",
+    "description": "Student cannot grade",
+    "expected": "403",
+    "passed": true,
+    "actual": {
+      "status": 403
+    }
+  },
+  {
+    "id": "LAB-OUTSIDER-READ",
+    "description": "Instructor outside the assigned class cannot read student report",
+    "expected": "403",
+    "passed": false,
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "id": "LAB-OUTSIDER-GRADE",
+    "description": "Instructor outside the assigned class cannot change marks",
+    "expected": "403",
+    "passed": false,
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "id": "LAB-SCORE-BOUNDS",
+    "description": "Reject score higher than rubric maximum",
+    "expected": "400",
+    "passed": true,
+    "actual": {
+      "status": 400
+    }
+  },
+  {
+    "id": "LAB-UNKNOWN-RUBRIC",
+    "description": "Reject unknown rubric cleanly",
+    "expected": "400 or 404",
+    "passed": false,
+    "actual": {
+      "status": 200,
+      "message": "Score saved successfully"
+    }
+  },
+  {
+    "id": "LAB-WRONG-RUBRIC",
+    "description": "Rubric from another experiment cannot be applied",
+    "expected": "400 or 404",
+    "passed": false,
+    "actual": {
+      "status": 200,
+      "message": "Score saved successfully"
+    }
+  },
+  {
+    "id": "LAB-ZERO",
+    "description": "Saved zero scores are recognized as graded",
+    "expected": "all rubrics graded, totalScore 0",
+    "passed": true,
+    "actual": {
+      "totalScore": 0,
+      "rubrics": [
+        {
+          "score": 0,
+          "isGraded": true
+        },
+        {
+          "score": 0,
+          "isGraded": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "LAB-TA-CONFIRM",
+    "description": "TA cannot finalize marks",
+    "expected": "403",
+    "passed": true,
+    "actual": {
+      "status": 403
+    }
+  },
+  {
+    "id": "LAB-CONFIRMED-LOCK",
+    "description": "Confirmed submission cannot be regraded",
+    "expected": "400",
+    "passed": true,
+    "actual": {
+      "status": 400
+    }
+  },
+  {
+    "id": "LAB-CONFIRMED-RESUBMIT",
+    "description": "Observe resubmission behavior after confirmation",
+    "expected": "observation only",
+    "passed": true,
+    "actual": {
+      "status": 200,
+      "count": 3,
+      "statuses": [
+        "PENDING",
+        "CONFIRMED",
+        "PENDING"
+      ]
+    }
+  },
+  {
+    "id": "LAB-INCOMPLETE-CONFIRM",
+    "description": "Cannot finalize a report with ungraded rubrics",
+    "expected": "400",
+    "passed": false,
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "id": "LAB-SCENE-1",
+    "description": "Simulation URL loads: Bài 1: Khảo sát chuyển động rơi tự do và xác định gia tốc trọng trường g",
+    "expected": "HTTP 2xx or 3xx",
+    "passed": false,
+    "actual": {
+      "url": "https://sim.vatly1.edu.vn/free-fall-3d",
+      "error": "ENOTFOUND"
+    }
+  },
+  {
+    "id": "LAB-SCENE-2",
+    "description": "Simulation URL loads: Bài 2: Khảo sát dao động và xác định gia tốc rơi tự do bằng con lắc đơn",
+    "expected": "HTTP 2xx or 3xx",
+    "passed": false,
+    "actual": {
+      "url": "https://sim.vatly1.edu.vn/simple-pendulum-3d",
+      "error": "ENOTFOUND"
+    }
+  },
+  {
+    "id": "LAB-SCENE-3",
+    "description": "Simulation URL loads: Bài 3: Khảo sát chuyển động quay và xác định mô-men quán tính của đĩa tròn",
+    "expected": "HTTP 2xx or 3xx",
+    "passed": false,
+    "actual": {
+      "url": "https://sim.vatly1.edu.vn/rotational-inertia-3d",
+      "error": "ENOTFOUND"
+    }
+  },
+  {
+    "id": "LAB-SCENE-4",
+    "description": "Simulation URL loads: Bài 4: Khảo sát va chạm trên đệm không khí và kiểm chứng định luật bảo toàn động lượng",
+    "expected": "HTTP 2xx or 3xx",
+    "passed": false,
+    "actual": {
+      "url": "https://sim.vatly1.edu.vn/air-track-collision-3d",
+      "error": "ENOTFOUND"
+    }
+  }
+]

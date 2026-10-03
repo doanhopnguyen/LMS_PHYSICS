@@ -3,7 +3,7 @@ import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
 import { ImmersiveShell } from '../../components/ImmersiveShell.jsx';
-import { api } from '../../lib/apiClient.js';
+import { experimentHref, loadStudentExperiment } from '../../lib/experimentContext.js';
 
 export function WorkspacePage() {
   const params = new URLSearchParams(window.location.search);
@@ -16,8 +16,7 @@ export function WorkspacePage() {
   useEffect(() => {
     if (!experimentId) return;
     let alive = true;
-    api.experiments
-      .get(experimentId)
+    loadStudentExperiment(experimentId, assignmentId)
       .then((data) => {
         if (alive) setExperiment(data);
       })
@@ -30,8 +29,8 @@ export function WorkspacePage() {
     return () => {
       alive = false;
     };
-  }, [experimentId]);
-  const reportHref = `lab_report_rubric.html?experimentId=${encodeURIComponent(experimentId || '')}${classId ? `&classId=${encodeURIComponent(classId)}` : ''}${assignmentId ? `&assignmentId=${encodeURIComponent(assignmentId)}` : ''}`;
+  }, [experimentId, assignmentId]);
+  const reportHref = experimentHref('lab_report_rubric.html', { experimentId, classId, assignmentId });
   const title = experiment?.title || 'Không gian thí nghiệm';
   return (
     <ImmersiveShell

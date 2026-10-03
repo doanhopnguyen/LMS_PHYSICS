@@ -1,0 +1,19 @@
+{
+  "originalBackend": {
+    "jsonStringStatus": 400,
+    "jsonBlobStatus": 400
+  },
+  "proposedBinder": {
+    "jsonStringStatus": 200,
+    "persistedRawData": {
+      "measurements": [
+        1.2
+      ]
+    },
+    "experimentTests": {
+      "tests": 21,
+      "passed": 21
+    }
+  },
+  "appliedToOriginalBackend": false
+}

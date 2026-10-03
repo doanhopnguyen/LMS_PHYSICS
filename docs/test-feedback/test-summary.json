@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-03",
+  "frontendRevision": "7869995aaf758798c1ecddb944e1891b5ae3febe",
+  "backendRevision": "01b1b6e3c14b1c36e21ce928454ed3978f6d49ab",
+  "frontendUnitTests": {
+    "tests": 38,
+    "passed": 38,
+    "failed": 0
+  },
+  "backendTests": {
+    "tests": 272,
+    "passed": 270,
+    "failures": 1,
+    "errors": 1,
+    "skipped": 0
+  },
+  "backendExperimentTests": {
+    "tests": 21,
+    "passed": 21
+  },
+  "routeSmoke": {
+    "routes": 52,
+    "runtimeErrors": 0,
+    "apiFailures": 0,
+    "desktopOverflow": 0
+  },
+  "build": "passed",
+  "routeManifestScan": {
+    "passed": false,
+    "missing": [
+      "403.html",
+      "404.html"
+    ]
+  },
+  "existingUiSuites": [
+    {
+      "name": "check-pagination",
+      "passed": true
+    },
+    {
+      "name": "check-admin-pages",
+      "passed": true
+    },
+    {
+      "name": "check-dashboard",
+      "passed": false,
+      "reason": "Expected 5 calendar events, got 0; fixture/auth not established by script"
+    },
+    {
+      "name": "check-dashboard-headers",
+      "passed": true
+    },
+    {
+      "name": "check-library-chat",
+      "passed": true
+    },
+    {
+      "name": "check-page-spacing",
+      "passed": true
+    },
+    {
+      "name": "check-student-notifications",
+      "passed": true
+    },
+    {
+      "name": "check-experiment-grading",
+      "passed": true
+    }
+  ],
+  "environment": {
+    "backendProfile": "test",
+    "database": "H2 in-memory",
+    "minio": false,
+    "backendPort": 18080,
+    "frontendPort": 5188,
+    "sourceApplicationEdits": false
+  }
+}

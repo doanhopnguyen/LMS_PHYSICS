@@ -1,0 +1,538 @@
+{
+  "results": [
+    {
+      "id": "UI-LAB-CONTEXT",
+      "description": "List → simulation → report preserves assignment",
+      "passed": false,
+      "actual": {
+        "workspaceAssignment": null,
+        "reportAssignment": null,
+        "submitDisabled": true
+      }
+    },
+    {
+      "id": "UI-LAB-INVALID-JSON",
+      "description": "Invalid JSON gives a concise validation message",
+      "passed": true,
+      "actual": {
+        "message": true,
+        "requests": 0
+      }
+    },
+    {
+      "id": "UI-LAB-RAW-JSON",
+      "description": "Valid measurement JSON can be submitted through the actual UI",
+      "passed": false,
+      "actual": {
+        "success": false,
+        "error": "rawDataJson: Failed to convert property value of type 'org.springframework.web.multipart.support.StandardMultipartHttpServletRequest$StandardMultipartFile' to required type 'com.fasterxml.jackson.databind.JsonNode' for property 'rawDataJson'; Cannot convert value of type 'org.springframework.web.multipart.support.StandardMultipartHttpServletRequest$StandardMultipartFile' to required type 'com.fasterxml.jackson.databind.JsonNode' for property 'rawDataJson': no matching editors or conversion strategy found",
+        "globalToasts": 0
+      }
+    },
+    {
+      "id": "UI-LAB-URL-SUBMIT",
+      "description": "Evidence URL submits and persists",
+      "passed": true,
+      "actual": {
+        "success": true,
+        "persisted": true
+      }
+    },
+    {
+      "id": "UI-LAB-OVERRIDE",
+      "description": "Report shows class-specific assigned instructions",
+      "passed": false,
+      "actual": {
+        "showsOverride": false,
+        "showsOriginal": true
+      }
+    },
+    {
+      "id": "UI-LAB-MOBILE",
+      "description": "Report has no horizontal overflow at 390px",
+      "passed": true,
+      "actual": {
+        "overflow": false,
+        "width": 390
+      }
+    },
+    {
+      "id": "UI-LAB-CONFIRMED",
+      "description": "Actual confirmed report is read only in grader",
+      "passed": true,
+      "actual": {
+        "scores": 2,
+        "allDisabled": true
+      }
+    }
+  ],
+  "smoke": [
+    {
+      "route": "login.html",
+      "user": "sv_an",
+      "text": 196,
+      "title": "Đăng nhập",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "account.html",
+      "user": "sv_an",
+      "text": 1218,
+      "title": "Tài khoản & bảo mật",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "notification_detail.html",
+      "user": "sv_an",
+      "text": 912,
+      "title": "Chi tiết thông báo",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "dashboard.html",
+      "user": "sv_an",
+      "text": 1741,
+      "title": "Xin chào, Lê Văn An!",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "course_detail.html",
+      "user": "sv_an",
+      "text": 948,
+      "title": "PHY101-02",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "learning_module.html",
+      "user": "sv_an",
+      "text": 238,
+      "title": "Không thể mở chủ đề",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "exam_practice_center.html",
+      "user": "sv_an",
+      "text": 1499,
+      "title": "Trung tâm ôn luyện",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "exam_results.html",
+      "user": "sv_an",
+      "text": 684,
+      "title": "Kết quả bài làm",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lab_report_rubric.html",
+      "user": "sv_an",
+      "text": 1289,
+      "title": "QA isolated lab 1790996293413",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "learning_results.html",
+      "user": "sv_an",
+      "text": 1444,
+      "title": "Kết quả & tiến độ học tập",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "library.html",
+      "user": "sv_an",
+      "text": 1110,
+      "title": "Kho học liệu",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "my_courses.html",
+      "user": "sv_an",
+      "text": 1310,
+      "title": "Học phần của tôi",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "profile_settings.html",
+      "user": "sv_an",
+      "text": 1218,
+      "title": "Tài khoản & bảo mật",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "virtual_lab.html",
+      "user": "sv_an",
+      "text": 1254,
+      "title": "Thí nghiệm trực tuyến",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "voice_citations.html",
+      "user": "sv_an",
+      "text": 1229,
+      "title": "Voice & citations",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "3d_workspace.html",
+      "user": "sv_an",
+      "text": 167,
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "ai_tutor.html",
+      "user": "sv_an",
+      "text": 515,
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "document_viewer.html",
+      "user": "sv_an",
+      "text": 1083,
+      "title": "Mục 2.2. Định luật II Newton",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "exam_session.html",
+      "user": "sv_an",
+      "text": 917,
+      "title": "Chọn đề kiểm tra",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "interactive_lesson.html",
+      "user": "sv_an",
+      "text": 192,
+      "title": "Không thể mở bài học",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "mobile_experience.html",
+      "user": "sv_an",
+      "text": 425,
+      "title": "Xin chào, Nguyễn Văn A!",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_dashboard.html",
+      "user": "gv_nguyen",
+      "text": 1528,
+      "title": "Tổng quan giảng viên",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_courses.html",
+      "user": "gv_nguyen",
+      "text": 1308,
+      "title": "Học phần & lớp học",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_course_detail.html",
+      "user": "gv_nguyen",
+      "text": 1293,
+      "title": "PHY101-01 · Đang hoạt động",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_materials.html",
+      "user": "gv_nguyen",
+      "text": 1080,
+      "title": "Kho học liệu",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_question_bank.html",
+      "user": "gv_nguyen",
+      "text": 1125,
+      "title": "Ngân hàng câu hỏi",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_assessments.html",
+      "user": "gv_nguyen",
+      "text": 1025,
+      "title": "Bài tập & kiểm tra",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_assessment_results.html",
+      "user": "gv_nguyen",
+      "text": 1046,
+      "title": "Bài tập & kiểm tra",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_attempt_detail.html",
+      "user": "gv_nguyen",
+      "text": 1046,
+      "title": "Bài tập & kiểm tra",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_grading.html",
+      "user": "gv_nguyen",
+      "text": 1001,
+      "title": "Chấm bài kiểm tra",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_labs.html",
+      "user": "gv_nguyen",
+      "text": 1945,
+      "title": "Thí nghiệm 3D",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_lab_assignment_detail.html",
+      "user": "gv_nguyen",
+      "text": 1968,
+      "title": "Thí nghiệm 3D",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_lab_submission_detail.html",
+      "user": "gv_nguyen",
+      "text": 1237,
+      "title": "Chấm bài thí nghiệm",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_lab_grading.html",
+      "user": "gv_nguyen",
+      "text": 1237,
+      "title": "Chấm bài thí nghiệm",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_ai_insights.html",
+      "user": "gv_nguyen",
+      "text": 1143,
+      "title": "Phân tích học tập",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "lecturer_analytics.html",
+      "user": "gv_nguyen",
+      "text": 1143,
+      "title": "Phân tích học tập",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "admin_dashboard.html",
+      "user": "admin",
+      "text": 1996,
+      "title": "Tổng quan vận hành",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "admin_users.html",
+      "user": "admin",
+      "text": 1419,
+      "title": "Người dùng & phân quyền",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "admin_academics.html",
+      "user": "admin",
+      "text": 1202,
+      "title": "Học kỳ & học phần",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "admin_questions.html",
+      "user": "admin",
+      "text": 1105,
+      "title": "Ngân hàng câu hỏi",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "admin_assessments.html",
+      "user": "admin",
+      "text": 1025,
+      "title": "Ma trận đề & ghi danh",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "admin_operations.html",
+      "user": "admin",
+      "text": 1079,
+      "title": "Cấu hình & nhật ký",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "ta_dashboard.html",
+      "user": "ta_hung",
+      "text": 1300,
+      "title": "Tổng quan trợ giảng",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "ta_work_queue.html",
+      "user": "ta_hung",
+      "text": 851,
+      "title": "Lớp và công việc được phân công",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "admin_analytics.html",
+      "user": "admin",
+      "text": 1146,
+      "title": "Phân tích học tập",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "student_evidence.html",
+      "user": "sv_an",
+      "text": 1752,
+      "title": "Báo cáo và minh chứng thí nghiệm",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "auth_access.html",
+      "user": "sv_an",
+      "text": 171,
+      "title": "Quên mật khẩu",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "register.html",
+      "user": "sv_an",
+      "text": 212,
+      "title": "Đăng ký tài khoản",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "reset_password.html",
+      "user": "sv_an",
+      "text": 171,
+      "title": "Quên mật khẩu",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "ta_class_support.html",
+      "user": "ta_hung",
+      "text": 929,
+      "title": "Hỗ trợ lớp học",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "403.html",
+      "user": "sv_an",
+      "text": 185,
+      "title": "Bạn không có quyền mở trang này",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    },
+    {
+      "route": "404.html",
+      "user": "sv_an",
+      "text": 155,
+      "title": "Trang bạn tìm không tồn tại",
+      "overflow": false,
+      "errors": [],
+      "apiFailures": []
+    }
+  ],
+  "runtimeErrors": []
+}

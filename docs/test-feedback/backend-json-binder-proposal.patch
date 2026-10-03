@@ -1,0 +1,41 @@
+--- a/src/main/java/com/vatly1/example/controller/ExperimentController.java
++++ b/src/main/java/com/vatly1/example/controller/ExperimentController.java
+@@ -27,6 +27,12 @@
+ import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.*;
+ 
++import com.fasterxml.jackson.core.JsonProcessingException;
++import com.fasterxml.jackson.databind.JsonNode;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import org.springframework.web.bind.WebDataBinder;
++import java.beans.PropertyEditorSupport;
++
+ import java.util.List;
+ import java.util.UUID;
+ 
+@@ -38,6 +44,25 @@
+ public class ExperimentController {
+ 
+     private final IExperimentService experimentService;
++    private final ObjectMapper objectMapper;
++
++    @InitBinder
++    public void bindRawDataJson(WebDataBinder binder) {
++        binder.registerCustomEditor(JsonNode.class, "rawDataJson", new PropertyEditorSupport() {
++            @Override
++            public void setAsText(String text) {
++                if (text == null || text.isBlank()) {
++                    setValue(null);
++                    return;
++                }
++                try {
++                    setValue(objectMapper.readTree(text));
++                } catch (JsonProcessingException error) {
++                    throw new IllegalArgumentException("Dữ liệu thô phải là JSON hợp lệ.", error);
++                }
++            }
++        });
++    }
+ 
+     @Operation(summary = "Lấy danh sách bài thí nghiệm", description = "Trả về danh sách các bài thí nghiệm ảo 3D. Có thể truyền subjectId để lọc theo môn học, hoặc bỏ trống để lấy toàn bộ.")
+     @GetMapping
