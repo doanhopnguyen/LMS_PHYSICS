@@ -1,5 +1,6 @@
 import React, { createContext, Children } from 'react';
 import { usePagination } from '../hooks/usePagination.js';
+import { SelectField } from './SelectField.jsx';
 export const PaginationContext = createContext(false);
 
 function pageNumbers(currentPage, totalPages) {
@@ -31,12 +32,11 @@ export function Pagination({ currentPage, pageSize, totalItems, onPageChange, on
           Hiển thị {first}–{last} trong {totalItems}
         </span>
         {onPageSizeChange && (
-          <label className="flex items-center gap-2">
-            Số dòng/trang
-            <select
+            <SelectField
+              label="Số dòng/trang"
               value={pageSize}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
-              className="h-9 border border-[#CBD5E1] bg-white px-3"
+              className="pagination-size"
             >
               {[...new Set([pageSize, 10, 20, 50])]
                 .sort((a, b) => a - b)
@@ -45,8 +45,7 @@ export function Pagination({ currentPage, pageSize, totalItems, onPageChange, on
                     {size}
                   </option>
                 ))}
-            </select>
-          </label>
+            </SelectField>
         )}
       </div>
       <div className="flex items-center justify-between gap-2 sm:justify-end">

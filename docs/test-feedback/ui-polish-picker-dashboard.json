@@ -1,0 +1,72 @@
+{
+  "phase": "picker-dashboard",
+  "pages": [
+    {
+      "file": "dashboard.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "PTIT Physics 1 - Tổng quan sinh viên",
+          "rootText": 1704,
+          "outside": [
+            {
+              "tag": "A",
+              "class": "lms-card  bg-surface-container-lowest rounded-2xl border border-[#E2E8F0] shadow-sm dashboard-calendar__event dashboard-calendar__event--primary"
+            }
+          ],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_dashboard.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan giảng viên · PTIT Physics LMS",
+          "rootText": 1436,
+          "outside": [
+            {
+              "tag": "A",
+              "class": "lms-card  bg-surface-container-lowest rounded-2xl border border-[#E2E8F0] shadow-sm dashboard-calendar__event dashboard-calendar__event--primary"
+            }
+          ],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    }
+  ],
+  "runtimeErrors": [],
+  "layoutIssues": [
+    {
+      "file": "dashboard.html",
+      "width": 390,
+      "state": "initial",
+      "issues": [
+        "viewport overflow"
+      ]
+    },
+    {
+      "file": "lecturer_dashboard.html",
+      "width": 390,
+      "state": "initial",
+      "issues": [
+        "viewport overflow"
+      ]
+    }
+  ],
+  "snapshots": [
+    "docs/test-feedback/ui-polish-screenshots/dashboard-390-page.png",
+    "docs/test-feedback/ui-polish-screenshots/lecturer_dashboard-390-page.png"
+  ]
+}

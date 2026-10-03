@@ -1,11 +1,12 @@
 import React, { forwardRef, useId } from 'react';
+import { DatePicker } from './DatePicker.jsx';
 export const FormField = forwardRef(function FormField(
   { label, multiline = false, bare = false, wrapperClassName = '', className = '', id, hint, error, ...props },
   ref
 ) {
   const generatedId = useId();
   const fieldId = id || generatedId;
-  const Tag = multiline ? 'textarea' : 'input';
+  const Tag = multiline ? 'textarea' : ['date', 'datetime-local', 'time', 'month'].includes(props.type) ? DatePicker : 'input';
   const temporal = ['date', 'datetime-local', 'time', 'month', 'week'].includes(props.type) ? props.type : '';
   const control = (
     <Tag
@@ -15,6 +16,7 @@ export const FormField = forwardRef(function FormField(
       aria-invalid={error ? true : undefined}
       aria-describedby={hint || error ? `${fieldId}-hint` : undefined}
       {...props}
+      {...(Tag === DatePicker ? { label, nativeOnChange: props.onChange, onChange: undefined } : {})}
     />
   );
   if (bare) return control;

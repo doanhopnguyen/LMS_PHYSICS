@@ -37,7 +37,7 @@ export function FormDialog({
           if (e.key === 'Tab') {
             const nodes = [
               ...ref.current.querySelectorAll(
-                'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href]'
+                'button:not(:disabled):not([tabindex="-1"]),input:not(:disabled):not([tabindex="-1"]),select:not(:disabled):not([tabindex="-1"]),textarea:not(:disabled),a[href]'
               ),
             ];
             const first = nodes[0],

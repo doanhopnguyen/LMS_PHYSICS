@@ -104,7 +104,8 @@ try {
     const visible=e=>e.getClientRects().length && getComputedStyle(e).visibility!=='hidden';
     const controls=[...document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),textarea,select')].filter(visible);
     const viewport=document.documentElement.clientWidth;
-    const outside=[...document.querySelectorAll('main,.page-academic-filters,.tabs-toolbar,.form-dialog,.lms-card')].filter(visible).filter(e=>{const r=e.getBoundingClientRect();return r.left < -1 || r.right > viewport+1;}).map(e=>({tag:e.tagName,class:e.className}));
+    // Calendar events live inside an intentional horizontal scroller on mobile.
+    const outside=[...document.querySelectorAll('main,.page-academic-filters,.tabs-toolbar,.form-dialog,.lms-card')].filter(visible).filter(e=>!e.closest('.dashboard-calendar__scroll')).filter(e=>{const r=e.getBoundingClientRect();return r.left < -1 || r.right > viewport+1;}).map(e=>({tag:e.tagName,class:e.className}));
     const fields=controls.map(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return {name:e.name||e.id,type:e.type||e.tagName,width:r.width,paddingLeft:parseFloat(s.paddingLeft),paddingRight:parseFloat(s.paddingRight),height:r.height,border:s.borderColor};});
     const tabs=[...document.querySelectorAll('.tabs-list')].filter(visible).map(e=>({height:e.getBoundingClientRect().height,scrollWidth:e.scrollWidth,width:e.clientWidth,lines:new Set([...e.children].map(c=>Math.round(c.getBoundingClientRect().top))).size}));
     const toolbars=[...document.querySelectorAll('.tabs-toolbar')].filter(visible).map(e=>({height:e.getBoundingClientRect().height,width:e.getBoundingClientRect().width}));

@@ -1,6 +1,7 @@
 @import './styles/tokens.css';
 @import './styles/authoring.css';
 @import './styles/account.css';
+@import './styles/pickers.css';
 
 @tailwind base;
 @tailwind components;
@@ -321,6 +322,8 @@ select option:checked { border-radius: 10px; color: #fff; background: #E52220; }
 .tabs-filters .form-field { display: flex; align-items: center; gap: 8px; width: 100%; }
 .tabs-filters .form-field__label { flex: none; max-width: 50%; font-size: 13px; }
 .tabs-filters .form-field__control { flex: 1; width: 0; min-height: var(--ptit-toolbar-height); }
+.tabs-filters .temporal-picker { flex: 1; width: 0; }
+.tabs-filters .temporal-picker .picker-trigger { width: 100%; }
 .tabs-filters > div { min-width: 0; }
 .filter-advanced { grid-column: 1 / -1; min-width: 0; }
 .filter-advanced > summary { width: fit-content; cursor: pointer; color: #475569; font-size: 13px; font-weight: 500; padding-block: 4px; }
@@ -2049,7 +2052,7 @@ button {
 .lesson-video__time { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; margin-right: auto; }
 .lesson-video__time .material-symbols-outlined { font-size: 18px; }
 .lesson-video__toolbar label { display: flex; align-items: center; gap: 8px; }
-.lesson-video__toolbar select { border: 1px solid #cbd5e1; padding: 4px 10px; background: #fff; }
+.lesson-video__toolbar .picker-trigger { color: #0f172a; font-weight: 400; }
 .lesson-video__toolbar button { color: #e52220; font-weight: 600; }
 .lesson-video__demo { color: #64748b; font-size: 11px; }
 .lesson-video__error { padding: 10px 0; color: #b91c1c; font-size: 13px; }

@@ -2,6 +2,7 @@ import { Form, SubmitButton } from './Form.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { Card } from './Card.jsx';
 import { AuthAlert } from './AuthLayout.jsx';
+import { SelectField } from './SelectField.jsx';
 
 const formatTime = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
@@ -59,9 +60,9 @@ export function LessonVideo({ lesson }) {
       <AuthAlert error>{error}</AuthAlert>
       <div className="lesson-video__toolbar">
         <span className="lesson-video__time"><span className="material-symbols-outlined" aria-hidden="true">schedule</span>{formatTime(time)} / {formatTime(duration)}</span>
-        <label>Tốc độ <select value={speed} disabled={!source || !!error} onChange={(event) => { setSpeed(event.target.value); if (player.current) player.current.playbackRate = Number(event.target.value); }}>
+        <SelectField label="Tốc độ" className="lesson-video__speed" value={speed} disabled={!source || !!error} onChange={(event) => { setSpeed(event.target.value); if (player.current) player.current.playbackRate = Number(event.target.value); }}>
           {['0.5', '0.75', '1', '1.25', '1.5', '2'].map(value => <option key={value} value={value}>{value}×</option>)}
-        </select></label>
+        </SelectField>
         {source && <button type="button" onClick={() => picker.current.click()}>Đổi video minh họa</button>}
       </div>
       <p className="lesson-video__demo">Xem thử trên thiết bị · Video không được tải lên hệ thống.</p>
