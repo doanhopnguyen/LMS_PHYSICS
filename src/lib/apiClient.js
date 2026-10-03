@@ -1,19 +1,6 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const ACCESS_TOKEN_KEY = 'ptit-physics-access-token';
 const REFRESH_TOKEN_KEY = 'ptit-physics-refresh-token';
-const API_ERROR_EVENT = 'ptit-api-error';
-
-function reportApiError(error) {
-  window.dispatchEvent(new CustomEvent(API_ERROR_EVENT, { detail: {
-    message: error.message,
-    status: error.status,
-    method: error.method,
-    path: error.path,
-    statusText: error.statusText,
-    details: error.details,
-  } }));
-  return error;
-}
 
 export class ApiError extends Error {
   constructor(message, { status, data, method, path, statusText, details } = {}) {
@@ -98,7 +85,7 @@ export async function apiRequest(path, options = {}) {
       body: formData || (body === undefined ? undefined : JSON.stringify(body)),
     });
   } catch (networkError) {
-    throw reportApiError(new ApiError('Không thể kết nối tới máy chủ API. Kiểm tra VITE_API_BASE_URL hoặc backend tại cổng 8080.'));
+    throw new ApiError('Không thể kết nối tới máy chủ API. Kiểm tra VITE_API_BASE_URL hoặc backend tại cổng 8080.');
   }
 
   if (response.status === 401 && auth && retry && await refreshAccessToken()) {
@@ -115,8 +102,7 @@ export async function apiRequest(path, options = {}) {
       statusText: response.statusText,
       details: errorDetails(payload),
     });
-    throw reportApiError(detailedError);
-    throw reportApiError(new ApiError(payload?.message || `Yêu cầu thất bại (${response.status}).`, { status: response.status, data: payload }));
+    throw detailedError;
   }
   return payload?.data ?? payload;
 }

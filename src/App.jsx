@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { LecturerExperimentGradingPage } from './pages/lecturers/LecturerExperimentGrading.jsx';
-import { ApiErrorToasts } from './components/ApiErrorToasts.jsx';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getCleanRoute, getPageFile } from './lib/routes.js';
 import { LoginPage } from './pages/LoginPage.jsx';
@@ -137,19 +136,9 @@ function App() {
     !['login.html', 'auth_access.html', 'register.html', 'reset_password.html', '403.html', '404.html'].includes(file) &&
     (!session || !canAccess(session.role, file))
   ) {
-    return (
-      <>
-        <RoleAccessPage session={session} requestedPage={file} />
-        <ApiErrorToasts />
-      </>
-    );
+    return <RoleAccessPage session={session} requestedPage={file} />;
   }
-  return (
-    <>
-      <Page key={locationKey} />
-      <ApiErrorToasts />
-    </>
-  );
+  return <Page key={locationKey} />;
 }
 
 export default App;
