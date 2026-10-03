@@ -1,0 +1,77 @@
+{
+  "environment": "Isolated H2 backend with current submission fix; local storage, MinIO disabled",
+  "results": [
+    {
+      "id": "upload-busy",
+      "description": "Inputs locked while uploading",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "upload-success",
+      "description": "UI reports successful submission",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "multipart-contract",
+      "description": "FE sends string JSON and actual file",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "persist-json-file",
+      "description": "BE stores numeric JSON, notes, fileId and PENDING",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "evidence-immediate",
+      "description": "Unconfirmed report appears in evidence repository",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "warehouse-ui",
+      "description": "Success link opens evidence with download button",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "download-file",
+      "description": "Signed download returns original file bytes",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "warehouse-open",
+      "description": "Open file button requests signed URL",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "invalid-json",
+      "description": "Malformed JSON rejected without technical class names",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "empty-report",
+      "description": "Empty multipart rejected",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "failed-requests-no-records",
+      "description": "Invalid requests create neither submission nor evidence",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "runtime",
+      "description": "No browser runtime errors",
+      "passed": true,
+      "actual": []
+    }
+  ]
+}

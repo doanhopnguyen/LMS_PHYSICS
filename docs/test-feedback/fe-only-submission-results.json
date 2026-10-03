@@ -1,0 +1,101 @@
+{
+  "backend": "Copy of original, unchanged backend; H2/local storage; JSON stored as a file, not rawDataJson",
+  "results": [
+    {
+      "id": "FREE_FALL_3D-busy",
+      "description": "Inputs locked during upload",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "FREE_FALL_3D-multipart",
+      "description": "Generated JSON file matches original BE contract",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "FREE_FALL_3D-roundtrip",
+      "description": "Download preserves all numeric values, units and notes",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "SIMPLE_PENDULUM_3D-busy",
+      "description": "Inputs locked during upload",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "SIMPLE_PENDULUM_3D-multipart",
+      "description": "Generated JSON file matches original BE contract",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "SIMPLE_PENDULUM_3D-roundtrip",
+      "description": "Download preserves all numeric values, units and notes",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "ROTATIONAL_INERTIA_3D-busy",
+      "description": "Inputs locked during upload",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "ROTATIONAL_INERTIA_3D-multipart",
+      "description": "Generated JSON file matches original BE contract",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "ROTATIONAL_INERTIA_3D-roundtrip",
+      "description": "Download preserves all numeric values, units and notes",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "AIR_TRACK_COLLISION_3D-busy",
+      "description": "Inputs locked during upload",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "AIR_TRACK_COLLISION_3D-multipart",
+      "description": "Generated JSON file matches original BE contract",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "AIR_TRACK_COLLISION_3D-roundtrip",
+      "description": "Download preserves all numeric values, units and notes",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "invalid-values",
+      "description": "Nonpositive value blocks submission",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "zip-roundtrip",
+      "description": "ZIP preserves JSON, Unicode file, original bytes and evidence link",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "original-evidence-policy",
+      "description": "FE explains evidence appears after instructor confirmation",
+      "passed": true,
+      "actual": true
+    },
+    {
+      "id": "runtime",
+      "description": "No browser runtime exceptions",
+      "passed": true,
+      "actual": []
+    }
+  ]
+}

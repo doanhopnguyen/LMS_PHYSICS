@@ -71,7 +71,10 @@ try{
   assert.ok(await evaluate(`testCalls.some(c=>c.path==='/api/v1/experiments/submissions'&&c.query.includes('myClassesOnly=true'))`));
   await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Chấm bài')&&!e.hasAttribute('role')).click()`);
   await waitFor(`document.querySelectorAll('input[name=score]').length===2`);
-  assert.ok(await evaluate(`document.body.textContent.includes('B26D001') && document.body.textContent.includes('1.25') && document.body.textContent.includes('Mở tệp')`));
+  assert.ok(await evaluate(`document.body.textContent.includes('B26D001') && document.body.textContent.includes('Xem số liệu') && document.body.textContent.includes('Xem minh chứng')`));
+  await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Xem số liệu')).click()`);
+  await waitFor(`document.querySelector('[role=dialog]')?.textContent.includes('1.25')`);
+  await evaluate(`document.querySelector('[role=dialog] button[aria-label="Đóng"]').click()`);
   assert.equal(await evaluate(`[...document.querySelectorAll('button')].find(e=>e.textContent.includes('Xác nhận kết quả')).disabled`),true);
   await setInput('input[name=score]','5');
   assert.equal(await evaluate(`document.querySelector('input[name=score]').checkValidity()`),false);

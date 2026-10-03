@@ -10,7 +10,7 @@ import { StatusBadge } from './StatusBadge.jsx';
 import { AuthAlert } from './AuthLayout.jsx';
 import { useApiData, listItems } from '../hooks/useApiData.js';
 import { api } from '../lib/apiClient.js';
-import { safeUrl } from '../lib/lecturerUtils.js';
+import { SubmissionEvidence } from './SubmissionEvidence.jsx';
 
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
 const statusLabels = { PENDING: 'Chờ chấm', GRADED: 'Đã chấm', CONFIRMED: 'Đã chốt' };
@@ -145,17 +145,6 @@ export function ExperimentSubmissionGrader({ submissionId, canConfirm = false, o
   const rubrics = data?.rubrics || [];
   const confirmed = data?.status === 'CONFIRMED' || detail.data?.isConfirmed || detail.data?.status === 'CONFIRMED';
   const complete = dirty.size === 0 && rubrics.length > 0 && rubrics.every((row) => row.isGraded && row.score != null);
-  const files = detail.data?.fileId || detail.data?.evidenceUrl ? [detail.data] : [];
-  const openFile = async (row) => {
-    try {
-      const response = row.fileId ? await api.files.downloadUrl(row.fileId) : null;
-      const url = safeUrl(response?.downloadUrl || response?.url || row.evidenceUrl);
-      if (!url) throw new Error('Không có liên kết tệp hợp lệ.');
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } catch (err) {
-      setError(err.message);
-    }
-  };
   const grade = async (event, rubric) => {
     event.preventDefault();
     if (lock.current || confirmed) return;
@@ -263,28 +252,7 @@ export function ExperimentSubmissionGrader({ submissionId, canConfirm = false, o
                 {confirmed ? 'Đã xác nhận' : 'Chưa chốt điểm'}
               </StatusBadge>
             </Card>
-            {files.length > 0 && (
-              <Card className="p-5">
-                <h2 className="font-medium">Tệp minh chứng</h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {files.map((row, index) => (
-                    <Button key={row.submissionId} variant="secondary" icon="attachment" onClick={() => openFile(row)}>
-                      Mở tệp {index + 1}
-                    </Button>
-                  ))}
-                </div>
-              </Card>
-            )}
-            {detail.data?.rawDataJson != null && (
-              <Card className="p-5">
-                <h2 className="font-medium">Số liệu thí nghiệm</h2>
-                <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words text-body-sm">
-                  {typeof detail.data.rawDataJson === 'string'
-                    ? detail.data.rawDataJson
-                    : JSON.stringify(detail.data.rawDataJson, null, 2)}
-                </pre>
-              </Card>
-            )}
+            {detail.data && <SubmissionEvidence key={submissionId} submission={detail.data} />}
             {!rubrics.length ? (
               <Card className="p-6 text-slate-500">
                 Bài thí nghiệm chưa có tiêu chí rubric. Chưa thể chấm hoặc xác nhận.

@@ -12,6 +12,7 @@ import { api } from '../../lib/apiClient.js';
 import { experimentHref, loadStudentExperiment } from '../../lib/experimentContext.js';
 import { LabMeasurementTable } from '../../components/LabMeasurementTable.jsx';
 import { buildLabReport, emptyLabTrial, getLabReportSchema, MIN_LAB_TRIALS } from '../../lib/labReportSchema.js';
+import { buildExperimentSubmission } from '../../lib/experimentSubmission.js';
 
 export function LabReportPage() {
   const params = new URLSearchParams(window.location.search);
@@ -65,14 +66,9 @@ export function LabReportPage() {
     setError('');
     setMessage('');
     try {
-      const formData = new FormData();
-      if (file) formData.append('file', file);
-      if (evidenceUrl.trim()) formData.append('evidenceUrl', evidenceUrl.trim());
-      if (report.data) {
-        formData.append('rawDataJson', JSON.stringify(report.data));
-      }
+      const formData = await buildExperimentSubmission({ report: report.data, file, evidenceUrl });
       await api.experiments.submitAssignment(assignmentId, formData);
-      setMessage('Đã gửi báo cáo thí nghiệm. Bạn có thể theo dõi tệp trong Kho minh chứng.');
+      setMessage('Đã gửi báo cáo thí nghiệm. Minh chứng sẽ được đưa vào kho sau khi giảng viên xác nhận kết quả.');
     } catch (submitError) {
       setError(submitError.message || 'Không thể nộp báo cáo thí nghiệm.');
     } finally {
@@ -145,12 +141,14 @@ export function LabReportPage() {
                     </div>
                   )}
                   <SharedForm className="mt-6 min-w-0 space-y-5" onSubmit={submit} noValidate>
+                    <p className="text-body-sm text-slate-500">Số liệu và nhận xét được lưu thành tệp JSON khi nộp. Nếu đính kèm minh chứng, hệ thống sẽ gộp vào một tệp ZIP.</p>
                     {schema && (
                       <LabMeasurementTable schema={schema} rows={measurements} errors={measurementErrors} disabled={submitting}
                         onChange={(rows) => { setMeasurements(rows); setMeasurementErrors({}); setError(''); setMessage(''); }} />
                     )}
                     <SharedFormField
                       type="file"
+                      disabled={submitting}
                       onChange={(event) => setFile(event.target.files?.[0] || null)}
                       className="mt-2 block w-full"
                       label={<>Tệp báo cáo hoặc minh chứng</>}
@@ -158,6 +156,7 @@ export function LabReportPage() {
                     />
                     <SharedFormField
                       value={evidenceUrl}
+                      disabled={submitting}
                       onChange={(event) => setEvidenceUrl(event.target.value)}
                       type="url"
                       placeholder="https://…"
@@ -167,6 +166,7 @@ export function LabReportPage() {
                     />
                     <SharedFormField
                       value={rawData}
+                      disabled={submitting}
                       onChange={(event) => setRawData(event.target.value)}
                       rows="7"
                       placeholder={schema ? 'Nhận xét về kết quả đo, sai số và điều kiện thực hiện…' : 'Nhập số liệu đo và nhận xét của bạn…'}
@@ -176,7 +176,9 @@ export function LabReportPage() {
                       hint={schema ? 'Có thể bổ sung nhận xét hoặc giải thích chênh lệch giữa các lần đo.' : 'Nhập số liệu từng lần đo và nhận xét của bạn.'}
                       wrapperClassName="block text-body-sm font-semibold"
                     />
-                    {message && <p className="text-[#15803D]">{message}</p>}
+                    {message && <div role="status" className="space-y-2 text-[#15803D]">
+                      <p>{message}</p>
+                    </div>}
                     {error && (
                       <p role="alert" className="text-primary">
                         {error}
