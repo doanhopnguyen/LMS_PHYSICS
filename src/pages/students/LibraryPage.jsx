@@ -134,7 +134,7 @@ export function LibraryPage() {
         />
         <Tabs
           items={[{ id: 'materials', label: 'Học liệu' }]}
-          actions={
+          filters={
             <>
               <SharedSelectField
                 label="Lớp học"
@@ -173,6 +173,10 @@ export function LibraryPage() {
                   </option>
                 ))}
               </SharedSelectField>
+            </>
+          }
+          actions={
+            <>
               <Button
                 variant="ghost"
                 disabled={!classId && !topicId && !type}

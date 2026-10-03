@@ -32,8 +32,8 @@ function TAShell({ currentPage, title, description, children }) {
     </AppShell>
   );
 }
-const className = (item) => item.className || item.classCode || item.classId;
-const status = (value) => <StatusBadge tone={value === 'ACTIVE' ? 'success' : 'neutral'}>{value || '—'}</StatusBadge>;
+const className = (item) => item.className || item.classCode || 'Lớp học';
+const status = (value) => <StatusBadge status={value} />;
 const classUrl = (id) => `ta_class_support.html?classId=${encodeURIComponent(id)}`;
 
 function ClassList({ classes, loading, error, reload, actionLabel = 'Mở hỗ trợ' }) {
@@ -72,7 +72,7 @@ export function TADashboardApiPage() {
     {
       label: 'Lớp được phân công',
       value: classesResource.data?.totalElements ?? classes.length,
-      detail: 'Từ danh sách lớp được cấp quyền',
+      detail: 'Các lớp đang hỗ trợ',
       icon: 'groups',
       tone: 'primary',
     },
@@ -88,7 +88,7 @@ export function TADashboardApiPage() {
     <TAShell
       currentPage="ta_dashboard.html"
       title="Tổng quan trợ giảng"
-      description="Theo dõi các lớp và công việc hỗ trợ được cấp quyền."
+      description="Theo dõi các lớp và công việc hỗ trợ giảng dạy."
     >
       <div className="mt-6">
         <DashboardOverview role="TA">

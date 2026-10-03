@@ -108,7 +108,7 @@
 .notification-list .is-unread { background: #fff7f7; }
 .notification-list .material-symbols-outlined { flex-shrink: 0; font-size: 20px; color: #15803d; }
 .notification-title { display: block; font-weight: 400; overflow-wrap: anywhere; }
-.notification-list time { display: block; margin-top: 5px; color: #94a3b8; font-size: 11px; }
+.notification-list time { display: block; margin-top: 5px; color: #64748b; font-size: 11px; }
 .notification-dot { flex-shrink: 0; height: 7px; width: 7px; margin-top: 6px; margin-left: auto; border-radius: 50%; background: #e52220; }
 .notification-empty { padding: 32px 16px; text-align: center; color: #64748b; }
 .notification-empty > span { font-size: 32px; margin-bottom: 8px; color: #94a3b8; }

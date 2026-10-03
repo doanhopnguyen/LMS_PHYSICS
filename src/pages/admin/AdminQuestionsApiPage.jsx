@@ -15,6 +15,7 @@ import { QuestionImportForm } from '../../components/QuestionImportForm.jsx';
 import { useApiData, listItems } from '../../hooks/useApiData.js';
 import { api } from '../../lib/apiClient.js';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
+import { labelOf } from '../../lib/lecturerUtils.js';
 
 const questionTypes = [
   ['MCQ_SINGLE', 'Một đáp án'],
@@ -27,7 +28,7 @@ const difficulties = [
   ['MEDIUM', 'Trung bình'],
   ['HARD', 'Khó'],
 ];
-const labelFor = (options, value) => options.find(([id]) => id === value)?.[1] || value || '—';
+const labelFor = (options, value) => options.find(([id]) => id === value)?.[1] || labelOf(value);
 const optionRows = (initial) =>
   Array.isArray(initial?.options) && initial.options.length
     ? initial.options.map((item) => ({
@@ -386,7 +387,7 @@ export function AdminQuestionsApiPage() {
       )}
       <Card className="mt-6 p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="grid flex-1 gap-3 sm:grid-cols-3">
+          <div className="filter-grid flex-1">
             <SelectField
               label="Học phần"
               value={subjectId}
@@ -464,9 +465,7 @@ export function AdminQuestionsApiPage() {
                   <td className="p-3">{labelFor(questionTypes, question.questionType)}</td>
                   <td className="p-3">{labelFor(difficulties, question.difficultyLevel)}</td>
                   <td className="p-3">
-                    <StatusBadge tone={question.approvalStatus === 'APPROVED' ? 'success' : 'warning'}>
-                      {question.approvalStatus === 'APPROVED' ? 'Đã duyệt' : question.approvalStatus || 'Chờ duyệt'}
-                    </StatusBadge>
+                    <StatusBadge status={question.approvalStatus || 'PENDING'} />
                   </td>
                   <td className="p-3">
                     <ActionMenu

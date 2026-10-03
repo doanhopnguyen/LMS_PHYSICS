@@ -49,13 +49,12 @@ export function AcademicFilters({ page, actions }) {
   return (
     <section
       aria-label="Phạm vi học tập"
-      className="page-academic-filters mx-auto flex w-full max-w-[1440px] flex-nowrap items-end gap-3 overflow-x-auto px-3 md:px-5 lg:px-6"
+      className="page-academic-filters mx-auto flex w-full max-w-[1440px] flex-wrap items-center gap-3 px-3 md:px-5 lg:px-6"
     >
       {mode !== 'subject' && (
         <SelectField
           label="Học kỳ"
           name="academic-semester"
-          className="min-w-56"
           value={scope.semester}
           disabled={loadingSemesters || !semesters.length}
           onChange={(event) => change('semester', event.target.value)}
@@ -78,7 +77,6 @@ export function AcademicFilters({ page, actions }) {
         <SelectField
           label="Lớp"
           name="academic-class"
-          className="min-w-40"
           value={scope.classId}
           onChange={(event) => change('class', event.target.value)}
         >

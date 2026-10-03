@@ -274,7 +274,7 @@ export function AdminAcademicsApiPage() {
     <AdminPageShell
       currentPage="admin_academics.html"
       title="Học kỳ & học phần"
-      description="Thiết lập học kỳ, học phần và chủ đề bằng dữ liệu backend."
+      description="Quản lý học kỳ, học phần và chủ đề học tập."
     >
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>

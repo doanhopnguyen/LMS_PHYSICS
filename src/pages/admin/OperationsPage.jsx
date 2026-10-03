@@ -14,6 +14,7 @@ import { Tabs } from '../../components/Tabs.jsx';
 import { SystemSettingsForm } from '../../components/SystemSettingsForm.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { formatLogValue } from '../../lib/logValues.js';
+import { labelOf } from '../../lib/lecturerUtils.js';
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleString('vi-VN') : '—';
@@ -125,7 +126,7 @@ export function OperationsPage() {
           <section className="min-w-0">
             {tab !== 'settings' && (
               <Card className="mt-4 p-4">
-                <Form className="grid gap-3 md:grid-cols-3" onSubmit={applyFilters}>
+                <Form className="filter-grid" onSubmit={applyFilters}>
                   <SharedSelectField
                     value={filters.userId}
                     onChange={(event) =>
@@ -156,8 +157,13 @@ export function OperationsPage() {
                     className="mt-1 block w-full"
                     label={<>{tab === 'activity-logs' ? 'Loại hành động' : 'Thực thể'}</>}
                   />
+                  <div className="flex items-end">
+                    <SubmitButton type="submit" variant="secondary">Lọc</SubmitButton>
+                  </div>
                   {tab === 'activity-logs' && (
-                    <>
+                    <details className="filter-advanced">
+                      <summary>Khoảng thời gian{filters.startDate || filters.endDate ? ' · Đang lọc' : ''}</summary>
+                      <div className="filter-advanced__fields">
                       <SharedFormField
                         type="date"
                         value={filters.startDate}
@@ -182,11 +188,9 @@ export function OperationsPage() {
                         className="mt-1 block w-full"
                         label={<>Đến ngày</>}
                       />
-                    </>
+                      </div>
+                    </details>
                   )}
-                  <div className="flex items-end">
-                    <SubmitButton type="submit">Lọc</SubmitButton>
-                  </div>
                 </Form>
               </Card>
             )}
@@ -211,8 +215,8 @@ export function OperationsPage() {
                       <td className="p-3">{displayUser(item, usersById)}</td>
                       {tab === 'activity-logs' ? (
                         <>
-                          <td className="p-3">{item.actionType || item.action || '—'}</td>
-                          <td className="p-3">{item.objectType || item.entity || '—'}</td>
+                          <td className="p-3">{labelOf(item.actionType || item.action)}</td>
+                          <td className="p-3">{labelOf(item.objectType || item.entity)}</td>
                           <td className="p-3">{formatDate(item.createdAt)}</td>
                           <td className="whitespace-pre-wrap break-words p-3">
                             {formatLogValue(item.details ?? item.metadataJson ?? item.description)}
@@ -220,8 +224,8 @@ export function OperationsPage() {
                         </>
                       ) : (
                         <>
-                          <td className="p-3">{item.entity || item.objectType || '—'}</td>
-                          <td className="p-3">{item.action || item.actionType || '—'}</td>
+                          <td className="p-3">{labelOf(item.entity || item.objectType)}</td>
+                          <td className="p-3">{labelOf(item.action || item.actionType)}</td>
                           <td className="p-3">
                             <Button variant="secondary" onClick={() => setChange(item)}>
                               Xem thay đổi

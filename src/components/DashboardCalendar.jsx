@@ -135,7 +135,7 @@ export function DashboardCalendar({ role }) {
           </button>
         </div>
       </header>
-      <p className="mt-1 text-body-sm text-[#64748B]">Đồng bộ từ các kỳ thi đã lập lịch của lớp được cấp quyền.</p>
+      <p className="mt-1 text-body-sm text-[#64748B]">Lịch kiểm tra và thi của các lớp đang theo dõi.</p>
       <div ref={scrollRef} className="dashboard-calendar__scroll" tabIndex={0} aria-label="Lịch kỳ thi theo giờ, có thể cuộn">
         <div className="dashboard-calendar__grid">
           <div className="dashboard-calendar__days">

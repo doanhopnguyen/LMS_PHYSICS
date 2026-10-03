@@ -1,4 +1,5 @@
 import React from 'react';
+import { labelOf } from '../../lib/lecturerUtils.js';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -169,7 +170,7 @@ export function AdminDashboardPage() {
                     <li key={item.logId || `${item.createdAt}-${index}`}>
                       <p className="text-label-md font-bold text-primary">{formatTime(item.createdAt)}</p>
                       <p className="mt-1 text-body-sm font-semibold">
-                        {activityUser(item)} · {item.actionType || item.action || 'Hoạt động'}
+                        {activityUser(item)} · {labelOf(item.actionType || item.action)}
                       </p>
                       <p className="text-body-sm text-[#64748B]">{activityObject(item)}</p>
                     </li>

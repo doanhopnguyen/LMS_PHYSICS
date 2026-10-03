@@ -10,6 +10,7 @@ import { PageTitle } from '../../components/PageTitle.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
+import { labelOf } from '../../lib/lecturerUtils.js';
 import { navigate } from '../../lib/navigation.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
@@ -101,7 +102,7 @@ function ExamSelection() {
         <PageTitle
           eyebrow="KIỂM TRA"
           title="Chọn đề kiểm tra"
-          description="Chọn đề được cấp quyền để bắt đầu hoặc tiếp tục lượt làm."
+          description="Chọn đề kiểm tra để bắt đầu hoặc tiếp tục làm bài."
         />
         {loading ? (
           <p className="py-10 text-center text-[#64748B]">Đang tải đề kiểm tra…</p>
@@ -122,7 +123,7 @@ function ExamSelection() {
                   key={exam.examId}
                   label={exam.title || 'Đề không có tiêu đề'}
                   value={`${Math.round(progress)}%`}
-                  detail={exam.examType || 'Kiểm tra'}
+                  detail={exam.examType ? labelOf(exam.examType) : 'Kiểm tra'}
                   icon="quiz"
                   ribbonLabel={exam.classLabel || 'Đề kiểm tra'}
                   ribbonPosition="bottom"
@@ -161,7 +162,7 @@ function ExamSelection() {
           </div>
         )}
         {!loading && !error && !exams.length && (
-          <Card className="p-10 text-center text-[#64748B]">Chưa có đề kiểm tra được cấp quyền.</Card>
+          <Card className="p-10 text-center text-[#64748B]">Chưa có đề kiểm tra nào.</Card>
         )}
       </PageContainer>
     </AppShell>
@@ -628,8 +629,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       </span>
                       <h3 className="mt-2 font-bold text-[#92400E]">Chưa thể tải câu hỏi của bài thi</h3>
                       <p className="mt-2 text-body-sm text-[#92400E]">
-                        Backend hiện chưa có API Student trả câu hỏi và lựa chọn theo lượt làm. Vì vậy hệ thống chưa thể
-                        hiển thị hoặc gửi câu trả lời một cách an toàn.
+                        Chưa thể tải nội dung bài thi. Vui lòng thử lại sau hoặc liên hệ giảng viên.
                       </p>
                     </Card>
                   )}
@@ -688,7 +688,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       <div className="border-b border-[#E2E8F0] pb-3">
                         <dt className="text-[#64748B]">Loại đề</dt>
                         <dd className="mt-1 font-semibold">
-                          {exam?.examType === 'PRACTICE' ? 'Luyện tập' : exam?.examType || '—'}
+                          {labelOf(exam?.examType)}
                         </dd>
                       </div>
                       <div className="border-b border-[#E2E8F0] pb-3">

@@ -53,8 +53,8 @@
 .account-field textarea { resize: vertical; }
 .account-field :is(input, textarea):focus-visible { outline: 2px solid #fee2e2; outline-offset: 1px; border-color: #e52220; background: #fff; }
 .account-field :is(input, textarea):disabled { opacity: .6; cursor: wait; }
-.account-field :is(input, textarea)::placeholder { color: #94a3b8; }
-.account-form-actions { display: flex; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+.account-field :is(input, textarea)::placeholder { color: #64748b; }
+.account-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
 .account-state { display: flex; align-items: center; flex-direction: column; gap: 16px; text-align: center; color: #64748b; }
 .account-state > .material-symbols-outlined { font-size: 36px; color: #94a3b8; }
 @media (max-width: 1023px) { .account-layout { grid-template-columns: 1fr; } }

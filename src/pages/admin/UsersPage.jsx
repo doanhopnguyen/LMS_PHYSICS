@@ -261,14 +261,14 @@ export function UsersPage() {
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
       <Card className="mt-5 p-5">
-        <Form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={findUser}>
+        <Form className="flex flex-wrap items-end gap-3" onSubmit={findUser}>
           <SharedFormField
             name="username"
             autoComplete="off"
-            placeholder="Nhập username chính xác"
-            className="mt-2 block w-full"
+            placeholder="Nhập tên đăng nhập"
+            className="block w-full"
             label={<>Tìm theo tên đăng nhập</>}
-            wrapperClassName="flex-1 font-semibold"
+            wrapperClassName="w-full sm:w-auto sm:min-w-56 sm:flex-1"
           />
           <SubmitButton type="submit" disabled={busy} icon="search">
             Tìm kiếm
@@ -295,7 +295,7 @@ export function UsersPage() {
       {importOpen && (
         <UserModal busy={busy} title="Nhập tài khoản sinh viên từ Excel" onClose={() => !busy && setImportOpen(false)}>
           <p className="text-body-sm text-[#64748B]">
-            Chỉ tạo tài khoản vai trò STUDENT. Có thể chọn lớp để ghi danh tự động.
+            Tạo tài khoản sinh viên từ tệp Excel. Có thể chọn lớp để ghi danh tự động.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button type="button" variant="secondary" icon="download" disabled={busy} onClick={downloadStudentTemplate}>
@@ -515,7 +515,7 @@ export function UsersPage() {
                   <td className="p-3">{user.email}</td>
                   <td className="p-3">{roles[user.role] || user.role}</td>
                   <td className="p-3">
-                    <StatusBadge tone={user.status === 'ACTIVE' ? 'success' : 'primary'}>
+                    <StatusBadge tone={user.status === 'ACTIVE' ? 'success' : 'danger'}>
                       {user.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
                     </StatusBadge>
                   </td>

@@ -208,13 +208,13 @@ function PracticeCenter() {
         <PageTitle
           eyebrow="LUYỆN TẬP CÁ NHÂN"
           title="Trung tâm ôn luyện"
-          description="Chọn đề được cấp quyền, theo dõi lượt làm và tiếp tục ôn tập."
+          description="Chọn đề luyện tập, theo dõi kết quả và tiếp tục ôn tập."
         />
         <AuthAlert>{notice}</AuthAlert>
         <MetricGrid
           items={[
             {
-              label: 'Đề được cấp quyền',
+              label: 'Đề luyện tập',
               value: examRows.length,
               detail: 'Theo lớp học và đề được chuyển',
               icon: 'quiz',

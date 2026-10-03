@@ -9,6 +9,7 @@ import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { PaginatedCollection } from '../../components/Pagination.jsx';
 import { api } from '../../lib/apiClient.js';
+import { labelOf } from '../../lib/lecturerUtils.js';
 
 const meta = {
   EXPERIMENT: ['Minh chứng thí nghiệm', 'success'],
@@ -190,9 +191,9 @@ export function StudentEvidencePage() {
                         className="border-t border-[#E2E8F0]"
                       >
                         <td className="px-3 py-3 font-medium">
-                          {item.actionType || item.action || 'Hoạt động học tập'}
+                          {labelOf(item.actionType || item.action)}
                         </td>
-                        <td className="px-3 py-3 text-[#64748B]">{item.objectType || item.entityType || '—'}</td>
+                        <td className="px-3 py-3 text-[#64748B]">{labelOf(item.objectType || item.entityType)}</td>
                         <td className="px-3 py-3 text-[#64748B]">{dateText(item.createdAt)}</td>
                       </tr>
                     )}

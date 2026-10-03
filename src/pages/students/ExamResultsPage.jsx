@@ -9,6 +9,7 @@ import { PageTitle } from '../../components/PageTitle.jsx';
 import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
+import { labelOf } from '../../lib/lecturerUtils.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
@@ -136,7 +137,7 @@ export function ExamResultsPage() {
                   </strong>
                 </div>
                 <StatusBadge tone={submitted ? 'success' : 'warning'}>
-                  {submitted ? 'Đã nộp bài' : attempt?.status || 'Đang cập nhật'}
+                  {submitted ? 'Đã nộp bài' : attempt?.status ? labelOf(attempt.status) : 'Đang cập nhật'}
                 </StatusBadge>
               </div>
             </Card>

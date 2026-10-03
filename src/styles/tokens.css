@@ -10,6 +10,14 @@
   --ptit-text-muted: #64748b;
   --ptit-success: #15803d;
   --ptit-warning: #b45309;
+  --ptit-danger: #b91c1c;
+  --ptit-space-xs: 4px;
+  --ptit-space-sm: 8px;
+  --ptit-space-md: 12px;
+  --ptit-space-lg: 16px;
+  --ptit-space-xl: 24px;
+  --ptit-control-height: 40px;
+  --ptit-toolbar-height: 36px;
   /* Relative fallbacks; rendered components use ratios of their shorter edge. */
   --ptit-radius-pill: 1.5em;
   --ptit-radius-panel: 1.25rem;

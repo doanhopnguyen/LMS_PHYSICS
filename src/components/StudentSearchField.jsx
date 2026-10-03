@@ -40,7 +40,7 @@ export function StudentSearchField({ onSelect, mapResults = (student) => [studen
   return (
     <div className="space-y-3">
       <label htmlFor={inputId} className="block text-sm font-medium">
-        Username, MSSV hoặc email
+        Tên đăng nhập, mã sinh viên hoặc email
       </label>
       <div className="flex gap-2">
         <SharedFormField

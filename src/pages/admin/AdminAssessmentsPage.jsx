@@ -62,7 +62,7 @@ function EnrollmentManager() {
       <AuthAlert error>{error}</AuthAlert>
       <h2 className="text-lg font-bold">Ghi danh sinh viên vào lớp</h2>
       <p className="mt-1 text-body-sm text-[#64748B]">
-        Tìm sinh viên theo username, MSSV hoặc email, sau đó chọn kết quả để ghi danh vào lớp.
+        Tìm sinh viên theo tên đăng nhập, mã sinh viên hoặc email để ghi danh vào lớp.
       </p>
       <div className="mt-5 grid gap-4">
         <SelectField
@@ -74,7 +74,7 @@ function EnrollmentManager() {
           <option value="">Chọn lớp học</option>
           {rows.map((item) => (
             <option key={item.classId} value={item.classId}>
-              {item.classCode ? `${item.classCode} — ${item.className}` : item.className || item.classId}
+              {item.classCode ? `${item.classCode} — ${item.className || 'Lớp học'}` : item.className || 'Lớp học'}
             </option>
           ))}
         </SelectField>
@@ -95,7 +95,7 @@ function EnrollmentManager() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold">Danh sách ghi danh hàng loạt ({bulkStudents.length})</h3>
-              <p className="mt-1 text-body-sm text-[#64748B]">API sẽ gửi toàn bộ UUID sinh viên trong một request.</p>
+              <p className="mt-1 text-body-sm text-[#64748B]">Các sinh viên trong danh sách sẽ được ghi danh vào lớp đã chọn.</p>
             </div>
             <Button disabled={!classId || busy} onClick={enrollBulk} icon="group_add">
               Ghi danh hàng loạt

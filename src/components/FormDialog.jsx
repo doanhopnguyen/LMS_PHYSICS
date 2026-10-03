@@ -21,7 +21,7 @@ export function FormDialog({
   }, []);
   const dialog = (
     <div
-      className={`fixed inset-0 ${dialogRole === 'alertdialog' ? 'z-[1200]' : 'z-[1100]'} flex items-center justify-center bg-transparent p-4`}
+      className={`fixed inset-0 ${dialogRole === 'alertdialog' ? 'z-[1200]' : 'z-[1100]'} flex items-center justify-center bg-slate-900/20 p-4`}
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}
     >
       <section
@@ -52,8 +52,8 @@ export function FormDialog({
           }
         }}
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#FECACA] px-6 py-4">
-          <h2 id={titleId} className="text-headline-sm font-medium">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-4 sm:px-6">
+          <h2 id={titleId} className="min-w-0 break-words text-headline-sm font-medium">
             {title}
           </h2>
           <button
@@ -61,12 +61,12 @@ export function FormDialog({
             aria-label="Đóng"
             disabled={busy}
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-primary hover:bg-[#FEF2F2] disabled:opacity-60"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary hover:bg-[#FEF2F2] disabled:opacity-60"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">{children}</div>
       </section>
     </div>
   );

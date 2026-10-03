@@ -11,15 +11,10 @@ import { Tabs } from '../../components/Tabs.jsx';
 import { taNavigation, taUtilityNavigation } from '../../data/taNavigation.js';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { demoRoles } from '../../lib/demoSession.js';
+import { labelOf } from '../../lib/lecturerUtils.js';
 
 const user = { ...demoRoles.TA, role: demoRoles.TA.label };
-const statusTone = (value) =>
-  ['ACTIVE', 'GRADED', 'COMPLETED', 'SUBMITTED'].includes(value)
-    ? 'success'
-    : value === 'IN_PROGRESS'
-      ? 'primary'
-      : 'neutral';
-const badge = (entry) => <StatusBadge tone={statusTone(entry)}>{entry || '—'}</StatusBadge>;
+const badge = (entry) => <StatusBadge status={entry} />;
 const value = (item, ...keys) =>
   keys.map((key) => item?.[key]).find((entry) => entry !== undefined && entry !== null && entry !== '') || '—';
 const dateTime = (entry) => {
@@ -98,7 +93,7 @@ export function TAClassSupportTabsPage() {
       <option value="">Chọn lớp</option>
       {options.map((item) => (
         <option key={item.classId} value={item.classId}>
-          {value(item, 'className', 'classCode', 'classId')}
+          {value(item, 'className', 'classCode')}
         </option>
       ))}
     </SelectField>
@@ -114,7 +109,7 @@ export function TAClassSupportTabsPage() {
       <option value="">Chọn kỳ thi để xem lượt làm</option>
       {examOptions.map((item) => (
         <option key={item.examId} value={item.examId}>
-          {value(item, 'examName', 'title', 'examId')}
+          {value(item, 'examName', 'title')}
         </option>
       ))}
     </SelectField>
@@ -161,7 +156,7 @@ export function TAClassSupportTabsPage() {
                   renderRow={(item) => (
                     <tr key={value(item, 'studentId', 'userId')} className="border-t">
                       <td className="p-3 font-medium">
-                        {value(item, 'fullName', 'username', 'studentCode', 'userId')}
+                        {value(item, 'fullName', 'username', 'studentCode')}
                       </td>
                       <td className="p-3">{value(item, 'email')}</td>
                       <td className="p-3">{badge(item.status)}</td>
@@ -176,8 +171,8 @@ export function TAClassSupportTabsPage() {
                   columns={['Nhân sự', 'Vai trò', 'Email']}
                   renderRow={(item) => (
                     <tr key={value(item, 'userId')} className="border-t">
-                      <td className="p-3 font-medium">{value(item, 'fullName', 'username', 'userId')}</td>
-                      <td className="p-3">{value(item, 'roleInClass', 'role')}</td>
+                      <td className="p-3 font-medium">{value(item, 'fullName', 'username')}</td>
+                      <td className="p-3">{labelOf(value(item, 'roleInClass', 'role'))}</td>
                       <td className="p-3">{value(item, 'email')}</td>
                     </tr>
                   )}
@@ -208,7 +203,7 @@ export function TAClassSupportTabsPage() {
                     columns={['Kỳ thi', 'Thời gian', 'Loại']}
                     renderRow={(item) => (
                       <tr key={item.examId} className="border-t">
-                        <td className="p-3 font-medium">{value(item, 'examName', 'title', 'examId')}</td>
+                        <td className="p-3 font-medium">{value(item, 'examName', 'title')}</td>
                         <td className="p-3">{dateTime(item.startTime || item.startAt)}</td>
                         <td className="p-3">{badge(item.examType || item.status)}</td>
                       </tr>
@@ -227,7 +222,7 @@ export function TAClassSupportTabsPage() {
                             renderRow={(item) => (
                               <tr key={value(item, 'studentId', 'userId')} className="border-t">
                                 <td className="p-3 font-medium">
-                                  {value(item, 'fullName', 'studentName', 'studentCode', 'userId')}
+                                  {value(item, 'fullName', 'studentName', 'studentCode')}
                                 </td>
                                 <td className="p-3">{badge(item.status)}</td>
                               </tr>

@@ -141,7 +141,7 @@ export function LabReportPage() {
                     </div>
                   )}
                   <SharedForm className="mt-6 min-w-0 space-y-5" onSubmit={submit} noValidate>
-                    <p className="text-body-sm text-slate-500">Số liệu và nhận xét được lưu thành tệp JSON khi nộp. Nếu đính kèm minh chứng, hệ thống sẽ gộp vào một tệp ZIP.</p>
+                    <p className="text-body-sm text-slate-500">Giảng viên sẽ xem số liệu, nhận xét và các minh chứng bạn nộp cùng báo cáo.</p>
                     {schema && (
                       <LabMeasurementTable schema={schema} rows={measurements} errors={measurementErrors} disabled={submitting}
                         onChange={(rows) => { setMeasurements(rows); setMeasurementErrors({}); setError(''); setMessage(''); }} />

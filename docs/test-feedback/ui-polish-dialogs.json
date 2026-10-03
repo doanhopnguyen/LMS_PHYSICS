@@ -1,0 +1,2858 @@
+{
+  "phase": "dialogs",
+  "pages": [
+    {
+      "file": "lecturer_materials.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 1071,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 536.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 553.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1113,
+              "width": 1113,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Học liệu",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 1071,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 536.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 553.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1113,
+              "width": 1113,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Chủ đề",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 977,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 1158.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1120,
+              "width": 1120,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo học liệu",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 1071,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 536.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rb:",
+              "type": "select-one",
+              "width": 553.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rh:",
+              "type": "select-one",
+              "width": 164.5,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rj:",
+              "type": "select-one",
+              "width": 181.515625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rl:",
+              "type": "text",
+              "width": 588,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "title",
+              "type": "text",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "type",
+              "type": "select-one",
+              "width": 622,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "contentText",
+              "type": "textarea",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 152.34375,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "sourceCitation",
+              "type": "text",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "file",
+              "type": "file",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 48,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1113,
+              "width": 1113,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_question_bank.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1090,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 329.34375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 346.359375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 346.203125,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 877,
+              "width": 877,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Câu hỏi",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1090,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 329.34375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 346.359375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 346.203125,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 877,
+              "width": 877,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo câu hỏi",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1090,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 329.34375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 346.359375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 346.203125,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rd:",
+              "type": "select-one",
+              "width": 164.5,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rf:",
+              "type": "select-one",
+              "width": 181.515625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rh:",
+              "type": "text",
+              "width": 578,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "content",
+              "type": "textarea",
+              "width": 612,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 107.5625,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rl:",
+              "type": "select-one",
+              "width": 612,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 612,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "cognitiveLevel",
+              "type": "text",
+              "width": 612,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rr:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rt:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rv:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r11:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r13:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r15:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r17:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r19:",
+              "type": "text",
+              "width": 586,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "mediaUrl",
+              "type": "url",
+              "width": 612,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 877,
+              "width": 877,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_assessments.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1035,
+          "outside": [],
+          "fields": [
+            {
+              "name": "classId",
+              "type": "select-one",
+              "width": 151.90625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 881,
+              "width": 881,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 47,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Kỳ thi của lớp",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1035,
+          "outside": [],
+          "fields": [
+            {
+              "name": "classId",
+              "type": "select-one",
+              "width": 151.90625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 881,
+              "width": 881,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 47,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Ma trận đề",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1003,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 174.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1232,
+              "width": 1232,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 41,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo đề thi",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1035,
+          "outside": [],
+          "fields": [
+            {
+              "name": "classId",
+              "type": "select-one",
+              "width": 151.90625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "title",
+              "type": "text",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "matrixId",
+              "type": "select-one",
+              "width": 622,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "examType",
+              "type": "select-one",
+              "width": 303,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "durationMinutes",
+              "type": "number",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "startTime",
+              "type": "datetime-local",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(229, 34, 32)"
+            },
+            {
+              "name": "endTime",
+              "type": "datetime-local",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(229, 34, 32)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 881,
+              "width": 881,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 47,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_labs.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1066,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 870,
+              "width": 870,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 47,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Danh sách thí nghiệm",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1066,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 870,
+              "width": 870,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 47,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Chấm bài thí nghiệm",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1141,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 213,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 165.734375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r9:",
+              "type": "select-one",
+              "width": 170,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 870,
+              "width": 870,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 47,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo thí nghiệm",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1066,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "title",
+              "type": "text",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "description",
+              "type": "textarea",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 88,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "sceneAssetUrl",
+              "type": "text",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "sceneAssetsJson",
+              "type": "textarea",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 88,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "instructions",
+              "type": "textarea",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 88,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "orderIndex",
+              "type": "number",
+              "width": 622,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 870,
+              "width": 870,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 47,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_users.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Người dùng & phân quyền · PTIT Physics LMS",
+          "rootText": 1077,
+          "outside": [],
+          "fields": [
+            {
+              "name": "username",
+              "type": "text",
+              "width": 791.234375,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 128.40625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo tài khoản",
+          "title": "Người dùng & phân quyền · PTIT Physics LMS",
+          "rootText": 1077,
+          "outside": [],
+          "fields": [
+            {
+              "name": "username",
+              "type": "text",
+              "width": 791.234375,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 128.40625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "username",
+              "type": "text",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "email",
+              "type": "email",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "role",
+              "type": "select-one",
+              "width": 303,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_academics.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 978,
+          "outside": [],
+          "fields": [],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1121,
+              "width": 1121,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Học kỳ",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 978,
+          "outside": [],
+          "fields": [],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1121,
+              "width": 1121,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Học phần",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 1007,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 170,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1102,
+              "width": 1102,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Chủ đề",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 964,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 174.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1120,
+              "width": 1120,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo học kỳ",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 978,
+          "outside": [],
+          "fields": [
+            {
+              "name": "semesterCode",
+              "type": "text",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "semesterName",
+              "type": "text",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "academicYear",
+              "type": "text",
+              "width": 303,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "startDate",
+              "type": "date",
+              "width": 224,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 44,
+              "border": "rgb(229, 34, 32)"
+            },
+            {
+              "name": "endDate",
+              "type": "date",
+              "width": 224,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 44,
+              "border": "rgb(229, 34, 32)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 1121,
+              "width": 1121,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 45,
+              "width": 1232
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_questions.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1085,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 180.875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 197.875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 197.734375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo câu hỏi",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1085,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 180.875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 197.875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 197.734375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rd:",
+              "type": "select-one",
+              "width": 474,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rf:",
+              "type": "select-one",
+              "width": 474,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rh:",
+              "type": "select-one",
+              "width": 474,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 474,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "content",
+              "type": "textarea",
+              "width": 964,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 107.5625,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "cognitiveLevel",
+              "type": "text",
+              "width": 474,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "mediaUrl",
+              "type": "url",
+              "width": 474,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rr:",
+              "type": "text",
+              "width": 930,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rt:",
+              "type": "text",
+              "width": 930,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rv:",
+              "type": "text",
+              "width": 930,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r11:",
+              "type": "text",
+              "width": 930,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_materials.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 1071,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 274.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 291.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Học liệu",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 1071,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 274.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 291.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Chủ đề",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 977,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 274.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo học liệu",
+          "title": "Kho học liệu · PTIT Physics LMS",
+          "rootText": 1071,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 274.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rb:",
+              "type": "select-one",
+              "width": 291.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rh:",
+              "type": "select-one",
+              "width": 164.5,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rj:",
+              "type": "select-one",
+              "width": 181.515625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rl:",
+              "type": "text",
+              "width": 280,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "title",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "type",
+              "type": "select-one",
+              "width": 314,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "contentText",
+              "type": "textarea",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 152.34375,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "sourceCitation",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "file",
+              "type": "file",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 48,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_question_bank.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1090,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 274.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 291.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 291.546875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Câu hỏi",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1090,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 274.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 291.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 291.546875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo câu hỏi",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1090,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 274.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 291.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 291.546875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rd:",
+              "type": "select-one",
+              "width": 164.5,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rf:",
+              "type": "select-one",
+              "width": 181.515625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rh:",
+              "type": "text",
+              "width": 270,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "content",
+              "type": "textarea",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 107.5625,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rl:",
+              "type": "select-one",
+              "width": 304,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 304,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "cognitiveLevel",
+              "type": "text",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rr:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rt:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rv:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r11:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r13:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r15:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r17:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r19:",
+              "type": "text",
+              "width": 278,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "mediaUrl",
+              "type": "url",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_assessments.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1035,
+          "outside": [],
+          "fields": [
+            {
+              "name": "classId",
+              "type": "select-one",
+              "width": 151.90625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 135,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Kỳ thi của lớp",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1035,
+          "outside": [],
+          "fields": [
+            {
+              "name": "classId",
+              "type": "select-one",
+              "width": 151.90625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 135,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Ma trận đề",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1003,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 174.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 41,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo đề thi",
+          "title": "Bài tập & kiểm tra · PTIT Physics LMS",
+          "rootText": 1035,
+          "outside": [],
+          "fields": [
+            {
+              "name": "classId",
+              "type": "select-one",
+              "width": 151.90625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "title",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "matrixId",
+              "type": "select-one",
+              "width": 314,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "examType",
+              "type": "select-one",
+              "width": 314,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "durationMinutes",
+              "type": "number",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "startTime",
+              "type": "datetime-local",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(229, 34, 32)"
+            },
+            {
+              "name": "endTime",
+              "type": "datetime-local",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(229, 34, 32)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 135,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_labs.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1066,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 135,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Danh sách thí nghiệm",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1066,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 135,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Chấm bài thí nghiệm",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1141,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 213,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 165.734375,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r9:",
+              "type": "select-one",
+              "width": 170,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 135,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo thí nghiệm",
+          "title": "Thí nghiệm 3D · PTIT Physics LMS",
+          "rootText": 1066,
+          "outside": [],
+          "fields": [
+            {
+              "name": "experiment-subject",
+              "type": "select-one",
+              "width": 142.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "title",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "description",
+              "type": "textarea",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 88,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "sceneAssetUrl",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "sceneAssetsJson",
+              "type": "textarea",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 88,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "instructions",
+              "type": "textarea",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 88,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "orderIndex",
+              "type": "number",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 135,
+              "width": 348
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_users.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Người dùng & phân quyền · PTIT Physics LMS",
+          "rootText": 1077,
+          "outside": [],
+          "fields": [
+            {
+              "name": "username",
+              "type": "text",
+              "width": 306,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 128.40625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo tài khoản",
+          "title": "Người dùng & phân quyền · PTIT Physics LMS",
+          "rootText": 1077,
+          "outside": [],
+          "fields": [
+            {
+              "name": "username",
+              "type": "text",
+              "width": 306,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 128.40625,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "username",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "email",
+              "type": "email",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "role",
+              "type": "select-one",
+              "width": 314,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_academics.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 978,
+          "outside": [],
+          "fields": [],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Học kỳ",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 978,
+          "outside": [],
+          "fields": [],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Học phần",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 1007,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 170,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "Chủ đề",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 964,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 174.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 358,
+              "width": 358,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 358
+            }
+          ],
+          "tableCount": 0,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo học kỳ",
+          "title": "Học kỳ & học phần · PTIT Physics LMS",
+          "rootText": 978,
+          "outside": [],
+          "fields": [
+            {
+              "name": "semesterCode",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "semesterName",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "academicYear",
+              "type": "text",
+              "width": 314,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 42,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "startDate",
+              "type": "date",
+              "width": 224,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 44,
+              "border": "rgb(229, 34, 32)"
+            },
+            {
+              "name": "endDate",
+              "type": "date",
+              "width": 224,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 44,
+              "border": "rgb(229, 34, 32)"
+            }
+          ],
+          "tabs": [
+            {
+              "height": 40,
+              "scrollWidth": 348,
+              "width": 348,
+              "lines": 1
+            }
+          ],
+          "toolbars": [
+            {
+              "height": 89,
+              "width": 348
+            }
+          ],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_questions.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1085,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 232.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 249.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 249.546875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        },
+        {
+          "state": "dialog:Tạo câu hỏi",
+          "title": "Ngân hàng câu hỏi · PTIT Physics LMS",
+          "rootText": 1085,
+          "outside": [],
+          "fields": [
+            {
+              "name": ":r3:",
+              "type": "select-one",
+              "width": 232.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r5:",
+              "type": "select-one",
+              "width": 249.6875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r7:",
+              "type": "select-one",
+              "width": 249.546875,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 38,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rd:",
+              "type": "select-one",
+              "width": 304,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rf:",
+              "type": "select-one",
+              "width": 304,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rh:",
+              "type": "select-one",
+              "width": 304,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "difficultyLevel",
+              "type": "select-one",
+              "width": 304,
+              "paddingLeft": 14,
+              "paddingRight": 28,
+              "height": 36,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "content",
+              "type": "textarea",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 107.5625,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "cognitiveLevel",
+              "type": "text",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": "mediaUrl",
+              "type": "url",
+              "width": 304,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rr:",
+              "type": "text",
+              "width": 270,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rt:",
+              "type": "text",
+              "width": 270,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":rv:",
+              "type": "text",
+              "width": 270,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            },
+            {
+              "name": ":r11:",
+              "type": "text",
+              "width": 270,
+              "paddingLeft": 16,
+              "paddingRight": 16,
+              "height": 40,
+              "border": "rgb(203, 213, 225)"
+            }
+          ],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    }
+  ],
+  "runtimeErrors": [],
+  "snapshots": [
+    "docs/test-feedback/ui-polish-screenshots/lecturer_materials-1280-dialog.png",
+    "docs/test-feedback/ui-polish-screenshots/lecturer_question_bank-1280-page.png",
+    "docs/test-feedback/ui-polish-screenshots/lecturer_labs-390-dialog.png",
+    "docs/test-feedback/ui-polish-screenshots/admin_users-390-dialog.png"
+  ]
+}

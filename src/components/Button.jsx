@@ -15,7 +15,7 @@ export const Button = forwardRef(function Button(
     <button
       ref={ref}
       className={`
-    inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-full font-body-md-medium transition-all active:scale-[0.98]
+    inline-flex shrink-0 items-center justify-center gap-1.5 h-9 px-3 rounded-full whitespace-nowrap text-body-md font-body-md-medium transition-all active:scale-[0.98]
     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
     disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100
     ${variants[variant] ?? variants.primary}

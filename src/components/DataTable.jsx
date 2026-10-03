@@ -42,7 +42,7 @@ export function DataTable({
                       className={`min-w-0 break-words ${valueIndex === 0 ? 'col-span-2' : ''}`}
                     >
                       <dt className="text-label-sm text-[#64748B]">{columns[valueIndex]}</dt>
-                      <dd className={valueIndex === 0 ? 'mt-1 font-semibold' : 'mt-1 text-body-sm'}>{value ?? '—'}</dd>
+                      <dd className={valueIndex === 0 ? 'mt-1 font-semibold leading-6' : 'mt-1 text-body-sm'}>{value ?? '—'}</dd>
                     </div>
                   ))}
                 </dl>

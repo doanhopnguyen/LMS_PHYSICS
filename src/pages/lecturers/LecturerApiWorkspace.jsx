@@ -20,16 +20,11 @@ import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api, apiRequest } from '../../lib/apiClient.js';
 import { questionTopicName } from '../../lib/topicLabels.js';
+import { labelOf } from '../../lib/lecturerUtils.js';
 
 const nameOf = (row) =>
   row?.className || row?.classCode || row?.title || row?.name || row?.subjectName || row?.username || '—';
-const state = (value) => (
-  <StatusBadge
-    tone={['ACTIVE', 'APPROVED', 'OPEN'].includes(value) ? 'success' : value === 'DRAFT' ? 'warning' : 'neutral'}
-  >
-    {value || '—'}
-  </StatusBadge>
-);
+const state = (value) => <StatusBadge status={value} />;
 function Resource({ resource, children }) {
   if (resource.loading)
     return (
@@ -53,7 +48,6 @@ function ClassSelect({ classes, value, onChange, label = 'Lớp học' }) {
     <SelectField
       label={label}
       name="classId"
-      className="min-w-64"
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >
@@ -217,7 +211,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
       {removeTarget && (
         <ConfirmDialog
           title="Gỡ câu hỏi khỏi đề"
-          description="Câu hỏi chỉ được gỡ khi backend cho phép theo trạng thái làm bài hiện tại."
+          description="Việc gỡ câu hỏi phụ thuộc vào trạng thái bài làm của đề thi."
           confirmLabel="Gỡ câu hỏi"
           busy={action.busy}
           onCancel={() => !action.busy && setRemoveTarget(null)}
@@ -260,7 +254,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                         item.content || item.questionText || '—',
                         topicNameOf(item),
                         <span>
-                          {item.difficultyLevel || '—'}
+                          {labelOf(item.difficultyLevel)}
                           {item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}
                         </span>,
                         <Button variant="secondary" disabled={action.busy} onClick={() => setRemoveTarget(item)}>
@@ -345,7 +339,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
               <Resource resource={attempts}>
                 {(rows) => (
                   <>
-                    <Card className="mb-4 grid grid-cols-3 gap-3 p-4">
+                    <Card className="mb-4 grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
                       <div>
                         <strong>{rows.length}</strong>
                         <p className="text-body-sm text-[#64748B]">lượt làm</p>
@@ -509,7 +503,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
                 <div className="grid gap-3">
                   <Card className="p-4">
                     <p>
-                      <strong>Trạng thái:</strong> {item.status || '—'}
+                      <strong>Trạng thái:</strong> {labelOf(item.status)}
                     </p>
                     <p className="mt-2">
                       <strong>Lần làm:</strong> {item.attemptNumber ?? '—'}
@@ -676,7 +670,7 @@ export function MatrixManager({ classes }) {
       {deleteTarget && (
         <ConfirmDialog
           title="Xóa ma trận đề"
-          description={`Bạn có chắc muốn xóa ${deleteTarget.matrixName || 'ma trận đề'}? Backend có thể từ chối nếu ma trận đã được sử dụng.`}
+          description={`Xóa ${deleteTarget.matrixName || 'ma trận đề'}? Ma trận đã được sử dụng có thể không xóa được.`}
           confirmLabel="Xóa ma trận"
           busy={action.busy}
           onCancel={() => !action.busy && setDeleteTarget(null)}
@@ -960,7 +954,7 @@ export function LecturerDashboardApiPage() {
       currentPage="lecturer_dashboard.html"
       title="Tổng quan giảng viên"
       eyebrow="KHU VỰC GIẢNG VIÊN"
-      description="Theo dõi lớp học, kỳ thi và hoạt động được cấp quyền."
+      description="Theo dõi lớp học, kỳ thi và hoạt động giảng dạy."
     >
       <DashboardOverview role="INSTRUCTOR">
         <MetricGrid
@@ -995,7 +989,7 @@ export function LecturerDashboardApiPage() {
         />
         <Card className="col-span-full p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-title-lg font-medium">Lớp được cấp quyền</h2>
+            <h2 className="text-title-lg font-medium">Lớp phụ trách</h2>
             <a
               href="lecturer_courses.html"
               className="inline-flex items-center gap-1 text-body-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -1177,7 +1171,7 @@ export function LecturerAssessmentApiPage({ grading = false }) {
                     columns={['Kỳ thi', 'Loại', 'Thời gian', 'Số câu', 'Thao tác']}
                     cells={(item) => [
                       nameOf(item),
-                      item.examType || '—',
+                      labelOf(item.examType),
                       item.startTime ? new Date(item.startTime).toLocaleString('vi-VN') : '—',
                       item.totalQuestions ?? '—',
                       <ActionMenu
@@ -1421,7 +1415,7 @@ export function LecturerAnalyticsApiPage() {
           ]}
           activeId={tab}
           onChange={setTab}
-          actions={
+          filters={
             <>
               {tab === 'difficulty' && (
                 <SelectField label="Lớp học" value={classId} onChange={(event) => setClassId(event.target.value)}>
@@ -1489,6 +1483,10 @@ export function LecturerAnalyticsApiPage() {
                   </Button>
                 </div>
               )}
+            </>
+          }
+          actions={
+            <>
               <Button variant="secondary" onClick={resource.reload}>
                 Làm mới
               </Button>
@@ -1583,7 +1581,7 @@ export function LecturerExperimentsApiPage() {
       {subjectRows.map((item) => (
         <option key={item.subjectId} value={item.subjectId}>
           {item.subjectCode ? `${item.subjectCode} · ` : ''}
-          {item.subjectName || item.subjectId}
+          {item.subjectName || item.subjectCode || 'Học phần'}
         </option>
       ))}
     </SelectField>
@@ -1632,25 +1630,25 @@ export function LecturerExperimentsApiPage() {
           <Form className="grid gap-4" onSubmit={submit}>
             {modal === 'create' ? (
               <>
-                <SharedFormField name="title" required placeholder="Tên thí nghiệm" className="" bare />
-                <SharedFormField name="description" required placeholder="Mô tả" className="" bare multiline />
-                <SharedFormField name="sceneAssetUrl" required placeholder="URL tài nguyên 3D" className="" bare />
+                <SharedFormField label="Tên thí nghiệm" name="title" required placeholder="Nhập tên thí nghiệm" />
+                <SharedFormField label="Mô tả" name="description" required multiline />
+                <SharedFormField label="Liên kết mô phỏng 3D" name="sceneAssetUrl" required placeholder="https://…" />
                 <SharedFormField
                   name="sceneAssetsJson"
+                  label="Thiết lập mô phỏng (không bắt buộc)"
                   placeholder="Cấu hình tài nguyên (nếu có)"
                   className=""
-                  bare
                   multiline
                 />
-                <SharedFormField name="instructions" placeholder="Hướng dẫn" className="" bare multiline />
+                <SharedFormField label="Hướng dẫn thực hiện" name="instructions" multiline />
                 <SharedFormField
                   name="orderIndex"
+                  label="Thứ tự hiển thị"
                   type="number"
                   min="0"
                   required
                   placeholder="Thứ tự"
                   className=""
-                  bare
                 />
               </>
             ) : (
@@ -1661,16 +1659,16 @@ export function LecturerExperimentsApiPage() {
                     .filter((item) => !modal.subjectId || item.subjectId === modal.subjectId)
                     .map((item) => (
                       <option key={item.classId} value={item.classId}>
-                        {item.classCode || item.className || item.classId}
+                        {item.classCode || item.className || 'Lớp học'}
                       </option>
                     ))}
                 </SelectField>
                 <SharedFormField label="Hạn nộp" name="dueDate" required type="datetime-local" />
                 <SharedFormField
                   name="instructionsOverride"
+                  label="Hướng dẫn bổ sung"
                   placeholder="Hướng dẫn bổ sung"
                   className=""
-                  bare
                   multiline
                 />
               </>

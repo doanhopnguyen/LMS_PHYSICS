@@ -177,7 +177,7 @@ export function AdminAnalyticsPage() {
           {() => (
             <>
               <Form
-                className="mt-5 grid gap-3 md:grid-cols-4"
+                className="filter-grid mt-4"
                 onSubmit={(event) => {
                   event.preventDefault();
                   setAppliedFilters(filters);

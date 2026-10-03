@@ -198,7 +198,7 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
       ) : (
         <Tabs
           items={[{ id: 'classes', label: 'Lớp học' }]}
-          actions={
+          filters={
             <>
               <Lookup
                 label="Học phần"
@@ -224,6 +224,10 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
                   </option>
                 ))}
               </SelectField>
+            </>
+          }
+          actions={
+            <>
               <Button
                 onClick={() => {
                   action.clear();

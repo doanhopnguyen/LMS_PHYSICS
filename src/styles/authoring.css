@@ -58,7 +58,7 @@
 }
 .authoring-form select { padding-right: 30px; text-overflow: ellipsis; }
 .authoring-form textarea { resize: vertical; min-height: 110px; line-height: 1.8; }
-.authoring-form :is(input, textarea)::placeholder { color: #94a3b8; }
+.authoring-form :is(input, textarea)::placeholder { color: #64748b; }
 .authoring-form :is(input, select, textarea):focus-visible {
   outline: none;
   border-color: #e52220;

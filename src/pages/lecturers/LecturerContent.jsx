@@ -2,6 +2,7 @@ import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/apiClient.js';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
+import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { queryPath, validateOptions } from '../../lib/lecturerUtils.js';
 import {
   Button,
@@ -365,7 +366,7 @@ export function LecturerAuthoringApiPage({ kind }) {
               ]
             : [{ id: 'questions', label: 'Câu hỏi' }]
         }
-        actions={
+        filters={
           <>
             <Lookup
               label="Học phần"
@@ -406,6 +407,10 @@ export function LecturerAuthoringApiPage({ kind }) {
                 ))}
               </SelectField>
             )}
+          </>
+        }
+        actions={
+          <>
             <Button
               disabled={action.busy}
               onClick={() => open(tab === 'topics' ? 'topic' : materialMode ? 'material' : 'question')}
@@ -473,7 +478,7 @@ export function LecturerAuthoringApiPage({ kind }) {
                       materialMode ? row.title : row.content,
                       labelOf(row.type || row.questionType),
                       materialMode ? row.version : labelOf(row.difficultyLevel),
-                      labelOf(row.approvalStatus),
+                      <StatusBadge status={row.approvalStatus} />,
                       <ActionMenu
                         label={`Thao tác với ${materialMode ? row.title : row.content || 'câu hỏi'}`}
                         disabled={action.busy}

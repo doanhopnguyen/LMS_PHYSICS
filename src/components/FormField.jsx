@@ -23,7 +23,7 @@ export const FormField = forwardRef(function FormField(
       htmlFor={fieldId}
       className={`form-field ${temporal ? `form-field--temporal form-field--${temporal}` : ''} grid min-w-0 gap-1 text-body-md font-normal ${wrapperClassName}`}
     >
-      {label}
+      {label && <span className="form-field__label">{label}</span>}
       {control}
       {(hint || error) && (
         <span id={`${fieldId}-hint`} className={error ? 'text-body-sm text-red-700' : 'text-body-sm text-slate-500'}>
