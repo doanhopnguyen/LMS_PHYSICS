@@ -1,0 +1,289 @@
+{
+  "phase": "monthly-calendar",
+  "pages": [
+    {
+      "file": "dashboard.html",
+      "width": 1440,
+      "states": [
+        {
+          "state": "initial",
+          "title": "PTIT Physics 1 - Tổng quan sinh viên",
+          "rootText": 1682,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_dashboard.html",
+      "width": 1440,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan giảng viên · PTIT Physics LMS",
+          "rootText": 1414,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_dashboard.html",
+      "width": 1440,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan vận hành · PTIT Physics LMS",
+          "rootText": 1747,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "ta_dashboard.html",
+      "width": 1440,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan trợ giảng · PTIT Physics LMS",
+          "rootText": 1216,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "dashboard.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "PTIT Physics 1 - Tổng quan sinh viên",
+          "rootText": 1682,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_dashboard.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan giảng viên · PTIT Physics LMS",
+          "rootText": 1414,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_dashboard.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan vận hành · PTIT Physics LMS",
+          "rootText": 1747,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "ta_dashboard.html",
+      "width": 1280,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan trợ giảng · PTIT Physics LMS",
+          "rootText": 1216,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "dashboard.html",
+      "width": 768,
+      "states": [
+        {
+          "state": "initial",
+          "title": "PTIT Physics 1 - Tổng quan sinh viên",
+          "rootText": 1682,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_dashboard.html",
+      "width": 768,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan giảng viên · PTIT Physics LMS",
+          "rootText": 1414,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_dashboard.html",
+      "width": 768,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan vận hành · PTIT Physics LMS",
+          "rootText": 1747,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "ta_dashboard.html",
+      "width": 768,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan trợ giảng · PTIT Physics LMS",
+          "rootText": 1216,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "dashboard.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "PTIT Physics 1 - Tổng quan sinh viên",
+          "rootText": 1682,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "lecturer_dashboard.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan giảng viên · PTIT Physics LMS",
+          "rootText": 1414,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "admin_dashboard.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan vận hành · PTIT Physics LMS",
+          "rootText": 1747,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 0,
+          "bodyOverflow": false
+        }
+      ]
+    },
+    {
+      "file": "ta_dashboard.html",
+      "width": 390,
+      "states": [
+        {
+          "state": "initial",
+          "title": "Tổng quan trợ giảng · PTIT Physics LMS",
+          "rootText": 1216,
+          "outside": [],
+          "fields": [],
+          "tabs": [],
+          "toolbars": [],
+          "tableCount": 1,
+          "bodyOverflow": false
+        }
+      ]
+    }
+  ],
+  "runtimeErrors": [],
+  "layoutIssues": [],
+  "snapshots": [
+    "docs/test-feedback/ui-polish-screenshots/dashboard-1280-page.png",
+    "docs/test-feedback/ui-polish-screenshots/lecturer_dashboard-1280-page.png",
+    "docs/test-feedback/ui-polish-screenshots/admin_dashboard-1280-page.png",
+    "docs/test-feedback/ui-polish-screenshots/ta_dashboard-1280-page.png",
+    "docs/test-feedback/ui-polish-screenshots/dashboard-390-page.png",
+    "docs/test-feedback/ui-polish-screenshots/lecturer_dashboard-390-page.png",
+    "docs/test-feedback/ui-polish-screenshots/admin_dashboard-390-page.png",
+    "docs/test-feedback/ui-polish-screenshots/ta_dashboard-390-page.png"
+  ]
+}

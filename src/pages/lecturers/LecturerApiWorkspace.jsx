@@ -1002,7 +1002,7 @@ export function LecturerDashboardApiPage() {
           </div>
           <Resource resource={classes}>
             {(items) => (
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="dashboard-class-cards mt-4 grid gap-3">
                 {items.slice(0, 8).map((item) => (
                   <Card
                     as="a"

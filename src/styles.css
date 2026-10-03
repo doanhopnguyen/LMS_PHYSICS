@@ -2,6 +2,7 @@
 @import './styles/authoring.css';
 @import './styles/account.css';
 @import './styles/pickers.css';
+@import './styles/monthly-calendar.css';
 
 @tailwind base;
 @tailwind components;
@@ -564,6 +565,7 @@ button {
 }
 
 .dashboard-overview__stats > .grid { display: contents; }
+.dashboard-class-cards { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
 .dashboard-overview__stats .stat-card__metrics { min-height: 60px; }
 .dashboard-overview__stats .stat-card__side-chart { max-width: 100%; }
 .dashboard-overview__stats .stat-card__chart { overflow: hidden; }
