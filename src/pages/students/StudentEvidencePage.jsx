@@ -10,6 +10,7 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { PaginatedCollection } from '../../components/Pagination.jsx';
 import { api } from '../../lib/apiClient.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
+import { StudentExperimentHistory } from '../../components/StudentExperimentHistory.jsx';
 
 const meta = {
   EXPERIMENT: ['Minh chứng thí nghiệm', 'success'],
@@ -26,7 +27,9 @@ export function StudentEvidencePage() {
   const [error, setError] = useState('');
   const [openingId, setOpeningId] = useState('');
   const [fileError, setFileError] = useState('');
+  const [historyVersion, setHistoryVersion] = useState(0);
   const reload = async () => {
+    setHistoryVersion((value) => value + 1);
     setLoading(true);
     setError('');
     setFileError('');
@@ -120,8 +123,9 @@ export function StudentEvidencePage() {
         <PageTitle
           eyebrow="KHO MINH CHỨNG CÁ NHÂN"
           title="Báo cáo và minh chứng thí nghiệm"
-          description="Theo dõi tệp số liệu, ảnh, đồ thị, trạng thái chấm và hoạt động học tập của bạn."
+          description="Xem lịch sử nộp báo cáo, điểm số, nhận xét và minh chứng thí nghiệm của bạn."
         />
+        <StudentExperimentHistory refreshKey={historyVersion} />
         {loading && <p className="py-10 text-center text-body-md text-[#64748B]">Đang tải minh chứng…</p>}
         {error && (
           <p role="alert" className="py-10 text-center text-body-md text-primary">
@@ -190,9 +194,7 @@ export function StudentEvidencePage() {
                         key={item.activityLogId || item.logId || `${item.createdAt}-${index}`}
                         className="border-t border-[#E2E8F0]"
                       >
-                        <td className="px-3 py-3 font-medium">
-                          {labelOf(item.actionType || item.action)}
-                        </td>
+                        <td className="px-3 py-3 font-medium">{labelOf(item.actionType || item.action)}</td>
                         <td className="px-3 py-3 text-[#64748B]">{labelOf(item.objectType || item.entityType)}</td>
                         <td className="px-3 py-3 text-[#64748B]">{dateText(item.createdAt)}</td>
                       </tr>

@@ -219,6 +219,13 @@ export function LearningResultsPage() {
           eyebrow="DỮ LIỆU HỌC TẬP"
           title="Kết quả & tiến độ học tập"
           description="Dữ liệu được tổng hợp từ tiến độ học liệu và các lượt làm bài của bạn."
+          actions={
+            <a href="student_evidence.html">
+              <Button variant="secondary" icon="history">
+                Lịch sử báo cáo & điểm
+              </Button>
+            </a>
+          }
         />
         {loading ? (
           <Card className="p-8 text-center text-[#64748B]">Đang tải kết quả học tập…</Card>

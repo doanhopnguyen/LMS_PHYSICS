@@ -59,7 +59,11 @@
   display: grid;
   place-items: center;
   padding: 40px 20px;
-  background: radial-gradient(ellipse at 12% 8%, #fee2e2 0, transparent 48%), #f8fafc;
+  background-color: #f8fafc;
+  background-image: linear-gradient(180deg, rgba(248, 250, 252, 0.7), rgba(248, 250, 252, 0.25)), var(--login-background-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   color: #1e293b;
 }
 

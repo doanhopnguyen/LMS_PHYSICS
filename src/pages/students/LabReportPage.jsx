@@ -13,6 +13,7 @@ import { experimentHref, loadStudentExperiment } from '../../lib/experimentConte
 import { LabMeasurementTable } from '../../components/LabMeasurementTable.jsx';
 import { buildLabReport, emptyLabTrial, getLabReportSchema, MIN_LAB_TRIALS } from '../../lib/labReportSchema.js';
 import { buildExperimentSubmission } from '../../lib/experimentSubmission.js';
+import { StudentExperimentHistory } from '../../components/StudentExperimentHistory.jsx';
 
 export function LabReportPage() {
   const params = new URLSearchParams(window.location.search);
@@ -29,6 +30,8 @@ export function LabReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [historyVersion, setHistoryVersion] = useState(0);
+  const [recentSubmission, setRecentSubmission] = useState(null);
 
   useEffect(() => {
     if (!experimentId) return;
@@ -67,7 +70,10 @@ export function LabReportPage() {
     setMessage('');
     try {
       const formData = await buildExperimentSubmission({ report: report.data, file, evidenceUrl });
-      await api.experiments.submitAssignment(assignmentId, formData);
+      const submitted = await api.experiments.submitAssignment(assignmentId, formData);
+      if (submitted?.submissionId)
+        setRecentSubmission({ ...submitted, assignmentId, experimentId, experimentTitle: experiment?.title });
+      setHistoryVersion((value) => value + 1);
       setMessage('Đã gửi báo cáo thí nghiệm. Minh chứng sẽ được đưa vào kho sau khi giảng viên xác nhận kết quả.');
     } catch (submitError) {
       setError(submitError.message || 'Không thể nộp báo cáo thí nghiệm.');
@@ -77,8 +83,12 @@ export function LabReportPage() {
   };
   const title = experiment?.title || 'Báo cáo thí nghiệm';
   const schema = getLabReportSchema(experiment);
-  const validMeasurements = schema && measurements.length >= MIN_LAB_TRIALS && !Object.keys(buildLabReport(schema, measurements, rawData).errors).length;
-  const completion = [file, evidenceUrl.trim(), schema ? validMeasurements : rawData.trim()].filter(Boolean).length * 33.33;
+  const validMeasurements =
+    schema &&
+    measurements.length >= MIN_LAB_TRIALS &&
+    !Object.keys(buildLabReport(schema, measurements, rawData).errors).length;
+  const completion =
+    [file, evidenceUrl.trim(), schema ? validMeasurements : rawData.trim()].filter(Boolean).length * 33.33;
   return (
     <AppShell
       currentPage="lab_report_rubric.html"
@@ -124,7 +134,9 @@ export function LabReportPage() {
                     </StatusBadge>
                     <h2 className="mt-3 text-headline-md font-bold">Tiến độ chuẩn bị báo cáo</h2>
                     <p className="mt-1 text-body-md text-[#64748B]">
-                      {schema ? 'Điền bảng số liệu trước khi gửi. Có thể bổ sung tệp hoặc liên kết minh chứng.' : 'Điền dữ liệu hoặc đính kèm tệp minh chứng trước khi gửi.'}
+                      {schema
+                        ? 'Điền bảng số liệu trước khi gửi. Có thể bổ sung tệp hoặc liên kết minh chứng.'
+                        : 'Điền dữ liệu hoặc đính kèm tệp minh chứng trước khi gửi.'}
                     </p>
                   </div>
                   <div className="w-full lg:w-80">
@@ -141,10 +153,22 @@ export function LabReportPage() {
                     </div>
                   )}
                   <SharedForm className="mt-6 min-w-0 space-y-5" onSubmit={submit} noValidate>
-                    <p className="text-body-sm text-slate-500">Giảng viên sẽ xem số liệu, nhận xét và các minh chứng bạn nộp cùng báo cáo.</p>
+                    <p className="text-body-sm text-slate-500">
+                      Giảng viên sẽ xem số liệu, nhận xét và các minh chứng bạn nộp cùng báo cáo.
+                    </p>
                     {schema && (
-                      <LabMeasurementTable schema={schema} rows={measurements} errors={measurementErrors} disabled={submitting}
-                        onChange={(rows) => { setMeasurements(rows); setMeasurementErrors({}); setError(''); setMessage(''); }} />
+                      <LabMeasurementTable
+                        schema={schema}
+                        rows={measurements}
+                        errors={measurementErrors}
+                        disabled={submitting}
+                        onChange={(rows) => {
+                          setMeasurements(rows);
+                          setMeasurementErrors({});
+                          setError('');
+                          setMessage('');
+                        }}
+                      />
                     )}
                     <SharedFormField
                       type="file"
@@ -169,16 +193,26 @@ export function LabReportPage() {
                       disabled={submitting}
                       onChange={(event) => setRawData(event.target.value)}
                       rows="7"
-                      placeholder={schema ? 'Nhận xét về kết quả đo, sai số và điều kiện thực hiện…' : 'Nhập số liệu đo và nhận xét của bạn…'}
+                      placeholder={
+                        schema
+                          ? 'Nhận xét về kết quả đo, sai số và điều kiện thực hiện…'
+                          : 'Nhập số liệu đo và nhận xét của bạn…'
+                      }
                       className="mt-2 block w-full"
                       multiline
                       label={schema ? 'Nhận xét' : 'Số liệu và ghi chú'}
-                      hint={schema ? 'Có thể bổ sung nhận xét hoặc giải thích chênh lệch giữa các lần đo.' : 'Nhập số liệu từng lần đo và nhận xét của bạn.'}
+                      hint={
+                        schema
+                          ? 'Có thể bổ sung nhận xét hoặc giải thích chênh lệch giữa các lần đo.'
+                          : 'Nhập số liệu từng lần đo và nhận xét của bạn.'
+                      }
                       wrapperClassName="block text-body-sm font-semibold"
                     />
-                    {message && <div role="status" className="space-y-2 text-[#15803D]">
-                      <p>{message}</p>
-                    </div>}
+                    {message && (
+                      <div role="status" className="space-y-2 text-[#15803D]">
+                        <p>{message}</p>
+                      </div>
+                    )}
                     {error && (
                       <p role="alert" className="text-primary">
                         {error}
@@ -187,7 +221,9 @@ export function LabReportPage() {
                     <SubmitButton
                       type="submit"
                       icon="send"
-                      disabled={!assignmentId || submitting || (!schema && !file && !evidenceUrl.trim() && !rawData.trim())}
+                      disabled={
+                        !assignmentId || submitting || (!schema && !file && !evidenceUrl.trim() && !rawData.trim())
+                      }
                     >
                       {submitting ? 'Đang nộp…' : 'Nộp báo cáo'}
                     </SubmitButton>
@@ -230,6 +266,13 @@ export function LabReportPage() {
               </div>
             </>
           )
+        )}
+        {assignmentId && (
+          <StudentExperimentHistory
+            assignmentId={assignmentId}
+            refreshKey={historyVersion}
+            recentSubmission={recentSubmission}
+          />
         )}
       </PageContainer>
     </AppShell>

@@ -5,7 +5,10 @@ import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 export function AuthLayout({ title, description, children }) {
   useDocumentMeta({ title: `${title} · PTIT Physics`, bodyClass: 'login-body' });
   return (
-    <main className="login-page">
+    <main
+      className="login-page"
+      style={{ '--login-background-image': `url("${import.meta.env.BASE_URL}background_login.jpg")` }}
+    >
       <div className="login-layout">
         <header className="login-brand">
           <img src={`${import.meta.env.BASE_URL}ptitlogo.png`} alt="Logo PTIT" width="54" height="69" />

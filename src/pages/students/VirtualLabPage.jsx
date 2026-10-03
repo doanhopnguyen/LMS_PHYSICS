@@ -126,7 +126,7 @@ export function VirtualLabPage() {
             ))}
           </SharedSelectField>
           <a href="student_evidence.html">
-            <Button icon="history">Minh chứng của tôi</Button>
+            <Button icon="history">Lịch sử báo cáo & điểm</Button>
           </a>
         </>
       }
@@ -180,9 +180,7 @@ export function VirtualLabPage() {
                             Mở mô phỏng
                           </Button>
                         </a>
-                        <a
-                          href={experimentHref('lab_report_rubric.html', context)}
-                        >
+                        <a href={experimentHref('lab_report_rubric.html', context)}>
                           <button
                             className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#CBD5E1] text-[#64748B] hover:border-primary hover:text-primary"
                             aria-label="Mở báo cáo"

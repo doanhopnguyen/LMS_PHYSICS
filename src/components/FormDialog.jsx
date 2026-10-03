@@ -33,6 +33,8 @@ export function FormDialog({
         aria-describedby={describedBy}
         className={`form-dialog flex max-h-[calc(100dvh-32px)] w-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}
         onKeyDown={(e) => {
+          // Events from a nested portal belong to its own dialog and focus trap.
+          if (!ref.current.contains(e.target)) return;
           if (e.key === 'Escape' && !busy) onClose();
           if (e.key === 'Tab') {
             const nodes = [
