@@ -1,4 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
+import { MaterialSource } from '../../components/MaterialSource.jsx';
+import { GuardedVideoPlayer } from '../../components/GuardedVideoPlayer.jsx';
+import { useMaterialProgress } from '../../hooks/useMaterialProgress.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -26,10 +30,11 @@ export function InteractiveLessonPage() {
   const [course, setCourse] = useState(null);
   const [topic, setTopic] = useState(null);
   const [materials, setMaterials] = useState([]);
-  const [progress, setProgress] = useState(0);
+  const learning = useMaterialProgress();
+  const progress = learning.percent;
   const [selected, setSelected] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const saving = learning.saving;
   const [error, setError] = useState('');
   const panelTitle = useRef(null);
 
@@ -49,16 +54,22 @@ export function InteractiveLessonPage() {
         const selectedTopic = topics.find((item) => String(item.topicId) === String(requestedTopicId)) || topics[0];
         if (!selectedTopic) throw new Error('Học phần này chưa có chủ đề học tập.');
         const [materialData, progressData] = await Promise.all([
-          api.materials.list(selectedTopic.topicId),
+          api.students.myMaterials({ classId: selectedCourse.classId, topicId: selectedTopic.topicId }),
           api.students.myProgress(selectedCourse.classId).catch(() => []),
         ]);
-        const materialRows = rowsOf(materialData);
+        const materialRows = rowsOf(materialData)
+          .filter((item) => !item.topicId || String(item.topicId) === String(selectedTopic.topicId))
+          .sort(
+            (a, b) =>
+              Number(a.orderIndex || 0) - Number(b.orderIndex || 0) ||
+              String(a.createdAt || '').localeCompare(String(b.createdAt || ''))
+          );
         const saved = rowsOf(progressData).find((item) => String(item.topicId) === String(selectedTopic.topicId));
         if (!alive) return;
         setCourse(selectedCourse);
         setTopic(selectedTopic);
         setMaterials(materialRows);
-        setProgress(Number(saved?.progressPercent || 0));
+        learning.initialize(materialRows, saved || {}, selectedCourse.classId, selectedTopic.topicId);
         const initialIndex = materialRows.findIndex((item) => String(item.materialId) === String(requestedMaterialId));
         setSelected(initialIndex >= 0 ? initialIndex : 0);
       } catch (loadError) {
@@ -76,7 +87,7 @@ export function InteractiveLessonPage() {
   const material = materials[selected] || null;
   const previous = selected > 0 ? () => setSelected((value) => value - 1) : undefined;
   const next = selected < materials.length - 1 ? () => setSelected((value) => value + 1) : undefined;
-  const completed = progress >= 100;
+  const completed = material && learning.completed.includes(String(material.materialId));
   const chapterTitle = useMemo(() => topicLabel(topic), [topic]);
 
   useEffect(() => {
@@ -91,21 +102,7 @@ export function InteractiveLessonPage() {
   };
 
   const markComplete = async () => {
-    if (!course || !topic || saving) return;
-    setSaving(true);
-    setError('');
-    try {
-      const updated = await api.students.updateProgress({
-        classId: course.classId,
-        topicId: topic.topicId,
-        progressPercent: 100,
-      });
-      setProgress(Number(updated?.progressPercent ?? 100));
-    } catch (saveError) {
-      setError(saveError?.message || 'Không thể cập nhật tiến độ học tập.');
-    } finally {
-      setSaving(false);
-    }
+    if (material) learning.markComplete(material.materialId);
   };
 
   const backHref = course ? `course_detail.html?classId=${encodeURIComponent(course.classId)}` : 'course_detail.html';
@@ -167,7 +164,9 @@ export function InteractiveLessonPage() {
                   className={selected === index ? 'is-selected' : ''}
                   aria-current={selected === index ? 'true' : undefined}
                 >
-                  <span className="chapter-lesson-number">{index + 1}</span>
+                  <span className="chapter-lesson-number">
+                    {learning.completed.includes(String(item.materialId)) ? '✓' : index + 1}
+                  </span>
                   <span>
                     {item.title || `Học liệu ${index + 1}`}
                     <small className="chapter-lesson-type">
@@ -182,9 +181,14 @@ export function InteractiveLessonPage() {
             )}
           </aside>
           <section id="chapter-lesson-panel" className="chapter-panel" aria-label="Nội dung bài học">
-            {error && (
+            {(error || learning.error) && (
               <p role="alert" className="mb-4 text-primary">
-                {error}
+                {error || learning.error}
+                {learning.error && (
+                  <Button variant="secondary" onClick={learning.retry}>
+                    Đồng bộ lại
+                  </Button>
+                )}
               </p>
             )}
             {material ? (
@@ -197,19 +201,15 @@ export function InteractiveLessonPage() {
                     </h1>
                   </div>
                 </div>
-                {material.type === 'VIDEO' && material.fileUrl ? (
+                {material.type === 'VIDEO' ? (
                   <div className="lesson-video">
-                    <div className="lesson-video__player">
-                      <video
-                        src={material.fileUrl}
-                        controls
-                        playsInline
-                        preload="metadata"
-                        aria-label={material.title || 'Video bài giảng'}
-                      >
-                        Trình duyệt không hỗ trợ phát video.
-                      </video>
-                    </div>
+                    <GuardedVideoPlayer
+                      key={material.materialId}
+                      material={material}
+                      completed={completed}
+                      watchedSeconds={learning.watched[String(material.materialId)]?.seconds || 0}
+                      onProgress={(record) => learning.watch(material.materialId, record)}
+                    />
                   </div>
                 ) : null}
                 {(material.type === 'MARKDOWN' || material.type === 'TEXT') && (
@@ -219,6 +219,9 @@ export function InteractiveLessonPage() {
                       <div className="whitespace-pre-wrap leading-7 text-[#334155]">
                         {material.contentText || 'Giảng viên chưa cập nhật nội dung văn bản cho học liệu này.'}
                       </div>
+                      {(material.fileUrl || material.downloadUrl) && (
+                        <MaterialFilePreview key={material.materialId} material={material} />
+                      )}
                     </section>
                   </article>
                 )}
@@ -230,27 +233,37 @@ export function InteractiveLessonPage() {
                     <h2 className="mt-3 text-headline-sm font-bold">
                       {materialTypeLabel[material.type] || 'Tệp học liệu'}
                     </h2>
-                    <p className="mt-2 text-body-md text-[#64748B]">
-                      Mở tệp học liệu do giảng viên cung cấp trong cửa sổ mới.
-                    </p>
-                    {material.fileUrl ? (
-                      <a className="mt-4 inline-block" href={material.fileUrl} target="_blank" rel="noreferrer">
-                        <Button icon="open_in_new">Mở học liệu</Button>
-                      </a>
+                    {material.fileUrl || material.downloadUrl ? (
+                      <div className="mt-4">
+                        <MaterialFilePreview key={material.materialId} material={material} />
+                      </div>
                     ) : (
                       <p className="mt-4 text-body-sm text-[#64748B]">Học liệu này chưa có tệp đính kèm.</p>
                     )}
                   </Card>
                 )}
-                {material.type === 'VIDEO' && !material.fileUrl && (
-                  <Card className="p-6 text-[#64748B]">Video bài giảng chưa có tệp phát trực tuyến.</Card>
-                )}
                 <div className="lesson-controls">
+                  {material.sourceCitation && material.type !== 'VIDEO' && (
+                    <section className="w-full">
+                      <h3 className="font-semibold">Nguồn học liệu</h3>
+                      <MaterialSource value={material.sourceCitation} title={material.title} />
+                    </section>
+                  )}
                   <Button variant="secondary" icon="arrow_back" disabled={!previous} onClick={previous}>
                     Học liệu trước
                   </Button>
-                  <Button icon="check" disabled={completed || saving} onClick={markComplete}>
-                    {saving ? 'Đang lưu…' : completed ? 'Đã hoàn thành chủ đề' : 'Đánh dấu hoàn thành'}
+                  <Button
+                    icon="check"
+                    disabled={completed || saving || material.type === 'VIDEO'}
+                    onClick={markComplete}
+                  >
+                    {completed
+                      ? 'Đã học'
+                      : saving
+                        ? 'Đang lưu…'
+                        : material.type === 'VIDEO'
+                          ? 'Xem hết video để hoàn thành'
+                          : 'Đánh dấu đã học'}
                   </Button>
                   <Button variant="secondary" icon="arrow_forward" disabled={!next} onClick={next}>
                     Học liệu tiếp

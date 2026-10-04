@@ -9,8 +9,10 @@ import { DataTable } from '../../components/DataTable.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { FormDialog } from '../../components/FormDialog.jsx';
+import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
+import { MaterialSource } from '../../components/MaterialSource.jsx';
+import { StudentMaterialVideo } from '../../components/StudentMaterialVideo.jsx';
 import { useApiData } from '../../hooks/useApiData.js';
-import { navigate } from '../../lib/navigation.js';
 import { PaginatedCollection } from '../../components/Pagination.jsx';
 import { api, apiRequest } from '../../lib/apiClient.js';
 
@@ -29,7 +31,12 @@ const typeMeta = {
 export function LibraryPage() {
   const [resources, setResources] = useState([]);
   const [viewing, setViewing] = useState(null);
-  const detail = useApiData(viewing ? '/api/v1/materials/' + encodeURIComponent(viewing.materialId) : null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const detail = useApiData(
+    viewing
+      ? `/api/v1/topics/${encodeURIComponent(viewing.topicId)}/materials/${encodeURIComponent(viewing.materialId)}`
+      : null
+  );
   const [subjects, setSubjects] = useState([]);
   const [classId, setClassId] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -81,25 +88,15 @@ export function LibraryPage() {
               classes.find((row) => row.classId === classId) ||
               classes.find((row) => row.subjectId === topic?.subjectId);
             const [tag, icon] = typeMeta[material.type] || ['Tệp đính kèm', 'attach_file'];
-            const params = new URLSearchParams(
-              Object.entries({
-                classId: course?.classId,
-                subjectId: topic?.subjectId,
-                topicId: material.topicId,
-                materialId: material.materialId,
-              }).filter(([, value]) => value)
-            );
-            const fileUrl = safeUrl(material.fileUrl);
             return {
               ...material,
+              classId: course?.classId,
               title: material.title || 'Học liệu',
               tag,
               icon,
               subjectName: course?.subjectName || '—',
               topicName: topic?.topicName || topic?.name || '—',
               author: [course?.subjectName, topic?.topicName || topic?.name].filter(Boolean).join(' · '),
-              href: fileUrl || 'interactive_lesson.html?' + params,
-              external: Boolean(fileUrl),
             };
           })
         );
@@ -232,13 +229,19 @@ export function LibraryPage() {
                             <ActionMenu
                               label={'Thao tác với ' + row.title}
                               items={[
-                                { label: 'Xem chi tiết', onSelect: () => setViewing(row) },
+                                {
+                                  label: 'Xem chi tiết',
+                                  onSelect: () => {
+                                    setPreviewOpen(false);
+                                    setViewing(row);
+                                  },
+                                },
                                 {
                                   label: 'Mở tài liệu',
-                                  onSelect: () =>
-                                    row.external
-                                      ? window.open(row.href, '_blank', 'noopener,noreferrer')
-                                      : navigate(row.href),
+                                  onSelect: () => {
+                                    setPreviewOpen(true);
+                                    setViewing(row);
+                                  },
                                 },
                               ]}
                             />,
@@ -259,7 +262,12 @@ export function LibraryPage() {
           )}
         </Tabs>
         {viewing && (
-          <FormDialog title="Chi tiết học liệu" onClose={() => setViewing(null)}>
+          <FormDialog
+            title={previewOpen ? viewing.title : 'Chi tiết học liệu'}
+            wide={previewOpen}
+            reader={previewOpen}
+            onClose={() => setViewing(null)}
+          >
             {detail.loading ? (
               <p role="status">Đang tải chi tiết…</p>
             ) : detail.error ? (
@@ -272,7 +280,28 @@ export function LibraryPage() {
                 </Button>
               </div>
             ) : (
-              detail.data && (
+              detail.data &&
+              (previewOpen ? (
+                (detail.data.type || viewing.type) === 'VIDEO' ? (
+                  <StudentMaterialVideo
+                    key={viewing.materialId}
+                    material={{ ...viewing, ...detail.data, classId: viewing.classId }}
+                    fill
+                  />
+                ) : safeUrl(detail.data.downloadUrl || detail.data.fileUrl || viewing.fileUrl) ? (
+                  <MaterialFilePreview key={viewing.materialId} material={{ ...viewing, ...detail.data }} fill />
+                ) : (
+                  <div className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-4">
+                    {detail.data.contentText}
+                    {detail.data.sourceCitation && (
+                      <MaterialSource value={detail.data.sourceCitation} title={detail.data.title || viewing.title} />
+                    )}
+                    {!detail.data.contentText &&
+                      !detail.data.sourceCitation &&
+                      'Học liệu này chưa có nội dung hoặc tệp đính kèm.'}
+                  </div>
+                )
+              ) : (
                 <>
                   <h2 className="text-title-lg font-medium">{detail.data.title || viewing.title}</h2>
                   <dl className="mt-4 grid grid-cols-2 gap-4 text-body-sm">
@@ -299,26 +328,21 @@ export function LibraryPage() {
                     </p>
                   )}
                   {detail.data.sourceCitation && (
-                    <p className="mt-4 break-words text-body-sm text-slate-500">Nguồn: {detail.data.sourceCitation}</p>
+                    <div className="mt-4 text-body-sm text-slate-500">
+                      <h3>Nguồn học liệu</h3>
+                      <MaterialSource value={detail.data.sourceCitation} title={detail.data.title || viewing.title} />
+                    </div>
                   )}
                   <div className="mt-5 flex justify-end gap-3">
                     <Button variant="secondary" onClick={() => setViewing(null)}>
                       Đóng
                     </Button>
-                    <a
-                      className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
-                      href={viewing.href}
-                      target={viewing.external ? '_blank' : undefined}
-                      rel={viewing.external ? 'noreferrer' : undefined}
-                    >
+                    <Button onClick={() => setPreviewOpen(true)} icon="visibility">
                       Mở tài liệu
-                      <span className="material-symbols-outlined text-base" aria-hidden="true">
-                        arrow_forward
-                      </span>
-                    </a>
+                    </Button>
                   </div>
                 </>
-              )
+              ))
             )}
           </FormDialog>
         )}

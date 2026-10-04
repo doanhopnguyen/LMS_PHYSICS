@@ -5,6 +5,7 @@ export const adminNavigation = [
   ['admin_users.html', 'manage_accounts', 'Người dùng & phân quyền'],
   ['admin_academics.html', 'account_tree', 'Học kỳ & học phần'],
   ['admin_questions.html', 'quiz', 'Ngân hàng câu hỏi'],
+  ['admin_materials.html', 'fact_check', 'Duyệt học liệu'],
   ['admin_assessments.html', 'assignment', 'Ma trận đề & ghi danh'],
   ['admin_analytics.html', 'analytics', 'Phân tích học tập'],
   ['admin_operations.html', 'settings', 'Cấu hình & nhật ký'],

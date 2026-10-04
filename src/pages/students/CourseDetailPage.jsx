@@ -8,6 +8,7 @@ import { ProgressBar } from '../../components/ProgressBar.jsx';
 import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
+import { loadClassMaterialProgress } from '../../lib/classMaterialProgress.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 
@@ -37,7 +38,7 @@ export function CourseDetailPage() {
 
         const [topicData, progressData, scheduleData] = await Promise.all([
           selected.subjectId ? api.subjects.topics(selected.subjectId).catch(() => []) : Promise.resolve([]),
-          api.students.myProgress(selected.classId).catch(() => []),
+          loadClassMaterialProgress(selected.classId),
           api.classes.schedules(selected.classId).catch(() => []),
         ]);
         if (!alive) return;

@@ -7,6 +7,7 @@ import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { api } from '../../lib/apiClient.js';
+import { loadClassMaterialProgress } from '../../lib/classMaterialProgress.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const isFinished = (attempt) =>
@@ -38,7 +39,7 @@ export function LearningResultsPage() {
           classRows.map(async (classItem) => {
             const [topicData, progressData, examData] = await Promise.all([
               classItem.subjectId ? api.subjects.topics(classItem.subjectId).catch(() => []) : Promise.resolve([]),
-              api.students.myProgress(classItem.classId).catch(() => []),
+              loadClassMaterialProgress(classItem.classId),
               api.exams.listForClass(classItem.classId).catch(() => []),
             ]);
             const progressByTopic = new Map(rowsOf(progressData).map((item) => [String(item.topicId), item]));

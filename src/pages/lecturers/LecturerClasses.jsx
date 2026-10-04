@@ -8,6 +8,7 @@ import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
+import { LecturerProgressView } from './LecturerProgressView.jsx';
 import {
   Button,
   Card,
@@ -652,9 +653,9 @@ const observationLabels = { progress: 'Tiến độ', evidence: 'Minh chứng', 
 export function ClassObservation({ classId, subjectId, studentId, tabs = ['progress', 'evidence', 'activity'] }) {
   const [tab, setTab] = useState(tabs[0]);
   const path = tab === 'activity' ? 'activity-logs' : tab;
-  const resource = useResource(`/api/v1/classes/${idPath(classId)}/${path}`);
+  const resource = useResource(`/api/v1/classes/${idPath(classId)}/${path}`, tab === 'progress');
   const students = useResource(`/api/v1/classes/${idPath(classId)}/students`, true);
-  const topics = useResource(subjectId ? `/api/v1/subjects/${idPath(subjectId)}/topics` : null);
+  const topics = useResource(subjectId ? `/api/v1/subjects/${idPath(subjectId)}/topics` : null, true);
   const person = (id) => displayName(itemsOf(students.data).find((s) => (s.studentId || s.userId) === id));
   return (
     <Tabs
@@ -662,32 +663,46 @@ export function ClassObservation({ classId, subjectId, studentId, tabs = ['progr
       activeId={tab}
       onChange={setTab}
       actions={
-        <Button variant="secondary" onClick={resource.reload}>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            resource.reload();
+            students.reload();
+            topics.reload();
+          }}
+        >
           Làm mới
         </Button>
       }
     >
       {() => (
         <Resource value={resource}>
-          {(data) => (
-            <Table
-              rows={itemsOf(data).filter((row) => !studentId || (row.studentId || row.userId) === studentId)}
-              columns={
-                tab === 'progress'
-                  ? ['Sinh viên', 'Chủ đề', 'Tiến độ', 'Truy cập gần nhất']
-                  : tab === 'evidence'
+          {(data) =>
+            tab === 'progress' ? (
+              <Resource value={students}>
+                {(people) => {
+                  const renderProgress = (chapters) => (
+                    <LecturerProgressView
+                      key={`${classId}:${studentId || ''}`}
+                      students={itemsOf(people)}
+                      topics={itemsOf(chapters)}
+                      progress={itemsOf(data)}
+                      studentId={studentId}
+                    />
+                  );
+                  return topics.enabled ? <Resource value={topics}>{renderProgress}</Resource> : renderProgress([]);
+                }}
+              </Resource>
+            ) : (
+              <Table
+                rows={itemsOf(data).filter((row) => !studentId || (row.studentId || row.userId) === studentId)}
+                columns={
+                  tab === 'evidence'
                     ? ['Sinh viên', 'Nguồn', 'Tệp', 'Thời gian']
                     : ['Người thực hiện', 'Hành động', 'Đối tượng', 'Thời gian']
-              }
-              cells={(row) =>
-                tab === 'progress'
-                  ? [
-                      person(row.studentId),
-                      displayName(itemsOf(topics.data).find((t) => t.topicId === row.topicId)),
-                      row.progressPercent == null ? '—' : `${row.progressPercent}%`,
-                      dateText(row.lastAccessedAt),
-                    ]
-                  : tab === 'evidence'
+                }
+                cells={(row) =>
+                  tab === 'evidence'
                     ? [
                         person(row.studentId),
                         labelOf(row.sourceType),
@@ -695,9 +710,10 @@ export function ClassObservation({ classId, subjectId, studentId, tabs = ['progr
                         dateText(row.createdAt),
                       ]
                     : [person(row.userId), labelOf(row.actionType), labelOf(row.objectType), dateText(row.createdAt)]
-              }
-            />
-          )}
+                }
+              />
+            )
+          }
         </Resource>
       )}
     </Tabs>

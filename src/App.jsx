@@ -37,6 +37,7 @@ import { AdminDashboardPage } from './pages/admin/AdminPages.jsx';
 import { AdminAcademicsApiPage } from './pages/admin/AdminAcademicsApiPage.jsx';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage.jsx';
 import { AdminQuestionsApiPage } from './pages/admin/AdminQuestionsApiPage.jsx';
+import { AdminMaterialsPage } from './pages/admin/AdminMaterialsPage.jsx';
 import { AdminAssessmentsPage } from './pages/admin/AdminAssessmentsPage.jsx';
 import { StudentEvidencePage } from './pages/students/StudentEvidencePage.jsx';
 import { RegisterPage } from './pages/RegisterPage.jsx';
@@ -88,6 +89,7 @@ const pageComponents = {
   'admin_users.html': UsersPage,
   'admin_academics.html': AdminAcademicsApiPage,
   'admin_questions.html': AdminQuestionsApiPage,
+  'admin_materials.html': AdminMaterialsPage,
   'admin_assessments.html': AdminAssessmentsPage,
   'admin_operations.html': OperationsPage,
   'admin_analytics.html': AdminAnalyticsPage,

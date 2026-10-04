@@ -8,6 +8,7 @@ import { PageTitle } from '../../components/PageTitle.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { api } from '../../lib/apiClient.js';
+import { loadClassMaterialProgress } from '../../lib/classMaterialProgress.js';
 
 export function MyCoursesPage() {
   const [classes, setClasses] = useState([]);
@@ -25,7 +26,7 @@ export function MyCoursesPage() {
         const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
         const withProgress = await Promise.all(
           list.map(async (item) => {
-            const progressRows = await api.students.myProgress(item.classId).catch(() => []);
+            const progressRows = await loadClassMaterialProgress(item.classId);
             const rows = Array.isArray(progressRows) ? progressRows : progressRows?.content || progressRows?.data || [];
             const values = rows
               .map((row) => Number(row.progressPercent ?? row.completionPercent ?? 0))

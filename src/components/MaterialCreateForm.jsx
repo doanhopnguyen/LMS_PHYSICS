@@ -7,6 +7,8 @@ import { Button } from './Button.jsx';
 import { AuthAlert } from './AuthLayout.jsx';
 import { apiRequest } from '../lib/apiClient.js';
 import { listItems, useApiData } from '../hooks/useApiData.js';
+import { VideoSourceFields } from './VideoSourceFields.jsx';
+import { validateVideoMaterial } from '../lib/materialSources.js';
 
 export function MaterialCreateForm() {
   const [subject, setSubject] = useState('');
@@ -26,6 +28,12 @@ export function MaterialCreateForm() {
     body.set('topicId', topic);
     setError('');
     setMessage('');
+    const videoError = validateVideoMaterial(body);
+    if (videoError) {
+      setError(videoError);
+      return;
+    }
+    if (!body.get('file')?.size) body.delete('file');
     if (type === 'MARKDOWN' && !String(body.get('contentText')).trim()) {
       setError('Vui lòng nhập nội dung Markdown.');
       return;
@@ -112,7 +120,9 @@ export function MaterialCreateForm() {
               <option key={value}>{value}</option>
             ))}
           </SharedSelectField>
-          {type === 'MARKDOWN' || type === 'TEXT' ? (
+          {type === 'VIDEO' ? (
+            <VideoSourceFields busy={busy} />
+          ) : type === 'MARKDOWN' || type === 'TEXT' ? (
             <SharedFormField
               name="contentText"
               required
@@ -133,12 +143,14 @@ export function MaterialCreateForm() {
               wrapperClassName="block"
             />
           )}
-          <SharedFormField
-            name="sourceCitation"
-            className="mt-2 block w-full"
-            label={<>Nguồn trích dẫn</>}
-            wrapperClassName="block"
-          />
+          {type !== 'VIDEO' && (
+            <SharedFormField
+              name="sourceCitation"
+              className="mt-2 block w-full"
+              label={<>Nguồn trích dẫn</>}
+              wrapperClassName="block"
+            />
+          )}
           <div className="authoring-actions">
             <SubmitButton icon="save" type="submit" disabled={!topic || busy}>
               {busy ? 'Đang lưu…' : 'Tạo học liệu'}

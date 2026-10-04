@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
 import { LessonContent } from '../../components/LessonContent.jsx';
-import { LessonVideo } from '../../components/LessonVideo.jsx';
+import { GuardedVideoPlayer } from '../../components/GuardedVideoPlayer.jsx';
+import { useMaterialProgress } from '../../hooks/useMaterialProgress.js';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { api } from '../../lib/apiClient.js';
@@ -27,10 +28,10 @@ export function LearningModulePage({ openInitialLesson = false }) {
   const [topic, setTopic] = useState(null);
   const [materials, setMaterials] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [completed, setCompleted] = useState([]);
+  const learning = useMaterialProgress();
+  const completed = learning.completed;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [savingId, setSavingId] = useState('');
   const panelTitle = useRef(null);
   const lesson = selected === null ? null : materials[selected];
 
@@ -64,18 +65,12 @@ export function LearningModulePage({ openInitialLesson = false }) {
               String(left.createdAt || '').localeCompare(String(right.createdAt || ''))
           );
         const progress = rowsOf(progressData).find((item) => String(item.topicId) === String(topicId));
-        const completedCount = Math.min(
-          orderedMaterials.length,
-          Math.round(
-            (Number(progress?.progressPercent ?? progress?.completionPercent ?? 0) / 100) * orderedMaterials.length
-          )
-        );
         const initialIndex = orderedMaterials.findIndex(
           (item) => String(item.materialId) === String(requestedMaterialId)
         );
         setTopic(topicData || null);
         setMaterials(orderedMaterials);
-        setCompleted(orderedMaterials.slice(0, completedCount).map((item) => item.materialId));
+        learning.initialize(orderedMaterials, progress || {}, classId, topicId);
         setSelected(initialIndex >= 0 ? initialIndex : openInitialLesson && orderedMaterials.length ? 0 : null);
       } catch (loadError) {
         if (alive) {
@@ -111,23 +106,7 @@ export function LearningModulePage({ openInitialLesson = false }) {
   const previous = selected > 0 ? () => openLesson(selected - 1) : undefined;
   const next = selected !== null && selected < materials.length - 1 ? () => openLesson(selected + 1) : undefined;
   const markComplete = async () => {
-    if (!lesson || completedSet.has(String(lesson.materialId)) || savingId) return;
-    const nextCompleted = [...completed, lesson.materialId];
-    setSavingId(lesson.materialId);
-    setError('');
-    try {
-      if (classId)
-        await api.students.updateProgress({
-          classId,
-          topicId,
-          progressPercent: Math.round((nextCompleted.length / Math.max(materials.length, 1)) * 100),
-        });
-      setCompleted(nextCompleted);
-    } catch (saveError) {
-      setError(saveError?.message || 'Không thể cập nhật tiến độ học tập.');
-    } finally {
-      setSavingId('');
-    }
+    if (lesson) learning.markComplete(lesson.materialId);
   };
   const backHref = classId ? `course_detail.html?classId=${encodeURIComponent(classId)}` : 'course_detail.html';
 
@@ -202,9 +181,14 @@ export function LearningModulePage({ openInitialLesson = false }) {
             </nav>
           </aside>
           <section id="chapter-lesson-panel" className="chapter-panel" aria-label="Nội dung học liệu">
-            {error && (
+            {(error || learning.error) && (
               <Card className="mb-5 p-4 text-primary" role="alert">
-                {error}
+                {error || learning.error}
+                {learning.error && (
+                  <Button variant="secondary" onClick={learning.retry}>
+                    Đồng bộ lại
+                  </Button>
+                )}
               </Card>
             )}
             {lesson ? (
@@ -228,16 +212,20 @@ export function LearningModulePage({ openInitialLesson = false }) {
                   </button>
                 </div>
                 {lesson.type === 'VIDEO' && (
-                  <LessonVideo
+                  <GuardedVideoPlayer
                     key={lesson.materialId}
-                    lesson={{ title: lesson.title, video: { src: lesson.fileUrl || lesson.downloadUrl } }}
+                    material={lesson}
+                    completed={completedSet.has(String(lesson.materialId))}
+                    watchedSeconds={learning.watched[String(lesson.materialId)]?.seconds || 0}
+                    onProgress={(record) => learning.watch(lesson.materialId, record)}
                   />
                 )}
                 <LessonContent
                   key={lesson.materialId}
                   material={lesson}
                   completed={completedSet.has(String(lesson.materialId))}
-                  saving={savingId === lesson.materialId}
+                  saving={learning.saving}
+                  completionBlocked={lesson.type === 'VIDEO' && !completedSet.has(String(lesson.materialId))}
                   onPrevious={previous}
                   onNext={next}
                   onComplete={markComplete}

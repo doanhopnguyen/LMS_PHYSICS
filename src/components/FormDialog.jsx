@@ -6,6 +6,7 @@ export function FormDialog({
   onClose,
   busy,
   wide = false,
+  reader = false,
   compact = false,
   children,
   dialogRole = 'dialog',
@@ -21,7 +22,7 @@ export function FormDialog({
   }, []);
   const dialog = (
     <div
-      className={`fixed inset-0 ${dialogRole === 'alertdialog' ? 'z-[1200]' : 'z-[1100]'} flex items-center justify-center bg-slate-900/20 p-4`}
+      className={`fixed inset-0 ${dialogRole === 'alertdialog' ? 'z-[1200]' : 'z-[1100]'} flex items-center justify-center bg-slate-900/20 ${reader ? 'p-2 sm:p-3' : 'p-4'}`}
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}
     >
       <section
@@ -31,7 +32,7 @@ export function FormDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={describedBy}
-        className={`form-dialog flex max-h-[calc(100dvh-32px)] w-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}
+        className={`form-dialog flex w-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl ${reader ? 'h-[calc(100dvh-16px)] max-h-[calc(100dvh-16px)] max-w-[1600px] sm:h-[calc(100dvh-24px)] sm:max-h-[calc(100dvh-24px)]' : `max-h-[calc(100dvh-32px)] ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}`}
         onKeyDown={(e) => {
           // Events from a nested portal belong to its own dialog and focus trap.
           if (!ref.current.contains(e.target)) return;
@@ -54,8 +55,13 @@ export function FormDialog({
           }
         }}
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E2E8F0] px-4 py-4 sm:px-6">
-          <h2 id={titleId} className="min-w-0 break-words text-headline-sm font-medium">
+        <div
+          className={`flex shrink-0 items-center justify-between gap-3 border-b border-[#E2E8F0] ${reader ? 'px-3 py-1' : 'px-4 py-4 sm:px-6'}`}
+        >
+          <h2
+            id={titleId}
+            className={`min-w-0 font-medium ${reader ? 'truncate text-body-sm' : 'break-words text-headline-sm'}`}
+          >
             {title}
           </h2>
           <button
@@ -68,7 +74,11 @@ export function FormDialog({
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">{children}</div>
+        <div
+          className={`min-h-0 min-w-0 flex-1 ${reader ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overscroll-contain p-4 sm:p-6'}`}
+        >
+          {children}
+        </div>
       </section>
     </div>
   );

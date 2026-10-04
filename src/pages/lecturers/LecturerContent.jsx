@@ -4,6 +4,8 @@ import { api } from '../../lib/apiClient.js';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { queryPath, validateOptions } from '../../lib/lecturerUtils.js';
+import { VideoSourceFields } from '../../components/VideoSourceFields.jsx';
+import { validateVideoMaterial } from '../../lib/materialSources.js';
 import {
   Button,
   Card,
@@ -67,6 +69,43 @@ function useAllMaterials(enabled, subjectsData, subjectFilter) {
     };
   }, [enabled, subjectIds, version]);
   return { ...state, enabled, reload: () => setVersion((value) => value + 1) };
+}
+
+function MaterialEditorForm({ initial, onSubmit, busy }) {
+  const [type, setType] = useState(initial.type || 'PDF');
+  return (
+    <Form className="grid gap-4" onSubmit={onSubmit}>
+      <Field label="Tiêu đề *" name="title" required defaultValue={initial.title || ''} />
+      <SelectField
+        label="Định dạng"
+        name="type"
+        value={type}
+        disabled={busy}
+        onChange={(event) => setType(event.target.value)}
+      >
+        {['PDF', 'VIDEO', 'MARKDOWN', 'TEXT'].map((value) => (
+          <option key={value} value={value}>
+            {labelOf(value)}
+          </option>
+        ))}
+      </SelectField>
+      <Field label="Nội dung / mô tả" name="contentText" multiline rows={6} defaultValue={initial.contentText || ''} />
+      {type === 'VIDEO' ? (
+        <VideoSourceFields initial={initial} busy={busy} />
+      ) : (
+        <>
+          <Field label="Nguồn học liệu" name="sourceCitation" defaultValue={initial.sourceCitation || ''} />
+          {initial.fileUrl && (
+            <FileLink url={initial.fileUrl}>Tệp hiện tại (giữ nguyên nếu không chọn tệp mới)</FileLink>
+          )}
+          <Field label="Tệp học liệu" name="file" type="file" />
+        </>
+      )}
+      <SubmitButton type="submit" disabled={busy}>
+        {busy ? 'Đang tải lên…' : 'Lưu học liệu'}
+      </SubmitButton>
+    </Form>
+  );
 }
 
 function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
@@ -292,7 +331,7 @@ export function LecturerAuthoringApiPage({ kind }) {
   const saved = (result) => {
     if (result.ok) {
       setModal(null);
-      resource.reload();
+      displayedResource.reload();
       topics.reload();
     }
   };
@@ -335,7 +374,12 @@ export function LecturerAuthoringApiPage({ kind }) {
     data.set('title', title);
     const file = data.get('file');
     if (!file?.size) data.delete('file');
-    if (!data.get('contentText')?.trim() && !file?.size && !modal.row.fileUrl) {
+    const videoError = validateVideoMaterial(data, modal.row);
+    if (videoError) {
+      action.setError(videoError);
+      return;
+    }
+    if (data.get('type') !== 'VIDEO' && !data.get('contentText')?.trim() && !file?.size && !modal.row.fileUrl) {
       action.setError('Nhập nội dung hoặc chọn tệp học liệu.');
       return;
     }
@@ -625,31 +669,11 @@ export function LecturerAuthoringApiPage({ kind }) {
               </SubmitButton>
             </Form>
           ) : modal.type === 'material' ? (
-            <Form className="grid gap-4" onSubmit={saveMaterial}>
-              <Field label="Tiêu đề *" name="title" required defaultValue={modal.row.title || ''} />
-              <SelectField label="Định dạng" name="type" defaultValue={modal.row.type || 'PDF'}>
-                {['PDF', 'VIDEO', 'MARKDOWN', 'TEXT'].map((v) => (
-                  <option key={v} value={v}>
-                    {labelOf(v)}
-                  </option>
-                ))}
-              </SelectField>
-              <Field
-                label="Nội dung / mô tả"
-                name="contentText"
-                multiline
-                rows={6}
-                defaultValue={modal.row.contentText || ''}
-              />
-              <Field label="Nguồn trích dẫn" name="sourceCitation" defaultValue={modal.row.sourceCitation || ''} />
-              {modal.row.fileUrl && (
-                <FileLink url={modal.row.fileUrl}>Tệp hiện tại (giữ nguyên nếu không chọn tệp mới)</FileLink>
-              )}
-              <Field label="Tệp học liệu" name="file" type="file" />
-              <SubmitButton type="submit" disabled={action.busy || !validSubject || !validTopic}>
-                {action.busy ? 'Đang tải lên…' : 'Lưu học liệu'}
-              </SubmitButton>
-            </Form>
+            <MaterialEditorForm
+              initial={modal.row}
+              onSubmit={saveMaterial}
+              busy={action.busy || (!modal.row.materialId && (!validSubject || !validTopic))}
+            />
           ) : modal.type === 'import' ? (
             <Form
               className="grid gap-4"
