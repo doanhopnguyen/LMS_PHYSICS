@@ -1,3 +1,4 @@
+import { MarkdownContent } from './MarkdownContent.jsx';
 import React from 'react';
 import { Button } from './Button.jsx';
 import { MaterialFilePreview } from './MaterialFilePreview.jsx';
@@ -22,7 +23,11 @@ export function LessonContent({
       {material?.contentText && (
         <section>
           <h3>Nội dung học liệu</h3>
-          <div className="whitespace-pre-wrap leading-7 text-[#334155]">{material.contentText}</div>
+          {material.type === 'MARKDOWN' ? (
+            <MarkdownContent content={material.contentText} />
+          ) : (
+            <div className="whitespace-pre-wrap leading-7 text-[#334155]">{material.contentText}</div>
+          )}
         </section>
       )}
       {fileUrl && !isVideo && (

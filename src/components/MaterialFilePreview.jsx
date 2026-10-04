@@ -4,6 +4,7 @@ import { FormDialog } from './FormDialog.jsx';
 import { previewType, formatJson } from '../lib/evidencePreview.js';
 import { safeUrl } from '../lib/lecturerUtils.js';
 import { MaterialVideoPlayer } from './MaterialVideoPlayer.jsx';
+import { MarkdownContent } from './MarkdownContent.jsx';
 
 export function MaterialFilePreview({ material, fill = false }) {
   const [attempt, setAttempt] = useState(0);
@@ -21,11 +22,17 @@ export function MaterialFilePreview({ material, fill = false }) {
       if (!response.ok) throw new Error(`Không thể tải tài liệu (${response.status}).`);
       const blob = await response.blob();
       const name = material.fileName || decodeURIComponent(new URL(source).pathname.split('/').pop()) || material.title;
-      const type = previewType(
-        name,
-        blob.type === 'application/octet-stream' && material.type === 'PDF' ? 'application/pdf' : blob.type
-      );
-      const text = ['text', 'json'].includes(type) ? await blob.text() : '';
+      const isMarkdown =
+        material.type === 'MARKDOWN' ||
+        /\.(md|markdown)$/i.test(name) ||
+        ['text/markdown', 'text/x-markdown'].includes(blob.type.split(';')[0].trim().toLowerCase());
+      const type = isMarkdown
+        ? 'markdown'
+        : previewType(
+            name,
+            blob.type === 'application/octet-stream' && material.type === 'PDF' ? 'application/pdf' : blob.type
+          );
+      const text = ['markdown', 'text', 'json'].includes(type) ? await blob.text() : '';
       if (controller.signal.aborted) return;
       objectUrl = URL.createObjectURL(type === 'pdf' ? new Blob([blob], { type: 'application/pdf' }) : blob);
       setState({ loading: false, url: objectUrl, type, text, name });
@@ -97,6 +104,13 @@ export function MaterialFilePreview({ material, fill = false }) {
         />
       )}
       {state.type === 'audio' && <audio src={state.url} controls preload="metadata" className="w-full" />}
+      {state.type === 'markdown' && (
+        <article
+          className={`${immersive ? 'min-h-0 flex-1' : 'max-h-[80dvh] rounded-xl'} overflow-auto bg-white p-4 sm:p-6`}
+        >
+          <MarkdownContent content={state.text} />
+        </article>
+      )}
       {['text', 'json'].includes(state.type) && (
         <pre
           className={`${immersive ? 'min-h-0 flex-1' : 'max-h-[80dvh] rounded-xl'} overflow-auto whitespace-pre-wrap break-words bg-slate-50 p-4 text-body-sm`}

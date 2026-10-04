@@ -64,7 +64,7 @@ export function DocumentViewerPage() {
           <DetailToolbar
             title="Giáo trình Vật lý đại cương 1"
             subtitle={`Cơ học · Chương 2 · Trang ${page}/280`}
-            backHref="library.html"
+            backHref="my_courses.html"
             backLabel="Về học liệu"
             actions={
               <>

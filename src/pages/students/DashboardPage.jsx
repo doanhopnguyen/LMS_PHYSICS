@@ -311,7 +311,7 @@ export function DashboardPage() {
             <SectionHeader icon="bolt" title="Truy cập nhanh" />
             <div className="grid grid-cols-2 gap-3 pt-5">
               {[
-                ['library.html', 'menu_book', 'Kho học liệu'],
+                ['my_courses.html', 'menu_book', 'Học phần của tôi'],
                 ['virtual_lab.html', 'science', 'Phòng Lab 3D'],
                 ['exam_practice_center.html', 'quiz', 'Ôn luyện'],
                 ['learning_results.html', 'insights', 'Kết quả học tập'],

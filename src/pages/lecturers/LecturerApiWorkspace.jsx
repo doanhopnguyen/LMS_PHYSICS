@@ -1,3 +1,7 @@
+import { AuthoringSection } from '../../components/AuthoringSection.jsx';
+import { AuthoringPanel } from '../../components/AuthoringPanel.jsx';
+import { navigate } from '../../lib/navigation.js';
+import { queryPath } from '../../lib/lecturerUtils.js';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { ExperimentGradingPanel } from './LecturerExperimentGrading.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
@@ -45,12 +49,7 @@ function Resource({ resource, children }) {
 }
 function ClassSelect({ classes, value, onChange, label = 'Lớp học' }) {
   return (
-    <SelectField
-      label={label}
-      name="classId"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    >
+    <SelectField label={label} name="classId" value={value} onChange={(event) => onChange(event.target.value)}>
       <option value="">Chọn lớp</option>
       <option value="ALL">Tất cả lớp</option>
       {classes.map((item) => (
@@ -103,7 +102,8 @@ function useAction() {
   };
 }
 
-function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClose, onChanged }) {
+function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMode = false, onClose, onChanged }) {
+  const Container = pageMode ? AuthoringPanel : Modal;
   const [tab, setTab] = useState(initialTab);
   const [questionTopicId, setQuestionTopicId] = useState('');
   const [questionDifficulty, setQuestionDifficulty] = useState('');
@@ -218,7 +218,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
           onConfirm={removeQuestion}
         />
       )}
-      <Modal
+      <Container
         wide
         title={`Quản lý đề thi · ${exam.title || 'Đề thi'}`}
         busy={action.busy}
@@ -447,7 +447,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
             )
           }
         </Tabs>
-      </Modal>
+      </Container>
       {transferOpen && (
         <Modal
           wide
@@ -570,9 +570,10 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', onClos
   );
 }
 
-export function MatrixManager({ classes }) {
-  const [subjectId, setSubjectId] = useState('');
-  const [modal, setModal] = useState(null);
+export function MatrixManager({ classes, createPage = false }) {
+  const [subjectId, setSubjectId] = useState(() => new URLSearchParams(window.location.search).get('subjectId') || '');
+  const [modal, setModal] = useState(createPage ? { mode: 'create' } : null);
+  const EditorContainer = createPage ? AuthoringPanel : Modal;
   const [details, setDetails] = useState([
     { topicId: '', difficultyLevel: 'MEDIUM', numQuestions: 1, weightPercent: 100 },
   ]);
@@ -582,10 +583,7 @@ export function MatrixManager({ classes }) {
   const topics = useApiData(subjectId ? `/api/v1/subjects/${encodeURIComponent(subjectId)}/topics` : null);
   const matrices = useApiData(`/api/v1/exam-matrices${subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : ''}`);
   const action = useAction();
-  const openCreate = () => {
-    setDetails([{ topicId: '', difficultyLevel: 'MEDIUM', numQuestions: 1, weightPercent: 100 }]);
-    setModal({ mode: 'create' });
-  };
+  const openCreate = () => navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
   const openEdit = async (row) => {
     const data = await action.run(`/api/v1/exam-matrices/${encodeURIComponent(row.matrixId)}`, {}, '');
     if (data) {
@@ -620,6 +618,10 @@ export function MatrixManager({ classes }) {
       action.setError(`Tổng trọng số hiện là ${weightTotal}%; cần bằng 100%.`);
       return;
     }
+    if (!subjectId || !listItems(subjects.data).some((item) => item.subjectId === subjectId)) {
+      action.setError('Vui lòng chọn học phần.');
+      return;
+    }
     const body = {
       subjectId: modal.row?.subjectId || subjectId,
       matrixName: values.matrixName.trim(),
@@ -640,6 +642,10 @@ export function MatrixManager({ classes }) {
       modal.mode === 'edit' ? 'Đã cập nhật ma trận.' : 'Đã tạo ma trận.'
     );
     if (result) {
+      if (createPage) {
+        navigate('lecturer_assessments.html?tab=matrices');
+        return;
+      }
       setModal(null);
       matrices.reload();
     }
@@ -667,6 +673,7 @@ export function MatrixManager({ classes }) {
   return (
     <>
       {action.feedback}
+      <AuthAlert error>{subjects.error || topics.error}</AuthAlert>
       {deleteTarget && (
         <ConfirmDialog
           title="Xóa ma trận đề"
@@ -712,10 +719,14 @@ export function MatrixManager({ classes }) {
           <SelectField
             label="Học phần"
             value={subjectId}
-            onChange={(event) => setSubjectId(event.target.value)}
+            onChange={(event) => {
+              setSubjectId(event.target.value);
+              if (createPage)
+                setDetails([{ topicId: '', difficultyLevel: 'MEDIUM', numQuestions: 1, weightPercent: 100 }]);
+            }}
             className="min-w-64"
           >
-            <option value="">Tất cả học phần</option>
+            <option value="">{createPage ? 'Chọn học phần' : 'Tất cả học phần'}</option>
             {listItems(subjects.data).map((item) => (
               <option key={item.subjectId} value={item.subjectId}>
                 {item.subjectCode ? `${item.subjectCode} · ` : ''}
@@ -723,39 +734,45 @@ export function MatrixManager({ classes }) {
               </option>
             ))}
           </SelectField>
-          <Button disabled={!subjectId || action.busy} onClick={openCreate}>
-            Tạo ma trận
-          </Button>
+          {!createPage && (
+            <Button disabled={!subjectId || action.busy} onClick={openCreate}>
+              Tạo ma trận
+            </Button>
+          )}
         </div>
       </Card>
-      <Resource resource={matrices}>
-        {(rows) => (
-          <Table
-            asCards
-            rows={rows}
-            columns={['Ma trận', 'Loại đề', 'Tổng điểm', 'Thao tác']}
-            cells={(item) => [
-              item.matrixName || item.name || '—',
-              item.examType || '—',
-              item.totalPoints ?? '—',
-              <ActionMenu
-                label={`Thao tác với ${item.matrixName || 'ma trận'}`}
-                disabled={action.busy}
-                items={[
-                  { label: 'Chỉnh sửa', onSelect: () => openEdit(item) },
-                  { label: 'Kiểm tra ma trận', onSelect: () => validate(item) },
-                  { label: 'Xóa', danger: true, onSelect: () => setDeleteTarget(item) },
-                ]}
-              />,
-            ]}
-          />
-        )}
-      </Resource>
+      {!createPage && (
+        <Resource resource={matrices}>
+          {(rows) => (
+            <Table
+              asCards
+              rows={rows}
+              columns={['Ma trận', 'Loại đề', 'Tổng điểm', 'Thao tác']}
+              cells={(item) => [
+                item.matrixName || item.name || '—',
+                item.examType || '—',
+                item.totalPoints ?? '—',
+                <ActionMenu
+                  label={`Thao tác với ${item.matrixName || 'ma trận'}`}
+                  disabled={action.busy}
+                  items={[
+                    { label: 'Chỉnh sửa', onSelect: () => openEdit(item) },
+                    { label: 'Kiểm tra ma trận', onSelect: () => validate(item) },
+                    { label: 'Xóa', danger: true, onSelect: () => setDeleteTarget(item) },
+                  ]}
+                />,
+              ]}
+            />
+          )}
+        </Resource>
+      )}
       {modal && (
-        <Modal
+        <EditorContainer
           title={modal.mode === 'edit' ? 'Chỉnh sửa ma trận đề' : 'Tạo ma trận đề'}
           busy={action.busy}
-          onClose={() => !action.busy && setModal(null)}
+          onClose={() =>
+            !action.busy && (createPage ? navigate('lecturer_assessments.html?tab=matrices') : setModal(null))
+          }
         >
           <Form className="grid gap-4" onSubmit={save}>
             <SharedFormField
@@ -937,9 +954,11 @@ export function MatrixManager({ classes }) {
                 </Button>
               </div>
             </Card>
-            <SubmitButton busy={action.busy}>Lưu ma trận</SubmitButton>
+            <SubmitButton busy={action.busy} disabled={!subjectId || topics.loading || Boolean(topics.error)}>
+              Lưu ma trận
+            </SubmitButton>
           </Form>
-        </Modal>
+        </EditorContainer>
       )}
     </>
   );
@@ -1041,18 +1060,21 @@ export function LecturerDashboardApiPage() {
   );
 }
 
-export function LecturerAssessmentApiPage({ grading = false }) {
+export function LecturerAssessmentApiPage({ grading = false, createPage = false }) {
   const classes = useResource('/api/v1/classes', true);
   const rows = listItems(classes.data);
-  const [tab, setTab] = useState('exams');
-  const [classId, setClassId] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [tab, setTab] = useState(
+    new URLSearchParams(window.location.search).get('tab') === 'matrices' ? 'matrices' : 'exams'
+  );
+  const [classId, setClassId] = useState(() => new URLSearchParams(window.location.search).get('classId') || '');
+  const [creating, setCreating] = useState(createPage);
   const [editing, setEditing] = useState(null);
   const [managing, setManaging] = useState(null);
   const [deleteExam, setDeleteExam] = useState(null);
   const [allExams, setAllExams] = useState([]);
   const [allExamsLoading, setAllExamsLoading] = useState(false);
   const [allExamsError, setAllExamsError] = useState('');
+  const EditorContainer = createPage ? AuthoringPanel : Modal;
   const selected = classId || 'ALL';
   const exams = useApiData(selected !== 'ALL' ? `/api/v1/exams/class/${encodeURIComponent(selected)}` : null);
   const matrices = useApiData(
@@ -1082,6 +1104,14 @@ export function LecturerAssessmentApiPage({ grading = false }) {
   const createExam = async (event) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
+    if (selected === 'ALL' || !rows.some((item) => item.classId === selected)) {
+      action.setError('Vui lòng chọn lớp học.');
+      return;
+    }
+    if (!values.title.trim() || new Date(values.endTime) <= new Date(values.startTime)) {
+      action.setError('Nhập tên đề thi và thời gian kết thúc sau thời gian bắt đầu.');
+      return;
+    }
     const body = {
       classId: selected,
       ...(values.matrixId ? { matrixId: values.matrixId } : {}),
@@ -1099,7 +1129,7 @@ export function LecturerAssessmentApiPage({ grading = false }) {
     if (result) {
       setCreating(false);
       setEditing(null);
-      exams.reload();
+      examResource.reload();
       if (!editing) setManaging(result);
     }
   };
@@ -1110,7 +1140,7 @@ export function LecturerAssessmentApiPage({ grading = false }) {
   return (
     <LecturerPageShell
       currentPage={grading ? 'lecturer_grading.html' : 'lecturer_assessments.html'}
-      title={grading ? 'Chấm bài kiểm tra' : 'Bài tập & kiểm tra'}
+      title={createPage ? 'Tạo đề thi' : grading ? 'Chấm bài kiểm tra' : 'Bài tập & kiểm tra'}
       eyebrow="ĐÁNH GIÁ"
       description={grading ? 'Theo dõi kỳ thi và thông tin đánh giá của lớp.' : 'Theo dõi các kỳ thi theo lớp.'}
     >
@@ -1136,155 +1166,233 @@ export function LecturerAssessmentApiPage({ grading = false }) {
           }}
         />
       )}
-      <div className="mt-6">
-        <Tabs
-          items={
-            grading
-              ? [{ id: 'exams', label: 'Kỳ thi của lớp' }]
-              : [
-                  { id: 'exams', label: 'Kỳ thi của lớp' },
-                  { id: 'matrices', label: 'Ma trận đề' },
-                ]
-          }
-          activeId={tab}
-          onChange={setTab}
-          actions={
-            <>
-              {tab === 'exams' && <ClassSelect classes={rows} value={selected} onChange={setClassId} />}
-              {!grading && tab === 'exams' && (
-                <Button icon="add" disabled={!selected || selected === 'ALL'} onClick={() => setCreating(true)}>
-                  Tạo đề thi
-                </Button>
-              )}
-            </>
-          }
-        >
-          {() =>
-            tab === 'matrices' ? (
-              <MatrixManager classes={rows} />
-            ) : (
-              <Resource resource={examResource}>
-                {(items) => (
-                  <Table
-                    asCards
-                    rows={items}
-                    columns={['Kỳ thi', 'Loại', 'Thời gian', 'Số câu', 'Thao tác']}
-                    cells={(item) => [
-                      nameOf(item),
-                      labelOf(item.examType),
-                      item.startTime ? new Date(item.startTime).toLocaleString('vi-VN') : '—',
-                      item.totalQuestions ?? '—',
-                      <ActionMenu
-                        label={`Thao tác với ${nameOf(item)}`}
-                        disabled={action.busy}
-                        items={
-                          grading
-                            ? [{ label: 'Xem danh sách bài làm', onSelect: () => setManaging(item) }]
-                            : [
-                                { label: 'Chỉnh sửa đề thi', onSelect: () => setManaging(item) },
-                                { label: 'Sửa thông tin đề thi', onSelect: () => editExam(item) },
-                                { label: 'Xóa đề thi', danger: true, onSelect: () => setDeleteExam(item) },
-                              ]
-                        }
-                      />,
-                    ]}
-                  />
+      {!createPage && (
+        <div className="mt-6">
+          <Tabs
+            items={
+              grading
+                ? [{ id: 'exams', label: 'Kỳ thi của lớp' }]
+                : [
+                    { id: 'exams', label: 'Kỳ thi của lớp' },
+                    { id: 'matrices', label: 'Ma trận đề' },
+                  ]
+            }
+            activeId={tab}
+            onChange={setTab}
+            actions={
+              <>
+                {tab === 'exams' && <ClassSelect classes={rows} value={selected} onChange={setClassId} />}
+                {!grading && tab === 'exams' && (
+                  <Button
+                    icon="add"
+                    disabled={!selected || selected === 'ALL'}
+                    onClick={() => navigate(queryPath('lecturer_exam_create.html', { classId: selected }))}
+                  >
+                    Tạo đề thi
+                  </Button>
                 )}
-              </Resource>
-            )
-          }
-        </Tabs>
-      </div>
+              </>
+            }
+          >
+            {() =>
+              tab === 'matrices' ? (
+                <MatrixManager classes={rows} />
+              ) : (
+                <Resource resource={examResource}>
+                  {(items) => (
+                    <Table
+                      asCards
+                      rows={items}
+                      columns={['Kỳ thi', 'Loại', 'Thời gian', 'Số câu', 'Thao tác']}
+                      cells={(item) => [
+                        nameOf(item),
+                        labelOf(item.examType),
+                        item.startTime ? new Date(item.startTime).toLocaleString('vi-VN') : '—',
+                        item.totalQuestions ?? '—',
+                        <ActionMenu
+                          label={`Thao tác với ${nameOf(item)}`}
+                          disabled={action.busy}
+                          items={
+                            grading
+                              ? [{ label: 'Xem danh sách bài làm', onSelect: () => setManaging(item) }]
+                              : [
+                                  { label: 'Chỉnh sửa đề thi', onSelect: () => setManaging(item) },
+                                  { label: 'Sửa thông tin đề thi', onSelect: () => editExam(item) },
+                                  { label: 'Xóa đề thi', danger: true, onSelect: () => setDeleteExam(item) },
+                                ]
+                          }
+                        />,
+                      ]}
+                    />
+                  )}
+                </Resource>
+              )
+            }
+          </Tabs>
+        </div>
+      )}
+      {createPage && <AuthAlert error>{matrices.error}</AuthAlert>}
       {(creating || editing) && (
-        <Modal
-          title={editing ? 'Chỉnh sửa đề thi' : 'Tạo đề thi'}
+        <EditorContainer
+          title={editing ? 'Chỉnh sửa đề thi' : 'Thiết lập đề thi'}
+          description="Chuẩn bị thông tin, cấu trúc và lịch thi trước khi thêm câu hỏi."
+          icon="quiz"
           busy={action.busy}
           onClose={() => {
+            if (createPage) {
+              navigate(queryPath('lecturer_assessments.html', { classId }));
+              return;
+            }
             setCreating(false);
             setEditing(null);
           }}
         >
-          <Form className="grid gap-4" busy={action.busy} onSubmit={createExam}>
-            <SharedFormField
-              name="title"
-              defaultValue={editing?.title || ''}
-              required
-              className="mt-2 w-full"
-              label={<>Tên đề thi</>}
-              wrapperClassName="text-body-sm font-semibold"
-            />
-            <SelectField label="Ma trận đề" name="matrixId" defaultValue={editing?.matrixId || ''}>
-              <option value="">Không sử dụng ma trận</option>
-              {listItems(matrices.data).map((matrix) => (
-                <option key={matrix.matrixId} value={matrix.matrixId}>
-                  {matrix.matrixName || matrix.name || 'Ma trận đề'}
-                </option>
-              ))}
-            </SelectField>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SharedSelectField
-                name="examType"
-                defaultValue={editing?.examType || 'PRACTICE'}
-                label={<>Loại đề</>}
-                className="text-body-sm font-semibold"
+          <Form className="authoring-grouped-form" busy={action.busy} onSubmit={createExam}>
+            <AuthoringSection
+              number="01"
+              icon="school"
+              title="Thông tin chung"
+              description="Chọn lớp học và đặt tên để dễ nhận diện đề thi."
+            >
+              <div className="authoring-fields authoring-fields--exam-info">
+                {createPage && (
+                  <Resource resource={classes}>
+                    {() => <ClassSelect classes={rows} value={selected} onChange={setClassId} />}
+                  </Resource>
+                )}
+                <SharedFormField
+                  name="title"
+                  defaultValue={editing?.title || ''}
+                  placeholder="Ví dụ: Kiểm tra giữa kỳ — Vật lý đại cương"
+                  required
+                  className="mt-2 w-full"
+                  label={<>Tên đề thi *</>}
+                  wrapperClassName="text-body-sm font-semibold"
+                />
+              </div>
+            </AuthoringSection>
+            <div className="authoring-exam-columns">
+              <AuthoringSection
+                number="02"
+                icon="quiz"
+                title="Cấu trúc đề thi"
+                description="Thiết lập loại đề, thời lượng làm bài và ma trận câu hỏi."
               >
-                <option value="PRACTICE">Luyện tập</option>
-                <option value="QUIZ">Kiểm tra ngắn</option>
-                <option value="MIDTERM">Giữa kỳ</option>
-                <option value="FINAL">Cuối kỳ</option>
-              </SharedSelectField>
-              <SharedFormField
-                name="durationMinutes"
-                type="number"
-                min="1"
-                defaultValue={editing?.durationMinutes || ''}
-                required
-                className="mt-2 w-full"
-                label={<>Thời lượng (phút)</>}
-                wrapperClassName="text-body-sm font-semibold"
-              />
-              <SharedFormField
-                name="startTime"
-                type="datetime-local"
-                defaultValue={editing?.startTime?.slice(0, 16) || ''}
-                required
-                className="mt-2 w-full"
-                label={<>Bắt đầu</>}
-                wrapperClassName="text-body-sm font-semibold"
-              />
-              <SharedFormField
-                name="endTime"
-                type="datetime-local"
-                defaultValue={editing?.endTime?.slice(0, 16) || ''}
-                required
-                className="mt-2 w-full"
-                label={<>Kết thúc</>}
-                wrapperClassName="text-body-sm font-semibold"
-              />
+                <div className="authoring-fields">
+                  <SharedSelectField
+                    name="examType"
+                    defaultValue={editing?.examType || 'PRACTICE'}
+                    label={<>Loại đề</>}
+                    className="text-body-sm font-semibold"
+                  >
+                    <option value="PRACTICE">Luyện tập</option>
+                    <option value="QUIZ">Kiểm tra ngắn</option>
+                    <option value="MIDTERM">Giữa kỳ</option>
+                    <option value="FINAL">Cuối kỳ</option>
+                  </SharedSelectField>
+                  <SharedFormField
+                    name="durationMinutes"
+                    type="number"
+                    min="1"
+                    defaultValue={editing?.durationMinutes || ''}
+                    required
+                    className="mt-2 w-full"
+                    label={<>Thời lượng (phút)</>}
+                    wrapperClassName="text-body-sm font-semibold"
+                  />
+                </div>
+                <SelectField
+                  key={selected}
+                  label="Ma trận đề"
+                  name="matrixId"
+                  defaultValue={editing?.matrixId || ''}
+                  disabled={matrices.loading || Boolean(matrices.error)}
+                >
+                  <option value="">Không sử dụng ma trận</option>
+                  {listItems(matrices.data).map((matrix) => (
+                    <option key={matrix.matrixId} value={matrix.matrixId}>
+                      {matrix.matrixName || matrix.name || 'Ma trận đề'}
+                    </option>
+                  ))}
+                </SelectField>
+              </AuthoringSection>
+              <AuthoringSection
+                number="03"
+                icon="event"
+                title="Lịch thi"
+                description="Khoảng thời gian sinh viên được phép vào làm bài."
+              >
+                <div className="authoring-time-fields">
+                  <SharedFormField
+                    name="startTime"
+                    type="datetime-local"
+                    defaultValue={editing?.startTime?.slice(0, 16) || ''}
+                    required
+                    className="mt-2 w-full"
+                    label={<>Bắt đầu</>}
+                    wrapperClassName="text-body-sm font-semibold"
+                  />
+                  <SharedFormField
+                    name="endTime"
+                    type="datetime-local"
+                    defaultValue={editing?.endTime?.slice(0, 16) || ''}
+                    required
+                    className="mt-2 w-full"
+                    label={<>Kết thúc</>}
+                    wrapperClassName="text-body-sm font-semibold"
+                  />
+                </div>
+              </AuthoringSection>
             </div>
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={action.busy}
-                onClick={() => {
-                  setCreating(false);
-                  setEditing(null);
-                }}
-              >
-                Hủy
-              </Button>
-              <SubmitButton busy={action.busy}>{editing ? 'Lưu thay đổi' : 'Tạo đề thi'}</SubmitButton>
+
+            <div className="authoring-page__footer">
+              <p>
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  playlist_add
+                </span>
+                Sau khi tạo đề, bạn có thể thêm câu hỏi hoặc sinh câu hỏi từ ma trận.
+              </p>
+              <div className="authoring-page__footer-actions">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={action.busy}
+                  onClick={() => {
+                    if (createPage) {
+                      navigate(queryPath('lecturer_assessments.html', { classId }));
+                      return;
+                    }
+                    setCreating(false);
+                    setEditing(null);
+                  }}
+                >
+                  Hủy
+                </Button>
+                <SubmitButton
+                  busy={action.busy}
+                  disabled={selected === 'ALL' || classes.loading || Boolean(classes.error)}
+                >
+                  {editing ? 'Lưu thay đổi' : 'Tạo đề thi'}
+                </SubmitButton>
+              </div>
             </div>
           </Form>
-        </Modal>
+        </EditorContainer>
+      )}
+      {createPage && !creating && (
+        <Button variant="secondary" onClick={() => navigate(queryPath('lecturer_assessments.html', { classId }))}>
+          Quay lại danh sách
+        </Button>
       )}
       {managing && (
         <ExamManagementModal
+          pageMode={createPage}
           exam={managing}
           subjectId={rows.find((item) => item.classId === (managing.classId || selected))?.subjectId}
           initialTab={grading ? 'attempts' : 'questions'}
-          onClose={() => setManaging(null)}
+          onClose={() =>
+            createPage ? navigate(queryPath('lecturer_assessments.html', { classId })) : setManaging(null)
+          }
           onChanged={examResource.reload}
         />
       )}
@@ -1721,6 +1829,19 @@ export function LecturerExperimentsApiPage() {
           }
         </Tabs>
       </div>
+    </LecturerPageShell>
+  );
+}
+
+export function LecturerMatrixCreatePage() {
+  return (
+    <LecturerPageShell
+      currentPage="lecturer_assessments.html"
+      title="Tạo ma trận đề"
+      eyebrow="ĐÁNH GIÁ"
+      description="Thiết lập cấu trúc ma trận đề theo học phần."
+    >
+      <MatrixManager createPage />
     </LecturerPageShell>
   );
 }

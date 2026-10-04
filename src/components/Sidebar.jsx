@@ -3,7 +3,6 @@ import React from 'react';
 export const studentNavItems = [
   ['dashboard.html', 'dashboard', 'Tổng quan'],
   ['my_courses.html', 'menu_book', 'Học phần của tôi'],
-  ['library.html', 'folder_open', 'Kho học liệu'],
   ['ai_tutor.html', 'smart_toy', 'Trợ giảng AI', '24/7'],
   ['exam_practice_center.html', 'fitness_center', 'Ôn luyện'],
   ['exam_session.html', 'quiz', 'Kiểm tra'],
@@ -12,9 +11,7 @@ export const studentNavItems = [
   ['learning_results.html', 'insights', 'Kết quả học tập'],
 ];
 
-export const studentFooterItems = [
-  ['profile_settings.html', 'settings', 'Cài đặt'],
-];
+export const studentFooterItems = [['profile_settings.html', 'settings', 'Cài đặt']];
 
 export function Sidebar({
   currentPage = '',

@@ -10,6 +10,7 @@ import { FormField } from '../../components/FormField.jsx';
 import { SelectField } from '../../components/SelectField.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
+import { MarkdownContent } from '../../components/MarkdownContent.jsx';
 import { api } from '../../lib/apiClient.js';
 import { loadAdminMaterials } from '../../lib/adminMaterials.js';
 import { labelOf, safeUrl } from '../../lib/lecturerUtils.js';
@@ -224,9 +225,15 @@ export function AdminMaterialsPage() {
               </div>
               <div>
                 <h3 className="font-semibold">Nội dung</h3>
-                <p className="mt-2 whitespace-pre-wrap break-words">
-                  {detail.contentText || 'Học liệu không có nội dung văn bản.'}
-                </p>
+                {detail.type === 'MARKDOWN' && detail.contentText ? (
+                  <Card className="mt-2 p-4">
+                    <MarkdownContent content={detail.contentText} />
+                  </Card>
+                ) : (
+                  <p className="mt-2 whitespace-pre-wrap break-words">
+                    {detail.contentText || 'Học liệu không có nội dung văn bản.'}
+                  </p>
+                )}
               </div>
               {(safeUrl(detail.fileUrl) || (detail.type === 'VIDEO' && materialVideoSource(detail))) && (
                 <Button

@@ -4,7 +4,11 @@ import { api } from '../../lib/apiClient.js';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { queryPath, validateOptions } from '../../lib/lecturerUtils.js';
-import { VideoSourceFields } from '../../components/VideoSourceFields.jsx';
+import { MaterialContentFields, materialFormats } from '../../components/MaterialContentFields.jsx';
+import { MarkdownContent } from '../../components/MarkdownContent.jsx';
+import { AuthoringPanel } from '../../components/AuthoringPanel.jsx';
+import { AuthoringSection } from '../../components/AuthoringSection.jsx';
+import { navigate } from '../../lib/navigation.js';
 import { validateVideoMaterial } from '../../lib/materialSources.js';
 import {
   Button,
@@ -72,38 +76,73 @@ function useAllMaterials(enabled, subjectsData, subjectFilter) {
 }
 
 function MaterialEditorForm({ initial, onSubmit, busy }) {
-  const [type, setType] = useState(initial.type || 'PDF');
+  const [type, setType] = useState(initial.type || 'MARKDOWN');
   return (
-    <Form className="grid gap-4" onSubmit={onSubmit}>
-      <Field label="Tiêu đề *" name="title" required defaultValue={initial.title || ''} />
-      <SelectField
-        label="Định dạng"
-        name="type"
-        value={type}
-        disabled={busy}
-        onChange={(event) => setType(event.target.value)}
+    <Form className="authoring-grouped-form" onSubmit={onSubmit}>
+      <AuthoringSection
+        number="02"
+        icon="description"
+        title="Thông tin học liệu"
+        description="Đặt tên và chọn định dạng phù hợp với bài học."
       >
-        {['PDF', 'VIDEO', 'MARKDOWN', 'TEXT'].map((value) => (
-          <option key={value} value={value}>
-            {labelOf(value)}
-          </option>
-        ))}
-      </SelectField>
-      <Field label="Nội dung / mô tả" name="contentText" multiline rows={6} defaultValue={initial.contentText || ''} />
-      {type === 'VIDEO' ? (
-        <VideoSourceFields initial={initial} busy={busy} />
-      ) : (
-        <>
-          <Field label="Nguồn học liệu" name="sourceCitation" defaultValue={initial.sourceCitation || ''} />
-          {initial.fileUrl && (
-            <FileLink url={initial.fileUrl}>Tệp hiện tại (giữ nguyên nếu không chọn tệp mới)</FileLink>
-          )}
-          <Field label="Tệp học liệu" name="file" type="file" />
-        </>
-      )}
-      <SubmitButton type="submit" disabled={busy}>
-        {busy ? 'Đang tải lên…' : 'Lưu học liệu'}
-      </SubmitButton>
+        <div className="authoring-fields authoring-fields--material">
+          <Field
+            label="Tiêu đề *"
+            name="title"
+            required
+            defaultValue={initial.title || ''}
+            placeholder="Ví dụ: Định luật Newton và ứng dụng"
+          />
+          <SelectField
+            label="Định dạng"
+            name="type"
+            value={type}
+            disabled={busy}
+            onChange={(event) => setType(event.target.value)}
+          >
+            {materialFormats.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </SelectField>
+        </div>
+      </AuthoringSection>
+      <AuthoringSection
+        number="03"
+        icon={type === 'VIDEO' ? 'play_circle' : type === 'MARKDOWN' ? 'code' : 'upload_file'}
+        title={
+          type === 'MARKDOWN'
+            ? 'Soạn nội dung & xem trước'
+            : type === 'VIDEO'
+              ? 'Nội dung video'
+              : ['TEXT'].includes(type)
+                ? 'Nội dung bài học'
+                : 'Tệp đính kèm'
+        }
+        description={
+          type === 'MARKDOWN'
+            ? 'Viết Markdown bên trái. Bản hiển thị cho sinh viên cập nhật ngay bên phải.'
+            : type === 'VIDEO'
+              ? 'Thêm mô tả bài học và đường dẫn video.'
+              : type === 'TEXT'
+                ? 'Nhập nội dung mà sinh viên sẽ đọc trong bài học.'
+                : 'Chọn tài liệu để đính kèm vào bài học.'
+        }
+      >
+        <MaterialContentFields key={type} type={type} initial={initial} busy={busy} />
+      </AuthoringSection>
+      <div className="authoring-page__footer">
+        <p>
+          <span className="material-symbols-outlined" aria-hidden="true">
+            info
+          </span>
+          Các trường có dấu * là bắt buộc.
+        </p>
+        <SubmitButton type="submit" icon="save" disabled={busy}>
+          {busy ? 'Đang tải lên…' : 'Lưu học liệu'}
+        </SubmitButton>
+      </div>
     </Form>
   );
 }
@@ -237,7 +276,7 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
   );
 }
 
-export function LecturerAuthoringApiPage({ kind }) {
+export function LecturerAuthoringApiPage({ kind, createPage = false }) {
   const materialMode = kind === 'materials';
   const subjects = useResource('/api/v1/subjects', true);
   const [subjectId, setSubject] = useQueryState('subjectId');
@@ -262,7 +301,8 @@ export function LecturerAuthoringApiPage({ kind }) {
         })
   );
   const displayedResource = materialMode && !validTopic ? allMaterials : resource;
-  const [modal, setModal] = useState(null);
+  const [modal, setModal] = useState(createPage ? { type: 'material', row: {} } : null);
+  const EditorContainer = createPage ? AuthoringPanel : Modal;
   const [newTopicName, setNewTopicName] = useState('');
   const action = useMutation();
   const formTopicId = modal?.row.topicId || modal?.row._topicId || validTopic;
@@ -305,6 +345,10 @@ export function LecturerAuthoringApiPage({ kind }) {
     }
   };
   const close = () => {
+    if (createPage && !action.busy) {
+      navigate(queryPath('lecturer_materials.html', { subjectId, topicId: validTopic }));
+      return;
+    }
     if (!action.busy) {
       setModal(null);
       action.clear();
@@ -312,6 +356,10 @@ export function LecturerAuthoringApiPage({ kind }) {
   };
   const open = async (type, row) => {
     action.clear();
+    if (type === 'material' && !row) {
+      navigate(queryPath('lecturer_material_create.html', { subjectId, topicId: validTopic }));
+      return;
+    }
     if (!row) {
       setNewTopicName('');
       setModal({ type, row: {} });
@@ -330,6 +378,10 @@ export function LecturerAuthoringApiPage({ kind }) {
   };
   const saved = (result) => {
     if (result.ok) {
+      if (createPage) {
+        navigate(queryPath('lecturer_materials.html', { subjectId, topicId: validTopic }));
+        return;
+      }
       setModal(null);
       displayedResource.reload();
       topics.reload();
@@ -379,8 +431,21 @@ export function LecturerAuthoringApiPage({ kind }) {
       action.setError(videoError);
       return;
     }
-    if (data.get('type') !== 'VIDEO' && !data.get('contentText')?.trim() && !file?.size && !modal.row.fileUrl) {
-      action.setError('Nhập nội dung hoặc chọn tệp học liệu.');
+    const type = data.get('type');
+    if (['MARKDOWN', 'TEXT'].includes(type) && !String(data.get('contentText') || '').trim()) {
+      action.setError('Vui lòng nhập nội dung học liệu.');
+      return;
+    }
+    if (
+      !['MARKDOWN', 'TEXT', 'VIDEO'].includes(type) &&
+      !file?.size &&
+      (!modal.row.fileUrl || modal.row.type !== type)
+    ) {
+      action.setError('Vui lòng chọn tệp học liệu.');
+      return;
+    }
+    if (file?.size && type === 'PDF' && !/\.pdf$/i.test(file.name)) {
+      action.setError('Tệp không đúng định dạng đã chọn.');
       return;
     }
     saved(
@@ -394,166 +459,170 @@ export function LecturerAuthoringApiPage({ kind }) {
   return (
     <LecturerPageShell
       currentPage={materialMode ? 'lecturer_materials.html' : 'lecturer_question_bank.html'}
-      title={materialMode ? 'Kho học liệu' : 'Ngân hàng câu hỏi'}
+      title={createPage ? 'Thêm học liệu' : materialMode ? 'Kho học liệu' : 'Ngân hàng câu hỏi'}
       eyebrow="NỘI DUNG GIẢNG DẠY"
       description="Quản lý nội dung theo học phần và chủ đề."
     >
       {action.feedback}
-      <Tabs
-        activeId={tab}
-        onChange={setTab}
-        items={
-          materialMode
-            ? [
-                { id: 'materials', label: 'Học liệu' },
-                { id: 'topics', label: 'Chủ đề' },
-              ]
-            : [{ id: 'questions', label: 'Câu hỏi' }]
-        }
-        filters={
-          <>
-            <Lookup
-              label="Học phần"
-              idKey="subjectId"
-              resource={subjects}
-              value={subjectId}
-              onChange={changeSubject}
-              placeholder={materialMode ? 'Tất cả học phần' : 'Chọn học phần'}
-            />
-            {tab !== 'topics' && (
+      {!createPage && (
+        <Tabs
+          activeId={tab}
+          onChange={setTab}
+          items={
+            materialMode
+              ? [
+                  { id: 'materials', label: 'Học liệu' },
+                  { id: 'topics', label: 'Chủ đề' },
+                ]
+              : [{ id: 'questions', label: 'Câu hỏi' }]
+          }
+          filters={
+            <>
               <Lookup
-                label="Chủ đề"
-                idKey="topicId"
-                resource={topics}
-                value={validTopic}
-                onChange={(v) => {
-                  setTopic(v);
-                  setPage(0);
-                }}
-                placeholder={materialMode ? 'Chọn chủ đề' : 'Tất cả chủ đề'}
+                label="Học phần"
+                idKey="subjectId"
+                resource={subjects}
+                value={subjectId}
+                onChange={changeSubject}
+                placeholder={materialMode ? 'Tất cả học phần' : 'Chọn học phần'}
               />
-            )}
-            {!materialMode && (
-              <SelectField
-                label="Độ khó"
-                name="difficultyLevel"
-                value={difficulty}
-                onChange={(e) => {
-                  setDifficulty(e.target.value);
-                  setPage(0);
-                }}
-              >
-                <option value="">Tất cả</option>
-                {['EASY', 'MEDIUM', 'HARD'].map((v) => (
-                  <option key={v} value={v}>
-                    {labelOf(v)}
-                  </option>
-                ))}
-              </SelectField>
-            )}
-          </>
-        }
-        actions={
-          <>
-            <Button
-              disabled={action.busy}
-              onClick={() => open(tab === 'topics' ? 'topic' : materialMode ? 'material' : 'question')}
-            >
-              Tạo {tab === 'topics' ? 'chủ đề' : materialMode ? 'học liệu' : 'câu hỏi'}
-            </Button>
-            {!materialMode && (
-              <>
-                <Button
-                  variant="secondary"
-                  disabled={action.busy}
-                  onClick={async () => {
-                    const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
-                    if (result.ok) {
-                      const url = URL.createObjectURL(result.data);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = 'mau-nhap-cau-hoi.xlsx';
-                      link.click();
-                      URL.revokeObjectURL(url);
-                    }
+              {tab !== 'topics' && (
+                <Lookup
+                  label="Chủ đề"
+                  idKey="topicId"
+                  resource={topics}
+                  value={validTopic}
+                  onChange={(v) => {
+                    setTopic(v);
+                    setPage(0);
                   }}
-                >
-                  Tải mẫu Excel
-                </Button>
-                <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
-                  Nhập Excel
-                </Button>
-              </>
-            )}
-          </>
-        }
-      >
-        {() =>
-          tab === 'topics' ? (
-            <Resource value={topics}>
-              {(data) => (
-                <Table
-                  rows={itemsOf(data)}
-                  asCards
-                  columns={['Chủ đề', 'Mô tả', 'Thứ tự', 'Thao tác']}
-                  cells={(row) => [
-                    displayName(row),
-                    row.description,
-                    row.orderIndex,
-                    <ActionMenu
-                      disabled={action.busy}
-                      label={`Thao tác với ${displayName(row)}`}
-                      items={[{ label: 'Chỉnh sửa', onSelect: () => open('topic', row) }]}
-                    />,
-                  ]}
+                  placeholder={materialMode ? 'Chọn chủ đề' : 'Tất cả chủ đề'}
                 />
               )}
-            </Resource>
-          ) : (
-            <Resource value={displayedResource} empty="Đang tải tất cả học liệu…">
-              {(data) => (
+              {!materialMode && (
+                <SelectField
+                  label="Độ khó"
+                  name="difficultyLevel"
+                  value={difficulty}
+                  onChange={(e) => {
+                    setDifficulty(e.target.value);
+                    setPage(0);
+                  }}
+                >
+                  <option value="">Tất cả</option>
+                  {['EASY', 'MEDIUM', 'HARD'].map((v) => (
+                    <option key={v} value={v}>
+                      {labelOf(v)}
+                    </option>
+                  ))}
+                </SelectField>
+              )}
+            </>
+          }
+          actions={
+            <>
+              <Button
+                disabled={action.busy}
+                onClick={() => open(tab === 'topics' ? 'topic' : materialMode ? 'material' : 'question')}
+              >
+                Tạo {tab === 'topics' ? 'chủ đề' : materialMode ? 'học liệu' : 'câu hỏi'}
+              </Button>
+              {!materialMode && (
                 <>
+                  <Button
+                    variant="secondary"
+                    disabled={action.busy}
+                    onClick={async () => {
+                      const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
+                      if (result.ok) {
+                        const url = URL.createObjectURL(result.data);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = 'mau-nhap-cau-hoi.xlsx';
+                        link.click();
+                        URL.revokeObjectURL(url);
+                      }
+                    }}
+                  >
+                    Tải mẫu Excel
+                  </Button>
+                  <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
+                    Nhập Excel
+                  </Button>
+                </>
+              )}
+            </>
+          }
+        >
+          {() =>
+            tab === 'topics' ? (
+              <Resource value={topics}>
+                {(data) => (
                   <Table
                     rows={itemsOf(data)}
-                    server={!materialMode}
                     asCards
-                    columns={['Nội dung', 'Loại', materialMode ? 'Phiên bản' : 'Độ khó', 'Trạng thái', 'Thao tác']}
+                    columns={['Chủ đề', 'Mô tả', 'Thứ tự', 'Thao tác']}
                     cells={(row) => [
-                      materialMode ? row.title : row.content,
-                      labelOf(row.type || row.questionType),
-                      materialMode ? row.version : labelOf(row.difficultyLevel),
-                      <StatusBadge status={row.approvalStatus} />,
+                      displayName(row),
+                      row.description,
+                      row.orderIndex,
                       <ActionMenu
-                        label={`Thao tác với ${materialMode ? row.title : row.content || 'câu hỏi'}`}
                         disabled={action.busy}
-                        items={[
-                          { label: 'Xem chi tiết', onSelect: () => open('view', row) },
-                          { label: 'Chỉnh sửa', onSelect: () => open(materialMode ? 'material' : 'question', row) },
-                          materialMode &&
-                            row.approvalStatus !== 'APPROVED' && {
-                              label: 'Duyệt học liệu',
-                              onSelect: () =>
-                                action.confirm(
-                                  `Duyệt học liệu “${row.title || 'này'}”?`,
-                                  () =>
-                                    api.materials.approve(row.topicId || row._topicId || validTopic, row.materialId),
-                                  displayedResource.reload
-                                ),
-                            },
-                          { label: 'Xóa', danger: true, onSelect: () => remove(row) },
-                        ]}
+                        label={`Thao tác với ${displayName(row)}`}
+                        items={[{ label: 'Chỉnh sửa', onSelect: () => open('topic', row) }]}
                       />,
                     ]}
                   />
-                  {!materialMode && <Pager data={data} page={page} onChange={setPage} />}
-                </>
-              )}
-            </Resource>
-          )
-        }
-      </Tabs>
+                )}
+              </Resource>
+            ) : (
+              <Resource value={displayedResource} empty="Đang tải tất cả học liệu…">
+                {(data) => (
+                  <>
+                    <Table
+                      rows={itemsOf(data)}
+                      server={!materialMode}
+                      asCards
+                      columns={['Nội dung', 'Loại', materialMode ? 'Phiên bản' : 'Độ khó', 'Trạng thái', 'Thao tác']}
+                      cells={(row) => [
+                        materialMode ? row.title : row.content,
+                        labelOf(row.type || row.questionType),
+                        materialMode ? row.version : labelOf(row.difficultyLevel),
+                        <StatusBadge status={row.approvalStatus} />,
+                        <ActionMenu
+                          label={`Thao tác với ${materialMode ? row.title : row.content || 'câu hỏi'}`}
+                          disabled={action.busy}
+                          items={[
+                            { label: 'Xem chi tiết', onSelect: () => open('view', row) },
+                            { label: 'Chỉnh sửa', onSelect: () => open(materialMode ? 'material' : 'question', row) },
+                            materialMode &&
+                              row.approvalStatus !== 'APPROVED' && {
+                                label: 'Duyệt học liệu',
+                                onSelect: () =>
+                                  action.confirm(
+                                    `Duyệt học liệu “${row.title || 'này'}”?`,
+                                    () =>
+                                      api.materials.approve(row.topicId || row._topicId || validTopic, row.materialId),
+                                    displayedResource.reload
+                                  ),
+                              },
+                            { label: 'Xóa', danger: true, onSelect: () => remove(row) },
+                          ]}
+                        />,
+                      ]}
+                    />
+                    {!materialMode && <Pager data={data} page={page} onChange={setPage} />}
+                  </>
+                )}
+              </Resource>
+            )
+          }
+        </Tabs>
+      )}
       {modal && (
-        <Modal
+        <EditorContainer
+          description={createPage ? 'Chuẩn bị tài liệu, video hoặc bài đọc cho chủ đề giảng dạy.' : undefined}
+          icon="library_add"
           title={
             modal.type === 'view'
               ? 'Chi tiết nội dung'
@@ -570,14 +639,15 @@ export function LecturerAuthoringApiPage({ kind }) {
             </p>
           )}
           {modal.type !== 'view' && !modal.row.materialId && !modal.row.questionId && !modal.row.topicId && (
-            <section
-              className="mb-5 grid gap-3 rounded-xl border border-[#E2E8F0] p-4"
+            <AuthoringSection
+              number="01"
+              icon="school"
+              title="Học phần & chủ đề"
+              description="Chọn nơi lưu nội dung. Bạn có thể tạo chủ đề mới ngay tại đây."
+              className="authoring-scope"
               aria-label="Học phần và chủ đề của nội dung"
             >
-              <p className="text-body-sm text-[#64748B]">
-                Chọn nơi lưu nội dung. Nếu chưa có chủ đề, tạo chủ đề ngay bên dưới.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="authoring-fields authoring-scope__fields">
                 <Lookup
                   label="Học phần *"
                   resource={subjects}
@@ -634,7 +704,7 @@ export function LecturerAuthoringApiPage({ kind }) {
                   </p>
                 )
               )}
-            </section>
+            </AuthoringSection>
           )}
           {modal.type === 'question' ? (
             <QuestionForm
@@ -725,9 +795,13 @@ export function LecturerAuthoringApiPage({ kind }) {
               <p>
                 {labelOf(modal.row.type || modal.row.questionType)} · {labelOf(modal.row.approvalStatus)}
               </p>
-              <p className="whitespace-pre-wrap">
-                {materialMode ? modal.row.contentText || modal.row.sourceCitation : modal.row.content}
-              </p>
+              {materialMode && modal.row.type === 'MARKDOWN' ? (
+                <MarkdownContent content={modal.row.contentText || ''} />
+              ) : (
+                <p className="whitespace-pre-wrap">
+                  {materialMode ? modal.row.contentText || modal.row.sourceCitation : modal.row.content}
+                </p>
+              )}
               {modal.row.fileUrl && <FileLink url={modal.row.fileUrl} />}
               {modal.row.mediaUrl && <FileLink url={modal.row.mediaUrl}>Xem hình ảnh</FileLink>}
               {itemsOf(modal.row.options).map((o, i) => (
@@ -741,7 +815,7 @@ export function LecturerAuthoringApiPage({ kind }) {
               ))}
             </div>
           )}
-        </Modal>
+        </EditorContainer>
       )}
     </LecturerPageShell>
   );

@@ -14,7 +14,6 @@ import { ExamPracticePage } from './pages/students/ExamPracticePage.jsx';
 import { ExamResultsPage } from './pages/students/ExamResultsPage.jsx';
 import { LabReportPage } from './pages/students/LabReportPage.jsx';
 import { LearningResultsPage } from './pages/students/LearningResultsPage.jsx';
-import { LibraryPage } from './pages/students/LibraryPage.jsx';
 import { MyCoursesPage } from './pages/students/MyCoursesPage.jsx';
 import { VirtualLabPage } from './pages/students/VirtualLabPage.jsx';
 import { VoiceCitationsPage } from './pages/students/VoiceCitationsPage.jsx';
@@ -27,6 +26,7 @@ import { MobileExperiencePage } from './pages/students/MobileExperiencePage.jsx'
 import {
   LecturerAnalyticsApiPage,
   LecturerAssessmentApiPage,
+  LecturerMatrixCreatePage,
   LecturerDashboardApiPage,
   LecturerExperimentsApiPage,
   LecturerGradingApiPage,
@@ -57,7 +57,6 @@ const pageComponents = {
   'exam_results.html': ExamResultsPage,
   'lab_report_rubric.html': LabReportPage,
   'learning_results.html': LearningResultsPage,
-  'library.html': LibraryPage,
   'my_courses.html': MyCoursesPage,
   'profile_settings.html': AccountPage,
   'account.html': AccountPage,
@@ -76,6 +75,9 @@ const pageComponents = {
   'lecturer_materials.html': () => <LecturerAuthoringApiPage kind="materials" />,
   'lecturer_question_bank.html': () => <LecturerAuthoringApiPage kind="questions" />,
   'lecturer_assessments.html': LecturerAssessmentApiPage,
+  'lecturer_exam_create.html': () => <LecturerAssessmentApiPage createPage />,
+  'lecturer_matrix_create.html': LecturerMatrixCreatePage,
+  'lecturer_material_create.html': () => <LecturerAuthoringApiPage kind="materials" createPage />,
   'lecturer_assessment_results.html': LecturerAssessmentApiPage,
   'lecturer_attempt_detail.html': LecturerAssessmentApiPage,
   'lecturer_grading.html': LecturerGradingApiPage,
@@ -135,7 +137,9 @@ function App() {
   const session = getDemoSession();
   const Page = pageComponents[file] ?? pageComponents['login.html'];
   if (
-    !['login.html', 'auth_access.html', 'register.html', 'reset_password.html', '403.html', '404.html'].includes(file) &&
+    !['login.html', 'auth_access.html', 'register.html', 'reset_password.html', '403.html', '404.html'].includes(
+      file
+    ) &&
     (!session || !canAccess(session.role, file))
   ) {
     return <RoleAccessPage session={session} requestedPage={file} />;

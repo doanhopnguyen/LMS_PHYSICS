@@ -5,7 +5,6 @@ import { academicHref } from './academicScope.js';
 export const navigationByLabel = [
   ['Tổng quan', 'dashboard.html'],
   ['Học phần của tôi', 'my_courses.html'],
-  ['Kho học liệu', 'library.html'],
   ['Trợ giảng AI', 'ai_tutor.html'],
   ['Ôn luyện', 'exam_practice_center.html'],
   ['Kiểm tra', 'exam_session.html'],
@@ -47,7 +46,11 @@ export function routeFromLink(link) {
   if (link.hasAttribute('download') || (link.target && link.target !== '_self')) return null;
   if (href && !href.startsWith('#')) {
     let url;
-    try { url = new URL(href, window.location.href); } catch { return null; }
+    try {
+      url = new URL(href, window.location.href);
+    } catch {
+      return null;
+    }
     if (url.origin !== window.location.origin) return null;
     const route = url.pathname.replace(/^\//, '');
     const file = route.endsWith('.html') ? route : `${route}.html`;

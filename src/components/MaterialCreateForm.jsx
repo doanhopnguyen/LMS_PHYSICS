@@ -7,13 +7,15 @@ import { Button } from './Button.jsx';
 import { AuthAlert } from './AuthLayout.jsx';
 import { apiRequest } from '../lib/apiClient.js';
 import { listItems, useApiData } from '../hooks/useApiData.js';
-import { VideoSourceFields } from './VideoSourceFields.jsx';
+import { MaterialContentFields, materialFormats } from './MaterialContentFields.jsx';
+import { MarkdownContent } from './MarkdownContent.jsx';
 import { validateVideoMaterial } from '../lib/materialSources.js';
 
 export function MaterialCreateForm() {
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [type, setType] = useState('MARKDOWN');
+  const [editorKey, setEditorKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -42,6 +44,8 @@ export function MaterialCreateForm() {
     try {
       await apiRequest(`/api/v1/topics/${encodeURIComponent(topic)}/materials`, { method: 'POST', formData: body });
       form.reset();
+      setType('MARKDOWN');
+      setEditorKey((value) => value + 1);
       materials.reload();
       setMessage('Đã tạo học liệu.');
     } catch (e) {
@@ -116,41 +120,13 @@ export function MaterialCreateForm() {
             label={<>Định dạng</>}
             className="block"
           >
-            {['MARKDOWN', 'PDF', 'VIDEO', 'SLIDE', 'TEXT', 'OTHER'].map((value) => (
-              <option key={value}>{value}</option>
+            {materialFormats.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
             ))}
           </SharedSelectField>
-          {type === 'VIDEO' ? (
-            <VideoSourceFields busy={busy} />
-          ) : type === 'MARKDOWN' || type === 'TEXT' ? (
-            <SharedFormField
-              name="contentText"
-              required
-              rows={12}
-              className="mt-2 block w-full"
-              placeholder="# Tiêu đề bài học"
-              multiline
-              label={<>Nội dung {type === 'MARKDOWN' ? 'Markdown' : ''}</>}
-              wrapperClassName="block"
-            />
-          ) : (
-            <SharedFormField
-              name="file"
-              type="file"
-              required
-              className="mt-2 block w-full"
-              label={<>Tệp tài liệu</>}
-              wrapperClassName="block"
-            />
-          )}
-          {type !== 'VIDEO' && (
-            <SharedFormField
-              name="sourceCitation"
-              className="mt-2 block w-full"
-              label={<>Nguồn trích dẫn</>}
-              wrapperClassName="block"
-            />
-          )}
+          <MaterialContentFields key={`${type}-${editorKey}`} type={type} busy={busy} />
           <div className="authoring-actions">
             <SubmitButton icon="save" type="submit" disabled={!topic || busy}>
               {busy ? 'Đang lưu…' : 'Tạo học liệu'}
@@ -180,9 +156,13 @@ export function MaterialCreateForm() {
                   {item.contentText && (
                     <details className="mt-2">
                       <summary>Xem nội dung</summary>
-                      <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm">
-                        {item.contentText}
-                      </pre>
+                      {item.type === 'MARKDOWN' ? (
+                        <MarkdownContent content={item.contentText} />
+                      ) : (
+                        <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-4 text-sm">
+                          {item.contentText}
+                        </pre>
+                      )}
                     </details>
                   )}
                 </li>

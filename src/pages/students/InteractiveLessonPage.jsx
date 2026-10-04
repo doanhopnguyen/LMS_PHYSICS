@@ -1,3 +1,4 @@
+import { MarkdownContent } from '../../components/MarkdownContent.jsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
 import { MaterialSource } from '../../components/MaterialSource.jsx';
@@ -212,14 +213,29 @@ export function InteractiveLessonPage() {
                     />
                   </div>
                 ) : null}
+                {material.type === 'VIDEO' && material.contentText && (
+                  <Card className="p-6">
+                    <h3 className="mb-3 font-semibold">Nội dung video</h3>
+                    <p className="whitespace-pre-wrap leading-7 text-[#334155]">{material.contentText}</p>
+                  </Card>
+                )}
                 {(material.type === 'MARKDOWN' || material.type === 'TEXT') && (
                   <article className="lesson-content">
                     <section>
                       <h3>Nội dung bài học</h3>
-                      <div className="whitespace-pre-wrap leading-7 text-[#334155]">
-                        {material.contentText || 'Giảng viên chưa cập nhật nội dung văn bản cho học liệu này.'}
-                      </div>
-                      {(material.fileUrl || material.downloadUrl) && (
+                      {(material.contentText || !(material.fileUrl || material.downloadUrl || material.url)) &&
+                        (material.type === 'MARKDOWN' ? (
+                          <MarkdownContent
+                            content={
+                              material.contentText || 'Giảng viên chưa cập nhật nội dung văn bản cho học liệu này.'
+                            }
+                          />
+                        ) : (
+                          <div className="whitespace-pre-wrap leading-7 text-[#334155]">
+                            {material.contentText || 'Giảng viên chưa cập nhật nội dung văn bản cho học liệu này.'}
+                          </div>
+                        ))}
+                      {(material.fileUrl || material.downloadUrl || material.url) && (
                         <MaterialFilePreview key={material.materialId} material={material} />
                       )}
                     </section>
@@ -233,7 +249,7 @@ export function InteractiveLessonPage() {
                     <h2 className="mt-3 text-headline-sm font-bold">
                       {materialTypeLabel[material.type] || 'Tệp học liệu'}
                     </h2>
-                    {material.fileUrl || material.downloadUrl ? (
+                    {material.fileUrl || material.downloadUrl || material.url ? (
                       <div className="mt-4">
                         <MaterialFilePreview key={material.materialId} material={material} />
                       </div>

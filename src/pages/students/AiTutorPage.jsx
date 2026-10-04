@@ -241,13 +241,13 @@ export function AiTutorPage() {
             </div>
           )}
           <a
-            href="library.html"
+            href="my_courses.html"
             className="mt-4 inline-flex items-center gap-2 text-body-sm font-medium text-primary hover:underline"
           >
             <span className="material-symbols-outlined text-base" aria-hidden="true">
               menu_book
             </span>
-            Kho học liệu
+            Học phần của tôi
           </a>
         </Card>
         <Card className="chat-page__conversation flex min-w-0 flex-1 flex-col overflow-hidden">
