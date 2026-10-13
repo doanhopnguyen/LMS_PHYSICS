@@ -6,6 +6,7 @@ export const routeFiles = [
   'course_detail.html',
   'learning_module.html',
   'exam_practice_center.html',
+  'practice_session.html',
   'exam_results.html',
   'lab_report_rubric.html',
   'learning_results.html',

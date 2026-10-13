@@ -25,6 +25,7 @@ test('admin queue includes all subject and material pages with the correct topic
     calls.push(path);
     const url = new URL(path, 'https://api.example');
     const page = Number(url.searchParams.get('page'));
+    if (url.pathname === '/api/v1/classes') return [];
     if (url.pathname === '/api/v1/subjects')
       return { content: [{ subjectId: `s${page}`, subjectName: `Subject ${page}` }], totalPages: 2 };
     if (url.pathname.endsWith('/topics'))
@@ -36,6 +37,26 @@ test('admin queue includes all subject and material pages with the correct topic
   assert.equal(result.materials[0].topicId, 't0');
   assert.equal(result.materials[2].subjectId, 's1');
   assert.equal(calls.filter((path) => path.includes('/materials')).length, 4);
+});
+
+test('admin queue includes pending CLASS materials and deduplicates shared content', async () => {
+  const result = await loadAdminMaterials(async (path) => {
+    const url = new URL(path, 'https://api.example');
+    if (url.pathname === '/api/v1/subjects') return [{ subjectId: 's1', subjectName: 'Vật lý' }];
+    if (url.pathname.endsWith('/topics')) return [{ topicId: 't1', topicName: 'Newton' }];
+    if (url.pathname === '/api/v1/classes') return [{ classId: 'c1', subjectId: 's1', classCode: 'VL01' }];
+    if (url.pathname === '/api/v1/classes/c1/materials')
+      return [
+        { materialId: 'shared', scope: 'SHARED', topicId: 't1' },
+        { materialId: 'private', scope: 'CLASS', topicId: 't1', classId: 'c1', approvalStatus: 'PENDING' },
+      ];
+    return [{ materialId: 'shared', scope: 'SHARED', topicId: 't1' }];
+  });
+  assert.equal(result.materials.length, 2);
+  const privateMaterial = result.materials.find((row) => row.materialId === 'private');
+  assert.equal(privateMaterial.classCode, 'VL01');
+  assert.equal(privateMaterial.subjectName, 'Vật lý');
+  assert.equal(privateMaterial.approvalStatus, 'PENDING');
 });
 
 test('queue surfaces topic loading failures instead of displaying an incomplete queue', async () => {

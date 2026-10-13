@@ -15,7 +15,7 @@ export function StudentMaterialVideo({ material, fill = false }) {
     (async () => {
       if (!material.classId || !material.topicId) throw new Error('Mở video từ lớp học để ghi nhận tiến độ.');
       const [rows, progress] = await Promise.all([
-        api.students.myMaterials({ classId: material.classId, topicId: material.topicId }),
+        api.materials.forClass(material.classId, { topicId: material.topicId }),
         api.students.myProgress(material.classId),
       ]);
       if (!active) return;

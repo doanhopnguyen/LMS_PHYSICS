@@ -9,6 +9,7 @@ import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api } from '../../lib/apiClient.js';
 import { AdminFinalMatrices } from './AdminFinalMatrices.jsx';
+import { MatrixManager } from '../lecturers/LecturerApiWorkspace.jsx';
 
 function EnrollmentManager() {
   const [classId, setClassId] = useState('');
@@ -68,7 +69,13 @@ function EnrollmentManager() {
         <SelectField
           label="Lớp học *"
           value={classId}
-          onChange={(event) => setClassId(event.target.value)}
+          onChange={(event) => {
+            setClassId(event.target.value);
+            setStudent(null);
+            setBulkStudents([]);
+            setError('');
+            setMessage('');
+          }}
           disabled={classes.loading || busy}
         >
           <option value="">Chọn lớp học</option>
@@ -132,12 +139,21 @@ export function AdminAssessmentsPage() {
       <Tabs
         items={[
           { id: 'matrices', label: 'Ma trận FINAL' },
+          { id: 'regular', label: 'Ma trận đánh giá' },
           { id: 'enrollments', label: 'Ghi danh sinh viên' },
         ]}
         activeId={tab}
         onChange={setTab}
       >
-        {() => (tab === 'matrices' ? <AdminFinalMatrices /> : <EnrollmentManager />)}
+        {() =>
+          tab === 'matrices' ? (
+            <AdminFinalMatrices />
+          ) : tab === 'regular' ? (
+            <MatrixManager adminMode />
+          ) : (
+            <EnrollmentManager />
+          )
+        }
       </Tabs>
     </AdminPageShell>
   );

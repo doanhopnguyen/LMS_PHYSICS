@@ -10,10 +10,25 @@ const toneClasses = {
 };
 
 const statusTones = {
-  ACTIVE: 'success', APPROVED: 'success', COMPLETED: 'success', CONFIRMED: 'success',
-  GRADED: 'success', OPEN: 'success', PENDING: 'warning', IN_PROGRESS: 'primary',
-  REJECTED: 'danger', CANCELLED: 'danger', BLOCKED: 'danger', LOCKED: 'danger', DISABLED: 'neutral',
-  INACTIVE: 'neutral', DRAFT: 'neutral', SUBMITTED: 'primary',
+  PUBLISHED: 'success',
+  ARCHIVED: 'neutral',
+  ABANDONED: 'neutral',
+  ACTIVE: 'success',
+  APPROVED: 'success',
+  COMPLETED: 'success',
+  CONFIRMED: 'success',
+  GRADED: 'success',
+  OPEN: 'success',
+  PENDING: 'warning',
+  IN_PROGRESS: 'primary',
+  REJECTED: 'danger',
+  CANCELLED: 'danger',
+  BLOCKED: 'danger',
+  LOCKED: 'danger',
+  DISABLED: 'neutral',
+  INACTIVE: 'neutral',
+  DRAFT: 'neutral',
+  SUBMITTED: 'primary',
 };
 
 export function StatusBadge({ children, tone, status, className = '' }) {

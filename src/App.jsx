@@ -11,6 +11,7 @@ import { DashboardPage } from './pages/students/DashboardPage.jsx';
 import { CourseDetailPage } from './pages/students/CourseDetailPage.jsx';
 import { LearningModulePage } from './pages/students/LearningModulePage.jsx';
 import { ExamPracticePage } from './pages/students/ExamPracticePage.jsx';
+import { AdaptiveSessionPage } from './pages/students/AdaptivePractice.jsx';
 import { ExamResultsPage } from './pages/students/ExamResultsPage.jsx';
 import { LabReportPage } from './pages/students/LabReportPage.jsx';
 import { LearningResultsPage } from './pages/students/LearningResultsPage.jsx';
@@ -53,6 +54,7 @@ const pageComponents = {
   'course_detail.html': CourseDetailPage,
   'learning_module.html': LearningModulePage,
   'exam_practice_center.html': ExamPracticePage,
+  'practice_session.html': AdaptiveSessionPage,
   'exam_results.html': ExamResultsPage,
   'lab_report_rubric.html': LabReportPage,
   'learning_results.html': LearningResultsPage,

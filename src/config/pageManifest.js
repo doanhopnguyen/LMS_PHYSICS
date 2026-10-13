@@ -4,6 +4,7 @@ export const pageManifest = [
   { file: 'course_detail.html', component: 'CourseDetailPage', layout: 'AppShell' },
   { file: 'learning_module.html', component: 'LearningModulePage', layout: 'AppShell' },
   { file: 'exam_practice_center.html', component: 'ExamPracticePage', layout: 'AppShell' },
+  { file: 'practice_session.html', component: 'AdaptiveSessionPage', layout: 'AppShell' },
   { file: 'exam_results.html', component: 'ExamResultsPage', layout: 'AppShell' },
   { file: 'lab_report_rubric.html', component: 'LabReportPage', layout: 'AppShell' },
   { file: 'learning_results.html', component: 'LearningResultsPage', layout: 'AppShell' },
