@@ -72,7 +72,6 @@ const pageComponents = {
   'lecturer_courses.html': LecturerClassesApiPage,
   'lecturer_course_detail.html': LecturerClassDetail,
   'lecturer_materials.html': () => <LecturerAuthoringApiPage kind="materials" />,
-  'lecturer_question_bank.html': () => <LecturerAuthoringApiPage kind="questions" />,
   'lecturer_assessments.html': LecturerAssessmentApiPage,
   'lecturer_exam_create.html': () => <LecturerAssessmentApiPage createPage />,
   'lecturer_matrix_create.html': LecturerMatrixCreatePage,

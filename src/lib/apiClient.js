@@ -85,7 +85,7 @@ export async function apiRequest(path, options = {}) {
       body: formData || (body === undefined ? undefined : JSON.stringify(body)),
     });
   } catch (networkError) {
-    throw new ApiError('Không thể kết nối tới máy chủ API. Kiểm tra VITE_API_BASE_URL hoặc backend tại cổng 8080.');
+    throw new ApiError('Không thể kết nối máy chủ.', { method, path });
   }
 
   if (response.status === 401 && auth && retry && await refreshAccessToken()) {
@@ -162,7 +162,9 @@ export const api = {
 
   // ─── Learning Materials ──────────────────────────────────────────────────────
   materials: {
-    list: (topicId) => apiRequest(`/api/v1/topics/${topicId}/materials`),
+    list: (topicId, query) => apiRequest(`/api/v1/topics/${topicId}/materials`, { query }),
+    forClass: (classId, query) => apiRequest(`/api/v1/classes/${classId}/materials`, { query }),
+    createForClass: (classId, topicId, formData) => apiRequest(`/api/v1/classes/${classId}/topics/${topicId}/materials`, { method: 'POST', formData }),
     get: (topicId, materialId) => apiRequest(`/api/v1/topics/${topicId}/materials/${materialId}`),
     create: (topicId, formData) => apiRequest(`/api/v1/topics/${topicId}/materials`, { method: 'POST', formData }),
     update: (topicId, materialId, formData) => apiRequest(`/api/v1/topics/${topicId}/materials/${materialId}`, { method: 'PUT', formData }),
@@ -221,6 +223,10 @@ export const api = {
     update: (id, body) => apiRequest(`/api/v1/questions/${id}`, { method: 'PUT', body }),
     remove: (id) => apiRequest(`/api/v1/questions/${id}`, { method: 'DELETE' }),
     approve: (id) => apiRequest(`/api/v1/questions/${id}/approve`, { method: 'PUT' }),
+    submitReview: (id) => apiRequest(`/api/v1/questions/${id}/submit-review`, { method: 'PUT' }),
+    reject: (id, body) => apiRequest(`/api/v1/questions/${id}/reject`, { method: 'PUT', body }),
+    approvals: (id) => apiRequest(`/api/v1/questions/${id}/approvals`),
+    assignClos: (id, cloIds) => apiRequest(`/api/v1/questions/${id}/clos`, { method: 'PUT', body: cloIds }),
     downloadTemplate: () => apiRequest('/api/v1/questions/import-excel/template', { responseType: 'blob' }),
     importExcel: (formData, query) => apiRequest('/api/v1/questions/import-excel', { method: 'POST', formData, query }),
   },
@@ -233,10 +239,6 @@ export const api = {
     remove: (id) => apiRequest(`/api/v1/notifications/${id}`, { method: 'DELETE' }),
     generateReminders: () => apiRequest('/api/v1/notifications/reminders/generate', { method: 'POST' }),
     sendToClass: (classId, body) => apiRequest(`/api/v1/notifications/classes/${classId}`, { method: 'POST', body }),
-  },
-
-  files: {
-    upload: (formData) => apiRequest('/api/v1/files/upload', { method: 'POST', formData }),
   },
 
   examMatrices: {
@@ -337,7 +339,50 @@ export const api = {
   files: {
     upload: (formData, query) => apiRequest('/api/v1/files/upload', { method: 'POST', formData, query }),
     downloadUrl: (fileId) => apiRequest(`/api/v1/files/${fileId}/download-url`, { method: 'POST' }),
-    /** Get a public read-only URL for a stored file (no auth needed). */
+    chunk: (formData) => apiRequest('/api/v1/files/chunks', { method: 'POST', formData }),
+    chunkStatus: (uploadId) => apiRequest(`/api/v1/files/chunks/${uploadId}/status`),
+    merge: (uploadId) => apiRequest('/api/v1/files/chunks/merge', { method: 'POST', body: { uploadId } }),
+    /** Direct URL; protected files require a signed download URL or authenticated fetch. */
     url: (filePath) => makeUrl(`/api/v1/files/${filePath}`, {}),
+  },
+  chapters: {
+    list: (subjectId) => apiRequest(`/api/v1/subjects/${subjectId}/chapters`),
+    create: (subjectId, body) => apiRequest(`/api/v1/subjects/${subjectId}/chapters`, { method: 'POST', body }),
+    update: (id, body) => apiRequest(`/api/v1/chapters/${id}`, { method: 'PUT', body }),
+    remove: (id) => apiRequest(`/api/v1/chapters/${id}`, { method: 'DELETE' }),
+    reorderTopics: (id, topicIds) => apiRequest(`/api/v1/chapters/${id}/topics/reorder`, { method: 'PUT', body: { topicIds } }),
+    assignTopic: (topicId, chapterId) => apiRequest(`/api/v1/topics/${topicId}/assign-chapter`, { method: 'PUT', body: { chapterId: chapterId || null } }),
+  },
+  clos: {
+    list: (subjectId) => apiRequest(`/api/v1/subjects/${subjectId}/clos`),
+    create: (subjectId, body) => apiRequest(`/api/v1/subjects/${subjectId}/clos`, { method: 'POST', body }),
+    update: (id, body) => apiRequest(`/api/v1/clos/${id}`, { method: 'PUT', body }),
+    remove: (id) => apiRequest(`/api/v1/clos/${id}`, { method: 'DELETE' }),
+  },
+  instructorClasses: {
+    list: (query) => apiRequest('/api/v1/instructor/classes', { query }),
+    get: (id) => apiRequest(`/api/v1/instructor/classes/${id}`),
+    settings: (id) => apiRequest(`/api/v1/instructor/classes/${id}/settings`),
+    updateSettings: (id, body) => apiRequest(`/api/v1/instructor/classes/${id}/settings`, { method: 'PUT', body }),
+    weakTopics: (id) => apiRequest(`/api/v1/instructor/classes/${id}/weak-topics-summary`),
+  },
+  adminFinalMatrices: {
+    list: (subjectId) => apiRequest('/api/v1/admin/exam-matrices', { query: { subjectId } }),
+    create: (body) => apiRequest('/api/v1/admin/exam-matrices/final', { method: 'POST', body }),
+    validate: (id) => apiRequest(`/api/v1/admin/exam-matrices/${id}/validate`, { method: 'POST' }),
+    publish: (id) => apiRequest(`/api/v1/admin/exam-matrices/${id}/publish`, { method: 'POST' }),
+    archive: (id) => apiRequest(`/api/v1/admin/exam-matrices/${id}/archive`, { method: 'POST' }),
+    clone: (id) => apiRequest(`/api/v1/admin/exam-matrices/${id}/clone-revision`, { method: 'POST' }),
+  },
+  adminExams: {
+    provisionFinal: (body) => apiRequest('/api/v1/admin/exams/bulk-provision-final', { method: 'POST', body }),
+  },
+  practice: {
+    weakTopics: (classId) => apiRequest(`/api/v1/student/classes/${classId}/weak-topics`),
+    create: (classId, body) => apiRequest(`/api/v1/student/classes/${classId}/practice-recommendations`, { method: 'POST', body }),
+    get: (id) => apiRequest(`/api/v1/student/practice-sessions/${id}`),
+    saveAnswer: (id, body) => apiRequest(`/api/v1/student/practice-sessions/${id}/answers`, { method: 'POST', body }),
+    submit: (id) => apiRequest(`/api/v1/student/practice-sessions/${id}/submit`, { method: 'POST' }),
+    results: (id) => apiRequest(`/api/v1/student/practice-sessions/${id}/results`),
   },
 };

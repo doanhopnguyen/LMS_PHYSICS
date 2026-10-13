@@ -26,7 +26,6 @@ export const routeFiles = [
   'lecturer_material_create.html',
   'lecturer_exam_create.html',
   'lecturer_matrix_create.html',
-  'lecturer_question_bank.html',
   'lecturer_assessments.html',
   'lecturer_assessment_results.html',
   'lecturer_attempt_detail.html',

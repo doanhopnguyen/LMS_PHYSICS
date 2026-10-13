@@ -11,7 +11,6 @@ export const lecturerNavigation = [
   ['lecturer_dashboard.html', 'dashboard', 'Tổng quan'],
   ['lecturer_courses.html', 'menu_book', 'Học phần & lớp học'],
   ['lecturer_materials.html', 'folder_open', 'Kho học liệu'],
-  ['lecturer_question_bank.html', 'quiz', 'Ngân hàng câu hỏi'],
   ['lecturer_assessments.html', 'assignment', 'Bài tập & kiểm tra'],
   ['lecturer_grading.html', 'grading', 'Chấm bài'],
   ['lecturer_labs.html', 'science', 'Thí nghiệm 3D'],
