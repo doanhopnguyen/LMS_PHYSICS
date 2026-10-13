@@ -126,8 +126,9 @@ try {
       if(p==='/api/v1/subjects/s1/clos')data=method==='GET'?[clo]:{...clo,...body};
       if(p==='/api/v1/instructor/classes/c1/settings')data=method==='GET'?{classId:'c1',practiceEnabled:true,quizEnabled:true,maxPracticeAttempts:10,practiceShowSolution:true}:body;
       if(p==='/api/v1/instructor/classes/c1/weak-topics-summary')data={topics:[{topicName:topic.topicName,studentsNeedingPractice:3,averageAccuracyRate:55}]};
-      if(p==='/api/v1/classes/c1/materials')data=[{materialId:'m1',topicId:'t1',title:'Học liệu chung',scope:'SHARED',approvalStatus:'APPROVED',createdBy:'admin'}, {materialId:'m2',topicId:'t1',title:'Học liệu riêng',scope:'CLASS',classId:'c1',approvalStatus:'PENDING',createdBy:'u1'}];
+      if(p==='/api/v1/classes/c1/materials')data=[{materialId:'m1',topicId:'t1',title:'Học liệu chung',type:'TEXT',contentText:'Nội dung chuẩn của môn',scope:'SHARED',approvalStatus:'APPROVED',createdBy:'admin'}, {materialId:'m2',topicId:'t1',title:'Học liệu riêng',type:'TEXT',contentText:'Nội dung riêng của lớp',scope:'CLASS',classId:'c1',approvalStatus:'APPROVED',createdBy:'u1'}];
       if(p==='/api/v1/classes/c1/topics/t1/materials')data={materialId:'m3',...body,approvalStatus:'PENDING'};
+      if(p==='/api/v1/students/me/progress'){if(method==='PUT')localStorage.setItem('qa-topic-progress',JSON.stringify([{...body,status:'COMPLETED'}]));data=JSON.parse(localStorage.getItem('qa-topic-progress')||'[]');}
       if(p==='/api/v1/questions')data=method==='GET'?{content:[{questionId:'q1',content:'Câu hỏi nháp',approvalStatus:'DRAFT',subjectId:'s1'}],last:true,totalElements:1}:{questionId:'q2',...body};
       if(p==='/api/v1/questions/q1/submit-review')data={questionId:'q1',content:'Câu hỏi nháp',approvalStatus:'PENDING',subjectId:'s1'};
       if(p==='/api/v1/users/admin/users')data={content:[{userId:'u1',username:'Giảng viên',role:'INSTRUCTOR'},{userId:'sv1',username:'Sinh viên',role:'STUDENT'}],last:true};
@@ -194,6 +195,27 @@ try {
   await go('teacher/classes/c2');
   await wait('document.body.innerText.includes("Bạn không có quyền mở trang này")');
   assert.equal(await evaluate('testCalls.some(c=>c.p==="/api/v1/instructor/classes/c2")'),false);
+  await go('student/classes/c1/learn/t1');
+  await wait('document.body.innerText.includes("Nội dung chuẩn của môn")');
+  assert.equal(await evaluate('testCalls.some(c=>c.p==="/api/v1/classes/c1")'),false,'student avoids forbidden class detail endpoint');
+  assert.equal(await evaluate('document.body.innerText.includes("Nội dung riêng của lớp")'),false);
+  await evaluate('window.rejectSave=true');
+  await click('Đánh dấu hoàn thành');
+  await wait('document.body.innerText.includes("Lỗi BE đã định dạng")');
+  assert.equal(await evaluate('document.querySelector("[data-testid=overall-progress]").innerText'),'Tiến trình 0%');
+  await evaluate('window.rejectSave=false');await click('Đánh dấu hoàn thành');
+  await wait('document.querySelector("[data-testid=overall-progress]")?.innerText==="Tiến trình 50%"');
+  const progressBody=await evaluate('testCalls.filter(c=>c.p==="/api/v1/students/me/progress"&&c.method==="PUT").at(-1).body');
+  assert.deepEqual(progressBody,{classId:'c1',topicId:'t1',progressPercent:100});
+  await click('Học liệu của GV');await wait('document.body.innerText.includes("Học liệu riêng")');
+  assert.equal(await evaluate('document.body.innerText.includes("Nội dung chuẩn của môn")'),false);
+  await go('student/classes/c1/learn/t1');
+  await wait('document.querySelector("[data-testid=overall-progress]")?.innerText==="Tiến trình 50%"');
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await click('Chương và chủ đề');
+  await wait('!!document.querySelector("[role=dialog]")');
+  await shot('student-topic-mobile');await evaluate(`document.querySelector('[aria-label="Đóng"]').click()`);
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+2'),'student mobile overflow');
   await go('admin/subjects/s1/curriculum');
   await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   await shot('curriculum-mobile');

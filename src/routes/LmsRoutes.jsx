@@ -1,3 +1,4 @@
+import { StudentClassPage } from '../features/classes/StudentClassPage.jsx';
 import { ClassList } from '../features/classes/ClassList.jsx';
 import { CreateClassWizard } from '../features/classes/CreateClassWizard.jsx';
 import { AdminClassDetail } from '../features/classes/AdminClassDetail.jsx';
@@ -15,7 +16,7 @@ function RoutedPage({ route }) {
   if (route.collection === 'users') return <UsersPage />;
   if (route.area === 'admin' && route.collection === 'classes' && route.id) return route.id === 'new' ? <CreateClassWizard /> : <AdminClassDetail route={route} />;
   if (route.collection === 'classes' && !route.id) return <ClassList route={route} />;
-  if (route.collection === 'classes' && route.id !== 'new' && route.area !== 'admin') return <RequireClass route={route}>{data => <LmsShell title={data.classCode} />}</RequireClass>;
+  if (route.collection === 'classes' && route.id !== 'new' && route.area !== 'admin') return <RequireClass route={route}>{data => route.area === 'student' ? <StudentClassPage route={route} cls={data} /> : <LmsShell title={data.classCode} />}</RequireClass>;
   return <LmsShell title={route.collection === 'subjects' ? 'Môn học' : route.collection === 'semesters' ? 'Học kỳ' : 'Đóng góp'} />;
 }
 export function LmsRoutes({ route }) { return <RequireRole roles={[route.role]}><RoutedPage route={route} /></RequireRole>; }
