@@ -15,11 +15,8 @@ import { api } from '../../lib/apiClient.js';
 import { loadAdminMaterials } from '../../lib/adminMaterials.js';
 import { labelOf, safeUrl } from '../../lib/lecturerUtils.js';
 import { materialVideoSource } from '../../lib/materialSources.js';
-import { MaterialCreateForm } from '../../components/MaterialCreateForm.jsx';
 
 export function AdminMaterialsPage() {
-  const [editor, setEditor] = useState(null);
-  const [deleting, setDeleting] = useState(null);
   const [version, setVersion] = useState(0);
   const [resource, setResource] = useState({ loading: true, error: '', data: null });
   const [subjectId, setSubjectId] = useState('');
@@ -88,50 +85,13 @@ export function AdminMaterialsPage() {
     }
   }
   return (
-    <AdminPageShell currentPage="admin_materials.html" title="Quản lý học liệu">
+    <AdminPageShell
+      currentPage="admin_materials.html"
+      title="Duyệt học liệu"
+      description="Xem nội dung và duyệt học liệu theo học phần, chủ đề."
+    >
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
-      {deleting && (
-        <ConfirmDialog
-          title="Xóa học liệu"
-          description={deleting.title}
-          busy={busy}
-          onCancel={() => !busy && setDeleting(null)}
-          onConfirm={async () => {
-            setBusy(true);
-            setError('');
-            setMessage('');
-            try {
-              await api.materials.remove(deleting.topicId, deleting.materialId);
-              setDeleting(null);
-              setMessage('Đã xóa học liệu.');
-              reload();
-            } catch (failure) {
-              setError(failure.message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        />
-      )}
-      <Button className="mt-5" onClick={() => setEditor({})}>
-        Thêm học liệu chung
-      </Button>
-      {editor && (
-        <FormDialog
-          wide
-          title={editor.materialId ? 'Sửa học liệu' : 'Thêm học liệu chung'}
-          onClose={() => setEditor(null)}
-        >
-          <MaterialCreateForm
-            initial={editor}
-            onSaved={() => {
-              setEditor(null);
-              reload();
-            }}
-          />
-        </FormDialog>
-      )}
       <Card className="mt-6 p-5">
         <div className="filter-grid">
           <FormField
@@ -202,7 +162,7 @@ export function AdminMaterialsPage() {
           <p className="text-slate-500">Không có học liệu phù hợp với bộ lọc hiện tại.</p>
         ) : (
           <DataTable
-            columns={['Học liệu', 'Học phần / Chủ đề', 'Phạm vi', 'Loại', 'Trạng thái', 'Thao tác']}
+            columns={['Học liệu', 'Học phần / Chủ đề', 'Loại', 'Trạng thái', 'Thao tác']}
             rows={rows}
             renderRow={(row) => (
               <tr key={`${row.topicId}:${row.materialId}`} className="border-t">
@@ -210,9 +170,6 @@ export function AdminMaterialsPage() {
                 <td className="p-3">
                   {row.subjectName}
                   <p className="mt-1 text-slate-500">{row.topicName}</p>
-                </td>
-                <td className="p-3">
-                  {row.scope === 'CLASS' ? `Riêng lớp ${row.classCode || ''}` : 'Dùng chung môn học'}
                 </td>
                 <td className="p-3">{labelOf(row.type)}</td>
                 <td className="p-3">
@@ -290,26 +247,6 @@ export function AdminMaterialsPage() {
               <div className="flex flex-wrap justify-end gap-2">
                 <Button variant="secondary" disabled={busy} onClick={() => setDetail(null)}>
                   Đóng
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={busy}
-                  onClick={() => {
-                    setEditor(detail);
-                    setDetail(null);
-                  }}
-                >
-                  Sửa học liệu
-                </Button>
-                <Button
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => {
-                    setDeleting(detail);
-                    setDetail(null);
-                  }}
-                >
-                  Xóa học liệu
                 </Button>
                 {detail.approvalStatus !== 'APPROVED' && (
                   <Button disabled={busy} onClick={() => setApproving(detail)}>

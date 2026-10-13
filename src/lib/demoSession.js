@@ -47,7 +47,6 @@ export function clearDemoSession() {
 }
 
 export function canAccess(role, file) {
-  if (['lecturer_question_bank.html', 'lecturer_matrix_create.html'].includes(file)) return false;
   if (['account.html', 'notification_detail.html'].includes(file)) return Boolean(demoRoles[role]);
   if (['login.html', 'auth_access.html', 'register.html', 'reset_password.html'].includes(file)) return true;
   if (role === 'STUDENT') return !file.startsWith('lecturer_') && !file.startsWith('admin_') && !file.startsWith('ta_');

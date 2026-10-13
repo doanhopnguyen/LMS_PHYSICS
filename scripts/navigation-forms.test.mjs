@@ -6,14 +6,18 @@ import { getCleanRoute } from '../src/lib/routes.js';
 import { navigate, routeFromLink } from '../src/lib/navigation.js';
 import { validateOptions, loadAllPages } from '../src/lib/lecturerUtils.js';
 
-test('lecturer authoring keeps material creation scoped to an assigned class', () => {
+test('authoring entry buttons open without requiring an outside topic filter', () => {
   const source = readFileSync('src/pages/lecturers/LecturerContent.jsx', 'utf8');
-  assert.match(source, /createForClass/);
-  assert.doesNotMatch(source, /createInlineTopic|api\.subjects\.createTopic|api\.questions/);
+  assert.doesNotMatch(source, /disabled=\{!validTopic \|\| action\.busy\}/);
+  assert.doesNotMatch(source, /disabled=\{action\.busy \|\| !\(tab === 'topics'/);
+  assert.match(source, /label="Học phần \*"/);
+  assert.match(source, /label="Chủ đề \*"/);
+  assert.match(source, /onClick=\{createInlineTopic\}/);
 });
-test('lecturer class management does not expose enrollment or class creation', () => {
+
+test('create-class form aligns related lookup fields in the shared two-column layout', () => {
   const source = readFileSync('src/pages/lecturers/LecturerClasses.jsx', 'utf8');
-  assert.doesNotMatch(source, /api\.classes\.(create\(|update\(|enroll|removeStudent|assignStaff|removeStaff)/);
+  assert.match(source, /<Form className="app-form--two-columns grid gap-4" onSubmit=\{save\}>/);
 });
 
 globalThis.window = {

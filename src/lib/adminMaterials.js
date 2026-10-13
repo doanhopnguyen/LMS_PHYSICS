@@ -24,33 +24,9 @@ export async function loadAdminMaterials(request = apiRequest) {
       };
     })
   );
-  const classes = await loadAllPages(request, '/api/v1/classes');
-  const subjectById = new Map(subjects.map((row) => [row.subjectId, row]));
-  const topicById = new Map(groups.flatMap((group) => group.topics).map((row) => [row.topicId, row]));
-  const classGroups = await Promise.all(
-    classes.map(async (row) => {
-      const materials = itemsOf(await request(`/api/v1/classes/${encodeURIComponent(row.classId)}/materials`));
-      return materials
-        .filter((material) => material.scope === 'CLASS')
-        .map((material) => ({
-          ...material,
-          classCode: row.classCode,
-          subjectId: row.subjectId,
-          subjectName: subjectById.get(row.subjectId)?.subjectName,
-          topicName: topicById.get(material.topicId)?.topicName,
-        }));
-    })
-  );
   return {
     subjects,
     topics: groups.flatMap((group) => group.topics),
-    materials: [
-      ...new Map(
-        [...groups.flatMap((group) => group.materials), ...classGroups.flat()].map((material) => [
-          material.materialId,
-          material,
-        ])
-      ).values(),
-    ],
+    materials: groups.flatMap((group) => group.materials),
   };
 }

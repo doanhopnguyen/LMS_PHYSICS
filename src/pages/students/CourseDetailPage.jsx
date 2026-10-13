@@ -1,6 +1,3 @@
-import { CurriculumView } from '../../components/CurriculumView.jsx';
-import { navigate } from '../../lib/navigation.js';
-import { queryPath } from '../../lib/lecturerUtils.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
@@ -36,13 +33,13 @@ export function CourseDetailPage() {
       setError('');
       try {
         const enrolled = rowsOf(await api.students.myClasses());
-        const selected = classId ? enrolled.find((item) => String(item.classId) === String(classId)) : enrolled[0];
+        const selected = enrolled.find((item) => String(item.classId) === String(classId)) || enrolled[0];
         if (!selected) throw new Error('Bạn chưa được ghi danh vào lớp học phần nào.');
 
         const [topicData, progressData, scheduleData] = await Promise.all([
-          selected.subjectId ? api.subjects.topics(selected.subjectId) : Promise.resolve([]),
+          selected.subjectId ? api.subjects.topics(selected.subjectId).catch(() => []) : Promise.resolve([]),
           loadClassMaterialProgress(selected.classId),
-          api.classes.schedules(selected.classId),
+          api.classes.schedules(selected.classId).catch(() => []),
         ]);
         if (!alive) return;
         setCourse(selected);
@@ -124,19 +121,50 @@ export function CourseDetailPage() {
                   title="Nội dung học tập"
                   action={<span className="text-sm font-medium text-slate-500">{topics.length} chủ đề</span>}
                 />
-                <CurriculumView
-                  subjectId={course.subjectId}
-                  topicProgress={topicProgress}
-                  onTopic={(topic) =>
-                    navigate(
-                      queryPath('learning_module.html', {
-                        classId: course.classId,
-                        subjectId: course.subjectId,
-                        topicId: topic.topicId,
-                      })
-                    )
-                  }
-                />
+                <p className="mb-4 mt-2 text-sm text-slate-500">Chọn một chủ đề để xem học liệu và tiếp tục học.</p>
+                <div className="space-y-3">
+                  {topics.map((topic, index) => {
+                    const value = topicProgress(topic);
+                    const href = `learning_module.html?classId=${encodeURIComponent(course.classId)}&subjectId=${encodeURIComponent(course.subjectId || '')}&topicId=${encodeURIComponent(topic.topicId)}`;
+                    return (
+                      <a key={topic.topicId} href={href} className="block">
+                        <Card variant="accent" className="group p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 font-bold text-indigo-600">
+                              {index + 1}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="truncate font-semibold text-slate-900">
+                                  {topic.topicName || topic.name || `Chủ đề ${index + 1}`}
+                                </h3>
+                                {value >= 100 && <StatusBadge tone="success">Hoàn thành</StatusBadge>}
+                              </div>
+                              {topic.description && (
+                                <p className="mt-1 line-clamp-1 text-sm text-slate-500">{topic.description}</p>
+                              )}
+                              <div className="mt-3 flex items-center gap-3">
+                                <ProgressBar value={value} className="max-w-48 flex-1" />
+                                <span className="text-xs font-medium text-slate-500">{formatPercent(value)}</span>
+                              </div>
+                            </div>
+                            <span
+                              className="material-symbols-outlined text-slate-400 transition group-hover:text-indigo-600"
+                              aria-hidden="true"
+                            >
+                              chevron_right
+                            </span>
+                          </div>
+                        </Card>
+                      </a>
+                    );
+                  })}
+                  {!topics.length && (
+                    <Card className="p-6 text-center text-[#64748B]">
+                      Giảng viên chưa thêm chủ đề cho học phần này.
+                    </Card>
+                  )}
+                </div>
               </section>
             </main>
 

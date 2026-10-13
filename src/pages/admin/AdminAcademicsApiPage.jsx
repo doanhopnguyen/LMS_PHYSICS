@@ -1,5 +1,3 @@
-import { AdminCurriculum } from './AdminCurriculum.jsx';
-import { AdminClassManager } from './AdminClassManager.jsx';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import React, { useEffect, useState } from 'react';
@@ -296,9 +294,6 @@ export function AdminAcademicsApiPage() {
           { id: 'semesters', label: 'Học kỳ' },
           { id: 'subjects', label: 'Học phần' },
           { id: 'topics', label: 'Chủ đề' },
-          { id: 'chapters', label: 'Chương' },
-          { id: 'clos', label: 'CLO' },
-          { id: 'classes', label: 'Lớp học' },
         ]}
         activeId={tab}
         onChange={(nextTab) => {
@@ -306,19 +301,13 @@ export function AdminAcademicsApiPage() {
           if (nextTab === 'subjects') setSubjectPage(0);
         }}
         actions={
-          !['chapters', 'clos', 'classes'].includes(tab) && (
-            <Button disabled={busy} onClick={openCreate}>
-              {tab === 'semesters' ? 'Tạo học kỳ' : tab === 'subjects' ? 'Tạo học phần' : 'Tạo chủ đề'}
-            </Button>
-          )
+          <Button disabled={busy} onClick={openCreate}>
+            {tab === 'semesters' ? 'Tạo học kỳ' : tab === 'subjects' ? 'Tạo học phần' : 'Tạo chủ đề'}
+          </Button>
         }
       >
         {() =>
-          tab === 'classes' ? (
-            <AdminClassManager />
-          ) : ['chapters', 'clos'].includes(tab) ? (
-            <AdminCurriculum key={tab} kind={tab} />
-          ) : tab === 'semesters' ? (
+          tab === 'semesters' ? (
             <Card className="mt-5 overflow-x-auto p-5">
               {semesters.loading ? (
                 <p role="status">Đang tải học kỳ…</p>

@@ -42,7 +42,7 @@ export function useMaterialProgress() {
       (failure) => {
         if (queue.current === request) {
           setSaving(false);
-          setError(failure.message);
+          setError(`Đã lưu trên thiết bị, chưa đồng bộ tiến độ: ${failure.message}`);
         }
       }
     );

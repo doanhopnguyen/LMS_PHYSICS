@@ -11,10 +11,10 @@ import { MaterialContentFields, materialFormats } from './MaterialContentFields.
 import { MarkdownContent } from './MarkdownContent.jsx';
 import { validateVideoMaterial } from '../lib/materialSources.js';
 
-export function MaterialCreateForm({ initial = {}, onSaved }) {
-  const [subject, setSubject] = useState(initial.subjectId || '');
-  const [topic, setTopic] = useState(initial.topicId || '');
-  const [type, setType] = useState(initial.type || 'MARKDOWN');
+export function MaterialCreateForm() {
+  const [subject, setSubject] = useState('');
+  const [topic, setTopic] = useState('');
+  const [type, setType] = useState('MARKDOWN');
   const [editorKey, setEditorKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -30,7 +30,7 @@ export function MaterialCreateForm({ initial = {}, onSaved }) {
     body.set('topicId', topic);
     setError('');
     setMessage('');
-    const videoError = validateVideoMaterial(body, initial);
+    const videoError = validateVideoMaterial(body);
     if (videoError) {
       setError(videoError);
       return;
@@ -42,15 +42,7 @@ export function MaterialCreateForm({ initial = {}, onSaved }) {
     }
     setBusy(true);
     try {
-      if (!initial.materialId) body.set('scope', 'SHARED');
-      await apiRequest(
-        `/api/v1/topics/${encodeURIComponent(topic)}/materials${initial.materialId ? `/${initial.materialId}` : ''}`,
-        { method: initial.materialId ? 'PUT' : 'POST', formData: body }
-      );
-      if (onSaved) {
-        onSaved();
-        return;
-      }
+      await apiRequest(`/api/v1/topics/${encodeURIComponent(topic)}/materials`, { method: 'POST', formData: body });
       form.reset();
       setType('MARKDOWN');
       setEditorKey((value) => value + 1);
@@ -84,7 +76,7 @@ export function MaterialCreateForm({ initial = {}, onSaved }) {
           <SharedSelectField
             className="mt-2 block w-full"
             value={subject}
-            disabled={busy || subjects.loading || Boolean(initial.materialId)}
+            disabled={busy || subjects.loading}
             onChange={(e) => {
               setSubject(e.target.value);
               setTopic('');
@@ -101,7 +93,7 @@ export function MaterialCreateForm({ initial = {}, onSaved }) {
           <SharedSelectField
             className="mt-2 block w-full"
             value={topic}
-            disabled={busy || !subject || topics.loading || Boolean(initial.materialId)}
+            disabled={busy || !subject || topics.loading}
             onChange={(e) => setTopic(e.target.value)}
             label={<>Chủ đề</>}
           >
@@ -116,7 +108,6 @@ export function MaterialCreateForm({ initial = {}, onSaved }) {
         <Form className="space-y-4" onSubmit={submit}>
           <SharedFormField
             name="title"
-            defaultValue={initial.title || ''}
             required
             className="mt-2 block w-full"
             label={<>Tiêu đề</>}
@@ -135,18 +126,10 @@ export function MaterialCreateForm({ initial = {}, onSaved }) {
               </option>
             ))}
           </SharedSelectField>
-          <MaterialContentFields key={`${type}-${editorKey}`} type={type} initial={initial} busy={busy} />
-          {type !== 'VIDEO' && (
-            <SharedFormField
-              label="Nguồn tham khảo"
-              name="sourceCitation"
-              defaultValue={initial.sourceCitation || ''}
-              disabled={busy}
-            />
-          )}
+          <MaterialContentFields key={`${type}-${editorKey}`} type={type} busy={busy} />
           <div className="authoring-actions">
             <SubmitButton icon="save" type="submit" disabled={!topic || busy}>
-              {busy ? 'Đang lưu…' : initial.materialId ? 'Lưu học liệu' : 'Tạo học liệu'}
+              {busy ? 'Đang lưu…' : 'Tạo học liệu'}
             </SubmitButton>
           </div>
         </Form>

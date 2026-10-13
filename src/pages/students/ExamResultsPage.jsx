@@ -57,11 +57,11 @@ export function ExamResultsPage() {
           (examId ? await api.exams.myAttempt(examId) : null);
         if (!attemptData?.attemptId) throw new Error('Không tìm thấy lượt làm bài của bạn.');
         const [examData, progressData, questionData] = await Promise.all([
-          examId ? api.exams.get(examId) : Promise.resolve(null),
-          api.exams.attemptProgress(attemptId),
+          examId ? api.exams.get(examId).catch(() => null) : Promise.resolve(null),
+          api.exams.attemptProgress(attemptId).catch(() => null),
           rowsOf(attemptData?.questions).length
             ? Promise.resolve(attemptData.questions)
-            : api.exams.attemptQuestions(attemptId),
+            : api.exams.attemptQuestions(attemptId).catch(() => []),
         ]);
         if (!alive) return;
         setAttempt(attemptData);
