@@ -15,8 +15,10 @@ import { api } from '../../lib/apiClient.js';
 import { loadAdminMaterials } from '../../lib/adminMaterials.js';
 import { labelOf, safeUrl } from '../../lib/lecturerUtils.js';
 import { materialVideoSource } from '../../lib/materialSources.js';
+import { MaterialCreateForm } from '../../components/MaterialCreateForm.jsx';
 
 export function AdminMaterialsPage() {
+  const [editor, setEditor] = useState(null);
   const [version, setVersion] = useState(0);
   const [resource, setResource] = useState({ loading: true, error: '', data: null });
   const [subjectId, setSubjectId] = useState('');
@@ -85,13 +87,27 @@ export function AdminMaterialsPage() {
     }
   }
   return (
-    <AdminPageShell
-      currentPage="admin_materials.html"
-      title="Duyệt học liệu"
-      description="Xem nội dung và duyệt học liệu theo học phần, chủ đề."
-    >
+    <AdminPageShell currentPage="admin_materials.html" title="Quản lý học liệu">
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
+      <Button className="mt-5" onClick={() => setEditor({})}>
+        Thêm học liệu chung
+      </Button>
+      {editor && (
+        <FormDialog
+          wide
+          title={editor.materialId ? 'Sửa học liệu' : 'Thêm học liệu chung'}
+          onClose={() => setEditor(null)}
+        >
+          <MaterialCreateForm
+            initial={editor}
+            onSaved={() => {
+              setEditor(null);
+              reload();
+            }}
+          />
+        </FormDialog>
+      )}
       <Card className="mt-6 p-5">
         <div className="filter-grid">
           <FormField
@@ -247,6 +263,16 @@ export function AdminMaterialsPage() {
               <div className="flex flex-wrap justify-end gap-2">
                 <Button variant="secondary" disabled={busy} onClick={() => setDetail(null)}>
                   Đóng
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => {
+                    setEditor(detail);
+                    setDetail(null);
+                  }}
+                >
+                  Sửa học liệu
                 </Button>
                 {detail.approvalStatus !== 'APPROVED' && (
                   <Button disabled={busy} onClick={() => setApproving(detail)}>

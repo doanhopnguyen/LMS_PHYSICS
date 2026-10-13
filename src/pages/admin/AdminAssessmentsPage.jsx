@@ -8,7 +8,7 @@ import { Tabs } from '../../components/Tabs.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api } from '../../lib/apiClient.js';
-import { MatrixManager } from '../lecturers/LecturerApiWorkspace.jsx';
+import { AdminFinalMatrices } from './AdminFinalMatrices.jsx';
 
 function EnrollmentManager() {
   const [classId, setClassId] = useState('');
@@ -95,7 +95,9 @@ function EnrollmentManager() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold">Danh sách ghi danh hàng loạt ({bulkStudents.length})</h3>
-              <p className="mt-1 text-body-sm text-[#64748B]">Các sinh viên trong danh sách sẽ được ghi danh vào lớp đã chọn.</p>
+              <p className="mt-1 text-body-sm text-[#64748B]">
+                Các sinh viên trong danh sách sẽ được ghi danh vào lớp đã chọn.
+              </p>
             </div>
             <Button disabled={!classId || busy} onClick={enrollBulk} icon="group_add">
               Ghi danh hàng loạt
@@ -126,20 +128,16 @@ function EnrollmentManager() {
 export function AdminAssessmentsPage() {
   const [tab, setTab] = useState('matrices');
   return (
-    <AdminPageShell
-      currentPage="admin_assessments.html"
-      title="Ma trận đề & ghi danh"
-      description="Thiết lập ma trận đề thi và quản lý ghi danh sinh viên vào lớp."
-    >
+    <AdminPageShell currentPage="admin_assessments.html" title="Thi cuối kỳ & ghi danh">
       <Tabs
         items={[
-          { id: 'matrices', label: 'Ma trận đề' },
+          { id: 'matrices', label: 'Ma trận FINAL' },
           { id: 'enrollments', label: 'Ghi danh sinh viên' },
         ]}
         activeId={tab}
         onChange={setTab}
       >
-        {() => (tab === 'matrices' ? <MatrixManager /> : <EnrollmentManager />)}
+        {() => (tab === 'matrices' ? <AdminFinalMatrices /> : <EnrollmentManager />)}
       </Tabs>
     </AdminPageShell>
   );
