@@ -139,8 +139,8 @@ function LinkedTab({ active }) {
       'insights',
       'Kết quả lớp học',
       'Xem tiến độ, điểm số và mức độ tham gia.',
-      'lecturer_analytics.html',
-      'Xem phân tích',
+      'lecturer_assessments.html',
+      'Xem kỳ thi của lớp',
     ],
   }[active];
   if (!config) return null;

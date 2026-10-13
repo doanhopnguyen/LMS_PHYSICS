@@ -34,8 +34,6 @@ export const pageManifest = [
   { file: 'lecturer_lab_assignment_detail.html', component: 'LecturerLabAssignmentDetailPage', layout: 'AppShell' },
   { file: 'lecturer_lab_submission_detail.html', component: 'LecturerLabSubmissionDetailPage', layout: 'AppShell' },
   { file: 'lecturer_lab_grading.html', component: 'LecturerLabGradingPage', layout: 'AppShell' },
-  { file: 'lecturer_ai_insights.html', component: 'LecturerAiInsightsPage', layout: 'AppShell' },
-  { file: 'lecturer_analytics.html', component: 'LecturerLearningAnalyticsPage', layout: 'AppShell' },
   { file: 'ta_dashboard.html', component: 'TADashboardPage', layout: 'AppShell' },
   { file: 'ta_work_queue.html', component: 'TAWorkQueuePage', layout: 'AppShell' },
   { file: 'admin_dashboard.html', component: 'AdminDashboardPage', layout: 'AppShell' },

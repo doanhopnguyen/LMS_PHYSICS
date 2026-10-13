@@ -24,7 +24,6 @@ import { ExamSessionPage } from './pages/students/ExamSessionPage.jsx';
 import { InteractiveLessonPage } from './pages/students/InteractiveLessonPage.jsx';
 import { MobileExperiencePage } from './pages/students/MobileExperiencePage.jsx';
 import {
-  LecturerAnalyticsApiPage,
   LecturerAssessmentApiPage,
   LecturerMatrixCreatePage,
   LecturerDashboardApiPage,
@@ -85,8 +84,6 @@ const pageComponents = {
   'lecturer_lab_assignment_detail.html': LecturerExperimentsApiPage,
   'lecturer_lab_submission_detail.html': LecturerExperimentGradingPage,
   'lecturer_lab_grading.html': LecturerExperimentGradingPage,
-  'lecturer_ai_insights.html': LecturerAnalyticsApiPage,
-  'lecturer_analytics.html': LecturerAnalyticsApiPage,
   'admin_dashboard.html': AdminDashboardPage,
   'admin_users.html': UsersPage,
   'admin_academics.html': AdminAcademicsApiPage,

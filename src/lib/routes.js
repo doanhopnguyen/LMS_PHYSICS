@@ -35,8 +35,6 @@ export const routeFiles = [
   'lecturer_lab_assignment_detail.html',
   'lecturer_lab_submission_detail.html',
   'lecturer_lab_grading.html',
-  'lecturer_ai_insights.html',
-  'lecturer_analytics.html',
   'admin_dashboard.html',
   'admin_users.html',
   'admin_academics.html',

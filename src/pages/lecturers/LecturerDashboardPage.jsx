@@ -215,11 +215,6 @@ export function LecturerDashboardPage() {
             <SectionHeader
               icon="priority_high"
               title="Nội dung cần chú ý"
-              action={
-                <a href="lecturer_analytics.html" className="text-body-sm font-semibold text-primary hover:underline">
-                  Xem phân tích chi tiết
-                </a>
-              }
             />
             <p className="pt-5 text-body-sm text-[#64748B]">Tỷ lệ sinh viên trả lời sai theo nội dung</p>
             <div className="mt-4">

@@ -15,8 +15,6 @@ export const lecturerNavigation = [
   ['lecturer_assessments.html', 'assignment', 'Bài tập & kiểm tra'],
   ['lecturer_grading.html', 'grading', 'Chấm bài'],
   ['lecturer_labs.html', 'science', 'Thí nghiệm 3D'],
-  ['lecturer_ai_insights.html', 'smart_toy', 'Phân tích trợ giảng AI'],
-  ['lecturer_analytics.html', 'insights', 'Phân tích học tập'],
 ];
 
 // Chưa có trang Lecturer riêng cho thông báo/cài đặt; không hiển thị liên kết giả.
