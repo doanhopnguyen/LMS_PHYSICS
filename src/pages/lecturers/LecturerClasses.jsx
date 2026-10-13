@@ -1,3 +1,5 @@
+import { CurriculumView } from '../../components/CurriculumView.jsx';
+import { ClassAssessmentSettings, ClassWeakTopics } from './ClassAssessmentSettings.jsx';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useState } from 'react';
 import { api } from '../../lib/apiClient.js';
@@ -139,13 +141,41 @@ export function LecturerClassesApiPage() {
   const classes = useResource('/api/v1/instructor/classes', true);
   const detail = routeParam('classId');
   if (detail) return <LecturerClassDetail classId={detail} />;
-  return <LecturerPageShell currentPage="lecturer_courses.html" title="L?p ???c ph?n c?ng">
-    <Resource value={classes}>{(data) => <Table asCards rows={itemsOf(data)} columns={['L?p', 'M?n', 'Tr?ng th?i', '']} cells={(row) => [row.classCode, row.subjectName, <StatusBadge status={row.status} />, <Button onClick={() => navigate(queryPath('lecturer_course_detail.html', {classId: row.classId}))}>M? l?p</Button>]} />}</Resource>
-  </LecturerPageShell>;
+  return (
+    <LecturerPageShell currentPage="lecturer_courses.html" title="Lớp được phân công">
+      <Resource value={classes}>
+        {(data) => (
+          <Table
+            asCards
+            rows={itemsOf(data)}
+            columns={['Lớp', 'Môn', 'Trạng thái', '']}
+            cells={(row) => [
+              row.classCode,
+              row.subjectName,
+              <StatusBadge status={row.status} />,
+              <Button onClick={() => navigate(queryPath('lecturer_course_detail.html', { classId: row.classId }))}>
+                Mở lớp
+              </Button>,
+            ]}
+          />
+        )}
+      </Resource>
+    </LecturerPageShell>
+  );
 }
 function ClassPeople({ classId, staff = false }) {
   const resource = useResource(`/api/v1/classes/${idPath(classId)}/${staff ? 'staff' : 'students'}`, !staff);
-  return <Resource value={resource}>{(data) => <Table rows={itemsOf(data)} columns={['H? t?n', 'Email', staff ? 'Vai tr?' : 'Tr?ng th?i']} cells={(row) => [displayName(row), row.email, labelOf(staff ? row.roleInClass : row.status)]} />}</Resource>;
+  return (
+    <Resource value={resource}>
+      {(data) => (
+        <Table
+          rows={itemsOf(data)}
+          columns={['Họ tên', 'Email', staff ? 'Vai trò' : 'Trạng thái']}
+          cells={(row) => [displayName(row), row.email, labelOf(staff ? row.roleInClass : row.status)]}
+        />
+      )}
+    </Resource>
+  );
 }
 function ClassSchedules({ classId }) {
   const [modal, setModal] = useState(null);
@@ -400,6 +430,10 @@ export function LecturerClassDetail({ classId = routeParam('classId') }) {
               onChange={setTab}
               items={[
                 ['overview', 'Tổng quan'],
+                ['curriculum', 'Chương trình'],
+                ['materials', 'Học liệu'],
+                ['settings', 'Cấu hình đánh giá'],
+                ['weak', 'Chủ đề cần hỗ trợ'],
                 ['students', 'Sinh viên'],
                 ['staff', 'Nhân sự'],
                 ['schedules', 'Lịch học'],
@@ -412,7 +446,24 @@ export function LecturerClassDetail({ classId = routeParam('classId') }) {
               ].map(([id, label]) => ({ id, label }))}
             >
               {() =>
-                tab === 'overview' ? (
+                tab === 'curriculum' ? (
+                  <CurriculumView
+                    subjectId={row.subjectId}
+                    onTopic={(topic) =>
+                      navigate(queryPath('lecturer_materials.html', { classId, topicId: topic.topicId }))
+                    }
+                  />
+                ) : tab === 'materials' ? (
+                  <Card className="mt-5 p-5">
+                    <Button onClick={() => navigate(queryPath('lecturer_materials.html', { classId }))}>
+                      Mở học liệu lớp
+                    </Button>
+                  </Card>
+                ) : tab === 'settings' ? (
+                  <ClassAssessmentSettings classId={classId} />
+                ) : tab === 'weak' ? (
+                  <ClassWeakTopics classId={classId} />
+                ) : tab === 'overview' ? (
                   <>
                     <p className="my-4">Sĩ số tối đa: {row?.maxStudents ?? '—'}</p>
                     <Snapshot resource={snapshot} />
