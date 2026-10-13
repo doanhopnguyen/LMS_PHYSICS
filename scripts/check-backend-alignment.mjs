@@ -65,7 +65,7 @@ try {
   };
   const go = async (route) => {
     await send('Page.navigate', { url: `${origin}/${route}` });
-    await wait('document.readyState === "complete" && !!document.querySelector("h1")');
+    await wait('document.readyState === "complete" && !!document.querySelector("h1, h2")');
     await delay(250);
   };
   const click = async (label) => {
@@ -98,7 +98,7 @@ try {
     source: `
     const role=location.pathname.startsWith('/admin')?'ADMIN':location.pathname.startsWith('/lecturer')?'INSTRUCTOR':'STUDENT';
     localStorage.setItem('ptit-physics-demo-session',JSON.stringify({role,userId:'u1',name:'Kiểm thử'}));localStorage.setItem('ptit-physics-access-token','isolated-test');
-    window.testCalls=[];window.rejectSave=false;
+    window.testCalls=[];window.rejectSave=false;window.confirm=()=>true;
     const cls={classId:'c1',classCode:'VL01',subjectId:'s1',subjectName:'Vật lý 1',semesterId:'sem1',status:'ACTIVE'};
     const subject={subjectId:'s1',subjectCode:'VL1',subjectName:'Vật lý 1',isActive:true};
     const chapter={chapterId:'ch1',chapterName:'Cơ học',chapterCode:'CH1',orderIndex:1,isActive:true};
@@ -138,6 +138,16 @@ try {
       if(p==='/api/v1/student/practice-sessions/ps1/answers') { await new Promise(r=>setTimeout(r,80));const answers=JSON.parse(localStorage.getItem('qa-practice-answers')||'{}');answers[body.questionId]=body;localStorage.setItem('qa-practice-answers',JSON.stringify(answers));return new Response(null,{status:200}); }
       if(p==='/api/v1/student/practice-sessions/ps1/submit')localStorage.setItem('qa-practice-completed','yes');
       if(p.startsWith('/api/v1/student/practice-sessions/ps1')) {const completed=localStorage.getItem('qa-practice-completed')==='yes';const answers=JSON.parse(localStorage.getItem('qa-practice-answers')||'{}');const questions=practiceQuestions.map(q=>({...q,...answers[q.questionId],...(completed?{isCorrect:true,acceptedAnswers:q.questionType==='FILL_BLANK'?['9.8']:null}:{})}));return Response.json({sessionId:'ps1',classId:'c1',status:completed?'COMPLETED':'IN_PROGRESS',totalQuestions:2,questions,...(completed?{correctCount:2,wrongCount:0,totalScore:2,accuracyRate:100,updatedWeakTopics:[]}: {})}); }
+      const submitted=localStorage.getItem('qa-exam-submitted')==='yes';const exam={examId:'e1',title:'Bài kiểm tra',classId:'c1',examType:'QUIZ',totalQuestions:2,durationMinutes:45};const examAttempt={attemptId:'a1',examId:'e1',status:submitted?'GRADED':'IN_PROGRESS',totalScore:submitted?2:null,startedAt:new Date().toISOString(),...(submitted?{submittedAt:new Date().toISOString()}: {})};
+      if(p==='/api/v1/exams/e1')data=exam;
+      if(p==='/api/v1/exams/e1/attempt-policy')data={canStartAttempt:!submitted,hasInProgressAttempt:!submitted,currentAttemptId:'a1',remainingAttempts:1};
+      if(p==='/api/v1/exams/e1/my-attempts')data=[examAttempt];
+      if(p==='/api/v1/exams/attempts/a1')data=examAttempt;
+      if(p==='/api/v1/exams/attempts/a1/questions'){const answers=JSON.parse(localStorage.getItem('qa-exam-answers')||'{}');data=practiceQuestions.map((q,i)=>({...q,...answers[q.questionId],orderIndex:i+1,isCorrect:submitted?true:null}));}
+      if(p==='/api/v1/exams/attempts/a1/progress')data={attemptId:'a1',remainingSeconds:900,isExpired:false,totalQuestions:2,answeredQuestions:0};
+      if(p==='/api/v1/exams/attempts/a1/answers'){await new Promise(r=>setTimeout(r,100));const answers=JSON.parse(localStorage.getItem('qa-exam-answers')||'{}');answers[body.questionId]=body;localStorage.setItem('qa-exam-answers',JSON.stringify(answers));data=null;}
+      if(p==='/api/v1/exams/attempts/a1/autosave'){localStorage.setItem('qa-autosave',JSON.stringify(body));data={savedCount:body.answers.length};}
+      if(p==='/api/v1/exams/attempts/a1/submit'){localStorage.setItem('qa-exam-submitted','yes');data={...examAttempt,status:'GRADED',totalScore:2,submittedAt:new Date().toISOString()};}
       return Response.json({status:200,data});
     };
   `,
@@ -239,6 +249,14 @@ try {
     1
   );
   assert.equal(await evaluate('!!document.querySelector("a[href*=lecturer_question_bank]")'), false);
+  await go('exam_session?examId=e1&attemptId=a1&mode=take');
+  await wait('!!document.querySelector("input[type=text]")');
+  await input('input[type=text]', '9,8');
+  await evaluate('document.querySelector("input[type=text]").focus()');
+  await click('Nộp bài');
+  await wait('location.pathname==="/exam_results"');
+  const autoSave = await evaluate('JSON.parse(localStorage.getItem("qa-autosave"))');
+  assert.equal(autoSave.answers.find((q) => q.questionId === 'pq1').answerText, '9,8');
   await go('exam_practice_center');
   await choose('Lớp học', 'c1');
   await click('Bắt đầu luyện tập');

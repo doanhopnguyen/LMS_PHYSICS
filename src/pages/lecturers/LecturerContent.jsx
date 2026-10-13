@@ -4,6 +4,7 @@ import { getDemoSession } from '../../lib/demoSession.js';
 import { queryPath } from '../../lib/lecturerUtils.js';
 import { navigate } from '../../lib/navigation.js';
 import { MaterialContentFields, materialFormats } from '../../components/MaterialContentFields.jsx';
+import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
 import { validateVideoMaterial } from '../../lib/materialSources.js';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
@@ -153,6 +154,9 @@ export function LecturerAuthoringApiPage({ createPage = false }) {
         <Modal title={preview.title} onClose={() => setPreview(null)}>
           <StatusBadge status={preview.approvalStatus} />
           {preview.contentText && <MarkdownContent content={preview.contentText} />}
+          {(preview.fileId || preview.fileUrl || preview.type === 'VIDEO') && (
+            <MaterialFilePreview material={preview} />
+          )}
           <Button
             className="mt-4"
             variant="secondary"

@@ -116,6 +116,7 @@ export function AdminClassManager() {
         <Modal wide title={row.classCode} onClose={() => setClassId('')}>
           <h3 className="font-semibold">Chương trình môn · {row.subjectName}</h3>
           <CurriculumView subjectId={row.subjectId} />
+          <AdminClassMaterials classId={classId} />
           <AdminClassPeople key={classId} classId={classId} users={itemsOf(users.data)} />
           <Button
             className="mt-4"
@@ -129,6 +130,27 @@ export function AdminClassManager() {
         </Modal>
       )}
     </div>
+  );
+}
+function AdminClassMaterials({ classId }) {
+  const resource = useResource(`/api/v1/classes/${classId}/materials`);
+  return (
+    <section className="mt-5">
+      <h3 className="font-semibold">Học liệu lớp</h3>
+      <Resource value={resource}>
+        {(data) => (
+          <Table
+            rows={itemsOf(data)}
+            columns={['Học liệu', 'Phạm vi', 'Trạng thái']}
+            cells={(row) => [
+              row.title,
+              row.scope === 'CLASS' ? 'Riêng lớp này' : 'Dùng chung môn học',
+              row.approvalStatus,
+            ]}
+          />
+        )}
+      </Resource>
+    </section>
   );
 }
 function AdminClassForm({ initial, subjects, semesters, users, busy, onSave }) {

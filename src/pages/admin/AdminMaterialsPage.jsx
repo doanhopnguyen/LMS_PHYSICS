@@ -19,6 +19,7 @@ import { MaterialCreateForm } from '../../components/MaterialCreateForm.jsx';
 
 export function AdminMaterialsPage() {
   const [editor, setEditor] = useState(null);
+  const [deleting, setDeleting] = useState(null);
   const [version, setVersion] = useState(0);
   const [resource, setResource] = useState({ loading: true, error: '', data: null });
   const [subjectId, setSubjectId] = useState('');
@@ -90,6 +91,29 @@ export function AdminMaterialsPage() {
     <AdminPageShell currentPage="admin_materials.html" title="Quản lý học liệu">
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
+      {deleting && (
+        <ConfirmDialog
+          title="Xóa học liệu"
+          description={deleting.title}
+          busy={busy}
+          onCancel={() => !busy && setDeleting(null)}
+          onConfirm={async () => {
+            setBusy(true);
+            setError('');
+            setMessage('');
+            try {
+              await api.materials.remove(deleting.topicId, deleting.materialId);
+              setDeleting(null);
+              setMessage('Đã xóa học liệu.');
+              reload();
+            } catch (failure) {
+              setError(failure.message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+      )}
       <Button className="mt-5" onClick={() => setEditor({})}>
         Thêm học liệu chung
       </Button>
@@ -187,7 +211,9 @@ export function AdminMaterialsPage() {
                   {row.subjectName}
                   <p className="mt-1 text-slate-500">{row.topicName}</p>
                 </td>
-                <td className="p-3">{row.scope === 'CLASS' ? `Riêng lớp ${row.classCode || ''}` : 'Dùng chung môn học'}</td>
+                <td className="p-3">
+                  {row.scope === 'CLASS' ? `Riêng lớp ${row.classCode || ''}` : 'Dùng chung môn học'}
+                </td>
                 <td className="p-3">{labelOf(row.type)}</td>
                 <td className="p-3">
                   <StatusBadge status={row.approvalStatus} />
@@ -274,6 +300,16 @@ export function AdminMaterialsPage() {
                   }}
                 >
                   Sửa học liệu
+                </Button>
+                <Button
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setDeleting(detail);
+                    setDetail(null);
+                  }}
+                >
+                  Xóa học liệu
                 </Button>
                 {detail.approvalStatus !== 'APPROVED' && (
                   <Button disabled={busy} onClick={() => setApproving(detail)}>
