@@ -1,3 +1,5 @@
+import { CatalogPage } from '../features/subjects/CatalogPage.jsx';
+import { SubjectPage } from '../features/subjects/SubjectPage.jsx';
 import React from 'react';
 import { RequireRole, RequireClass } from './RequireRole.jsx';
 import { LmsShell, LoadState, useList, Table } from '../features/shared/LmsUi.jsx';
@@ -10,6 +12,8 @@ function ClassList({ route }) {
 }
 function RoutedPage({ route }) {
   if (!route.valid) return <ErrorPage status={404} />;
+  if (route.collection === 'subjects') return route.id ? <SubjectPage route={route} /> : <CatalogPage kind="subjects" />;
+  if (route.collection === 'semesters') return <CatalogPage kind="semesters" />;
   if (route.collection === 'users') return <UsersPage />;
   if (route.collection === 'classes' && !route.id) return <ClassList route={route} />;
   if (route.collection === 'classes' && route.id !== 'new' && route.area !== 'admin') return <RequireClass route={route}>{data => <LmsShell title={data.classCode} />}</RequireClass>;
