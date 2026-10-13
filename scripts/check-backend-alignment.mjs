@@ -126,6 +126,12 @@ try {
       if(p==='/api/v1/classes/c1/topics/t1/materials')data={materialId:'m3',...body,approvalStatus:'PENDING'};
       if(p==='/api/v1/questions')data=method==='GET'?{content:[{questionId:'q1',content:'Câu hỏi nháp',approvalStatus:'DRAFT',subjectId:'s1'}],last:true,totalElements:1}:{questionId:'q2',...body};
       if(p==='/api/v1/questions/q1/submit-review')data={questionId:'q1',content:'Câu hỏi nháp',approvalStatus:'PENDING',subjectId:'s1'};
+      if(p==='/api/v1/users/admin/users')data={content:[{userId:'u1',username:'Giảng viên',role:'INSTRUCTOR'}],last:true};
+      const matrix={matrixId:'mx1',matrixName:'FINAL mẫu',subjectId:'s1',subjectName:'Vật lý 1',examType:'FINAL',matrixFamilyId:'fam1',revisionNumber:1,matrixStatus:'PUBLISHED',isLocked:true,details:[{topicId:'t1',cloId:'cl1',difficultyLevel:'MEDIUM',numQuestions:1,weightPercent:100}]};
+      if(p==='/api/v1/admin/exam-matrices')data=[matrix];
+      if(p==='/api/v1/admin/exam-matrices/final')data={...matrix,...body,matrixId:'mx2',matrixStatus:'DRAFT',isLocked:false};
+      if(p==='/api/v1/admin/exam-matrices/mx1/validate')data={matrixId:'mx1',valid:true,totalRequired:1,totalAvailable:5,items:[],warnings:[]};
+      if(p==='/api/v1/admin/exams/bulk-provision-final')data={matrixId:'mx1',totalClassesRequested:1,totalClassesProvisioned:1,createdExams:[{examId:'e1',classId:'c1',title:body.title||'FINAL mẫu',startTime:body.startTime}]};
       return Response.json({status:200,data});
     };
   `,
@@ -144,6 +150,43 @@ try {
     await evaluate('testCalls.find(c=>c.method==="POST"&&c.p.endsWith("/chapters")).body.chapterName'),
     'Điện học'
   );
+  await go('admin_academics');
+  await click('Lớp học');
+  await click('Tạo lớp');
+  await input('input[name=classCode]', 'VL02');
+  await choose('Môn học', 's1');
+  await choose('Học kỳ', 'sem1');
+  await choose('Giảng viên', 'u1');
+  await wait('document.body.innerText.includes("Cơ học")');
+  await click('Lưu lớp');
+  assert.equal(await evaluate('testCalls.find(c=>c.method==="POST"&&c.p==="/api/v1/classes").body.instructorId'), 'u1');
+  await go('admin_assessments');
+  await wait('document.body.innerText.includes("FINAL mẫu")');
+  assert.equal(await evaluate('[...document.querySelectorAll("button")].some(e=>e.textContent.trim()==="Sửa")'), false);
+  await choose('Môn học', 's1');
+  await click('Tạo ma trận FINAL');
+  await input('input[name=matrixName]', 'FINAL mới');
+  await choose('Chủ đề', 't1');
+  await choose('CLO', 'cl1');
+  await click('Lưu ma trận');
+  assert.equal(
+    await evaluate('testCalls.find(c=>c.method==="POST"&&c.p.endsWith("/final")).body.details[0].cloId'),
+    'cl1'
+  );
+  await click('Cấp phát');
+  await wait('!!document.querySelector("fieldset input[type=checkbox]")');
+  await evaluate('document.querySelector("fieldset input[type=checkbox]").click()');
+  await input('input[name=durationMinutes]', '45');
+  await input('input[name=startTime]', '2026-11-01T08:00');
+  await input('input[name=endTime]', '2026-11-01T09:00');
+  await click('Xem lại');
+  await click('Xác nhận cấp phát');
+  await wait('document.body.innerText.includes("Đã cấp phát")');
+  const provision = await evaluate('testCalls.find(c=>c.p.endsWith("bulk-provision-final")).body');
+  assert.deepEqual(provision.classIds, ['c1']);
+  assert.equal(provision.autoGenerateQuestions, true);
+  assert.ok(provision.startTime.endsWith('Z'));
+  await shot('admin-final-provision');
   await go('admin_questions');
   await click('Tạo câu hỏi');
   await choose('Học phần *', 's1');
