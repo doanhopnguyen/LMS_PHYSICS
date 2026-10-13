@@ -104,7 +104,6 @@ function useAction() {
 
 function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMode = false, onClose, onChanged }) {
   const Container = pageMode ? AuthoringPanel : Modal;
-  const readOnly = exam.examType === 'FINAL';
   const [tab, setTab] = useState(initialTab);
   const [questionTopicId, setQuestionTopicId] = useState('');
   const [questionDifficulty, setQuestionDifficulty] = useState('');
@@ -121,12 +120,12 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
     viewAttempt ? `/api/v1/exams/attempts/${encodeURIComponent(viewAttempt.attemptId)}` : null
   );
   const roster = useApiData(`/api/v1/exams/${encodeURIComponent(exam.examId)}/roster`);
-  const classOptions = useResource('/api/v1/instructor/classes', true);
+  const classOptions = useResource('/api/v1/classes', true);
   const candidateTopics = useApiData(subjectId ? `/api/v1/subjects/${encodeURIComponent(subjectId)}/topics` : null);
   const candidateQuery = new URLSearchParams({ subjectId, page: '0', size: '100' });
   if (questionTopicId) candidateQuery.set('topicId', questionTopicId);
   if (questionDifficulty) candidateQuery.set('difficultyLevel', questionDifficulty);
-  const candidates = useApiData(!readOnly && subjectId ? `/api/v1/questions?${candidateQuery}` : null);
+  const candidates = useApiData(subjectId ? `/api/v1/questions?${candidateQuery}` : null);
   const action = useAction();
   const questions = listItems(examQuestions.data);
   const topicNameOf = (question) => questionTopicName(question, listItems(candidateTopics.data));
@@ -236,7 +235,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
           activeId={tab}
           onChange={setTab}
           actions={
-            !readOnly && tab === 'questions' && detail.data?.matrixId ? (
+            tab === 'questions' && detail.data?.matrixId ? (
               <Button disabled={action.busy} onClick={generate}>
                 Sinh theo ma trận
               </Button>
@@ -258,18 +257,14 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                           {labelOf(item.difficultyLevel)}
                           {item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}
                         </span>,
-                        <Button
-                          variant="secondary"
-                          disabled={readOnly || action.busy}
-                          onClick={() => setRemoveTarget(item)}
-                        >
+                        <Button variant="secondary" disabled={action.busy} onClick={() => setRemoveTarget(item)}>
                           Gỡ
                         </Button>,
                       ]}
                     />
                   )}
                 </Resource>
-                {!readOnly && subjectId ? (
+                {subjectId ? (
                   <>
                     <Card className="mt-5 grid gap-3 p-4 md:grid-cols-3">
                       <SharedFormField
@@ -575,7 +570,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   );
 }
 
-export function MatrixManager({ classes, createPage = false, adminMode = false }) {
+export function MatrixManager({ classes, createPage = false }) {
   const [subjectId, setSubjectId] = useState(() => new URLSearchParams(window.location.search).get('subjectId') || '');
   const [modal, setModal] = useState(createPage ? { mode: 'create' } : null);
   const EditorContainer = createPage ? AuthoringPanel : Modal;
@@ -588,15 +583,10 @@ export function MatrixManager({ classes, createPage = false, adminMode = false }
   const topics = useApiData(subjectId ? `/api/v1/subjects/${encodeURIComponent(subjectId)}/topics` : null);
   const matrices = useApiData(`/api/v1/exam-matrices${subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : ''}`);
   const action = useAction();
-  const openCreate = () =>
-    adminMode
-      ? (setDetails([{ topicId: '', difficultyLevel: 'MEDIUM', numQuestions: 1, weightPercent: 100 }]),
-        setModal({ mode: 'create' }))
-      : navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
+  const openCreate = () => navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
   const openEdit = async (row) => {
     const data = await action.run(`/api/v1/exam-matrices/${encodeURIComponent(row.matrixId)}`, {}, '');
     if (data) {
-      setSubjectId(data.subjectId);
       setDetails(data.details?.length ? data.details : []);
       setModal({ mode: 'edit', row: data });
     }
@@ -756,7 +746,7 @@ export function MatrixManager({ classes, createPage = false, adminMode = false }
           {(rows) => (
             <Table
               asCards
-              rows={adminMode ? rows.filter((row) => row.examType !== 'FINAL') : rows}
+              rows={rows}
               columns={['Ma trận', 'Loại đề', 'Tổng điểm', 'Thao tác']}
               cells={(item) => [
                 item.matrixName || item.name || '—',
@@ -975,7 +965,7 @@ export function MatrixManager({ classes, createPage = false, adminMode = false }
 }
 
 export function LecturerDashboardApiPage() {
-  const classes = useResource('/api/v1/instructor/classes', true);
+  const classes = useResource('/api/v1/classes', true);
   const rows = listItems(classes.data);
   const active = rows.filter((item) => item.status === 'ACTIVE');
   return (
@@ -1071,9 +1061,11 @@ export function LecturerDashboardApiPage() {
 }
 
 export function LecturerAssessmentApiPage({ grading = false, createPage = false }) {
-  const classes = useResource('/api/v1/instructor/classes', true);
+  const classes = useResource('/api/v1/classes', true);
   const rows = listItems(classes.data);
-  const [tab, setTab] = useState('exams');
+  const [tab, setTab] = useState(
+    new URLSearchParams(window.location.search).get('tab') === 'matrices' ? 'matrices' : 'exams'
+  );
   const [classId, setClassId] = useState(() => new URLSearchParams(window.location.search).get('classId') || '');
   const [creating, setCreating] = useState(createPage);
   const [editing, setEditing] = useState(null);
@@ -1221,7 +1213,7 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                           label={`Thao tác với ${nameOf(item)}`}
                           disabled={action.busy}
                           items={
-                            grading || item.examType === 'FINAL'
+                            grading
                               ? [{ label: 'Xem danh sách bài làm', onSelect: () => setManaging(item) }]
                               : [
                                   { label: 'Chỉnh sửa đề thi', onSelect: () => setManaging(item) },
@@ -1317,13 +1309,11 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                   disabled={matrices.loading || Boolean(matrices.error)}
                 >
                   <option value="">Không sử dụng ma trận</option>
-                  {listItems(matrices.data)
-                    .filter((matrix) => matrix.examType !== 'FINAL')
-                    .map((matrix) => (
-                      <option key={matrix.matrixId} value={matrix.matrixId}>
-                        {matrix.matrixName || matrix.name || 'Ma trận đề'}
-                      </option>
-                    ))}
+                  {listItems(matrices.data).map((matrix) => (
+                    <option key={matrix.matrixId} value={matrix.matrixId}>
+                      {matrix.matrixName || matrix.name || 'Ma trận đề'}
+                    </option>
+                  ))}
                 </SelectField>
               </AuthoringSection>
               <AuthoringSection
@@ -1416,7 +1406,7 @@ export function LecturerGradingApiPage() {
 
 export function LecturerExperimentsApiPage() {
   const subjects = useResource('/api/v1/subjects?isActive=true', true);
-  const classes = useResource('/api/v1/instructor/classes', true);
+  const classes = useResource('/api/v1/classes', true);
   const subjectRows = listItems(subjects.data);
   const classRows = listItems(classes.data);
   const [subjectId, setSubjectId] = useState('');

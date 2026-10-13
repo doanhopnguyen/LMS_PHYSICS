@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { resolveLmsRoute } from './routes/resolveLmsRoute.js';
-import { LmsRoutes } from './routes/LmsRoutes.jsx';
 import { LecturerExperimentGradingPage } from './pages/lecturers/LecturerExperimentGrading.jsx';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getCleanRoute, getPageFile } from './lib/routes.js';
@@ -13,7 +11,6 @@ import { DashboardPage } from './pages/students/DashboardPage.jsx';
 import { CourseDetailPage } from './pages/students/CourseDetailPage.jsx';
 import { LearningModulePage } from './pages/students/LearningModulePage.jsx';
 import { ExamPracticePage } from './pages/students/ExamPracticePage.jsx';
-import { AdaptiveSessionPage } from './pages/students/AdaptivePractice.jsx';
 import { ExamResultsPage } from './pages/students/ExamResultsPage.jsx';
 import { LabReportPage } from './pages/students/LabReportPage.jsx';
 import { LearningResultsPage } from './pages/students/LearningResultsPage.jsx';
@@ -56,7 +53,6 @@ const pageComponents = {
   'course_detail.html': CourseDetailPage,
   'learning_module.html': LearningModulePage,
   'exam_practice_center.html': ExamPracticePage,
-  'practice_session.html': AdaptiveSessionPage,
   'exam_results.html': ExamResultsPage,
   'lab_report_rubric.html': LabReportPage,
   'learning_results.html': LearningResultsPage,
@@ -76,6 +72,7 @@ const pageComponents = {
   'lecturer_courses.html': LecturerClassesApiPage,
   'lecturer_course_detail.html': LecturerClassDetail,
   'lecturer_materials.html': () => <LecturerAuthoringApiPage kind="materials" />,
+  'lecturer_question_bank.html': () => <LecturerAuthoringApiPage kind="questions" />,
   'lecturer_assessments.html': LecturerAssessmentApiPage,
   'lecturer_exam_create.html': () => <LecturerAssessmentApiPage createPage />,
   'lecturer_matrix_create.html': LecturerMatrixCreatePage,
@@ -135,8 +132,6 @@ function App() {
   }, []);
 
   const session = getDemoSession();
-  const lmsRoute = resolveLmsRoute(window.location.pathname);
-  if (lmsRoute) return <LmsRoutes key={locationKey} route={lmsRoute} />;
   const Page = pageComponents[file] ?? pageComponents['login.html'];
   if (
     !['login.html', 'auth_access.html', 'register.html', 'reset_password.html', '403.html', '404.html'].includes(

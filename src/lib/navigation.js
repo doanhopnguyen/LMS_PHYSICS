@@ -1,7 +1,6 @@
 import { getCleanRoute, getPageFile, routeFiles } from './routes.js';
 import { canAccess, getDemoSession } from './demoSession.js';
 import { academicHref } from './academicScope.js';
-import { resolveLmsRoute } from '../routes/resolveLmsRoute.js';
 
 export const navigationByLabel = [
   ['Tổng quan', 'dashboard.html'],
@@ -55,7 +54,7 @@ export function routeFromLink(link) {
     if (url.origin !== window.location.origin) return null;
     const route = url.pathname.replace(/^\//, '');
     const file = route.endsWith('.html') ? route : `${route}.html`;
-    if (routeFiles.includes(file) || resolveLmsRoute(url.pathname)) return `${url.pathname}${url.search}${url.hash}`;
+    if (routeFiles.includes(file)) return `${url.pathname}${url.search}${url.hash}`;
   }
   if (href === '#' || href.startsWith('#')) {
     const text = link.textContent.replace(/\s+/g, ' ').trim();

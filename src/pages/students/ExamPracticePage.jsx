@@ -14,7 +14,6 @@ import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { api } from '../../lib/apiClient.js';
 import { navigate } from '../../lib/navigation.js';
 import { AttemptSession } from './ExamSessionPage.jsx';
-import { AdaptivePracticeEntry } from './AdaptivePractice.jsx';
 
 const rowsOf = (value) =>
   Array.isArray(value)
@@ -78,11 +77,11 @@ function PracticeCenter() {
         const grouped = await Promise.all(
           classRows.map(async (classItem) => ({
             classItem,
-            exams: rowsOf(await api.exams.listForClass(classItem.classId)),
-            progress: rowsOf(await api.students.myProgress(classItem.classId)),
+            exams: rowsOf(await api.exams.listForClass(classItem.classId).catch(() => [])),
+            progress: rowsOf(await api.students.myProgress(classItem.classId).catch(() => [])),
           }))
         );
-        const transfers = rowsOf(await api.exams.myTransferredExams());
+        const transfers = rowsOf(await api.exams.myTransferredExams().catch(() => []));
         const classById = new Map(classRows.map((item) => [String(item.classId), item]));
         const unique = new Map();
         [
@@ -94,8 +93,8 @@ function PracticeCenter() {
         const withAttempts = await Promise.all(
           [...unique.values()].map(async (exam) => {
             const [attemptData, policy] = await Promise.all([
-              api.exams.myAttempts(exam.examId),
-              api.exams.attemptPolicy(exam.examId),
+              api.exams.myAttempts(exam.examId).catch(() => []),
+              api.exams.attemptPolicy(exam.examId).catch(() => null),
             ]);
             const attempts = rowsOf(attemptData);
             const active = attempts.find((attempt) => !isFinished(attempt));
@@ -212,7 +211,6 @@ function PracticeCenter() {
           description="Chọn đề luyện tập, theo dõi kết quả và tiếp tục ôn tập."
         />
         <AuthAlert>{notice}</AuthAlert>
-        <AdaptivePracticeEntry />
         <MetricGrid
           items={[
             {

@@ -3,11 +3,9 @@ import { materialVideoSource } from '../lib/materialSources.js';
 import { createVideoWatchGuard } from '../lib/videoWatchGuard.js';
 import { loadYouTube, loadVimeo } from '../lib/videoPlayerApi.js';
 import { AuthAlert } from './AuthLayout.jsx';
-import { useSignedMaterial } from '../hooks/useSignedMaterial.js';
 
 export function GuardedVideoPlayer({ material, completed = false, watchedSeconds = 0, onProgress, fill = false }) {
-  const resolved = useSignedMaterial(material);
-  const source = resolved.loading ? null : materialVideoSource(resolved.material);
+  const source = materialVideoSource(material);
   const native = useRef(null);
   const container = useRef(null);
   const callback = useRef(onProgress);
@@ -188,16 +186,6 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
     };
   }, [source?.url, attempt, guard]);
 
-  if (resolved.loading) return <p role="status">Đang tải video…</p>;
-  if (resolved.error)
-    return (
-      <div role="alert">
-        {resolved.error}
-        <button type="button" onClick={resolved.refresh}>
-          Thử lại
-        </button>
-      </div>
-    );
   if (!source) return <p className="p-4 text-slate-500">Video bài giảng chưa được cung cấp.</p>;
   return (
     <div className={fill ? 'flex min-h-0 w-full flex-1 flex-col' : 'space-y-2'}>
@@ -215,7 +203,6 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
             onClick={() => {
               setError('');
               setAttempt((value) => value + 1);
-              if (material.fileId) resolved.refresh();
               native.current?.load();
             }}
           >

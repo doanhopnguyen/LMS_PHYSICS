@@ -8,7 +8,6 @@ import { Tabs } from '../../components/Tabs.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api } from '../../lib/apiClient.js';
-import { AdminFinalMatrices } from './AdminFinalMatrices.jsx';
 import { MatrixManager } from '../lecturers/LecturerApiWorkspace.jsx';
 
 function EnrollmentManager() {
@@ -69,13 +68,7 @@ function EnrollmentManager() {
         <SelectField
           label="Lớp học *"
           value={classId}
-          onChange={(event) => {
-            setClassId(event.target.value);
-            setStudent(null);
-            setBulkStudents([]);
-            setError('');
-            setMessage('');
-          }}
+          onChange={(event) => setClassId(event.target.value)}
           disabled={classes.loading || busy}
         >
           <option value="">Chọn lớp học</option>
@@ -102,9 +95,7 @@ function EnrollmentManager() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold">Danh sách ghi danh hàng loạt ({bulkStudents.length})</h3>
-              <p className="mt-1 text-body-sm text-[#64748B]">
-                Các sinh viên trong danh sách sẽ được ghi danh vào lớp đã chọn.
-              </p>
+              <p className="mt-1 text-body-sm text-[#64748B]">Các sinh viên trong danh sách sẽ được ghi danh vào lớp đã chọn.</p>
             </div>
             <Button disabled={!classId || busy} onClick={enrollBulk} icon="group_add">
               Ghi danh hàng loạt
@@ -135,25 +126,20 @@ function EnrollmentManager() {
 export function AdminAssessmentsPage() {
   const [tab, setTab] = useState('matrices');
   return (
-    <AdminPageShell currentPage="admin_assessments.html" title="Thi cuối kỳ & ghi danh">
+    <AdminPageShell
+      currentPage="admin_assessments.html"
+      title="Ma trận đề & ghi danh"
+      description="Thiết lập ma trận đề thi và quản lý ghi danh sinh viên vào lớp."
+    >
       <Tabs
         items={[
-          { id: 'matrices', label: 'Ma trận FINAL' },
-          { id: 'regular', label: 'Ma trận đánh giá' },
+          { id: 'matrices', label: 'Ma trận đề' },
           { id: 'enrollments', label: 'Ghi danh sinh viên' },
         ]}
         activeId={tab}
         onChange={setTab}
       >
-        {() =>
-          tab === 'matrices' ? (
-            <AdminFinalMatrices />
-          ) : tab === 'regular' ? (
-            <MatrixManager adminMode />
-          ) : (
-            <EnrollmentManager />
-          )
-        }
+        {() => (tab === 'matrices' ? <MatrixManager /> : <EnrollmentManager />)}
       </Tabs>
     </AdminPageShell>
   );

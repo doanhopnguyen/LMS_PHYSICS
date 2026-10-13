@@ -22,7 +22,6 @@ const questionTypes = [
   ['MCQ_MULTI', 'Nhiều đáp án'],
   ['TRUE_FALSE', 'Đúng / Sai'],
   ['SHORT_ANSWER', 'Trả lời ngắn'],
-  ['FILL_BLANK', 'Điền khuyết'],
 ];
 const difficulties = [
   ['EASY', 'Dễ'],
@@ -44,14 +43,11 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave }) {
   const [topicId, setTopicId] = useState(initial?.topicId || '');
   const [type, setType] = useState(initial?.questionType || 'MCQ_SINGLE');
   const [options, setOptions] = useState(() => optionRows(initial));
-  const [cloIds, setCloIds] = useState(initial?.cloIds || []);
-  const clos = useApiData(subjectId ? `/api/v1/subjects/${subjectId}/clos` : null);
   const [error, setError] = useState('');
   const topics = useApiData(subjectId ? `/api/v1/subjects/${encodeURIComponent(subjectId)}/topics` : null);
   const topicRows = listItems(topics.data);
   useEffect(() => {
-    if (!topics.loading && !topics.error && topicId && !topicRows.some((topic) => topic.topicId === topicId))
-      setTopicId('');
+    if (topicId && !topicRows.some((topic) => topic.topicId === topicId)) setTopicId('');
   }, [subjectId, topicId, topicRows]);
   const updateOption = (index, patch) =>
     setOptions((rows) =>
@@ -76,18 +72,8 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave }) {
       .filter((option) => option.content);
     if (!subjectId || !topicId) return setError('Vui lòng chọn học phần và chủ đề.');
     if (!values.content.trim()) return setError('Vui lòng nhập nội dung câu hỏi.');
-    if (
-      !['SHORT_ANSWER', 'FILL_BLANK'].includes(type) &&
-      (preparedOptions.length < 2 || !preparedOptions.some((option) => option.isCorrect))
-    )
+    if (type !== 'SHORT_ANSWER' && (preparedOptions.length < 2 || !preparedOptions.some((option) => option.isCorrect)))
       return setError('Câu trắc nghiệm cần ít nhất 2 đáp án và phải có đáp án đúng.');
-    const acceptedAnswers = String(values.acceptedAnswers || '')
-      .split('\n')
-      .map((value) => value.trim())
-      .filter(Boolean);
-    if (type === 'FILL_BLANK' && !acceptedAnswers.length) return setError('Nhập đáp án chấp nhận.');
-    if (type === 'MCQ_SINGLE' && preparedOptions.filter((row) => row.isCorrect).length !== 1)
-      return setError('Chọn đúng một đáp án.');
     setError('');
     onSave({
       subjectId,
@@ -97,10 +83,7 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave }) {
       mediaUrl: values.mediaUrl.trim(),
       difficultyLevel: values.difficultyLevel,
       cognitiveLevel: values.cognitiveLevel.trim(),
-      options: ['FILL_BLANK', 'SHORT_ANSWER'].includes(type) ? [] : preparedOptions,
-      acceptedAnswers: type === 'FILL_BLANK' ? acceptedAnswers : [],
-      cloIds,
-      approvalStatus: 'DRAFT',
+      options: preparedOptions,
     });
   };
   return (
@@ -113,7 +96,6 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave }) {
             onChange={(event) => {
               setSubjectId(event.target.value);
               setTopicId('');
-              setCloIds([]);
             }}
             required
           >
@@ -180,92 +162,62 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave }) {
             wrapperClassName="grid gap-1.5 text-body-sm font-medium"
           />
         </div>
-        {(topics.error || clos.error) && <p role="alert">{topics.error || clos.error}</p>}
-        <fieldset className="grid gap-2">
-          <legend className="font-semibold">Chuẩn đầu ra</legend>
-          {listItems(clos.data)
-            .filter((row) => row.isActive !== false || cloIds.includes(row.cloId))
-            .map((row) => (
-              <label key={row.cloId} className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  disabled={busy}
-                  checked={cloIds.includes(row.cloId)}
-                  onChange={(e) =>
-                    setCloIds((ids) => (e.target.checked ? [...ids, row.cloId] : ids.filter((id) => id !== row.cloId)))
-                  }
-                />
-                {row.cloCode} · {row.description}
-              </label>
-            ))}
+        <fieldset className="grid gap-3">
+          <legend className="font-semibold">Đáp án</legend>
+          {options.map((option, index) => (
+            <Card as="div" className="grid gap-3 p-4" key={index}>
+              <div className="flex items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-body-sm font-medium">
+                  <input
+                    type={type === 'MCQ_SINGLE' ? 'radio' : 'checkbox'}
+                    name={type === 'MCQ_SINGLE' ? 'correct-answer' : `correct-${index}`}
+                    checked={option.isCorrect}
+                    onChange={(event) => updateOption(index, { isCorrect: event.target.checked })}
+                  />
+                  Đáp án {index + 1} đúng
+                </label>
+                <Button
+                  variant="secondary"
+                  disabled={options.length <= 2}
+                  onClick={() => setOptions((rows) => rows.filter((_, rowIndex) => rowIndex !== index))}
+                >
+                  Xóa đáp án
+                </Button>
+              </div>
+              <SharedFormField
+                aria-label={`Nội dung đáp án ${index + 1}`}
+                required
+                value={option.content}
+                onChange={(event) =>
+                  updateOption(index, {
+                    content: event.target.value,
+                  })
+                }
+                placeholder="Nội dung đáp án"
+                className="h-10"
+                bare
+              />
+              <SharedFormField
+                aria-label={`Giải thích đáp án ${index + 1}`}
+                value={option.explanation}
+                onChange={(event) =>
+                  updateOption(index, {
+                    explanation: event.target.value,
+                  })
+                }
+                placeholder="Giải thích (không bắt buộc)"
+                className="h-10"
+                bare
+              />
+            </Card>
+          ))}
+          <Button
+            variant="secondary"
+            onClick={() => setOptions((rows) => [...rows, { content: '', isCorrect: false, explanation: '' }])}
+          >
+            Thêm đáp án
+          </Button>
         </fieldset>
-        {type === 'FILL_BLANK' && (
-          <SharedFormField
-            name="acceptedAnswers"
-            label="Đáp án chấp nhận · mỗi dòng một đáp án"
-            multiline
-            required
-            defaultValue={(initial?.acceptedAnswers || []).join('\n')}
-          />
-        )}
-        {!['FILL_BLANK', 'SHORT_ANSWER'].includes(type) && (
-          <fieldset className="grid gap-3">
-            <legend className="font-semibold">Đáp án</legend>
-            {options.map((option, index) => (
-              <Card as="div" className="grid gap-3 p-4" key={index}>
-                <div className="flex items-center justify-between gap-3">
-                  <label className="flex items-center gap-2 text-body-sm font-medium">
-                    <input
-                      type={type === 'MCQ_SINGLE' ? 'radio' : 'checkbox'}
-                      name={type === 'MCQ_SINGLE' ? 'correct-answer' : `correct-${index}`}
-                      checked={option.isCorrect}
-                      onChange={(event) => updateOption(index, { isCorrect: event.target.checked })}
-                    />
-                    Đáp án {index + 1} đúng
-                  </label>
-                  <Button
-                    variant="secondary"
-                    disabled={options.length <= 2}
-                    onClick={() => setOptions((rows) => rows.filter((_, rowIndex) => rowIndex !== index))}
-                  >
-                    Xóa đáp án
-                  </Button>
-                </div>
-                <SharedFormField
-                  aria-label={`Nội dung đáp án ${index + 1}`}
-                  required
-                  value={option.content}
-                  onChange={(event) =>
-                    updateOption(index, {
-                      content: event.target.value,
-                    })
-                  }
-                  placeholder="Nội dung đáp án"
-                  className="h-10"
-                  bare
-                />
-                <SharedFormField
-                  aria-label={`Giải thích đáp án ${index + 1}`}
-                  value={option.explanation}
-                  onChange={(event) =>
-                    updateOption(index, {
-                      explanation: event.target.value,
-                    })
-                  }
-                  placeholder="Giải thích (không bắt buộc)"
-                  className="h-10"
-                  bare
-                />
-              </Card>
-            ))}
-            <Button
-              variant="secondary"
-              onClick={() => setOptions((rows) => [...rows, { content: '', isCorrect: false, explanation: '' }])}
-            >
-              Thêm đáp án
-            </Button>
-          </fieldset>
-        )}
         {error && (
           <p role="alert" className="text-red-700">
             {error}
@@ -281,10 +233,6 @@ export function AdminQuestionsApiPage() {
   const [subjectId, setSubjectId] = useState('');
   const [topicId, setTopicId] = useState('');
   const [difficulty, setDifficulty] = useState('');
-  const [chapterId, setChapterId] = useState('');
-  const chapters = useApiData(subjectId ? `/api/v1/subjects/${subjectId}/chapters` : null);
-  const [rejecting, setRejecting] = useState(null);
-  const [history, setHistory] = useState(null);
   const [page, setPage] = useState(0);
   const [editor, setEditor] = useState(null);
   const [importing, setImporting] = useState(false);
@@ -297,11 +245,10 @@ export function AdminQuestionsApiPage() {
   const query = useMemo(() => {
     const parameters = new URLSearchParams({ page: String(page), size: '20' });
     if (subjectId) parameters.set('subjectId', subjectId);
-    if (chapterId) parameters.set('chapterId', chapterId);
     if (topicId) parameters.set('topicId', topicId);
     if (difficulty) parameters.set('difficultyLevel', difficulty);
     return parameters.toString();
-  }, [chapterId, difficulty, page, subjectId, topicId]);
+  }, [difficulty, page, subjectId, topicId]);
   const questions = useApiData(`/api/v1/questions?${query}`);
   const subjectRows = listItems(subjects.data);
   const topicRows = listItems(topics.data);
@@ -314,8 +261,7 @@ export function AdminQuestionsApiPage() {
     subjectRows.find((subject) => subject.subjectId === question.subjectId)?.subjectName ||
     '—';
   useEffect(() => {
-    if (!topics.loading && !topics.error && topicId && !topicRows.some((topic) => topic.topicId === topicId))
-      setTopicId('');
+    if (topicId && !topicRows.some((topic) => topic.topicId === topicId)) setTopicId('');
   }, [subjectId, topicId, topicRows]);
   const start = () => {
     setBusy(true);
@@ -338,7 +284,11 @@ export function AdminQuestionsApiPage() {
         : await api.questions.create(payload);
       setEditor(null);
       questions.reload();
-      setMessage(editor?.questionId ? 'Đã cập nhật câu hỏi.' : 'Đã lưu bản nháp.');
+      setMessage(
+        editor?.questionId
+          ? 'Đã cập nhật câu hỏi.'
+          : `Đã tạo câu hỏi ${result?.questionId ? 'và đang chờ duyệt.' : 'mới.'}`
+      );
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -349,32 +299,6 @@ export function AdminQuestionsApiPage() {
     start();
     try {
       setEditor(await api.questions.get(question.questionId));
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function govern(question, operation) {
-    start();
-    try {
-      const result = await operation();
-      questions.updateData((data) => ({
-        ...data,
-        content: listItems(data).map((row) => (row.questionId === question.questionId ? result : row)),
-      }));
-      setMessage('Đã cập nhật trạng thái.');
-      setRejecting(null);
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function showHistory(question) {
-    start();
-    try {
-      setHistory({ question, rows: await api.questions.approvals(question.questionId) });
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -430,38 +354,6 @@ export function AdminQuestionsApiPage() {
       title="Ngân hàng câu hỏi"
       description="Quản trị viên duyệt, chỉnh sửa và xóa câu hỏi dùng trong các đề thi."
     >
-      {rejecting && (
-        <FormDialog title="Từ chối câu hỏi" busy={busy} onClose={() => !busy && setRejecting(null)}>
-          <Form
-            className="grid gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const body = Object.fromEntries(new FormData(e.currentTarget));
-              govern(rejecting, () => api.questions.reject(rejecting.questionId, body));
-            }}
-          >
-            <SharedFormField label="Lý do" name="rejectionReason" multiline required />
-            <SubmitButton disabled={busy}>Từ chối</SubmitButton>
-          </Form>
-        </FormDialog>
-      )}
-      {history && (
-        <FormDialog title="Lịch sử duyệt" onClose={() => setHistory(null)}>
-          <ul className="divide-y">
-            {listItems(history.rows).map((row) => (
-              <li key={row.approvalId} className="py-3">
-                <strong>{row.action}</strong>
-                <p>
-                  {row.fromStatus} → {row.toStatus}
-                </p>
-                <p>{row.comment}</p>
-                <time>{row.createdAt ? new Date(row.createdAt).toLocaleString('vi-VN') : ''}</time>
-              </li>
-            ))}
-          </ul>
-          {history.question.rejectionReason && <p>{history.question.rejectionReason}</p>}
-        </FormDialog>
-      )}
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
       {editor !== null && (
@@ -502,8 +394,6 @@ export function AdminQuestionsApiPage() {
               onChange={(event) => {
                 changeFilter(setSubjectId, event.target.value);
                 setTopicId('');
-                setChapterId('');
-                setChapterId('');
               }}
             >
               <option value="">Tất cả học phần</option>
@@ -514,35 +404,17 @@ export function AdminQuestionsApiPage() {
               ))}
             </SelectField>
             <SelectField
-              label="Chương"
-              value={chapterId}
-              disabled={!subjectId || chapters.loading}
-              onChange={(e) => {
-                changeFilter(setChapterId, e.target.value);
-                setTopicId('');
-              }}
-            >
-              <option value="">Tất cả chương</option>
-              {listItems(chapters.data).map((row) => (
-                <option key={row.chapterId} value={row.chapterId}>
-                  {row.chapterName}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
               label="Chủ đề"
               value={topicId}
               disabled={!subjectId}
               onChange={(event) => changeFilter(setTopicId, event.target.value)}
             >
               <option value="">Tất cả chủ đề</option>
-              {topicRows
-                .filter((topic) => !chapterId || topic.chapterId === chapterId)
-                .map((topic) => (
-                  <option key={topic.topicId} value={topic.topicId}>
-                    {topic.topicName}
-                  </option>
-                ))}
+              {topicRows.map((topic) => (
+                <option key={topic.topicId} value={topic.topicId}>
+                  {topic.topicName}
+                </option>
+              ))}
             </SelectField>
             <SelectField
               label="Độ khó"
@@ -600,19 +472,10 @@ export function AdminQuestionsApiPage() {
                       label="Thao tác với câu hỏi"
                       disabled={busy}
                       items={[
-                        question.approvalStatus === 'PENDING' && {
+                        question.approvalStatus !== 'APPROVED' && {
                           label: 'Duyệt câu hỏi',
                           onSelect: () => approve(question),
                         },
-                        ['DRAFT', 'REJECTED'].includes(question.approvalStatus) && {
-                          label: 'Gửi duyệt',
-                          onSelect: () => govern(question, () => api.questions.submitReview(question.questionId)),
-                        },
-                        question.approvalStatus === 'PENDING' && {
-                          label: 'Từ chối',
-                          onSelect: () => setRejecting(question),
-                        },
-                        { label: 'Lịch sử duyệt', onSelect: () => showHistory(question) },
                         { label: 'Chỉnh sửa', onSelect: () => edit(question) },
                         { label: 'Xóa', danger: true, onSelect: () => setDeleting(question) },
                       ]}

@@ -52,9 +52,9 @@ export function LearningModulePage({ openInitialLesson = false }) {
       }
       try {
         const [materialData, topicData, progressData] = await Promise.all([
-          classId ? api.materials.forClass(classId, { topicId }) : api.materials.list(topicId),
-          subjectId ? api.subjects.getTopic(subjectId, topicId) : Promise.resolve(null),
-          classId ? api.students.myProgress(classId) : Promise.resolve([]),
+          classId ? api.students.myMaterials({ classId, topicId }) : api.materials.list(topicId),
+          subjectId ? api.subjects.getTopic(subjectId, topicId).catch(() => null) : Promise.resolve(null),
+          classId ? api.students.myProgress(classId).catch(() => []) : Promise.resolve([]),
         ]);
         if (!alive) return;
         const orderedMaterials = rowsOf(materialData)

@@ -10,7 +10,7 @@ import {
 
 export async function loadClassMaterialProgress(classId) {
   const [materialsData, progressData] = await Promise.all([
-    api.materials.forClass(classId),
+    api.students.myMaterials({ classId }),
     api.students.myProgress(classId),
   ]);
   const materials = itemsOf(materialsData);

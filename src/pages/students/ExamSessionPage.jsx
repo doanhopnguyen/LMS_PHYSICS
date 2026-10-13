@@ -1,5 +1,3 @@
-import { QuestionAnswer } from '../../components/QuestionAnswer.jsx';
-import { createAnswerQueue } from '../../lib/answerQueue.js';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
@@ -49,10 +47,10 @@ function ExamSelection() {
         const grouped = await Promise.all(
           classes.map(async (item) => ({
             item,
-            exams: rowsOf(await api.exams.listForClass(item.classId)),
+            exams: rowsOf(await api.exams.listForClass(item.classId).catch(() => [])),
           }))
         );
-        const transferred = rowsOf(await api.exams.myTransferredExams());
+        const transferred = rowsOf(await api.exams.myTransferredExams().catch(() => []));
         const unique = new Map();
         [
           ...grouped.flatMap(({ item, exams: examRows }) =>
@@ -62,12 +60,10 @@ function ExamSelection() {
         ].forEach((exam) => unique.set(String(exam.examId), exam));
         const withAttempts = await Promise.all(
           [...unique.values()].map(async (exam) => {
-            const attempts = rowsOf(await api.exams.myAttempts(exam.examId));
-            const policy = await api.exams.attemptPolicy(exam.examId);
+            const attempts = rowsOf(await api.exams.myAttempts(exam.examId).catch(() => []));
             const active = attempts.find((attempt) => !finished(attempt));
             return {
               ...exam,
-              policy,
               attempts,
               activeProgress: active?.attemptId
                 ? await api.exams.attemptProgress(active.attemptId).catch(() => null)
@@ -147,7 +143,7 @@ function ExamSelection() {
                       <Button
                         className="mt-3 w-full"
                         icon="play_arrow"
-                        disabled={startingId === exam.examId || (!active && !exam.policy?.canStartAttempt)}
+                        disabled={startingId === exam.examId}
                         onClick={() =>
                           active?.attemptId
                             ? navigate(
@@ -191,11 +187,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState([]);
   const [remainingSeconds, setRemainingSeconds] = useState(null);
-  const deadline = useRef(null);
-  const draftQuestions = useRef([]);
-  const answerQueue = useRef(null);
-  const submitLock = useRef(false);
-  const [policy, setPolicy] = useState(null);
   const canLeaveAttempt = useRef(false);
   const autoSubmitStarted = useRef(false);
   useEffect(() => {
@@ -207,19 +198,12 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
       setLoading(true);
       setError('');
       try {
-        const [examData, attemptData, policyData] = await Promise.all([
+        const [examData, attemptData] = await Promise.all([
           api.exams.get(examId),
-          attemptId
-            ? api.exams.getAttempt(attemptId)
-            : api.exams.myAttempt(examId).catch((error) => {
-                if (error.status === 404) return null;
-                throw error;
-              }),
-          api.exams.attemptPolicy(examId),
+          attemptId ? api.exams.getAttempt(attemptId) : api.exams.myAttempt(examId).catch(() => null),
         ]);
         if (!alive) return;
         setExam(examData);
-        setPolicy(policyData);
         setAttempt(attemptData);
       } catch (loadError) {
         if (alive) setError(loadError?.message || 'Không thể tải phiên kiểm tra.');
@@ -252,8 +236,6 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
           const rows = rowsOf(questionRows);
           setQuestions(rows);
           setAllQuestions(rows);
-          draftQuestions.current = rows;
-          answerQueue.current = createAnswerQueue((body) => api.exams.saveAnswer(attempt.attemptId, body));
           setProgress(progressData);
         }
       })
@@ -263,7 +245,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
     return () => {
       alive = false;
     };
-  }, [attempt?.attemptId, attempt?.status, takeMode]);
+  }, [attempt, takeMode]);
   useEffect(() => {
     setQuestions(
       layout === 'single' ? (allQuestions[activeQuestion] ? [allQuestions[activeQuestion]] : []) : allQuestions
@@ -271,28 +253,20 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
   }, [activeQuestion, allQuestions, layout]);
   useEffect(() => {
     const apiRemaining = progress?.remainingSeconds;
-    if (apiRemaining != null && Number.isFinite(Number(apiRemaining))) {
-      deadline.current = Date.now() + Math.max(0, Number(apiRemaining)) * 1000;
+    if (Number.isFinite(Number(apiRemaining))) {
       setRemainingSeconds(Number(apiRemaining));
       return;
     }
     if (exam?.durationMinutes && attempt?.startedAt) {
       const elapsed = Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000);
-      deadline.current = Math.min(
-        new Date(attempt.startedAt).getTime() + Number(exam.durationMinutes) * 60000,
-        exam.endTime ? new Date(exam.endTime).getTime() : Infinity
-      );
-      setRemainingSeconds(Math.max(0, Math.floor((deadline.current - Date.now()) / 1000)));
+      setRemainingSeconds(Math.max(0, Number(exam.durationMinutes) * 60 - elapsed));
       return;
     }
     setRemainingSeconds(null);
   }, [attempt?.startedAt, exam?.durationMinutes, progress?.remainingSeconds]);
   useEffect(() => {
     if (!takeMode || remainingSeconds === null || remainingSeconds <= 0) return undefined;
-    const timer = window.setInterval(
-      () => setRemainingSeconds(Math.max(0, Math.floor((deadline.current - Date.now()) / 1000))),
-      1000
-    );
+    const timer = window.setInterval(() => setRemainingSeconds((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
   }, [takeMode, remainingSeconds === null, remainingSeconds <= 0]);
   useEffect(() => {
@@ -329,48 +303,35 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
       document.removeEventListener('click', blockLink, true);
     };
   }, [attempt?.attemptId, takeMode, attempt?.status, attempt?.submittedAt]);
-  const updateDraft = (question, patch) => {
-    if (submitLock.current || finished(attempt)) return;
-    draftQuestions.current = draftQuestions.current.map((row) =>
-      row.questionId === question.questionId ? { ...row, ...patch } : row
-    );
-    setAllQuestions(draftQuestions.current);
-  };
-  const saveAnswer = async (question) => {
-    if (!attempt?.attemptId || submitLock.current || finished(attempt) || !answerQueue.current) return;
-    const row = draftQuestions.current.find((item) => item.questionId === question.questionId);
-    const body = {
-      questionId: question.questionId,
-      selectedOptionIds: row.selectedOptionIds || [],
-      answerText: row.answerText ?? null,
-    };
+  const saveAnswer = async (question, patch) => {
+    if (!attempt?.attemptId) return;
     setSavingQuestion(question.questionId);
     setError('');
+    const body = {
+      questionId: question.questionId,
+      selectedOptionIds: patch.selectedOptionIds || [],
+      answerText: patch.answerText || null,
+    };
     try {
-      await answerQueue.current.enqueue(body);
+      await api.exams.saveAnswer(attempt.attemptId, body);
+      setQuestions((rows) => rows.map((row) => (row.questionId === question.questionId ? { ...row, ...body } : row)));
+      setAllQuestions((rows) =>
+        rows.map((row) => (row.questionId === question.questionId ? { ...row, ...body } : row))
+      );
       setProgress(await api.exams.attemptProgress(attempt.attemptId));
-    } catch (failure) {
-      setError(failure.message);
+    } catch (saveError) {
+      setError(saveError?.message || 'Không thể lưu câu trả lời.');
     } finally {
       setSavingQuestion('');
     }
   };
   const submitAttempt = async ({ automatic = false } = {}) => {
-    if (
-      !attempt?.attemptId ||
-      submitLock.current ||
-      finished(attempt) ||
-      (!automatic && !window.confirm('Nộp bài và kết thúc lượt làm này?'))
-    )
-      return;
-    document.activeElement?.blur();
-    submitLock.current = true;
+    if (!attempt?.attemptId || (!automatic && !window.confirm('Nộp bài và kết thúc lượt làm này?'))) return;
     setSubmitting(true);
     setError('');
     try {
-      await answerQueue.current?.flush();
       await api.exams.autosave(attempt.attemptId, {
-        answers: draftQuestions.current.map((item) => ({
+        answers: allQuestions.map((item) => ({
           questionId: item.questionId,
           selectedOptionIds: item.selectedOptionIds || [],
           answerText: item.answerText || null,
@@ -388,15 +349,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
       }
     } catch (submitError) {
       setError(submitError?.message || 'Không thể nộp bài.');
-      try {
-        const actual = await api.exams.getAttempt(attempt.attemptId);
-        if (finished(actual)) {
-          canLeaveAttempt.current = true;
-          navigate(`exam_results.html?examId=${examId}&attemptId=${attempt.attemptId}`);
-        }
-      } catch {}
     } finally {
-      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -539,7 +492,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       )}
                     </div>
                     {!attempt && (
-                      <Button icon="play_arrow" disabled={starting || !policy?.canStartAttempt} onClick={start}>
+                      <Button icon="play_arrow" disabled={starting} onClick={start}>
                         {starting ? 'Đang bắt đầu…' : 'Bắt đầu làm bài'}
                       </Button>
                     )}
@@ -598,15 +551,53 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                           {question.mediaUrl && (
                             <img src={question.mediaUrl} alt="Nội dung minh họa" className="mt-3 max-h-64 rounded-lg" />
                           )}
-                          <QuestionAnswer
-                            question={question}
-                            disabled={submitting || progress?.isExpired}
-                            onChange={(patch) => {
-                              updateDraft(question, patch);
-                              if (!['FILL_BLANK', 'SHORT_ANSWER'].includes(question.questionType)) saveAnswer(question);
-                            }}
-                            onSaveText={() => saveAnswer(question)}
-                          />
+                          {['SHORT_ANSWER'].includes(question.questionType) ? (
+                            <SharedFormField
+                              defaultValue={question.answerText || ''}
+                              onBlur={(event) =>
+                                saveAnswer(question, {
+                                  answerText: event.target.value,
+                                })
+                              }
+                              className="mt-4 w-full"
+                              rows={3}
+                              placeholder="Nhập câu trả lời"
+                              disabled={savingQuestion === question.questionId}
+                              bare
+                              multiline
+                            />
+                          ) : (
+                            <div className="mt-4 space-y-2">
+                              {(question.options || []).map((option) => {
+                                const checked = (question.selectedOptionIds || []).includes(option.optionId);
+                                return (
+                                  <label
+                                    key={option.optionId}
+                                    className="flex cursor-pointer items-center gap-3 rounded-xl border p-3"
+                                  >
+                                    <input
+                                      type={question.questionType === 'MCQ_MULTI' ? 'checkbox' : 'radio'}
+                                      name={`question-${question.questionId}`}
+                                      checked={checked}
+                                      disabled={savingQuestion === question.questionId}
+                                      onChange={() => {
+                                        const ids =
+                                          question.questionType === 'MCQ_MULTI'
+                                            ? checked
+                                              ? (question.selectedOptionIds || []).filter(
+                                                  (id) => id !== option.optionId
+                                                )
+                                              : [...(question.selectedOptionIds || []), option.optionId]
+                                            : [option.optionId];
+                                        saveAnswer(question, { selectedOptionIds: ids });
+                                      }}
+                                    />
+                                    {option.content}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
                         </Card>
                       ))}
                     </div>
@@ -696,7 +687,9 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                     <dl className="mt-5 space-y-4 text-body-sm">
                       <div className="border-b border-[#E2E8F0] pb-3">
                         <dt className="text-[#64748B]">Loại đề</dt>
-                        <dd className="mt-1 font-semibold">{labelOf(exam?.examType)}</dd>
+                        <dd className="mt-1 font-semibold">
+                          {labelOf(exam?.examType)}
+                        </dd>
                       </div>
                       <div className="border-b border-[#E2E8F0] pb-3">
                         <dt className="text-[#64748B]">Thời gian mở đề</dt>
@@ -724,12 +717,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                   </div>
                 </div>
                 {!attempt && (
-                  <Button
-                    className="mt-6"
-                    icon="play_arrow"
-                    disabled={starting || !policy?.canStartAttempt}
-                    onClick={start}
-                  >
+                  <Button className="mt-6" icon="play_arrow" disabled={starting} onClick={start}>
                     {starting ? 'Đang bắt đầu…' : 'Bắt đầu làm bài'}
                   </Button>
                 )}

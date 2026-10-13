@@ -105,9 +105,9 @@ test('experiment rubric save preserves zero and confirmation sends the note', as
   ]);
 });
 
-test('question imports remain in the admin workspace', () => {
-  const lecturer = readFileSync('src/pages/lecturers/LecturerContent.jsx', 'utf8');
-  const admin = readFileSync('src/pages/admin/AdminQuestionsApiPage.jsx', 'utf8');
-  assert.doesNotMatch(lecturer, /api\.questions|QuestionForm|QuestionImportForm/);
-  assert.match(admin, /QuestionImportForm/);
+test('Excel import summary uses the shared alert instead of a page card', async () => {
+  const source = readFileSync('src/pages/lecturers/LecturerContent.jsx', 'utf8');
+  assert.doesNotMatch(source, /importResult/);
+  assert.match(source, /action\.setNotice\(/);
+  assert.match(source, /Đã đọc \$\{imported\.totalParsed/);
 });
