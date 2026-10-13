@@ -108,16 +108,18 @@ try {
       const p=new URL(url,location.origin).pathname,method=opts.method||'GET';
       const body=opts.body instanceof FormData?Object.fromEntries([...opts.body].map(([k,v])=>[k,v instanceof File?{name:v.name,size:v.size}:v])):opts.body?JSON.parse(opts.body):null;
       testCalls.push({p,method,body});
+      if(window.failEnrollOnce && p.endsWith('/enroll-bulk')){window.failEnrollOnce=false;return Response.json({message:'Ghi danh thất bại từ BE'},{status:400});}
       if(rejectSave && method!=='GET')return Response.json({status:400,message:'Lỗi BE đã định dạng: dữ liệu không hợp lệ',data:null},{status:400});
       let data=[];
+      if(p==='/api/v1/classes'&&method==='POST')data={...cls,...body};
       if(p==='/api/v1/users/me')data={userId:'u1',username:'test',role};
       if(p==='/api/v1/users/me/profile')data={fullName:'Kiểm thử'};
       if(p==='/api/v1/notifications/summary')data={unreadCount:0};
       if(p==='/api/v1/subjects/s1')data=subject;
       if(p==='/api/v1/topics/t1/materials'||p==='/api/v1/topics/t2/materials')data=[];
       if(p==='/api/v1/subjects')data={content:[subject],last:true};
-      if(p==='/api/v1/semesters')data=[{semesterId:'sem1',semesterName:'Kỳ 1'}];
-      if(['/api/v1/instructor/classes','/api/v1/classes','/api/v1/students/me/classes'].includes(p))data={content:[cls],last:true};
+      if(p==='/api/v1/semesters')data=[{semesterId:'sem1',semesterName:'Kỳ 1',semesterCode:'2026-1'}];
+      if(['/api/v1/instructor/classes','/api/v1/classes','/api/v1/students/me/classes'].includes(p))data=method==='POST'?{...cls,...body}:{content:[cls],last:true};
       if(['/api/v1/instructor/classes/c1','/api/v1/classes/c1'].includes(p))data=cls;
       if(p==='/api/v1/subjects/s1/chapters')data=method==='GET'?[chapter]:{...chapter,...body};
       if(p==='/api/v1/subjects/s1/topics')data=[topic,{topicId:'t2',topicName:'Chủ đề cũ',subjectId:'s1'}];
@@ -128,7 +130,7 @@ try {
       if(p==='/api/v1/classes/c1/topics/t1/materials')data={materialId:'m3',...body,approvalStatus:'PENDING'};
       if(p==='/api/v1/questions')data=method==='GET'?{content:[{questionId:'q1',content:'Câu hỏi nháp',approvalStatus:'DRAFT',subjectId:'s1'}],last:true,totalElements:1}:{questionId:'q2',...body};
       if(p==='/api/v1/questions/q1/submit-review')data={questionId:'q1',content:'Câu hỏi nháp',approvalStatus:'PENDING',subjectId:'s1'};
-      if(p==='/api/v1/users/admin/users')data={content:[{userId:'u1',username:'Giảng viên',role:'INSTRUCTOR'}],last:true};
+      if(p==='/api/v1/users/admin/users')data={content:[{userId:'u1',username:'Giảng viên',role:'INSTRUCTOR'},{userId:'sv1',username:'Sinh viên',role:'STUDENT'}],last:true};
       const matrix={matrixId:'mx1',matrixName:'FINAL mẫu',subjectId:'s1',subjectName:'Vật lý 1',examType:'FINAL',matrixFamilyId:'fam1',revisionNumber:1,matrixStatus:'PUBLISHED',isLocked:true,details:[{topicId:'t1',cloId:'cl1',difficultyLevel:'MEDIUM',numQuestions:1,weightPercent:100}]};
       if(p==='/api/v1/admin/exam-matrices')data=[matrix];
       if(p==='/api/v1/admin/exam-matrices/final')data={...matrix,...body,matrixId:'mx2',matrixStatus:'DRAFT',isLocked:false};
@@ -178,6 +180,17 @@ try {
   await wait('!document.querySelector("[role=dialog]")');
   const body=await evaluate('testCalls.filter(c=>c.method==="POST"&&c.p==="/api/v1/questions").at(-1).body');
   assert.equal(body.subjectId,'s1'); assert.equal(body.topicId,'t1'); assert.equal(body.questionType,'FILL_BLANK');
+  await go('admin/classes/new');
+  await choose('Học kỳ','sem1');await choose('Môn học','s1');await choose('Giảng viên','u1');
+  await click('Tiếp tục');
+  await evaluate('document.querySelector("input[type=checkbox]").click()');
+  await click('Tiếp tục');
+  await evaluate('window.failEnrollOnce=true');
+  await click('Tạo lớp');
+  await wait('document.body.innerText.includes("Ghi danh thất bại từ BE")');
+  assert.equal(await evaluate('testCalls.filter(c=>c.p==="/api/v1/classes"&&c.method==="POST").length'),1);
+  await click('Thử lại ghi danh');
+  await wait('location.pathname==="/admin/classes/c1"');
   await go('teacher/classes/c2');
   await wait('document.body.innerText.includes("Bạn không có quyền mở trang này")');
   assert.equal(await evaluate('testCalls.some(c=>c.p==="/api/v1/instructor/classes/c2")'),false);

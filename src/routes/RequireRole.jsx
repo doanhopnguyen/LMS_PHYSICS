@@ -12,8 +12,10 @@ export function RequireClass({ route, children }) {
   const value = useLoad(async () => {
     const path = route.area === 'teacher' ? '/api/v1/instructor/classes' : '/api/v1/students/me/classes';
     const list = await all(path);
-    if (!list.some(row => row.classId === route.id && !['DROPPED', 'ARCHIVED'].includes(row.status))) return null;
-    return apiRequest(`/api/v1/${route.area === 'teacher' ? 'instructor/' : ''}classes/${encodeURIComponent(route.id)}`);
+    const assigned = list.find(row => row.classId === route.id && row.status !== 'DROPPED');
+    if (!assigned) return null;
+    // GET /classes/{id} excludes STUDENT; the enrolled-class endpoint already returns ClassDTO.
+    return route.area === 'student' ? assigned : apiRequest(`/api/v1/instructor/classes/${encodeURIComponent(route.id)}`);
   }, `${route.area}:${route.id}`);
   return <LoadState value={value}>{data => data ? children(data) : <ErrorPage status={403} session={getDemoSession()} />}</LoadState>;
 }
