@@ -132,6 +132,12 @@ try {
       if(p==='/api/v1/admin/exam-matrices/final')data={...matrix,...body,matrixId:'mx2',matrixStatus:'DRAFT',isLocked:false};
       if(p==='/api/v1/admin/exam-matrices/mx1/validate')data={matrixId:'mx1',valid:true,totalRequired:1,totalAvailable:5,items:[],warnings:[]};
       if(p==='/api/v1/admin/exams/bulk-provision-final')data={matrixId:'mx1',totalClassesRequested:1,totalClassesProvisioned:1,createdExams:[{examId:'e1',classId:'c1',title:body.title||'FINAL mẫu',startTime:body.startTime}]};
+      const practiceQuestions=[{questionId:'pq1',questionType:'FILL_BLANK',content:'Gia tốc bằng ___',topicName:'Động lực học',options:[],acceptedAnswers:null,answerText:null},{questionId:'pq2',questionType:'MCQ_SINGLE',content:'Đơn vị lực',topicName:'Động lực học',options:[{optionId:'po1',content:'N',isCorrect:null},{optionId:'po2',content:'kg',isCorrect:null}]}];
+      if(p==='/api/v1/student/classes/c1/weak-topics')return Response.json([{topicId:'t1',topicName:'Động lực học',accuracyRate:50,hasEnoughData:true,weaknessLevel:'NEEDS_PRACTICE'}]);
+      if(p==='/api/v1/student/classes/c1/practice-recommendations'){localStorage.removeItem('qa-practice-answers');localStorage.removeItem('qa-practice-completed');return Response.json({sessionId:'ps1',classId:'c1',status:'IN_PROGRESS',totalQuestions:2,questions:practiceQuestions});}
+      if(p==='/api/v1/student/practice-sessions/ps1/answers') { await new Promise(r=>setTimeout(r,80));const answers=JSON.parse(localStorage.getItem('qa-practice-answers')||'{}');answers[body.questionId]=body;localStorage.setItem('qa-practice-answers',JSON.stringify(answers));return new Response(null,{status:200}); }
+      if(p==='/api/v1/student/practice-sessions/ps1/submit')localStorage.setItem('qa-practice-completed','yes');
+      if(p.startsWith('/api/v1/student/practice-sessions/ps1')) {const completed=localStorage.getItem('qa-practice-completed')==='yes';const answers=JSON.parse(localStorage.getItem('qa-practice-answers')||'{}');const questions=practiceQuestions.map(q=>({...q,...answers[q.questionId],...(completed?{isCorrect:true,acceptedAnswers:q.questionType==='FILL_BLANK'?['9.8']:null}:{})}));return Response.json({sessionId:'ps1',classId:'c1',status:completed?'COMPLETED':'IN_PROGRESS',totalQuestions:2,questions,...(completed?{correctCount:2,wrongCount:0,totalScore:2,accuracyRate:100,updatedWeakTopics:[]}: {})}); }
       return Response.json({status:200,data});
     };
   `,
@@ -233,6 +239,24 @@ try {
     1
   );
   assert.equal(await evaluate('!!document.querySelector("a[href*=lecturer_question_bank]")'), false);
+  await go('exam_practice_center');
+  await choose('Lớp học', 'c1');
+  await click('Bắt đầu luyện tập');
+  await wait('location.pathname==="/practice_session" && !!document.querySelector("input[type=text]")');
+  await input('input[type=text]', '9,8');
+  await evaluate('document.querySelector("input[type=radio]").click()');
+  await click('Nộp luyện tập');
+  await wait('document.body.innerText.includes("Đã hoàn thành")');
+  const answers = await evaluate('JSON.parse(localStorage.getItem("qa-practice-answers"))');
+  assert.equal(answers.pq1.answerText, '9,8');
+  assert.deepEqual(answers.pq2.selectedOptionIds, ['po1']);
+  assert.equal(await evaluate('testCalls.filter(c=>c.p.endsWith("/submit")).length'), 1);
+  await shot('adaptive-results');
+  await go('practice_session?sessionId=ps1&classId=c1');
+  await wait('document.body.innerText.includes("2/2 câu đúng")');
+  assert.equal(await evaluate('document.querySelectorAll("input[type=radio]").length'), 0);
+  await go('lecturer_materials?classId=c1');
+  await wait('document.body.innerText.includes("Học liệu chung")');
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await shot('instructor-materials-mobile');
   assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'mobile has no page overflow');

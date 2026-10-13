@@ -178,7 +178,7 @@ export function AdminMaterialsPage() {
           <p className="text-slate-500">Không có học liệu phù hợp với bộ lọc hiện tại.</p>
         ) : (
           <DataTable
-            columns={['Học liệu', 'Học phần / Chủ đề', 'Loại', 'Trạng thái', 'Thao tác']}
+            columns={['Học liệu', 'Học phần / Chủ đề', 'Phạm vi', 'Loại', 'Trạng thái', 'Thao tác']}
             rows={rows}
             renderRow={(row) => (
               <tr key={`${row.topicId}:${row.materialId}`} className="border-t">
@@ -187,6 +187,7 @@ export function AdminMaterialsPage() {
                   {row.subjectName}
                   <p className="mt-1 text-slate-500">{row.topicName}</p>
                 </td>
+                <td className="p-3">{row.scope === 'CLASS' ? `Riêng lớp ${row.classCode || ''}` : 'Dùng chung môn học'}</td>
                 <td className="p-3">{labelOf(row.type)}</td>
                 <td className="p-3">
                   <StatusBadge status={row.approvalStatus} />

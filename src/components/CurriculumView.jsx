@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card } from './Card.jsx';
 import { Button } from './Button.jsx';
+import { ProgressBar } from './ProgressBar.jsx';
 import { useResource, Resource, itemsOf } from '../pages/lecturers/LecturerShared.jsx';
 
-export function CurriculumView({ subjectId, onTopic }) {
+export function CurriculumView({ subjectId, onTopic, topicProgress }) {
   const chapters = useResource(subjectId ? `/api/v1/subjects/${subjectId}/chapters` : null);
   const topics = useResource(subjectId ? `/api/v1/subjects/${subjectId}/topics` : null);
   return (
@@ -30,7 +31,10 @@ export function CurriculumView({ subjectId, onTopic }) {
                       <ul className="mt-3 divide-y">
                         {rows.map((topic) => (
                           <li key={topic.topicId} className="flex items-center justify-between gap-3 py-3">
-                            <span>{topic.topicName}</span>
+                            <div className="min-w-0 flex-1">
+                              <span>{topic.topicName}</span>
+                              {topicProgress && <ProgressBar className="mt-2 max-w-64" value={topicProgress(topic)} />}
+                            </div>
                             {onTopic && (
                               <Button variant="secondary" onClick={() => onTopic(topic)}>
                                 Mở

@@ -4,7 +4,7 @@ import { Button } from './Button.jsx';
 import { MaterialFilePreview } from './MaterialFilePreview.jsx';
 import { MaterialSource } from './MaterialSource.jsx';
 
-const fileUrlOf = (material) => material?.downloadUrl || material?.fileUrl || material?.url || '';
+const fileUrlOf = (material) => material?.downloadUrl || material?.fileUrl || material?.url || material?.fileId || '';
 
 export function LessonContent({
   material,

@@ -258,7 +258,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                           {labelOf(item.difficultyLevel)}
                           {item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}
                         </span>,
-                        <Button variant="secondary" disabled={readOnly || action.busy} onClick={() => setRemoveTarget(item)}>
+                        <Button
+                          variant="secondary"
+                          disabled={readOnly || action.busy}
+                          onClick={() => setRemoveTarget(item)}
+                        >
                           Gỡ
                         </Button>,
                       ]}
@@ -571,7 +575,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   );
 }
 
-export function MatrixManager({ classes, createPage = false }) {
+export function MatrixManager({ classes, createPage = false, adminMode = false }) {
   const [subjectId, setSubjectId] = useState(() => new URLSearchParams(window.location.search).get('subjectId') || '');
   const [modal, setModal] = useState(createPage ? { mode: 'create' } : null);
   const EditorContainer = createPage ? AuthoringPanel : Modal;
@@ -584,10 +588,15 @@ export function MatrixManager({ classes, createPage = false }) {
   const topics = useApiData(subjectId ? `/api/v1/subjects/${encodeURIComponent(subjectId)}/topics` : null);
   const matrices = useApiData(`/api/v1/exam-matrices${subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : ''}`);
   const action = useAction();
-  const openCreate = () => navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
+  const openCreate = () =>
+    adminMode
+      ? (setDetails([{ topicId: '', difficultyLevel: 'MEDIUM', numQuestions: 1, weightPercent: 100 }]),
+        setModal({ mode: 'create' }))
+      : navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
   const openEdit = async (row) => {
     const data = await action.run(`/api/v1/exam-matrices/${encodeURIComponent(row.matrixId)}`, {}, '');
     if (data) {
+      setSubjectId(data.subjectId);
       setDetails(data.details?.length ? data.details : []);
       setModal({ mode: 'edit', row: data });
     }
@@ -747,7 +756,7 @@ export function MatrixManager({ classes, createPage = false }) {
           {(rows) => (
             <Table
               asCards
-              rows={rows}
+              rows={adminMode ? rows.filter((row) => row.examType !== 'FINAL') : rows}
               columns={['Ma trận', 'Loại đề', 'Tổng điểm', 'Thao tác']}
               cells={(item) => [
                 item.matrixName || item.name || '—',
@@ -1212,7 +1221,7 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                           label={`Thao tác với ${nameOf(item)}`}
                           disabled={action.busy}
                           items={
-                            (grading || item.examType === 'FINAL')
+                            grading || item.examType === 'FINAL'
                               ? [{ label: 'Xem danh sách bài làm', onSelect: () => setManaging(item) }]
                               : [
                                   { label: 'Chỉnh sửa đề thi', onSelect: () => setManaging(item) },
@@ -1308,11 +1317,13 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                   disabled={matrices.loading || Boolean(matrices.error)}
                 >
                   <option value="">Không sử dụng ma trận</option>
-                  {listItems(matrices.data).filter((matrix) => matrix.examType !== 'FINAL').map((matrix) => (
-                    <option key={matrix.matrixId} value={matrix.matrixId}>
-                      {matrix.matrixName || matrix.name || 'Ma trận đề'}
-                    </option>
-                  ))}
+                  {listItems(matrices.data)
+                    .filter((matrix) => matrix.examType !== 'FINAL')
+                    .map((matrix) => (
+                      <option key={matrix.matrixId} value={matrix.matrixId}>
+                        {matrix.matrixName || matrix.name || 'Ma trận đề'}
+                      </option>
+                    ))}
                 </SelectField>
               </AuthoringSection>
               <AuthoringSection

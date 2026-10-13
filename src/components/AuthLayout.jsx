@@ -31,6 +31,7 @@ export function AuthAlert({ error, children }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
     setVisible(true);
+    if (error) return undefined;
     const timer = setTimeout(() => setVisible(false), 5000);
     return () => clearTimeout(timer);
   }, [children, error]);

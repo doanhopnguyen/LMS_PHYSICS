@@ -104,7 +104,7 @@ export async function apiRequest(path, options = {}) {
     });
     throw detailedError;
   }
-  return payload?.data ?? payload;
+  return payload && typeof payload === 'object' && Object.prototype.hasOwnProperty.call(payload, 'data') ? payload.data : payload;
 }
 
 export const api = {
