@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { resolveLmsRoute } from './routes/resolveLmsRoute.js';
+import { LmsRoutes } from './routes/LmsRoutes.jsx';
 import { LecturerExperimentGradingPage } from './pages/lecturers/LecturerExperimentGrading.jsx';
 import { useAdaptiveCorners } from './hooks/useAdaptiveCorners.js';
 import { getCleanRoute, getPageFile } from './lib/routes.js';
@@ -133,6 +135,8 @@ function App() {
   }, []);
 
   const session = getDemoSession();
+  const lmsRoute = resolveLmsRoute(window.location.pathname);
+  if (lmsRoute) return <LmsRoutes key={locationKey} route={lmsRoute} />;
   const Page = pageComponents[file] ?? pageComponents['login.html'];
   if (
     !['login.html', 'auth_access.html', 'register.html', 'reset_password.html', '403.html', '404.html'].includes(

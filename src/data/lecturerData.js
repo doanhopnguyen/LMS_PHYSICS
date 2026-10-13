@@ -1,3 +1,4 @@
+import { menuByRole } from '../routes/resolveLmsRoute.js';
 import { rubricRows } from './lmsData.js';
 
 export const lecturerUser = {
@@ -7,14 +8,7 @@ export const lecturerUser = {
   initials: 'VB',
 };
 
-export const lecturerNavigation = [
-  ['lecturer_dashboard.html', 'dashboard', 'Tổng quan'],
-  ['lecturer_courses.html', 'menu_book', 'Học phần & lớp học'],
-  ['lecturer_materials.html', 'folder_open', 'Kho học liệu'],
-  ['lecturer_assessments.html', 'assignment', 'Bài tập & kiểm tra'],
-  ['lecturer_grading.html', 'grading', 'Chấm bài'],
-  ['lecturer_labs.html', 'science', 'Thí nghiệm 3D'],
-];
+export const lecturerNavigation = menuByRole.INSTRUCTOR;
 
 // Chưa có trang Lecturer riêng cho thông báo/cài đặt; không hiển thị liên kết giả.
 export const lecturerUtilityNavigation = [['account.html', 'manage_accounts', 'Tài khoản & bảo mật']];
