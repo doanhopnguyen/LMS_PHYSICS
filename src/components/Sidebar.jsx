@@ -1,15 +1,7 @@
+import { menuByRole } from '../routes/resolveLmsRoute.js';
 import React from 'react';
 
-export const studentNavItems = [
-  ['dashboard.html', 'dashboard', 'Tổng quan'],
-  ['my_courses.html', 'menu_book', 'Học phần của tôi'],
-  ['ai_tutor.html', 'smart_toy', 'Trợ giảng AI', '24/7'],
-  ['exam_practice_center.html', 'fitness_center', 'Ôn luyện'],
-  ['exam_session.html', 'quiz', 'Kiểm tra'],
-  ['virtual_lab.html', 'science', 'Phòng thí nghiệm 3D'],
-  ['student_evidence.html', 'folder_shared', 'Minh chứng & báo cáo'],
-  ['learning_results.html', 'insights', 'Kết quả học tập'],
-];
+export const studentNavItems = menuByRole.STUDENT;
 
 export const studentFooterItems = [['profile_settings.html', 'settings', 'Cài đặt']];
 

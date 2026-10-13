@@ -1,16 +1,7 @@
+import { menuByRole } from '../routes/resolveLmsRoute.js';
 export const adminUser = { name: 'Nguyễn Quang T.', role: 'Quản trị viên', detail: 'Quản trị hệ thống', initials: 'QT' };
 
-export const adminNavigation = [
-  ['admin_dashboard.html', 'dashboard', 'Tổng quan'],
-  ['admin_users.html', 'manage_accounts', 'Người dùng & phân quyền'],
-  ['admin_academics.html', 'account_tree', 'Học kỳ & học phần'],
-  ['admin_questions.html', 'quiz', 'Ngân hàng câu hỏi'],
-  ['admin_materials.html', 'fact_check', 'Duyệt học liệu'],
-  ['admin_assessments.html', 'assignment', 'Ma trận đề & ghi danh'],
-  ['admin_analytics.html', 'analytics', 'Phân tích học tập'],
-  ['admin_operations.html', 'settings', 'Cấu hình & nhật ký'],
-  ['account.html', 'manage_accounts', 'Tài khoản & bảo mật'],
-];
+export const adminNavigation = menuByRole.ADMIN;
 
 export const adminMetrics = [
   { label: 'Tài khoản hoạt động', value: '1.248', detail: '96% tổng tài khoản', icon: 'groups', tone: 'success' },
