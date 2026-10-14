@@ -18,9 +18,9 @@ Ngày kiểm tra: 14/10/2026. Nhánh: `admin-academic-management`.
 
 | Kiểm tra | Kết quả |
 | --- | --- |
-| `node --test scripts/*.test.mjs` | 104/104 qua |
-| `node scripts/check-admin-management.mjs` | 30/30 kịch bản trình duyệt qua |
-| `node scripts/admin-management-api.mjs` | 16/16 kịch bản API cô lập qua |
+| `node --test scripts/*.test.mjs` | 105/105 qua |
+| `node scripts/check-admin-management.mjs` | 32/32 kịch bản trình duyệt qua |
+| `node scripts/admin-management-api.mjs` | 17/17 kịch bản API cô lập qua |
 | `npm run scan:html` | 58 route và 58 manifest entry đồng bộ |
 | `npm run build` | Qua |
 | `git diff --check` | Qua |
@@ -46,6 +46,8 @@ Trang `admin_materials` được tái sử dụng làm trang duyệt chung, gồ
 Kiểm thử hàng chờ bao gồm câu hỏi ở trang API sau (q105), xem đáp án trước khi duyệt, gửi nhận xét qua query, lý do từ chối bắt buộc, lỗi duyệt/từ chối và thử lại, lịch sử trạng thái đã duyệt/từ chối, xem trước/duyệt học liệu và kiểm tra desktop/mobile. Backend H2 xác minh trạng thái/người duyệt/thời điểm duyệt, HTTP 409 khi duyệt lại, HTTP 400 với lý do trống hoặc duyệt trực tiếp câu hỏi REJECTED. Ảnh: `admin-review-questions-desktop.png`, `admin-review-question-preview.png`, `admin-review-materials-desktop.png`, `admin_materials-mobile.png`, `admin-review-materials-mobile.png`.
 
 Admin tạo câu hỏi sẽ tự động phê duyệt: tạo ở PENDING rồi gọi approve. Admin import Excel sẽ tự động gửi duyệt các câu DRAFT và duyệt toàn bộ câu vừa nhập, dùng đúng `questions[].questionId` từ kết quả API. Backend không cho POST trực tiếp APPROVED. Luồng import giảng viên vẫn giữ hành vi cũ. Khi duyệt lỗi, câu đã tạo/nhập được giữ và có nút thử duyệt lại, không POST tạo lại hoặc upload lại; đóng/mở lại modal import trong cùng trang vẫn giữ kết quả chưa xử lý xong. Kết quả import hiển thị riêng số câu đã nhập/đã duyệt, lỗi từng câu và cảnh báo parser. Kiểm tra thêm retry một phần, không duyệt lặp câu thành công, phản hồi không xác nhận APPROVED và thiếu mã câu hỏi. Backend thật cô lập kiểm tra tạo mới và nhập bốn câu từ tệp Excel mẫu đều hoàn tất APPROVED. Ảnh: `admin-import-approval-partial.png`, `admin-import-approval-complete.png`.
+
+Ngân hàng và màn hình duyệt của Admin bổ sung “Gửi duyệt câu hỏi” cho DRAFT và “Gửi duyệt lại” cho REJECTED, ở menu và cửa sổ xem câu hỏi. Có xác nhận và nhận xét tùy chọn, giữ dữ liệu khi API lỗi, cập nhật trạng thái/bộ lọc sau khi thành công. PENDING chỉ có duyệt/từ chối; APPROVED không có gửi duyệt. Có thể mở chỉnh sửa từ cửa sổ xem trong ngân hàng quản trị. Kiểm thử đầy đủ DRAFT → PENDING → APPROVED và REJECTED → PENDING, bao gồm thử lại sau lỗi gửi duyệt và không gửi body sai hợp đồng API. Backend cô lập kiểm tra gửi duyệt, từ chối, gửi lại (xóa lý do từ chối cũ) và duyệt. Ảnh: `admin-question-submit-review.png`.
 
 ```powershell
 npm run dev -- --port 5198 --host 127.0.0.1 --strictPort

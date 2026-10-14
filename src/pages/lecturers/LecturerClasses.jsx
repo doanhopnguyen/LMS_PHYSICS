@@ -5,6 +5,7 @@ import { queryPath } from '../../lib/lecturerUtils.js';
 import { navigate } from '../../lib/navigation.js';
 import { DashboardOverview } from '../../components/DashboardOverview.jsx';
 import { MetricGrid } from '../../components/MetricGrid.jsx';
+import { StatCard } from '../../components/StatCard.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
@@ -141,10 +142,23 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
   const semesters = useResource('/api/v1/semesters');
   const [filters, setFilters] = useState({ subjectId: '', semesterId: '', status: '' });
   const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
   const [selected, setSelected] = useQueryState('classId');
   const [modal, setModal] = useState(null);
   const action = useMutation();
-  const classes = useResource(queryPath('/api/v1/classes', { ...filters, page, size: 20 }));
+  const classes = useResource(
+    queryPath('/api/v1/classes', { ...filters, page: search.trim() ? undefined : page, size: 20 }),
+    Boolean(search.trim())
+  );
+  const filteredClasses = itemsOf(classes.data).filter(
+    (row) =>
+      !search.trim() ||
+      `${row.classCode || ''} ${itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId)?.subjectName || ''}`
+        .toLocaleLowerCase('vi')
+        .includes(search.trim().toLocaleLowerCase('vi'))
+  );
+  const classRows = search.trim() ? filteredClasses.slice(page * 20, (page + 1) * 20) : filteredClasses;
+  const classPage = search.trim() ? { size: 20, totalElements: filteredClasses.length } : classes.data;
   const lookup = useResource(mode === 'students' ? '/api/v1/classes' : null, true);
   const detail = routeParam('classId');
   const change = (key, value) => {
@@ -198,9 +212,21 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
         </>
       ) : (
         <Tabs
+          hideSingleTab
           items={[{ id: 'classes', label: 'Lớp học' }]}
           filters={
             <>
+              <Field
+                label="Tìm lớp học"
+                type="search"
+                name="classSearch"
+                value={search}
+                placeholder="Mã lớp hoặc học phần…"
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
+              />
               <Lookup
                 label="Học phần"
                 resource={subjects}
@@ -245,46 +271,35 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
               {(data) => (
                 <>
                   <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {itemsOf(data).map((row) => (
-                      <Card as="article" variant="accent" key={row.classId} className="flex min-w-0 flex-col p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FEE2E2] text-primary">
-                            <span className="material-symbols-outlined">school</span>
-                          </span>
-                          <StatusBadge
-                            tone={row.status === 'ACTIVE' ? 'success' : row.status === 'DRAFT' ? 'warning' : 'neutral'}
-                          >
-                            {labelOf(row.status)}
-                          </StatusBadge>
-                        </div>
-                        <div className="mt-3 min-w-0 break-words">
-                          <a
-                            className="text-headline-sm font-bold text-primary"
-                            href={`lecturer_course_detail.html?classId=${idPath(row.classId)}`}
-                          >
-                            {displayName(row)}
-                          </a>
-                          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-                            <div className="min-w-0">
-                              <dt className="text-label-sm text-[#64748B]">Học phần</dt>
-                              <dd className="mt-1 text-body-sm">
-                                {displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}
-                              </dd>
-                            </div>
-                            <div className="min-w-0">
-                              <dt className="text-label-sm text-[#64748B]">Học kỳ</dt>
-                              <dd className="mt-1 text-body-sm">
-                                {displayName(
-                                  itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId)
-                                )}
-                              </dd>
-                            </div>
-                          </dl>
-                        </div>
-                        <div className="mt-auto flex items-end justify-between gap-3 pt-3">
-                          <span className="text-body-sm text-[#64748B]">
-                            Sĩ số tối đa: <strong className="text-on-surface">{row.maxStudents || '—'}</strong>
-                          </span>
+                    {classRows.map((row) => (
+                      <StatCard
+                        key={row.classId}
+                        label={displayName(row)}
+                        value={row.maxStudents ?? '—'}
+                        detail="sĩ số tối đa"
+                        icon="school"
+                        ribbonLabel={
+                          itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId)?.subjectCode ||
+                          'LỚP HỌC PHẦN'
+                        }
+                        accentColor={
+                          row.status === 'ACTIVE' ? '#E52220' : row.status === 'COMPLETED' ? '#15803D' : '#B45309'
+                        }
+                        onOpen={() => navigate(`lecturer_course_detail.html?classId=${idPath(row.classId)}`)}
+                        footer={
+                          <div className="space-y-2 text-body-sm text-slate-500">
+                            <StatusBadge tone={row.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                              {labelOf(row.status)}
+                            </StatusBadge>
+                            <p>
+                              {displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}
+                            </p>
+                            <p>
+                              {displayName(itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId))}
+                            </p>
+                          </div>
+                        }
+                        headerActions={
                           <ActionMenu
                             label={`Thao tác với ${displayName(row)}`}
                             disabled={action.busy}
@@ -301,11 +316,12 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
                               })),
                             ]}
                           />
-                        </div>
-                      </Card>
+                        }
+                      />
                     ))}
                   </div>
-                  <Pager data={data} page={page} onChange={setPage} />
+                  {!classRows.length && <Card className="p-5 text-slate-500">Không có lớp học phù hợp.</Card>}
+                  <Pager data={classPage} page={page} onChange={setPage} />
                 </>
               )}
             </Resource>
@@ -424,22 +440,23 @@ function ClassPeople({ classId, staff = false }) {
                                 resource.reload
                               ),
                           })),
-                      (staff ? row.userId : studentId) && {
-                        label: 'Gỡ khỏi lớp',
-                        danger: true,
-                        onSelect: () =>
-                          action.confirm(
-                            `Gỡ ${displayName(row)} khỏi lớp?`,
-                            () =>
-                              staff
-                                ? api.classes.removeStaff(classId, row.userId)
-                                : api.classes.removeStudent(classId, studentId),
-                            () => {
-                              setPage(0);
-                              resource.reload();
-                            }
-                          ),
-                      },
+                      !staff &&
+                        studentId && {
+                          label: 'Gỡ khỏi lớp',
+                          danger: true,
+                          onSelect: () =>
+                            action.confirm(
+                              `Gỡ ${displayName(row)} khỏi lớp?`,
+                              () =>
+                                staff
+                                  ? api.classes.removeStaff(classId, row.userId)
+                                  : api.classes.removeStudent(classId, studentId),
+                              () => {
+                                setPage(0);
+                                resource.reload();
+                              }
+                            ),
+                        },
                     ].flat()}
                   />,
                 ];

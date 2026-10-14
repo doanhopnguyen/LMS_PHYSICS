@@ -133,3 +133,5 @@
   .app-header .page-heading .page-title__eyebrow { display: none; }
   .page-content-actions > button { max-width: 100%; }
 }
+.lecturer-workspace-content .page-container { padding-top: 8px; }
+.lecturer-workspace-content .page-container > .mt-6 { margin-top: 0; }

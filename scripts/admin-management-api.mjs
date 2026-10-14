@@ -317,19 +317,33 @@ await check('Real Excel import automatically submits and approves all imported q
     assert.equal((await request(`/api/v1/questions/${question.questionId}`)).approvalStatus, 'APPROVED');
 });
 await check('Admin manually submits a draft, rejects it, resubmits it and approves it', async () => {
-  const question = await request('/api/v1/questions','POST',{
-    subjectId:subject.subjectId,topicId:topic.topicId,questionType:'MCQ_SINGLE',content:'Luồng gửi duyệt thủ công',difficultyLevel:'EASY',approvalStatus:'DRAFT',
-    options:[{content:'A',isCorrect:true,orderIndex:0},{content:'B',isCorrect:false,orderIndex:1}],
+  const question = await request('/api/v1/questions', 'POST', {
+    subjectId: subject.subjectId,
+    topicId: topic.topicId,
+    questionType: 'MCQ_SINGLE',
+    content: 'Luồng gửi duyệt thủ công',
+    difficultyLevel: 'EASY',
+    approvalStatus: 'DRAFT',
+    options: [
+      { content: 'A', isCorrect: true, orderIndex: 0 },
+      { content: 'B', isCorrect: false, orderIndex: 1 },
+    ],
   });
-  assert.equal(question.approvalStatus,'DRAFT');
-  const pending = await request(`/api/v1/questions/${question.questionId}/submit-review?comment=${encodeURIComponent('Admin gửi duyệt')}`,'PUT');
-  assert.equal(pending.approvalStatus,'PENDING');
-  await request(`/api/v1/questions/${question.questionId}/reject`,'PUT',{rejectionReason:'Kiểm tra lại'});
-  const resubmitted = await request(`/api/v1/questions/${question.questionId}/submit-review?comment=${encodeURIComponent('Đã kiểm tra lại')}`,'PUT');
-  assert.equal(resubmitted.approvalStatus,'PENDING');
-  assert.equal(resubmitted.rejectionReason,null);
-  const approved = await request(`/api/v1/questions/${question.questionId}/approve`,'PUT');
-  assert.equal(approved.approvalStatus,'APPROVED');
+  assert.equal(question.approvalStatus, 'DRAFT');
+  const pending = await request(
+    `/api/v1/questions/${question.questionId}/submit-review?comment=${encodeURIComponent('Admin gửi duyệt')}`,
+    'PUT'
+  );
+  assert.equal(pending.approvalStatus, 'PENDING');
+  await request(`/api/v1/questions/${question.questionId}/reject`, 'PUT', { rejectionReason: 'Kiểm tra lại' });
+  const resubmitted = await request(
+    `/api/v1/questions/${question.questionId}/submit-review?comment=${encodeURIComponent('Đã kiểm tra lại')}`,
+    'PUT'
+  );
+  assert.equal(resubmitted.approvalStatus, 'PENDING');
+  assert.equal(resubmitted.rejectionReason, null);
+  const approved = await request(`/api/v1/questions/${question.questionId}/approve`, 'PUT');
+  assert.equal(approved.approvalStatus, 'APPROVED');
 });
 await mkdir('.tmp-admin-management', { recursive: true });
 await writeFile('.tmp-admin-management/api-results.json', JSON.stringify(results, null, 2));

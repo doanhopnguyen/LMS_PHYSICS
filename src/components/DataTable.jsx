@@ -22,38 +22,51 @@ export function DataTable({
   const visible = managed ? pagination.pageItems : rows;
   if (asCards) {
     return (
-      <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {rows.length ? (
-          rows.map((row, index) => {
-            const values = cells(row);
-            const action = React.isValidElement(values.at(-1)) ? values.at(-1) : null;
-            const dataValues = action ? values.slice(0, -1) : values;
-            return (
-              <Card
-                as="article"
-                variant="accent"
-                key={row.id || row.materialId || row.questionId || index}
-                className="flex min-w-0 flex-col p-4"
-              >
-                <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-                  {dataValues.map((value, valueIndex) => (
-                    <div
-                      key={columns[valueIndex]}
-                      className={`min-w-0 break-words ${valueIndex === 0 ? 'col-span-2' : ''}`}
-                    >
-                      <dt className="text-label-sm text-[#64748B]">{columns[valueIndex]}</dt>
-                      <dd className={valueIndex === 0 ? 'mt-1 font-semibold leading-6' : 'mt-1 text-body-sm'}>{value ?? '—'}</dd>
-                    </div>
-                  ))}
-                </dl>
-                {action && <div className="mt-auto flex justify-end pt-3">{action}</div>}
-              </Card>
-            );
-          })
-        ) : (
-          <Card className="p-5 text-[#64748B]">Chưa có dữ liệu phù hợp.</Card>
+      <>
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {rows.length ? (
+            visible.map((row, index) => {
+              const values = cells(row);
+              const action = React.isValidElement(values.at(-1)) ? values.at(-1) : null;
+              const dataValues = action ? values.slice(0, -1) : values;
+              return (
+                <Card
+                  as="article"
+                  variant="accent"
+                  key={row.id || row.materialId || row.questionId || index}
+                  className="flex min-w-0 flex-col p-4"
+                >
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+                    {dataValues.map((value, valueIndex) => (
+                      <div
+                        key={columns[valueIndex]}
+                        className={`min-w-0 break-words ${valueIndex === 0 ? 'col-span-2' : ''}`}
+                      >
+                        <dt className="text-label-sm text-[#64748B]">{columns[valueIndex]}</dt>
+                        <dd className={valueIndex === 0 ? 'mt-1 font-semibold leading-6' : 'mt-1 text-body-sm'}>
+                          {value ?? '—'}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {action && <div className="mt-auto flex justify-end pt-3">{action}</div>}
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="p-5 text-[#64748B]">Chưa có dữ liệu phù hợp.</Card>
+          )}
+        </div>
+        {managed && rows.length > 10 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            pageSize={pagination.pageSize}
+            totalItems={rows.length}
+            onPageChange={pagination.setCurrentPage}
+            onPageSizeChange={pagination.setPageSize}
+          />
         )}
-      </div>
+      </>
     );
   }
   return (
