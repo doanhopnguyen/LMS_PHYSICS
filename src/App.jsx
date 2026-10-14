@@ -31,6 +31,7 @@ import {
   LecturerGradingApiPage,
 } from './pages/lecturers/LecturerApiWorkspace.jsx';
 import { LecturerAuthoringApiPage } from './pages/lecturers/LecturerContent.jsx';
+import { LecturerQuestionWorkspace } from './pages/lecturers/LecturerQuestionWorkspace.jsx';
 import { LecturerClassesApiPage, LecturerClassDetail } from './pages/lecturers/LecturerClasses.jsx';
 import { AdminDashboardPage } from './pages/admin/AdminPages.jsx';
 import { AdminSemestersPage, AdminSubjectsPage, AdminSubjectDetailPage } from './pages/admin/AdminAcademicManagement.jsx';
@@ -73,7 +74,7 @@ const pageComponents = {
   'lecturer_courses.html': LecturerClassesApiPage,
   'lecturer_course_detail.html': LecturerClassDetail,
   'lecturer_materials.html': () => <LecturerAuthoringApiPage kind="materials" />,
-  'lecturer_question_bank.html': () => <LecturerAuthoringApiPage kind="questions" />,
+  'lecturer_question_bank.html': LecturerQuestionWorkspace,
   'lecturer_assessments.html': LecturerAssessmentApiPage,
   'lecturer_exam_create.html': () => <LecturerAssessmentApiPage createPage />,
   'lecturer_matrix_create.html': LecturerMatrixCreatePage,

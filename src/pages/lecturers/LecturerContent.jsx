@@ -1,9 +1,14 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/apiClient.js';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
-import { queryPath, validateOptions } from '../../lib/lecturerUtils.js';
+import { queryPath, validateOptions, loadAllPages } from '../../lib/lecturerUtils.js';
+import { apiRequest } from '../../lib/apiClient.js';
+import { getDemoSession } from '../../lib/demoSession.js';
+import { useTeachingScope } from './LecturerTeachingScope.jsx';
+import { CloPicker, CloLabels, useCloCatalog } from '../../components/CloPicker.jsx';
+import { validateCloIds } from '../../lib/cloSelection.js';
 import { MaterialContentFields, materialFormats } from '../../components/MaterialContentFields.jsx';
 import { MarkdownContent } from '../../components/MarkdownContent.jsx';
 import { AuthoringPanel } from '../../components/AuthoringPanel.jsx';
@@ -60,7 +65,7 @@ function useAllMaterials(enabled, subjectsData, subjectFilter) {
       const materialGroups = await Promise.all(
         topicRows.map(async (topic) => ({
           topicId: topic.topicId,
-          rows: itemsOf(await api.materials.list(topic.topicId)),
+          rows: await loadAllPages(apiRequest, `/api/v1/topics/${topic.topicId}/materials`),
         }))
       );
       return materialGroups.flatMap(({ topicId, rows }) => rows.map((row) => ({ ...row, _topicId: topicId })));
@@ -75,7 +80,7 @@ function useAllMaterials(enabled, subjectsData, subjectFilter) {
   return { ...state, enabled, reload: () => setVersion((value) => value + 1) };
 }
 
-function MaterialEditorForm({ initial, onSubmit, busy }) {
+export function MaterialEditorForm({ initial = {}, onSubmit, busy }) {
   const [type, setType] = useState(initial.type || 'MARKDOWN');
   return (
     <Form className="authoring-grouped-form" onSubmit={onSubmit}>
@@ -156,9 +161,16 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
           isCorrect: Boolean(o.isCorrect),
           explanation: o.explanation || '',
         }))
-      : Array.from({ length: 4 }, () => ({ content: '', isCorrect: false, explanation: '' }))
+      : Array.from({ length: 2 }, () => ({ content: '', isCorrect: false, explanation: '' }))
   );
   const [error, setError] = useState('');
+  const [cloIds, setCloIds] = useState(initial.cloIds || []);
+  const clos = useCloCatalog([subjectId]);
+  const previousSubject = useRef(subjectId);
+  useEffect(() => {
+    if (previousSubject.current !== subjectId) setCloIds([]);
+    previousSubject.current = subjectId;
+  }, [subjectId]);
   const update = (index, patch) =>
     setOptions((rows) =>
       rows.map((row, i) =>
@@ -174,10 +186,24 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
       className="grid gap-4"
       onSubmit={(e) => {
         e.preventDefault();
-        const message = validateOptions(type, options);
+        const values = Object.fromEntries(new FormData(e.currentTarget));
+        const acceptedAnswers = String(values.acceptedAnswers || '')
+          .split('\n')
+          .map((value) => value.trim())
+          .filter(Boolean);
+        const message =
+          type === 'FILL_BLANK'
+            ? !acceptedAnswers.length
+              ? 'Nhập ít nhất một đáp án được chấp nhận.'
+              : ''
+            : validateOptions(type, options);
         setError(message);
         if (message) return;
-        const values = Object.fromEntries(new FormData(e.currentTarget));
+        const cloError = validateCloIds(cloIds, clos.data, subjectId);
+        if (cloError) {
+          setError(cloError);
+          return;
+        }
         onSave({
           subjectId,
           topicId,
@@ -186,7 +212,11 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
           mediaUrl: values.mediaUrl.trim(),
           difficultyLevel: values.difficultyLevel,
           cognitiveLevel: values.cognitiveLevel,
-          options: options.map((o, i) => ({ ...o, content: o.content.trim(), orderIndex: i })),
+          cloIds,
+          approvalStatus: e.nativeEvent.submitter?.value === 'submit' ? 'PENDING' : 'DRAFT',
+          options:
+            type === 'FILL_BLANK' ? [] : options.map((o, i) => ({ ...o, content: o.content.trim(), orderIndex: i })),
+          ...(type === 'FILL_BLANK' ? { acceptedAnswers } : {}),
         });
       }}
     >
@@ -207,9 +237,7 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
         }}
       >
         <option value="MCQ_SINGLE">Một đáp án</option>
-        <option value="MCQ_MULTI">Nhiều đáp án</option>
-        <option value="TRUE_FALSE">Đúng / Sai</option>
-        <option value="SHORT_ANSWER">Trả lời ngắn</option>
+        <option value="FILL_BLANK">Điền đáp án</option>
       </SelectField>
       <SelectField label="Độ khó" name="difficultyLevel" defaultValue={initial.difficultyLevel || 'EASY'}>
         {['EASY', 'MEDIUM', 'HARD'].map((v) => (
@@ -223,68 +251,105 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
         name="cognitiveLevel"
         defaultValue={initial.cognitiveLevel || ''}
       />
-      <fieldset className="grid gap-3">
-        <legend className="mb-2 font-semibold">Đáp án — đánh dấu đáp án đúng</legend>
-        {options.map((o, i) => (
-          <div className="rounded-xl border p-3" key={i}>
-            <label className="flex items-center gap-2">
-              <input
-                type={type === 'MCQ_SINGLE' ? 'radio' : 'checkbox'}
-                name={`correct${type === 'MCQ_SINGLE' ? '' : i}`}
-                checked={o.isCorrect}
-                onChange={(e) => update(i, { isCorrect: e.target.checked })}
-              />
-              Đáp án {i + 1} đúng
-            </label>
-            <Field
-              label={`Nội dung đáp án ${i + 1} *`}
-              required
-              value={o.content}
-              onChange={(e) => update(i, { content: e.target.value })}
-            />
-            <Field
-              label="Giải thích"
-              value={o.explanation}
-              onChange={(e) => update(i, { explanation: e.target.value })}
-            />
-            <Button
-              variant="secondary"
-              disabled={options.length <= 2}
-              onClick={() => setOptions((rows) => rows.filter((_, index) => index !== i))}
-            >
-              Xóa đáp án
-            </Button>
-          </div>
-        ))}
-      </fieldset>
-      <Button
-        variant="secondary"
-        onClick={() => setOptions((rows) => [...rows, { content: '', isCorrect: false, explanation: '' }])}
-      >
-        Thêm đáp án
-      </Button>
+      <CloPicker resource={clos} subjectId={subjectId} value={cloIds} onChange={setCloIds} disabled={busy} />
+      {type === 'FILL_BLANK' ? (
+        <Field
+          multiline
+          name="acceptedAnswers"
+          label="Đáp án chấp nhận (mỗi dòng một đáp án)"
+          required
+          defaultValue={(initial.acceptedAnswers || []).join('\n')}
+        />
+      ) : (
+        <>
+          <fieldset className="grid gap-3">
+            <legend className="mb-2 font-semibold">Đáp án — đánh dấu đáp án đúng</legend>
+            {options.map((o, i) => (
+              <div className="rounded-xl border p-3" key={i}>
+                <label className="flex items-center gap-2">
+                  <input
+                    type={type === 'MCQ_SINGLE' ? 'radio' : 'checkbox'}
+                    name={`correct${type === 'MCQ_SINGLE' ? '' : i}`}
+                    checked={o.isCorrect}
+                    onChange={(e) => update(i, { isCorrect: e.target.checked })}
+                  />
+                  Đáp án {i + 1} đúng
+                </label>
+                <Field
+                  label={`Nội dung đáp án ${i + 1} *`}
+                  required
+                  value={o.content}
+                  onChange={(e) => update(i, { content: e.target.value })}
+                />
+                <Field
+                  label="Giải thích"
+                  value={o.explanation}
+                  onChange={(e) => update(i, { explanation: e.target.value })}
+                />
+                <Button
+                  variant="secondary"
+                  disabled={options.length <= 2}
+                  onClick={() => setOptions((rows) => rows.filter((_, index) => index !== i))}
+                >
+                  Xóa đáp án
+                </Button>
+              </div>
+            ))}
+          </fieldset>
+          <Button
+            variant="secondary"
+            onClick={() => setOptions((rows) => [...rows, { content: '', isCorrect: false, explanation: '' }])}
+          >
+            Thêm đáp án
+          </Button>
+        </>
+      )}
       <Field label="URL hình ảnh (không bắt buộc)" name="mediaUrl" type="url" defaultValue={initial.mediaUrl || ''} />
       {error && (
         <p role="alert" className="text-red-700">
           {error}
         </p>
       )}
-      <SubmitButton type="submit" disabled={busy}>
-        {busy ? 'Đang lưu…' : 'Lưu câu hỏi'}
-      </SubmitButton>
+      <div className="flex flex-wrap justify-end gap-2">
+        {initial.approvalStatus!=='PENDING'&&<SubmitButton
+          variant="secondary"
+          name="intent"
+          value="draft"
+          disabled={busy || clos.loading || Boolean(clos.error)}
+        >
+          Lưu bản nháp
+        </SubmitButton>}
+        <SubmitButton name="intent" value="submit" disabled={busy || clos.loading || Boolean(clos.error)}>
+          {initial.approvalStatus==='PENDING'?'Lưu cập nhật':'Lưu và gửi duyệt'}
+        </SubmitButton>
+      </div>
     </Form>
   );
 }
 
-export function LecturerAuthoringApiPage({ kind, createPage = false }) {
+export function LecturerAuthoringApiPage({
+  kind,
+  createPage = false,
+  embedded = false,
+  scopedSubjectId = '',
+  questionMode = 'manage',
+}) {
+  const Shell = embedded ? React.Fragment : LecturerPageShell;
   const materialMode = kind === 'materials';
-  const subjects = useResource('/api/v1/subjects', true);
-  const [subjectId, setSubject] = useQueryState('subjectId');
+  const teachingScope = useTeachingScope();
+  const subjects = teachingScope.subjects;
+  const [querySubject, setSubject] = useQueryState('subjectId');
+  const subjectId = scopedSubjectId || querySubject;
+  const validSubject = itemsOf(subjects.data).some((s) => s.subjectId === subjectId);
+  const bankMode = !materialMode && questionMode === 'bank';
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [cloFilter, setCloFilter] = useState('');
   const [topicId, setTopic] = useQueryState('topicId');
   const [difficulty, setDifficulty] = useState('');
   const [page, setPage] = useState(0);
   const [tab, setTab] = useState(materialMode ? 'materials' : 'questions');
-  const topics = useResource(subjectId ? `/api/v1/subjects/${idPath(subjectId)}/topics` : null);
+  const topics = useResource(validSubject ? `/api/v1/subjects/${idPath(subjectId)}/topics` : null);
   const validTopic = itemsOf(topics.data).some((t) => t.topicId === topicId) ? topicId : '';
   const allMaterials = useAllMaterials(materialMode && tab === 'materials' && !validTopic, subjects.data, subjectId);
   const resource = useResource(
@@ -292,13 +357,15 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
       ? validTopic
         ? `/api/v1/topics/${idPath(validTopic)}/materials`
         : null
-      : queryPath('/api/v1/questions', {
-          subjectId,
-          topicId: validTopic,
-          difficultyLevel: difficulty,
-          page,
-          size: 20,
-        })
+      : validSubject
+        ? queryPath('/api/v1/questions', {
+            subjectId,
+            topicId: validTopic,
+            difficultyLevel: difficulty,
+            size: 20,
+          })
+        : null,
+    true
   );
   const displayedResource = materialMode && !validTopic ? allMaterials : resource;
   const [modal, setModal] = useState(createPage ? { type: 'material', row: {} } : null);
@@ -306,16 +373,44 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
   const [newTopicName, setNewTopicName] = useState('');
   const action = useMutation();
   const formTopicId = modal?.row.topicId || modal?.row._topicId || validTopic;
-  const validSubject = itemsOf(subjects.data).some((s) => s.subjectId === subjectId);
+  const formSubjectId = modal?.row.subjectId || subjectId;
+  const alternateTopics = useResource(
+    formSubjectId && formSubjectId !== subjectId ? `/api/v1/subjects/${idPath(formSubjectId)}/topics` : null
+  );
+  const formTopics = formSubjectId === subjectId ? topics : alternateTopics;
+  const validFormSubject = itemsOf(subjects.data).some((row) => row.subjectId === formSubjectId);
+  const currentUserId = getDemoSession()?.userId;
+  const canManage = (row) => Boolean(currentUserId) && row.createdBy === currentUserId;
+  const filteredRows = itemsOf(displayedResource.data).filter(
+    (row) =>
+      (!search.trim() ||
+        `${row.title || row.content || ''}`.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi'))) &&
+      (!status || row.approvalStatus === status) &&
+      (!cloFilter || row.cloIds?.includes(cloFilter)) &&
+      (!bankMode || row.approvalStatus === 'APPROVED') &&
+      (materialMode || questionMode !== 'contributions' || row.createdBy === currentUserId)
+  );
+  const questionPage = {
+    content: filteredRows.slice(page * 20, (page + 1) * 20),
+    size: 20,
+    totalElements: filteredRows.length,
+  };
+  const displayRows = materialMode ? filteredRows : questionPage.content;
+  const catalogue = useCloCatalog(materialMode ? [] : [subjectId]);
+  useEffect(() => {
+    if (!displayedResource.loading && !materialMode)
+      setPage((current) => Math.min(current, Math.max(0, Math.ceil(filteredRows.length / 20) - 1)));
+  }, [displayedResource.loading, materialMode, filteredRows.length]);
   const changeSubject = (value) => {
     setSubject(value);
     setTopic('');
     setPage(0);
     setNewTopicName('');
+    setCloFilter('');
     action.clear();
   };
   const checkScope = (needsTopic = true) => {
-    if (!validSubject || (needsTopic && !itemsOf(topics.data).some((t) => t.topicId === formTopicId))) {
+    if (!validFormSubject || (needsTopic && !itemsOf(formTopics.data).some((t) => t.topicId === formTopicId))) {
       action.setError(needsTopic ? 'Vui lòng chọn học phần và chủ đề trước khi gửi.' : 'Vui lòng chọn học phần.');
       return false;
     }
@@ -457,15 +552,19 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
     );
   };
   return (
-    <LecturerPageShell
-      currentPage={materialMode ? 'lecturer_materials.html' : 'lecturer_question_bank.html'}
-      title={createPage ? 'Thêm học liệu' : materialMode ? 'Kho học liệu' : 'Ngân hàng câu hỏi'}
-      eyebrow="NỘI DUNG GIẢNG DẠY"
-      description="Quản lý nội dung theo học phần và chủ đề."
+    <Shell
+      {...(embedded
+        ? {}
+        : {
+            currentPage: materialMode ? 'lecturer_materials.html' : 'lecturer_question_bank.html',
+            title: createPage ? 'Thêm học liệu' : materialMode ? 'Kho học liệu' : 'Ngân hàng câu hỏi',
+            eyebrow: 'NỘI DUNG GIẢNG DẠY',
+          })}
     >
       {action.feedback}
       {!createPage && (
         <Tabs
+          hideSingleTab={!materialMode}
           activeId={tab}
           onChange={setTab}
           items={
@@ -478,11 +577,22 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
           }
           filters={
             <>
+              <Field
+                type="search"
+                name="contentSearch"
+                label={materialMode ? 'Tìm học liệu' : 'Tìm câu hỏi'}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(0);
+                }}
+              />
               <Lookup
                 label="Học phần"
                 idKey="subjectId"
                 resource={subjects}
                 value={subjectId}
+                disabled={Boolean(scopedSubjectId) || subjects.loading}
                 onChange={changeSubject}
                 placeholder={materialMode ? 'Tất cả học phần' : 'Chọn học phần'}
               />
@@ -517,41 +627,81 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
                   ))}
                 </SelectField>
               )}
+              {!bankMode && tab !== 'topics' && (
+                <SelectField
+                  name="contentStatus"
+                  label="Trạng thái"
+                  value={status}
+                  onChange={(event) => {
+                    setStatus(event.target.value);
+                    setPage(0);
+                  }}
+                >
+                  <option value="">Tất cả trạng thái</option>
+                  {['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'].map((value) => (
+                    <option key={value} value={value}>
+                      {labelOf(value)}
+                    </option>
+                  ))}
+                </SelectField>
+              )}
+              {!materialMode && (
+                <SelectField
+                  name="lecturerCloFilter"
+                  label="CLO"
+                  value={cloFilter}
+                  disabled={catalogue.loading}
+                  onChange={(event) => {
+                    setCloFilter(event.target.value);
+                    setPage(0);
+                  }}
+                >
+                  <option value="">Tất cả CLO</option>
+                  {catalogue.data.map((row) => (
+                    <option key={row.cloId} value={row.cloId}>
+                      {row.cloCode}
+                      {row.isActive ? '' : ' · ngừng hoạt động'}
+                    </option>
+                  ))}
+                </SelectField>
+              )}
             </>
           }
           actions={
-            <>
-              <Button
-                disabled={action.busy}
-                onClick={() => open(tab === 'topics' ? 'topic' : materialMode ? 'material' : 'question')}
-              >
-                Tạo {tab === 'topics' ? 'chủ đề' : materialMode ? 'học liệu' : 'câu hỏi'}
-              </Button>
-              {!materialMode && (
-                <>
-                  <Button
-                    variant="secondary"
-                    disabled={action.busy}
-                    onClick={async () => {
-                      const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
-                      if (result.ok) {
-                        const url = URL.createObjectURL(result.data);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = 'mau-nhap-cau-hoi.xlsx';
-                        link.click();
-                        URL.revokeObjectURL(url);
-                      }
-                    }}
-                  >
-                    Tải mẫu Excel
-                  </Button>
-                  <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
-                    Nhập Excel
-                  </Button>
-                </>
-              )}
-            </>
+            bankMode ? undefined : (
+              <>
+                <Button
+                  disabled={action.busy}
+                  onClick={() => open(tab === 'topics' ? 'topic' : materialMode ? 'material' : 'question')}
+                >
+                  Tạo {tab === 'topics' ? 'chủ đề' : materialMode ? 'học liệu' : 'câu hỏi'}
+                </Button>
+                {!materialMode && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      disabled={action.busy}
+                      onClick={async () => {
+                        const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
+                        if (result.ok) {
+                          const url = URL.createObjectURL(result.data);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = 'mau-nhap-cau-hoi.xlsx';
+                          link.click();
+                          URL.revokeObjectURL(url);
+                        }
+                      }}
+                    >
+                      Tải mẫu Excel
+                    </Button>
+                    <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
+                      Nhập Excel
+                    </Button>
+                  </>
+                )}
+              </>
+            )
           }
         >
           {() =>
@@ -559,7 +709,13 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
               <Resource value={topics}>
                 {(data) => (
                   <Table
-                    rows={itemsOf(data)}
+                    rows={itemsOf(data).filter(
+                      (row) =>
+                        !search.trim() ||
+                        `${row.topicName || ''} ${row.description || ''}`
+                          .toLocaleLowerCase('vi')
+                          .includes(search.trim().toLocaleLowerCase('vi'))
+                    )}
                     asCards
                     columns={['Chủ đề', 'Mô tả', 'Thứ tự', 'Thao tác']}
                     cells={(row) => [
@@ -580,38 +736,51 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
                 {(data) => (
                   <>
                     <Table
-                      rows={itemsOf(data)}
+                      rows={displayRows}
                       server={!materialMode}
                       asCards
-                      columns={['Nội dung', 'Loại', materialMode ? 'Phiên bản' : 'Độ khó', 'Trạng thái', 'Thao tác']}
+                      columns={[
+                        'Nội dung',
+                        'Loại',
+                        materialMode ? 'Phiên bản' : 'Độ khó',
+                        ...(!materialMode ? ['CLO'] : []),
+                        'Trạng thái',
+                        'Thao tác',
+                      ]}
                       cells={(row) => [
                         materialMode ? row.title : row.content,
                         labelOf(row.type || row.questionType),
                         materialMode ? row.version : labelOf(row.difficultyLevel),
+                        ...(!materialMode ? [<CloLabels ids={row.cloIds} rows={catalogue.data} />] : []),
                         <StatusBadge status={row.approvalStatus} />,
                         <ActionMenu
                           label={`Thao tác với ${materialMode ? row.title : row.content || 'câu hỏi'}`}
                           disabled={action.busy}
                           items={[
                             { label: 'Xem chi tiết', onSelect: () => open('view', row) },
-                            { label: 'Chỉnh sửa', onSelect: () => open(materialMode ? 'material' : 'question', row) },
-                            materialMode &&
-                              row.approvalStatus !== 'APPROVED' && {
-                                label: 'Duyệt học liệu',
+                            !bankMode &&
+                              canManage(row) && {
+                                label: 'Chỉnh sửa',
+                                onSelect: () => open(materialMode ? 'material' : 'question', row),
+                              },
+                            !materialMode &&
+                              !bankMode &&
+                              canManage(row) &&
+                              ['DRAFT', 'REJECTED'].includes(row.approvalStatus) && {
+                                label: row.approvalStatus === 'REJECTED' ? 'Gửi duyệt lại' : 'Gửi duyệt',
                                 onSelect: () =>
                                   action.confirm(
-                                    `Duyệt học liệu “${row.title || 'này'}”?`,
-                                    () =>
-                                      api.materials.approve(row.topicId || row._topicId || validTopic, row.materialId),
+                                    'Gửi câu hỏi vào hàng chờ để Admin phê duyệt?',
+                                    () => api.questions.submitReview(row.questionId),
                                     displayedResource.reload
                                   ),
                               },
-                            { label: 'Xóa', danger: true, onSelect: () => remove(row) },
+                            !bankMode && canManage(row) && { label: 'Xóa', danger: true, onSelect: () => remove(row) },
                           ]}
                         />,
                       ]}
                     />
-                    {!materialMode && <Pager data={data} page={page} onChange={setPage} />}
+                    {!materialMode && <Pager data={questionPage} page={page} onChange={setPage} />}
                   </>
                 )}
               </Resource>
@@ -621,6 +790,12 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
       )}
       {modal && (
         <EditorContainer
+          {...(!createPage
+            ? {
+                wide: true,
+                expandable: modal.type === 'material' || modal.type === 'question' || modal.type === 'view',
+              }
+            : {})}
           description={createPage ? 'Chuẩn bị tài liệu, video hoặc bài đọc cho chủ đề giảng dạy.' : undefined}
           icon="library_add"
           title={
@@ -653,7 +828,7 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
                   resource={subjects}
                   idKey="subjectId"
                   value={subjectId}
-                  disabled={action.busy || subjects.loading || Boolean(subjects.error)}
+                  disabled={Boolean(scopedSubjectId) || action.busy || subjects.loading || Boolean(subjects.error)}
                   onChange={changeSubject}
                 />
                 {modal.type !== 'topic' && (
@@ -709,14 +884,18 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
           {modal.type === 'question' ? (
             <QuestionForm
               initial={modal.row}
-              subjectId={subjectId}
+              subjectId={formSubjectId}
               topicId={modal.row.topicId || validTopic}
-              busy={action.busy || !validSubject || !formTopicId}
+              busy={action.busy || !validFormSubject || !formTopicId || formTopics.loading}
               onSave={async (body) => {
                 if (!checkScope()) return;
                 saved(
-                  await action.run(() =>
-                    modal.row.questionId ? api.questions.update(modal.row.questionId, body) : api.questions.create(body)
+                  await action.run(
+                    () =>
+                      modal.row.questionId
+                        ? api.questions.update(modal.row.questionId, body)
+                        : api.questions.create(body),
+                    body.approvalStatus === 'PENDING' ? 'Đã lưu và gửi câu hỏi chờ duyệt.' : 'Đã lưu bản nháp câu hỏi.'
                   )
                 );
               }}
@@ -804,6 +983,13 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
               )}
               {modal.row.fileUrl && <FileLink url={modal.row.fileUrl} />}
               {modal.row.mediaUrl && <FileLink url={modal.row.mediaUrl}>Xem hình ảnh</FileLink>}
+              {!materialMode && <CloLabels ids={modal.row.cloIds} rows={catalogue.data} />}
+              {modal.row.rejectionReason && (
+                <p className="text-body-sm text-red-700">Lý do từ chối: {modal.row.rejectionReason}</p>
+              )}
+              {modal.row.acceptedAnswers?.length > 0 && (
+                <p>Đáp án chấp nhận: {modal.row.acceptedAnswers.join(' · ')}</p>
+              )}
               {itemsOf(modal.row.options).map((o, i) => (
                 <div key={i} className="rounded-xl border p-3">
                   <p>
@@ -817,6 +1003,6 @@ export function LecturerAuthoringApiPage({ kind, createPage = false }) {
           )}
         </EditorContainer>
       )}
-    </LecturerPageShell>
+    </Shell>
   );
 }

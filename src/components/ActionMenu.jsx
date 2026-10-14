@@ -87,6 +87,7 @@ export function ActionMenu({ label, items, disabled = false }) {
       buttons[next]?.focus();
     }
   };
+  if (!items.some(Boolean)) return null;
   return (
     <>
       <button

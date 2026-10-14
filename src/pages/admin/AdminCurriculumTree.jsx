@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/Card.jsx';
 import { ResizablePanels } from '../../components/ResizablePanels.jsx';
-import { Button } from '../../components/Button.jsx';
+import { Button as EditableButton } from '../../components/Button.jsx';
 import { FormField } from '../../components/FormField.jsx';
 import { SelectField } from '../../components/SelectField.jsx';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import { FormDialog } from '../../components/FormDialog.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
-import { ActionMenu } from '../../components/ActionMenu.jsx';
+import { ActionMenu as EditableActionMenu } from '../../components/ActionMenu.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { MaterialContentFields, materialFormats } from '../../components/MaterialContentFields.jsx';
 import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
@@ -24,7 +24,7 @@ const sortByOrder = (rows) => [...rows].sort((a, b) => (a.orderIndex ?? 0) - (b.
 const iconOf = (type) =>
   type === 'PDF' ? 'picture_as_pdf' : type === 'VIDEO' ? 'videocam' : type === 'SLIDE' ? 'slideshow' : 'description';
 
-function useCurriculum(subjectId) {
+function useCurriculum(subjectId, classId) {
   const [version, setVersion] = useState(0);
   const [state, setState] = useState({ data: { chapters: [], topics: [], materials: [] }, loading: true, error: '' });
   useEffect(() => {
@@ -35,9 +35,9 @@ function useCurriculum(subjectId) {
         loadAllPages(apiRequest, `/api/v1/subjects/${subjectId}/chapters`),
         loadAllPages(apiRequest, `/api/v1/subjects/${subjectId}/topics`),
       ]);
-      const materials = [];
+      const materials = classId ? await loadAllPages(apiRequest, `/api/v1/classes/${classId}/materials`) : [];
       // Bound concurrent requests while keeping search complete across the subject.
-      for (let index = 0; index < topics.length; index += 4) {
+      for (let index = 0; !classId && index < topics.length; index += 4) {
         if (!alive) return;
         const batches = await Promise.all(
           topics
@@ -60,12 +60,14 @@ function useCurriculum(subjectId) {
     return () => {
       alive = false;
     };
-  }, [subjectId, version]);
+  }, [subjectId, classId, version]);
   return { ...state, reload: () => setVersion((value) => value + 1) };
 }
 
-export function AdminCurriculumTree({ subjectId }) {
-  const resource = useCurriculum(subjectId);
+export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false }) {
+  const resource = useCurriculum(subjectId, classId);
+  const Button = readOnly ? () => null : EditableButton;
+  const ActionMenu = readOnly ? () => null : EditableActionMenu;
   const { chapters, topics, materials } = resource.data;
   const [selected, setSelected] = useState(null);
   const [treeWidth, setTreeWidth] = useState(340);
@@ -129,6 +131,7 @@ export function AdminCurriculumTree({ subjectId }) {
     setTypeFilter('');
   }
   function open(kind, item = {}, parentId = selectedChapter?.chapterId) {
+    if (readOnly) return;
     setError('');
     setMaterialType(item.type || 'MARKDOWN');
     setModal({
@@ -532,17 +535,19 @@ export function AdminCurriculumTree({ subjectId }) {
                         )}
                       />
                     </div>
-                    <Card
-                      as="button"
-                      type="button"
-                      disabled={busy}
-                      onClick={() => open('material')}
-                      className="mt-5 flex w-full flex-col items-center gap-2 border-dashed p-6 text-slate-500 transition-colors hover:border-primary hover:text-primary"
-                    >
-                      <span className="material-symbols-outlined">add_circle</span>
-                      <span className="font-semibold">Thêm học liệu mới</span>
-                      <span className="text-body-sm">PDF, video, slide hoặc tài liệu văn bản</span>
-                    </Card>
+                    {!readOnly && (
+                      <Card
+                        as="button"
+                        type="button"
+                        disabled={busy}
+                        onClick={() => open('material')}
+                        className="mt-5 flex w-full flex-col items-center gap-2 border-dashed p-6 text-slate-500 transition-colors hover:border-primary hover:text-primary"
+                      >
+                        <span className="material-symbols-outlined">add_circle</span>
+                        <span className="font-semibold">Thêm học liệu mới</span>
+                        <span className="text-body-sm">PDF, video, slide hoặc tài liệu văn bản</span>
+                      </Card>
+                    )}
                   </>
                 ) : (
                   <PagedCards

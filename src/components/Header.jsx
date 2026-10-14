@@ -15,7 +15,7 @@ const defaultUser = {
   initials: 'TK',
 };
 
-export function Header({ onMenuClick, homeHref = 'dashboard.html', showBackButton = true }) {
+export function Header({ onMenuClick, homeHref = 'dashboard.html', showBackButton = true, backHref }) {
   const session = useCurrentUser();
   const user = session ? { ...session, role: session.label } : defaultUser;
   const home = session?.home || homeHref;
@@ -53,7 +53,7 @@ export function Header({ onMenuClick, homeHref = 'dashboard.html', showBackButto
           <button
             type="button"
             className="header-back-button"
-            onClick={() => goBack(home)}
+            onClick={() => (backHref ? navigate(backHref) : goBack(home))}
             title="Quay lại trang trước"
           >
             Quay lại

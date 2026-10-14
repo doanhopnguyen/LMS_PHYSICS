@@ -1,7 +1,7 @@
 import { AuthoringSection } from '../../components/AuthoringSection.jsx';
 import { AuthoringPanel } from '../../components/AuthoringPanel.jsx';
 import { navigate } from '../../lib/navigation.js';
-import { queryPath } from '../../lib/lecturerUtils.js';
+import { queryPath, localDateTimeInput } from '../../lib/lecturerUtils.js';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { ExperimentGradingPanel } from './LecturerExperimentGrading.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
@@ -23,6 +23,8 @@ import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { useCloCatalog } from '../../components/CloPicker.jsx';
 import { validateCloIds } from '../../lib/cloSelection.js';
+import { getDemoSession } from '../../lib/demoSession.js';
+import { useTeachingScope } from './LecturerTeachingScope.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api, apiRequest } from '../../lib/apiClient.js';
 import { questionTopicName } from '../../lib/topicLabels.js';
@@ -573,7 +575,9 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
 }
 
 export function MatrixManager({ classes, createPage = false, scopedSubjectId = '' }) {
-  const [subjectId, setSubjectId] = useState(() => scopedSubjectId || new URLSearchParams(window.location.search).get('subjectId') || '');
+  const [subjectId, setSubjectId] = useState(
+    () => scopedSubjectId || new URLSearchParams(window.location.search).get('subjectId') || ''
+  );
   const [modal, setModal] = useState(createPage ? { mode: 'create' } : null);
   const EditorContainer = createPage ? AuthoringPanel : Modal;
   const [details, setDetails] = useState([
@@ -581,7 +585,10 @@ export function MatrixManager({ classes, createPage = false, scopedSubjectId = '
   ]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [validation, setValidation] = useState(null);
-  const subjects = useApiData('/api/v1/subjects?isActive=true&page=0&size=100');
+  const adminMode=getDemoSession()?.role==='ADMIN';
+  const assignedScope=useTeachingScope(!adminMode);
+  const globalSubjects=useResource(adminMode?'/api/v1/subjects':null,true);
+  const subjects=adminMode?globalSubjects:assignedScope.subjects;
   const matrixSubjectId = modal?.row?.subjectId || subjectId;
   const topics = useApiData(matrixSubjectId ? `/api/v1/subjects/${encodeURIComponent(matrixSubjectId)}/topics` : null);
   const clos = useCloCatalog([matrixSubjectId]);
@@ -631,13 +638,20 @@ export function MatrixManager({ classes, createPage = false, scopedSubjectId = '
       action.setError('Vui lòng chọn học phần.');
       return;
     }
-    if (details.some(item => !listItems(topics.data).some(topic => topic.topicId === item.topicId))) {
-      action.setError('Chủ đề đã chọn không thuộc học phần này.'); return;
+    if (details.some((item) => !listItems(topics.data).some((topic) => topic.topicId === item.topicId))) {
+      action.setError('Chủ đề đã chọn không thuộc học phần này.');
+      return;
     }
-    const cloIds = details.map(item => item.cloId).filter(Boolean);
-    if (cloIds.length && (clos.loading || clos.error)) { action.setError('Vui lòng tải đầy đủ CLO trước khi lưu.'); return; }
+    const cloIds = details.map((item) => item.cloId).filter(Boolean);
+    if (cloIds.length && (clos.loading || clos.error)) {
+      action.setError('Vui lòng tải đầy đủ CLO trước khi lưu.');
+      return;
+    }
     const cloError = validateCloIds(cloIds, clos.data, matrixSubjectId);
-    if (cloError) { action.setError(cloError); return; }
+    if (cloError) {
+      action.setError(cloError);
+      return;
+    }
     const body = {
       subjectId: modal.row?.subjectId || subjectId,
       matrixName: values.matrixName.trim(),
@@ -793,7 +807,11 @@ export function MatrixManager({ classes, createPage = false, scopedSubjectId = '
             !action.busy && (createPage ? navigate('lecturer_assessments.html?tab=matrices') : setModal(null))
           }
         >
-          {(action.error || clos.error) && <p role="alert" className="mb-4 text-body-sm text-red-700">{action.error || clos.error}</p>}
+          {(action.error || clos.error) && (
+            <p role="alert" className="mb-4 text-body-sm text-red-700">
+              {action.error || clos.error}
+            </p>
+          )}
           <Form className="grid gap-4" onSubmit={save}>
             <SharedFormField
               name="matrixName"
@@ -812,7 +830,7 @@ export function MatrixManager({ classes, createPage = false, scopedSubjectId = '
                 <option value="PRACTICE">Luyện tập</option>
                 <option value="QUIZ">Kiểm tra ngắn</option>
                 <option value="MIDTERM">Giữa kỳ</option>
-                <option value="FINAL">Cuối kỳ</option>
+                {getDemoSession()?.role === 'ADMIN' && <option value="FINAL">Cuối kỳ</option>}
               </SharedSelectField>
               <SharedFormField
                 name="totalPoints"
@@ -870,9 +888,26 @@ export function MatrixManager({ classes, createPage = false, scopedSubjectId = '
                       </option>
                     ))}
                   </SharedSelectField>
-                  <SharedSelectField name={`cloId-${index}`} label="CLO" value={item.cloId || ''} disabled={clos.loading || Boolean(clos.error)} onChange={event => setDetails(rows => rows.map((row,i) => i === index ? { ...row, cloId: event.target.value } : row))}>
+                  <SharedSelectField
+                    name={`cloId-${index}`}
+                    label="CLO"
+                    value={item.cloId || ''}
+                    disabled={clos.loading || Boolean(clos.error)}
+                    onChange={(event) =>
+                      setDetails((rows) =>
+                        rows.map((row, i) => (i === index ? { ...row, cloId: event.target.value } : row))
+                      )
+                    }
+                  >
                     <option value="">Không giới hạn CLO</option>
-                    {clos.data.filter(clo => clo.subjectId === matrixSubjectId && (clo.isActive || clo.cloId === item.cloId)).map(clo => <option key={clo.cloId} value={clo.cloId} disabled={!clo.isActive}>{clo.cloCode}{!clo.isActive ? ' · ngừng hoạt động' : ''}</option>)}
+                    {clos.data
+                      .filter((clo) => clo.subjectId === matrixSubjectId && (clo.isActive || clo.cloId === item.cloId))
+                      .map((clo) => (
+                        <option key={clo.cloId} value={clo.cloId} disabled={!clo.isActive}>
+                          {clo.cloCode}
+                          {!clo.isActive ? ' · ngừng hoạt động' : ''}
+                        </option>
+                      ))}
                   </SharedSelectField>
                   <SharedSelectField
                     value={item.difficultyLevel}
@@ -1085,13 +1120,21 @@ export function LecturerDashboardApiPage() {
   );
 }
 
-export function LecturerAssessmentApiPage({ grading = false, createPage = false }) {
-  const classes = useResource('/api/v1/classes', true);
+export function LecturerAssessmentApiPage({
+  grading = false,
+  createPage = false,
+  embedded = false,
+  scopedClassId = '',
+}) {
+  const Shell = embedded ? React.Fragment : LecturerPageShell;
+  const classes = useResource('/api/v1/instructor/classes', true);
   const rows = listItems(classes.data);
   const [tab, setTab] = useState(
     new URLSearchParams(window.location.search).get('tab') === 'matrices' ? 'matrices' : 'exams'
   );
-  const [classId, setClassId] = useState(() => new URLSearchParams(window.location.search).get('classId') || '');
+  const [classId, setClassId] = useState(
+    () => scopedClassId || new URLSearchParams(window.location.search).get('classId') || ''
+  );
   const [creating, setCreating] = useState(createPage);
   const [editing, setEditing] = useState(null);
   const [managing, setManaging] = useState(null);
@@ -1100,10 +1143,12 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
   const [allExamsLoading, setAllExamsLoading] = useState(false);
   const [allExamsError, setAllExamsError] = useState('');
   const EditorContainer = createPage ? AuthoringPanel : Modal;
-  const selected = classId || 'ALL';
+  const selected = scopedClassId || classId || 'ALL';
   const exams = useApiData(selected !== 'ALL' ? `/api/v1/exams/class/${encodeURIComponent(selected)}` : null);
   const matrices = useApiData(
-    selected !== 'ALL' ? `/api/v1/exam-matrices?classId=${encodeURIComponent(selected)}` : null
+    selected !== 'ALL' && rows.find((row) => row.classId === selected)?.subjectId
+      ? `/api/v1/exam-matrices?subjectId=${encodeURIComponent(rows.find((row) => row.classId === selected).subjectId)}`
+      : null
   );
   const reloadAllExams = async () => {
     if (selected !== 'ALL') return;
@@ -1138,13 +1183,17 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
       return;
     }
     const body = {
-      classId: selected,
+      ...(!editing ? { classId: selected } : {}),
       ...(values.matrixId ? { matrixId: values.matrixId } : {}),
       title: values.title.trim(),
       examType: values.examType,
       durationMinutes: Number(values.durationMinutes),
       startTime: new Date(values.startTime).toISOString(),
       endTime: new Date(values.endTime).toISOString(),
+      maxAttempts: Number(values.maxAttempts),
+      shuffleQuestions: values.shuffleQuestions === 'on',
+      shuffleOptions: values.shuffleOptions === 'on',
+      isPublished: values.isPublished === 'on',
     };
     const result = await action.run(
       editing ? `/api/v1/exams/${encodeURIComponent(editing.examId)}` : '/api/v1/exams',
@@ -1163,11 +1212,14 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
     if (result) setEditing(result);
   };
   return (
-    <LecturerPageShell
-      currentPage={grading ? 'lecturer_grading.html' : 'lecturer_assessments.html'}
-      title={createPage ? 'Tạo đề thi' : grading ? 'Chấm bài kiểm tra' : 'Bài tập & kiểm tra'}
-      eyebrow="ĐÁNH GIÁ"
-      description={grading ? 'Theo dõi kỳ thi và thông tin đánh giá của lớp.' : 'Theo dõi các kỳ thi theo lớp.'}
+    <Shell
+      {...(embedded
+        ? {}
+        : {
+            currentPage: grading ? 'lecturer_grading.html' : 'lecturer_assessments.html',
+            title: createPage ? 'Tạo đề thi' : grading ? 'Chấm bài kiểm tra' : 'Bài tập & kiểm tra',
+            eyebrow: 'ĐÁNH GIÁ',
+          })}
     >
       <AuthAlert>{action.notice}</AuthAlert>
       <AuthAlert error>{action.error}</AuthAlert>
@@ -1195,7 +1247,7 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
         <div className="mt-6">
           <Tabs
             items={
-              grading
+              grading || embedded
                 ? [{ id: 'exams', label: 'Kỳ thi của lớp' }]
                 : [
                     { id: 'exams', label: 'Kỳ thi của lớp' },
@@ -1206,12 +1258,18 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
             onChange={setTab}
             actions={
               <>
-                {tab === 'exams' && <ClassSelect classes={rows} value={selected} onChange={setClassId} />}
+                {tab === 'exams' && !scopedClassId && (
+                  <ClassSelect classes={rows} value={selected} onChange={setClassId} />
+                )}
                 {!grading && tab === 'exams' && (
                   <Button
                     icon="add"
                     disabled={!selected || selected === 'ALL'}
-                    onClick={() => navigate(queryPath('lecturer_exam_create.html', { classId: selected }))}
+                    onClick={() =>
+                      embedded
+                        ? setCreating(true)
+                        : navigate(queryPath('lecturer_exam_create.html', { classId: selected }))
+                    }
                   >
                     Tạo đề thi
                   </Button>
@@ -1230,7 +1288,7 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                       rows={items}
                       columns={['Kỳ thi', 'Loại', 'Thời gian', 'Số câu', 'Thao tác']}
                       cells={(item) => [
-                        nameOf(item),
+                        <button className="text-left font-semibold text-primary hover:underline" onClick={()=>setManaging(item)}>{nameOf(item)}</button>,
                         labelOf(item.examType),
                         item.startTime ? new Date(item.startTime).toLocaleString('vi-VN') : '—',
                         item.totalQuestions ?? '—',
@@ -1313,7 +1371,6 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                     <option value="PRACTICE">Luyện tập</option>
                     <option value="QUIZ">Kiểm tra ngắn</option>
                     <option value="MIDTERM">Giữa kỳ</option>
-                    <option value="FINAL">Cuối kỳ</option>
                   </SharedSelectField>
                   <SharedFormField
                     name="durationMinutes"
@@ -1351,7 +1408,7 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                   <SharedFormField
                     name="startTime"
                     type="datetime-local"
-                    defaultValue={editing?.startTime?.slice(0, 16) || ''}
+                    defaultValue={localDateTimeInput(editing?.startTime)}
                     required
                     className="mt-2 w-full"
                     label={<>Bắt đầu</>}
@@ -1360,7 +1417,7 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
                   <SharedFormField
                     name="endTime"
                     type="datetime-local"
-                    defaultValue={editing?.endTime?.slice(0, 16) || ''}
+                    defaultValue={localDateTimeInput(editing?.endTime)}
                     required
                     className="mt-2 w-full"
                     label={<>Kết thúc</>}
@@ -1370,6 +1427,31 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
               </AuthoringSection>
             </div>
 
+            <AuthoringSection number="03" icon="settings" title="Cấu hình bài thi">
+              <SharedFormField
+                label="Số lượt làm tối đa"
+                name="maxAttempts"
+                type="number"
+                min="1"
+                step="1"
+                required
+                defaultValue={editing?.maxAttempts ?? 1}
+              />
+              <div className="mt-4 flex flex-wrap gap-5 text-body-sm">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="shuffleQuestions" defaultChecked={editing?.shuffleQuestions ?? false} />
+                  Xáo trộn câu hỏi
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="shuffleOptions" defaultChecked={editing?.shuffleOptions ?? false} />
+                  Xáo trộn đáp án
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="isPublished" defaultChecked={editing?.isPublished ?? false} />
+                  Cho phép sinh viên truy cập
+                </label>
+              </div>
+            </AuthoringSection>
             <div className="authoring-page__footer">
               <p>
                 <span className="material-symbols-outlined" aria-hidden="true">
@@ -1421,7 +1503,7 @@ export function LecturerAssessmentApiPage({ grading = false, createPage = false 
           onChanged={examResource.reload}
         />
       )}
-    </LecturerPageShell>
+    </Shell>
   );
 }
 
@@ -1429,12 +1511,14 @@ export function LecturerGradingApiPage() {
   return <LecturerAssessmentApiPage grading />;
 }
 
-export function LecturerExperimentsApiPage() {
-  const subjects = useResource('/api/v1/subjects?isActive=true', true);
-  const classes = useResource('/api/v1/classes', true);
+export function LecturerExperimentsApiPage({ embedded = false, scopedClassId = '', scopedSubjectId = '' }) {
+  const Shell = embedded ? React.Fragment : LecturerPageShell;
+  const assignedScope=useTeachingScope();
+  const subjects=assignedScope.subjects;
+  const classes=assignedScope.classes;
   const subjectRows = listItems(subjects.data);
-  const classRows = listItems(classes.data);
-  const [subjectId, setSubjectId] = useState('');
+  const classRows = listItems(classes.data).filter((row) => !scopedClassId || row.classId === scopedClassId);
+  const [subjectId, setSubjectId] = useState(scopedSubjectId);
   const selectedSubject = subjectId;
   const experiments = useApiData(
     `/api/v1/experiments${selectedSubject ? `?subjectId=${encodeURIComponent(selectedSubject)}` : ''}`
@@ -1483,7 +1567,7 @@ export function LecturerExperimentsApiPage() {
         {
           method: 'POST',
           body: {
-            classId: values.classId,
+            classId: scopedClassId || values.classId,
             dueDate: new Date(values.dueDate).toISOString(),
             instructionsOverride: values.instructionsOverride || '',
           },
@@ -1502,6 +1586,7 @@ export function LecturerExperimentsApiPage() {
       name="experiment-subject"
       className="min-w-64"
       value={selectedSubject}
+      disabled={Boolean(scopedSubjectId)}
       onChange={(event) => setSubjectId(event.target.value)}
     >
       <option value="">Tất cả học phần</option>
@@ -1514,12 +1599,7 @@ export function LecturerExperimentsApiPage() {
     </SelectField>
   );
   return (
-    <LecturerPageShell
-      currentPage="lecturer_labs.html"
-      title="Thí nghiệm 3D"
-      eyebrow="THỰC HÀNH"
-      description="Tạo và giao thí nghiệm theo học phần, lớp học."
-    >
+    <Shell {...(embedded ? {} : { currentPage: 'lecturer_labs.html', title: 'Thí nghiệm 3D', eyebrow: 'THỰC HÀNH' })}>
       <AuthAlert>{action.notice}</AuthAlert>
       <AuthAlert error>{action.error}</AuthAlert>
       {lastAssignment && (
@@ -1580,7 +1660,13 @@ export function LecturerExperimentsApiPage() {
               </>
             ) : (
               <>
-                <SelectField label="Lớp học" name="classId" required>
+                <SelectField
+                  label="Lớp học"
+                  name="classId"
+                  required
+                  defaultValue={scopedClassId}
+                  disabled={Boolean(scopedClassId)}
+                >
                   <option value="">Chọn lớp</option>
                   {classRows
                     .filter((item) => !modal.subjectId || item.subjectId === modal.subjectId)
@@ -1623,7 +1709,7 @@ export function LecturerExperimentsApiPage() {
         >
           {(activeTab) =>
             activeTab === 'grading' ? (
-              <ExperimentGradingPanel classes={classes} />
+              <ExperimentGradingPanel classes={{ ...classes, data: classRows }} classId={scopedClassId || undefined}/>
             ) : (
               <Resource resource={experiments}>
                 {(items) => (
@@ -1648,7 +1734,7 @@ export function LecturerExperimentsApiPage() {
           }
         </Tabs>
       </div>
-    </LecturerPageShell>
+    </Shell>
   );
 }
 
