@@ -824,7 +824,6 @@ button {
   .app-header:has(.page-heading) { align-items: flex-start; gap: 8px; }
   .app-header:has(.page-heading) .floating-actions { flex-shrink: 0; }
 }
-
 .page-title {
   position: relative;
   padding: 5px 5px 5px 24px;
@@ -2045,6 +2044,44 @@ button {
 }
 
 .chapter-lesson-type { display: block; margin-top: 3px; color: #64748b; font-size: 11px; font-weight: 400; }
+
+input.exam-checkbox[type="checkbox"] { appearance: none; -webkit-appearance: none; display: inline-grid; place-items: center; width: 20px; height: 20px; min-width: 20px; min-height: 20px; margin: 0; padding: 0; flex-shrink: 0; border: 2px solid var(--ptit-primary); border-radius: 50%; background: white; color: white; cursor: pointer; vertical-align: middle; }
+input.exam-checkbox[type="checkbox"]:checked { background: var(--ptit-primary); }
+input.exam-checkbox[type="checkbox"]:checked::after { content: ''; width: 5px; height: 9px; border: solid white; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+input.exam-checkbox[type="checkbox"]:focus-visible { outline: 2px solid var(--ptit-primary); outline-offset: 3px; }
+input.exam-checkbox[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.chapter-learning--tree { grid-template-columns: 340px minmax(0, 1fr); }
+.student-learning-workspace--embedded { width: 100%; margin: 0; }
+.student-learning-workspace--embedded .chapter-panel { min-height: 520px; }
+.chapter-learning--tree .chapter-panel-heading h1 { scroll-margin-top: 96px; }
+.chapter-learning--tree .chapter-outline { padding: 0; }
+.student-learning-tree { min-width: 0; color: var(--ptit-text); }
+.student-learning-tree__progress { padding: 18px; border-bottom: 1px solid var(--ptit-border); }
+.student-learning-tree__nodes { display: block !important; padding: 10px; max-height: 560px; overflow-y: auto; }
+.student-learning-tree summary { display: flex; align-items: flex-start; gap: 8px; padding: 10px 8px; border-radius: var(--ptit-radius-control); cursor: pointer; list-style: none; }
+.student-learning-tree summary::-webkit-details-marker { display: none; }
+.student-learning-tree summary:hover { background: #f8fafc; }
+.student-learning-tree summary:focus-visible, .student-learning-tree__lesson:focus-visible { outline: 2px solid var(--ptit-primary, #e52220); outline-offset: -2px; }
+.student-learning-tree .material-symbols-outlined { font-size: 20px; flex-shrink: 0; }
+.student-learning-tree__chevron { color: #64748b; transition: transform 150ms; }
+.student-learning-tree details[open] > summary > .student-learning-tree__chevron { transform: rotate(90deg); }
+.student-learning-tree__branch { margin-left: 16px; padding-left: 8px; border-left: 1px solid var(--ptit-border); }
+.student-learning-tree__lessons { margin-left: 18px; padding-left: 8px; border-left: 1px solid var(--ptit-border); }
+.student-learning-tree__lesson { display: flex; gap: 10px; align-items: flex-start; padding: 10px; margin-block: 3px; border-radius: var(--ptit-radius-control); color: #475569; font-size: 13px; line-height: 1.5; }
+.student-learning-tree__lesson:hover { background: #f8fafc; }
+.student-learning-tree__lesson.is-selected { background: #fef2f2; color: #e52220; font-weight: 600; }
+.chapter-learning--tree .chapter-outline { max-height: none; overflow: visible; }
+.chapter-learning--tree .student-learning-tree__nodes { max-height: calc(100dvh - 220px); }
+@media (max-width: 900px) {
+  .chapter-learning--tree { grid-template-columns: minmax(0, 1fr); }
+  .chapter-learning--tree .chapter-outline { position: static; }
+  .chapter-learning--tree .student-learning-tree__nodes { max-height: 260px; }
+}
+@media (max-width: 767px) {
+  .app-header.detail-toolbar:has(.student-learning-toolbar-actions) { flex-wrap: nowrap; }
+  .detail-toolbar-actions:has(.student-learning-toolbar-actions) { display: none; }
+}
 .lesson-video { margin: 20px 0 28px; min-width: 0; }
 .lesson-video__player { aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--ptit-radius-panel); background: #0f172a; }
 .lesson-video__player video { display: block; width: 100%; height: 100%; object-fit: contain; }

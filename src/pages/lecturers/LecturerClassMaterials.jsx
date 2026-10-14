@@ -7,7 +7,6 @@ import { MarkdownContent } from '../../components/MarkdownContent.jsx';
 import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
 import {
   Button,
-  Field,
   Lookup,
   Modal,
   Resource,
@@ -22,15 +21,10 @@ export function LecturerClassMaterials({ classId, subjectId }) {
   const resource = useResource(`/api/v1/classes/${classId}/materials`);
   const topics = useResource(`/api/v1/subjects/${subjectId}/topics`);
   const [topicId, setTopicId] = useState('');
-  const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
   const [view, setView] = useState(null);
   const action = useMutation();
-  const rows = itemsOf(resource.data).filter(
-    (row) =>
-      row.scope === 'CLASS' &&
-      (!search.trim() || row.title?.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi')))
-  );
+  const rows = itemsOf(resource.data).filter((row) => row.scope === 'CLASS');
   const save = async (event) => {
     event.preventDefault();
     if (!itemsOf(topics.data).some((row) => row.topicId === topicId)) {
@@ -64,12 +58,6 @@ export function LecturerClassMaterials({ classId, subjectId }) {
     <>
       {action.feedback}
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-        <Field
-          label="Tìm học liệu riêng"
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
         <Button
           icon="add"
           onClick={() => {

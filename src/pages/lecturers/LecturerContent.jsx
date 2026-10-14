@@ -1,5 +1,6 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../../lib/apiClient.js';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
@@ -311,16 +312,18 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
         </p>
       )}
       <div className="flex flex-wrap justify-end gap-2">
-        {initial.approvalStatus!=='PENDING'&&<SubmitButton
-          variant="secondary"
-          name="intent"
-          value="draft"
-          disabled={busy || clos.loading || Boolean(clos.error)}
-        >
-          Lưu bản nháp
-        </SubmitButton>}
+        {initial.approvalStatus !== 'PENDING' && (
+          <SubmitButton
+            variant="secondary"
+            name="intent"
+            value="draft"
+            disabled={busy || clos.loading || Boolean(clos.error)}
+          >
+            Lưu bản nháp
+          </SubmitButton>
+        )}
         <SubmitButton name="intent" value="submit" disabled={busy || clos.loading || Boolean(clos.error)}>
-          {initial.approvalStatus==='PENDING'?'Lưu cập nhật':'Lưu và gửi duyệt'}
+          {initial.approvalStatus === 'PENDING' ? 'Lưu cập nhật' : 'Lưu và gửi duyệt'}
         </SubmitButton>
       </div>
     </Form>
@@ -333,6 +336,7 @@ export function LecturerAuthoringApiPage({
   embedded = false,
   scopedSubjectId = '',
   questionMode = 'manage',
+  actionsTarget = null,
 }) {
   const Shell = embedded ? React.Fragment : LecturerPageShell;
   const materialMode = kind === 'materials';
@@ -551,6 +555,40 @@ export function LecturerAuthoringApiPage({
       )
     );
   };
+  const authoringActions = bankMode ? undefined : (
+    <>
+      <Button
+        disabled={action.busy}
+        onClick={() => open(tab === 'topics' ? 'topic' : materialMode ? 'material' : 'question')}
+      >
+        Tạo {tab === 'topics' ? 'chủ đề' : materialMode ? 'học liệu' : 'câu hỏi'}
+      </Button>
+      {!materialMode && (
+        <>
+          <Button
+            variant="secondary"
+            disabled={action.busy}
+            onClick={async () => {
+              const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
+              if (result.ok) {
+                const url = URL.createObjectURL(result.data);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'mau-nhap-cau-hoi.xlsx';
+                link.click();
+                URL.revokeObjectURL(url);
+              }
+            }}
+          >
+            Tải mẫu Excel
+          </Button>
+          <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
+            Nhập Excel
+          </Button>
+        </>
+      )}
+    </>
+  );
   return (
     <Shell
       {...(embedded
@@ -562,6 +600,7 @@ export function LecturerAuthoringApiPage({
           })}
     >
       {action.feedback}
+      {actionsTarget && !createPage && createPortal(authoringActions, actionsTarget)}
       {!createPage && (
         <Tabs
           hideSingleTab={!materialMode}
@@ -577,16 +616,18 @@ export function LecturerAuthoringApiPage({
           }
           filters={
             <>
-              <Field
-                type="search"
-                name="contentSearch"
-                label={materialMode ? 'Tìm học liệu' : 'Tìm câu hỏi'}
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setPage(0);
-                }}
-              />
+              {!materialMode && (
+                <Field
+                  type="search"
+                  name="contentSearch"
+                  label="Tìm câu hỏi"
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(0);
+                  }}
+                />
+              )}
               <Lookup
                 label="Học phần"
                 idKey="subjectId"
@@ -667,42 +708,7 @@ export function LecturerAuthoringApiPage({
               )}
             </>
           }
-          actions={
-            bankMode ? undefined : (
-              <>
-                <Button
-                  disabled={action.busy}
-                  onClick={() => open(tab === 'topics' ? 'topic' : materialMode ? 'material' : 'question')}
-                >
-                  Tạo {tab === 'topics' ? 'chủ đề' : materialMode ? 'học liệu' : 'câu hỏi'}
-                </Button>
-                {!materialMode && (
-                  <>
-                    <Button
-                      variant="secondary"
-                      disabled={action.busy}
-                      onClick={async () => {
-                        const result = await action.run(() => api.questions.downloadTemplate(), 'Đã tải mẫu Excel.');
-                        if (result.ok) {
-                          const url = URL.createObjectURL(result.data);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = 'mau-nhap-cau-hoi.xlsx';
-                          link.click();
-                          URL.revokeObjectURL(url);
-                        }
-                      }}
-                    >
-                      Tải mẫu Excel
-                    </Button>
-                    <Button variant="secondary" disabled={action.busy} onClick={() => open('import')}>
-                      Nhập Excel
-                    </Button>
-                  </>
-                )}
-              </>
-            )
-          }
+          actions={actionsTarget ? undefined : authoringActions}
         >
           {() =>
             tab === 'topics' ? (

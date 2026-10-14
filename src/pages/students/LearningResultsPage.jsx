@@ -8,11 +8,12 @@ import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { api } from '../../lib/apiClient.js';
 import { loadClassMaterialProgress } from '../../lib/classMaterialProgress.js';
+import { attemptScore } from '../../lib/examScoring.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const isFinished = (attempt) =>
   Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
-const scoreOf = (attempt) => Number(attempt?.totalScore ?? attempt?.score);
+const scoreOf = attemptScore;
 const dateLabel = (value, index) => {
   const date = value ? new Date(value) : null;
   return date && !Number.isNaN(date.getTime())
@@ -129,7 +130,7 @@ export function LearningResultsPage() {
     {
       label: 'Điểm trung bình',
       value: averageScore === null ? '—' : averageScore.toFixed(1),
-      detail: scoredAttempts.length ? `${scoredAttempts.length} lượt đã có điểm` : 'Chưa có lượt được chấm',
+      detail: scoredAttempts.length ? `${scoredAttempts.length} lượt có điểm · thang 10` : 'Chưa có điểm hợp lệ',
       icon: 'emoji_events',
       tone: 'warning',
       sideChart: scoreValues.length ? (

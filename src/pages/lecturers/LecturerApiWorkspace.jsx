@@ -29,6 +29,13 @@ import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api, apiRequest } from '../../lib/apiClient.js';
 import { questionTopicName } from '../../lib/topicLabels.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
+import {
+  examMaxScore,
+  tenPointScore,
+  rawScoreFromTen,
+  attemptScore,
+  formatAttemptScore,
+} from '../../lib/examScoring.js';
 
 const nameOf = (row) =>
   row?.className || row?.classCode || row?.title || row?.name || row?.subjectName || row?.username || '—';
@@ -113,6 +120,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   const [questionDifficulty, setQuestionDifficulty] = useState('');
   const [questionSearch, setQuestionSearch] = useState('');
   const [gradingAttempt, setGradingAttempt] = useState(null);
+  const [gradeValue, setGradeValue] = useState('');
   const [viewAttempt, setViewAttempt] = useState(null);
   const [removeTarget, setRemoveTarget] = useState(null);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -132,8 +140,19 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   const candidates = useApiData(subjectId ? `/api/v1/questions?${candidateQuery}` : null);
   const action = useAction();
   const questions = listItems(examQuestions.data);
+  const maxScore = examQuestions.loading || examQuestions.error ? null : examMaxScore(questions);
+  const questionsLocked = attempts.loading || Boolean(attempts.error) || listItems(attempts.data).length > 0;
+  const openGrading = (attempt) => {
+    action.clear();
+    setGradeValue(tenPointScore(attempt.totalScore, maxScore) ?? '');
+    setGradingAttempt(attempt);
+  };
   const topicNameOf = (question) => questionTopicName(question, listItems(candidateTopics.data));
   const addQuestion = async (question) => {
+    if (questionsLocked) {
+      action.setError('Đề đã có lượt làm, không thể thay đổi câu hỏi.');
+      return;
+    }
     const result = await action.run(
       `/api/v1/exams/${encodeURIComponent(exam.examId)}/questions`,
       { method: 'POST', body: { questionId: question.questionId } },
@@ -146,6 +165,10 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
     }
   };
   const generate = async () => {
+    if (questionsLocked) {
+      action.setError('Đề đã có lượt làm, không thể thay đổi câu hỏi.');
+      return;
+    }
     const result = await action.run(
       `/api/v1/exams/${encodeURIComponent(exam.examId)}/generate-questions`,
       { method: 'POST' },
@@ -159,6 +182,10 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   };
   const removeQuestion = async () => {
     if (!removeTarget) return;
+    if (questionsLocked) {
+      action.setError('Đề đã có lượt làm, không thể thay đổi câu hỏi.');
+      return;
+    }
     const result = await action.run(
       `/api/v1/exams/${encodeURIComponent(exam.examId)}/questions/${encodeURIComponent(removeTarget.questionId)}`,
       { method: 'DELETE' },
@@ -174,9 +201,29 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   const grade = async (event) => {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
+    let rawScore;
+    try {
+      if (!['SUBMITTED', 'GRADED'].includes(gradingAttempt?.status)) throw new Error('Chỉ chấm bài đã nộp.');
+      rawScore = rawScoreFromTen(values.totalScore, maxScore);
+      if (
+        gradingAttempt.status === 'GRADED' &&
+        rawScore !== Number(gradingAttempt.totalScore) &&
+        !values.feedback.trim()
+      )
+        throw new Error('Nhập nhận xét giải thích lý do điều chỉnh điểm.');
+    } catch (error) {
+      action.setError(error.message);
+      return;
+    }
     const result = await action.run(
       `/api/v1/exams/attempts/${encodeURIComponent(gradingAttempt.attemptId)}/grade`,
-      { method: 'PUT', body: { totalScore: Number(values.totalScore), feedback: values.feedback } },
+      {
+        method: 'PUT',
+        body: {
+          totalScore: rawScore,
+          feedback: `Điểm quy đổi: ${tenPointScore(rawScore, maxScore)}/10.${values.feedback.trim() ? ` ${values.feedback.trim()}` : ''}`,
+        },
+      },
       'Đã cập nhật điểm bài làm.'
     );
     if (result) {
@@ -240,7 +287,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
           onChange={setTab}
           actions={
             tab === 'questions' && detail.data?.matrixId ? (
-              <Button disabled={action.busy} onClick={generate}>
+              <Button disabled={action.busy || questionsLocked} onClick={generate}>
                 Sinh theo ma trận
               </Button>
             ) : null
@@ -249,6 +296,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
           {() =>
             tab === 'questions' ? (
               <>
+                {listItems(attempts.data).length > 0 && (
+                  <p className="mb-4 text-body-sm text-[#64748B]">
+                    Đề đã có lượt làm. Danh sách câu hỏi được giữ cố định.
+                  </p>
+                )}
                 <Resource resource={examQuestions}>
                   {(rows) => (
                     <Table
@@ -261,7 +313,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                           {labelOf(item.difficultyLevel)}
                           {item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}
                         </span>,
-                        <Button variant="secondary" disabled={action.busy} onClick={() => setRemoveTarget(item)}>
+                        <Button
+                          variant="secondary"
+                          disabled={action.busy || questionsLocked}
+                          onClick={() => setRemoveTarget(item)}
+                        >
                           Gỡ
                         </Button>,
                       ]}
@@ -322,7 +378,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                               item.content || '—',
                               topicNameOf(item),
                               item.difficultyLevel || '—',
-                              <Button disabled={action.busy} onClick={() => addQuestion(item)}>
+                              <Button disabled={action.busy || questionsLocked} onClick={() => addQuestion(item)}>
                                 Thêm vào đề
                               </Button>,
                             ]}
@@ -353,10 +409,15 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                         <p className="text-body-sm text-[#64748B]">đã nộp</p>
                       </div>
                       <div>
-                        <strong>{rows.filter((item) => item.totalScore != null).length}</strong>
+                        <strong>{rows.filter((item) => attemptScore(item, questions) !== null).length}</strong>
                         <p className="text-body-sm text-[#64748B]">đã có điểm</p>
                       </div>
                     </Card>
+                    {!maxScore && !examQuestions.loading && (
+                      <p role="alert" className="mb-4 text-primary">
+                        {examQuestions.error || 'Chưa có thang điểm hợp lệ để chấm bài.'}
+                      </p>
+                    )}
                     <Table
                       rows={rows}
                       columns={['Sinh viên', 'Lần làm', 'Trạng thái', 'Nộp bài', 'Điểm', '']}
@@ -365,17 +426,17 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                         item.attemptNumber ?? '—',
                         item.status || '—',
                         item.submittedAt ? new Date(item.submittedAt).toLocaleString('vi-VN') : 'Chưa nộp',
-                        item.totalScore ?? 'Chưa chấm',
+                        formatAttemptScore(item, questions),
                         <div className="flex flex-wrap gap-2">
                           <Button variant="secondary" onClick={() => setViewAttempt(item)}>
                             Xem chi tiết
                           </Button>
                           <Button
                             variant="secondary"
-                            disabled={action.busy || !['SUBMITTED', 'GRADED', 'COMPLETED'].includes(item.status)}
-                            onClick={() => setGradingAttempt(item)}
+                            disabled={action.busy || !maxScore || !['SUBMITTED', 'GRADED'].includes(item.status)}
+                            onClick={() => openGrading(item)}
                           >
-                            {item.totalScore == null ? 'Chấm bài' : 'Sửa điểm'}
+                            {item.status !== 'GRADED' ? 'Chấm bài' : 'Sửa điểm'}
                           </Button>
                         </div>,
                       ]}
@@ -521,19 +582,52 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                       {item.submittedAt ? new Date(item.submittedAt).toLocaleString('vi-VN') : 'Chưa nộp'}
                     </p>
                     <p className="mt-2">
-                      <strong>Điểm:</strong> {item.totalScore ?? 'Chưa chấm'}
+                      <strong>Điểm:</strong>{' '}
+                      {formatAttemptScore(item, item.questions?.length ? item.questions : questions)}
                     </p>
                   </Card>
                   {item.status === 'SUBMITTED' && (
                     <Button
-                      disabled={action.busy}
+                      disabled={action.busy || !maxScore}
                       onClick={() => {
                         setViewAttempt(null);
-                        setGradingAttempt(item);
+                        openGrading(item);
                       }}
                     >
                       Chấm bài này
                     </Button>
+                  )}
+                  {item.questions?.length > 0 && (
+                    <Table
+                      rows={item.questions}
+                      columns={['Câu hỏi', 'Câu trả lời', 'Kết quả', 'Điểm câu /10']}
+                      cells={(question) => {
+                        const selectedIds = question.selectedOptionIds || [];
+                        const answer =
+                          question.answerText?.trim() ||
+                          (question.options || [])
+                            .filter((option) => selectedIds.includes(option.optionId))
+                            .map((option) => option.content)
+                            .join(', ');
+                        const total = examMaxScore(item.questions);
+                        return [
+                          question.content,
+                          answer || 'Chưa trả lời',
+                          item.status !== 'GRADED'
+                            ? 'Chưa chấm'
+                            : !answer
+                              ? 'Chưa trả lời'
+                              : question.isCorrect === true
+                                ? 'Đúng'
+                                : question.isCorrect === false
+                                  ? 'Sai'
+                                  : 'Đã chấm',
+                          item.status === 'GRADED'
+                            ? `${tenPointScore(question.score ?? 0, total) ?? '—'} / ${tenPointScore(question.scoreWeight ?? 1, total) ?? '—'}`
+                            : 'Chưa chấm',
+                        ];
+                      }}
+                    />
                   )}
                 </div>
               );
@@ -548,15 +642,28 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
           onClose={() => !action.busy && setGradingAttempt(null)}
         >
           <Form className="grid gap-4" onSubmit={grade}>
+            {action.error && (
+              <p role="alert" className="text-primary">
+                {action.error}
+              </p>
+            )}
+            <p className="text-body-sm text-[#64748B]">Điểm theo thang 10, quy đổi theo trọng số từng câu trong đề.</p>
+            {maxScore && String(gradeValue).trim() !== '' && Number(gradeValue) >= 0 && Number(gradeValue) <= 10 && (
+              <p className="text-body-sm text-[#64748B]">
+                Điểm quy đổi sau khi lưu: {tenPointScore(rawScoreFromTen(gradeValue, maxScore), maxScore)}/10.
+              </p>
+            )}
             <SharedFormField
               name="totalScore"
               type="number"
               min="0"
+              max="10"
               step="0.01"
               required
-              defaultValue={gradingAttempt.totalScore ?? ''}
+              value={gradeValue}
+              onChange={(event) => setGradeValue(event.target.value)}
               className="mt-2 block w-full"
-              label={<>Điểm tổng</>}
+              label={<>Điểm cuối cùng (0–10)</>}
             />
             <SharedFormField
               name="feedback"
@@ -564,9 +671,15 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
               rows={4}
               className="mt-2 block w-full"
               multiline
-              label={<>Nhận xét</>}
+              label={<>Nhận xét gửi cho sinh viên</>}
+              required={
+                gradingAttempt.status === 'GRADED' &&
+                tenPointScore(gradingAttempt.totalScore, maxScore) !== Number(gradeValue)
+              }
             />
-            <SubmitButton busy={action.busy}>Lưu điểm</SubmitButton>
+            <SubmitButton busy={action.busy} disabled={!maxScore}>
+              Lưu điểm
+            </SubmitButton>
           </Form>
         </Modal>
       )}
@@ -585,10 +698,10 @@ export function MatrixManager({ classes, createPage = false, scopedSubjectId = '
   ]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [validation, setValidation] = useState(null);
-  const adminMode=getDemoSession()?.role==='ADMIN';
-  const assignedScope=useTeachingScope(!adminMode);
-  const globalSubjects=useResource(adminMode?'/api/v1/subjects':null,true);
-  const subjects=adminMode?globalSubjects:assignedScope.subjects;
+  const adminMode = getDemoSession()?.role === 'ADMIN';
+  const assignedScope = useTeachingScope(!adminMode);
+  const globalSubjects = useResource(adminMode ? '/api/v1/subjects' : null, true);
+  const subjects = adminMode ? globalSubjects : assignedScope.subjects;
   const matrixSubjectId = modal?.row?.subjectId || subjectId;
   const topics = useApiData(matrixSubjectId ? `/api/v1/subjects/${encodeURIComponent(matrixSubjectId)}/topics` : null);
   const clos = useCloCatalog([matrixSubjectId]);
@@ -1288,7 +1401,12 @@ export function LecturerAssessmentApiPage({
                       rows={items}
                       columns={['Kỳ thi', 'Loại', 'Thời gian', 'Số câu', 'Thao tác']}
                       cells={(item) => [
-                        <button className="text-left font-semibold text-primary hover:underline" onClick={()=>setManaging(item)}>{nameOf(item)}</button>,
+                        <button
+                          className="text-left font-semibold text-primary hover:underline"
+                          onClick={() => setManaging(item)}
+                        >
+                          {nameOf(item)}
+                        </button>,
                         labelOf(item.examType),
                         item.startTime ? new Date(item.startTime).toLocaleString('vi-VN') : '—',
                         item.totalQuestions ?? '—',
@@ -1439,15 +1557,30 @@ export function LecturerAssessmentApiPage({
               />
               <div className="mt-4 flex flex-wrap gap-5 text-body-sm">
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name="shuffleQuestions" defaultChecked={editing?.shuffleQuestions ?? false} />
+                  <input
+                    type="checkbox"
+                    className="exam-checkbox"
+                    name="shuffleQuestions"
+                    defaultChecked={editing?.shuffleQuestions ?? false}
+                  />
                   Xáo trộn câu hỏi
                 </label>
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name="shuffleOptions" defaultChecked={editing?.shuffleOptions ?? false} />
+                  <input
+                    type="checkbox"
+                    className="exam-checkbox"
+                    name="shuffleOptions"
+                    defaultChecked={editing?.shuffleOptions ?? false}
+                  />
                   Xáo trộn đáp án
                 </label>
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name="isPublished" defaultChecked={editing?.isPublished ?? false} />
+                  <input
+                    type="checkbox"
+                    className="exam-checkbox"
+                    name="isPublished"
+                    defaultChecked={editing?.isPublished ?? false}
+                  />
                   Cho phép sinh viên truy cập
                 </label>
               </div>
@@ -1513,9 +1646,9 @@ export function LecturerGradingApiPage() {
 
 export function LecturerExperimentsApiPage({ embedded = false, scopedClassId = '', scopedSubjectId = '' }) {
   const Shell = embedded ? React.Fragment : LecturerPageShell;
-  const assignedScope=useTeachingScope();
-  const subjects=assignedScope.subjects;
-  const classes=assignedScope.classes;
+  const assignedScope = useTeachingScope();
+  const subjects = assignedScope.subjects;
+  const classes = assignedScope.classes;
   const subjectRows = listItems(subjects.data);
   const classRows = listItems(classes.data).filter((row) => !scopedClassId || row.classId === scopedClassId);
   const [subjectId, setSubjectId] = useState(scopedSubjectId);
@@ -1709,7 +1842,7 @@ export function LecturerExperimentsApiPage({ embedded = false, scopedClassId = '
         >
           {(activeTab) =>
             activeTab === 'grading' ? (
-              <ExperimentGradingPanel classes={{ ...classes, data: classRows }} classId={scopedClassId || undefined}/>
+              <ExperimentGradingPanel classes={{ ...classes, data: classRows }} classId={scopedClassId || undefined} />
             ) : (
               <Resource resource={experiments}>
                 {(items) => (

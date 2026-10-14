@@ -12,6 +12,7 @@ import { DataTable } from '../../components/DataTable.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { api } from '../../lib/apiClient.js';
+import { attemptScore, formatAttemptScore } from '../../lib/examScoring.js';
 import { navigate } from '../../lib/navigation.js';
 import { AttemptSession } from './ExamSessionPage.jsx';
 
@@ -137,9 +138,9 @@ function PracticeCenter() {
 
   const allAttempts = examRows.flatMap((exam) => rowsOf(exam.attempts));
   const completedAttempts = allAttempts.filter(isFinished);
-  const scored = completedAttempts.filter((item) => Number.isFinite(Number(item.totalScore)));
+  const scored = completedAttempts.filter((item) => Number.isFinite(attemptScore(item)));
   const averageScore = scored.length
-    ? (scored.reduce((sum, item) => sum + Number(item.totalScore), 0) / scored.length).toFixed(1)
+    ? (scored.reduce((sum, item) => sum + attemptScore(item), 0) / scored.length).toFixed(1)
     : '—';
   const displayedExamRows = examRows.filter((exam) => exam.examType === 'PRACTICE');
   const start = async (exam) => {
@@ -230,7 +231,7 @@ function PracticeCenter() {
             {
               label: 'Điểm trung bình',
               value: averageScore,
-              detail: scored.length ? `${scored.length} lượt có điểm` : 'Chưa có lượt được chấm',
+              detail: scored.length ? `${scored.length} lượt có điểm · thang 10` : 'Chưa có điểm hợp lệ',
               icon: 'emoji_events',
               tone: 'primary',
             },
@@ -299,7 +300,7 @@ function PracticeCenter() {
                               Lượt: {policy.usedAttempts ?? 0}/{policy.maxAttempts ?? '—'}
                             </span>
                           )}
-                          {latest?.status === 'GRADED' && <span>Điểm: {latest.totalScore ?? '—'}</span>}
+                          {latest?.status === 'GRADED' && <span>Điểm: {formatAttemptScore(latest)}</span>}
                           {latest?.attemptNumber && <span>Lần làm: {latest.attemptNumber}</span>}
                         </div>
                         {!hasQuestions && <p className="mt-2 text-body-sm text-[#B45309]">Đề chưa có câu hỏi.</p>}
@@ -369,7 +370,7 @@ function PracticeCenter() {
                         {graded ? 'Đã chấm' : isFinished(attempt) ? 'Chờ chấm' : 'Đang làm'}
                       </StatusBadge>
                     </td>
-                    <td className="p-3">{graded ? attempt.totalScore : '—'}</td>
+                    <td className="p-3">{graded ? formatAttemptScore(attempt) : '—'}</td>
                     <td className="p-3">
                       {isFinished(attempt) && (
                         <a

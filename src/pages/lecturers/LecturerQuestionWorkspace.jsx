@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LecturerPageShell, Field, Tabs, useQueryState, itemsOf } from './LecturerShared.jsx';
+import { LecturerPageShell, Tabs, useQueryState, itemsOf } from './LecturerShared.jsx';
 import { useTeachingScope, TeachingSubjectCards } from './LecturerTeachingScope.jsx';
 import { LecturerAuthoringApiPage } from './LecturerContent.jsx';
 
@@ -8,7 +8,7 @@ export function LecturerQuestionWorkspace() {
   const [subjectId, setSubjectId] = useQueryState('subjectId');
   const [tabQuery, setTab] = useQueryState('tab');
   const tab = tabQuery === 'contributions' ? 'contributions' : 'bank';
-  const [search, setSearch] = useState('');
+  const [actionsTarget, setActionsTarget] = useState(null);
   const selected = itemsOf(scope.subjects.data).find((row) => row.subjectId === subjectId);
   return (
     <LecturerPageShell
@@ -22,6 +22,11 @@ export function LecturerQuestionWorkspace() {
         ]}
         activeId={tab}
         onChange={setTab}
+        actions={
+          selected && tab === 'contributions' ? (
+            <div ref={setActionsTarget} className="flex flex-wrap items-center gap-2" />
+          ) : undefined
+        }
       >
         {() =>
           selected ? (
@@ -31,22 +36,10 @@ export function LecturerQuestionWorkspace() {
               embedded
               scopedSubjectId={subjectId}
               questionMode={tab === 'bank' ? 'bank' : 'contributions'}
+              actionsTarget={actionsTarget}
             />
           ) : (
-            <>
-              <Field
-                type="search"
-                label="Tìm môn học được phân dạy"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-              <TeachingSubjectCards
-                resource={scope.subjects}
-                classes={scope.classes.data}
-                search={search}
-                onSelect={setSubjectId}
-              />
-            </>
+            <TeachingSubjectCards resource={scope.subjects} classes={scope.classes.data} onSelect={setSubjectId} />
           )
         }
       </Tabs>

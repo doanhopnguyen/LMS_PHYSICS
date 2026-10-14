@@ -30,7 +30,7 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
       reset();
       return false;
     }
-    emit(result);
+    if (!ended.current) emit(result);
     return true;
   }
   function finish() {
@@ -65,6 +65,7 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
           length: video.duration,
           rate: video.playbackRate,
           playing: isEnded || !video.paused,
+          ended: isEnded,
         }),
         nativeReset
       ) &&
@@ -97,8 +98,10 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
       if (!active || !player || polling) return;
       polling = true;
       try {
+        const youtubeState = youtube ? player.getPlayerState() : null;
+        const isEnded = forceEnded || youtubeState === 0;
         const [time, length, rate, playing] = youtube
-          ? [player.getCurrentTime(), player.getDuration(), player.getPlaybackRate(), player.getPlayerState() === 1]
+          ? [player.getCurrentTime(), player.getDuration(), player.getPlaybackRate(), youtubeState === 1]
           : await Promise.all([
               player.getCurrentTime(),
               player.getDuration(),
@@ -112,8 +115,8 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
           guard.baseline(0);
         }
         if (
-          check(guard.sample({ time, length, rate, playing: forceEnded || playing }), reset) &&
-          (forceEnded || (length > 0 && time >= length - 0.1))
+          check(guard.sample({ time, length, rate, playing: isEnded || playing, ended: isEnded }), reset) &&
+          (isEnded || (length > 0 && time >= length - 0.1))
         )
           finish();
       } catch (failure) {

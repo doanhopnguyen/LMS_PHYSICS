@@ -69,7 +69,6 @@ export function MyCoursesPage() {
       title="Học phần của tôi · PTIT Physics 1"
       breadcrumbs={['Học phần của tôi']}
       current="Danh sách học phần"
-      filterActions={<Button icon="add">Tham gia học phần</Button>}
     >
       <PageContainer>
         <PageTitle title="Học phần của tôi" description="Tổng quan tiến độ các học phần bạn đang theo học." />

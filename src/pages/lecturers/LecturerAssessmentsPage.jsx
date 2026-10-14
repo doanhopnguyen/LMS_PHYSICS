@@ -424,7 +424,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                     type="checkbox"
                     checked={data.classIds.includes(course.className)}
                     onChange={() => toggleValue('classIds', course.className)}
-                    className="h-5 w-5 accent-[#E52220]"
+                    className="exam-checkbox"
                   />
                   <span>
                     <strong className="block">{course.className}</strong>
@@ -446,7 +446,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                     type="checkbox"
                     checked={data.chapters.includes(chapterId)}
                     onChange={() => toggleChapter(chapterId)}
-                    className="h-5 w-5 accent-[#E52220]"
+                    className="exam-checkbox"
                   />
                   <span className="font-semibold">{label}</span>
                 </label>
@@ -570,7 +570,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                                 checked={data.questionIds.includes(row.id)}
                                 onChange={() => toggleQuestion(row.id)}
                                 aria-label={`Chọn ${row.id}`}
-                                className="h-5 w-5 accent-[#E52220]"
+                                className="exam-checkbox"
                               />
                             </td>
                             <td className="px-3 py-3 font-mono font-semibold whitespace-nowrap">{row.id}</td>
@@ -750,7 +750,7 @@ function Wizard({ assessment, onCancel, onSave, onViewQuestion }) {
                     type="checkbox"
                     checked={data[field]}
                     onChange={(event) => setData({ ...data, [field]: event.target.checked })}
-                    className="h-5 w-5 accent-[#E52220]"
+                    className="exam-checkbox"
                   />
                   {label}
                 </label>

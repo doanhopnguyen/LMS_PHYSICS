@@ -136,6 +136,23 @@ try {
   }
   assert.equal(await evaluate('window.__ytEvents.filter(record=>record.finished).length'), 1);
   console.log('PASS embedded video reports completion once after full playback');
+  await evaluate('window.__restartYT()');
+  await delay(300);
+  for (let time = 1; time <= 9; time++) {
+    await evaluate('window.__clock+=1000;window.__yt.time=' + time + ';window.__yt.state=1');
+    await delay(280);
+  }
+  await evaluate('window.__clock+=400;window.__yt.time=9.4;window.__yt.state=1');
+  await delay(280);
+  await evaluate(
+    'window.__clock+=600;window.__yt.time=0;window.__yt.duration=0;window.__yt.state=0;window.__yt.options.events.onStateChange({data:0})'
+  );
+  await delay(600);
+  assert.deepEqual(await evaluate('window.__learning.completed'), ['reading']);
+  assert.equal(await evaluate('window.__learning.watched.reading.finished'), true);
+  assert.equal(await evaluate('window.__writes.at(-1).progressPercent'), 50);
+  assert.equal(await evaluate('window.__ytEvents.filter(record=>record.finished).length'), 1);
+  console.log('PASS YouTube ending with reset timestamps completes the material and syncs its progress');
   await evaluate('window.__vm.time=9;window.__vm.handlers.seeking({seconds:9})');
   await delay(30);
   assert.equal(await evaluate('window.__vm.time'), 0);

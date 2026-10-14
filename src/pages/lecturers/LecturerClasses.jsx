@@ -279,18 +279,6 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
               </SelectField>
             </>
           }
-          actions={
-            <>
-              <Button
-                onClick={() => {
-                  action.clear();
-                  setModal({});
-                }}
-              >
-                Tạo lớp
-              </Button>
-            </>
-          }
         >
           {() =>
             !filters.subjectId ? (
@@ -705,9 +693,7 @@ function ClassSchedules({ classId }) {
 
 function ClassNotification({ classId }) {
   const action = useMutation();
-  const history = useResource(`/api/v1/notifications/classes/${idPath(classId)}/sent`, true);
   const [creating, setCreating] = useState(false);
-  const [search, setSearch] = useState('');
   const submit = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -726,19 +712,12 @@ function ClassNotification({ classId }) {
     if (result.ok) {
       form.reset();
       setCreating(false);
-      history.reload();
     }
   };
   return (
     <>
       {action.feedback}
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
-        <Field
-          label="Tìm thông báo đã gửi"
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
         <Button
           icon="add"
           onClick={() => {
@@ -749,17 +728,6 @@ function ClassNotification({ classId }) {
           Tạo thông báo cho lớp
         </Button>
       </div>
-      <Resource value={history}>
-        {(data) => (
-          <Table
-            rows={itemsOf(data).filter((row) =>
-              `${row.title} ${row.content}`.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi'))
-            )}
-            columns={['Tiêu đề', 'Nội dung', 'Loại', 'Đã gửi lúc']}
-            cells={(row) => [row.title, row.content, labelOf(row.type), dateText(row.createdAt)]}
-          />
-        )}
-      </Resource>
       {creating && (
         <Modal title="Tạo thông báo cho lớp" busy={action.busy} onClose={() => !action.busy && setCreating(false)}>
           {action.error && (

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GuardedVideoPlayer } from '../../src/components/GuardedVideoPlayer.jsx';
 import { useMaterialProgress } from '../../src/hooks/useMaterialProgress.js';
@@ -67,7 +67,7 @@ window.YT = {
       return this.time;
     }
     getDuration() {
-      return 10;
+      return this.duration ?? 10;
     }
     getPlaybackRate() {
       return this.rate;
@@ -134,15 +134,28 @@ window.Vimeo = {
 };
 const materials = [
   { materialId: 'video', topicId: 'topic', type: 'VIDEO', fileUrl: '/sample.mp4', createdAt: '2026-01-01T00:00:00Z' },
-  { materialId: 'reading', type: 'TEXT', createdAt: '2026-01-01T00:00:00Z' },
+  {
+    materialId: 'reading',
+    topicId: 'topic',
+    type: 'VIDEO',
+    sourceCitation: 'https://youtu.be/abcdefghijk',
+    createdAt: '2026-01-01T00:00:00Z',
+  },
 ];
 window.__materials = materials;
 function App() {
   const learning = useMaterialProgress();
+  const [youtubeVersion, setYoutubeVersion] = useState(0);
   useEffect(() => {
     learning.initialize(materials, {}, 'class', 'topic');
   }, []);
   window.__learning = learning;
+  window.__restartYT = () => {
+    localStorage.removeItem('ptit-material-progress-v1:video-ui-student:class:topic');
+    learning.initialize(materials, {}, 'class', 'topic');
+    window.__ytEvents = [];
+    setYoutubeVersion((version) => version + 1);
+  };
   return (
     <>
       <output>{learning.percent}</output>
@@ -153,10 +166,12 @@ function App() {
         onProgress={(record) => learning.watch('video', record)}
       />
       <GuardedVideoPlayer
+        key={youtubeVersion}
         material={{ materialId: 'yt', type: 'VIDEO', sourceCitation: 'https://youtu.be/abcdefghijk' }}
         onProgress={(record) => {
           window.__ytRecord = record;
           window.__ytEvents.push(record);
+          learning.watch('reading', record);
         }}
       />
       <GuardedVideoPlayer

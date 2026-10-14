@@ -21,6 +21,23 @@ test('normal playback accumulates a contiguous frontier and only finishes at the
   assert.equal(step(10).violation, false);
   assert.equal(guard.finish(), true);
 });
+test('ended playback uses the known duration when YouTube resets its time and duration', () => {
+  const { guard, step } = fixture();
+  for (let time = 1; time <= 9; time++) step(time);
+  step(9.4, 0.4);
+  assert.equal(step(0, 0.6, { length: 0, playing: false, ended: true }).violation, false);
+  assert.equal(guard.finish(), true);
+  assert.equal(guard.watched, 10);
+});
+test('an ended event cannot complete an unseen jump or a video with no duration', () => {
+  const { guard, step } = fixture();
+  step(1);
+  assert.equal(step(0, 0.1, { length: 0, playing: false, ended: true }).violation, true);
+  assert.equal(guard.finish(), false);
+  const unknown = fixture();
+  unknown.step(0, 0, { length: 0, playing: false, ended: true });
+  assert.equal(unknown.guard.finish(), false);
+});
 test('unseen seeking resets all watch credit while replaying a watched portion is allowed', () => {
   const { guard, step } = fixture();
   step(1);

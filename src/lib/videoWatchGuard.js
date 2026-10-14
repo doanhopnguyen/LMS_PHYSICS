@@ -30,8 +30,14 @@ export function createVideoWatchGuard({ watched = 0, completed = false, now = ()
     rate(rate, time = position) {
       return !completed && rate > 1.05 && time >= frontier - 0.15 ? reset() : { watched: frontier, violation: false };
     },
-    sample({ time, length = duration, rate = 1, playing = false }) {
-      duration = Number.isFinite(length) ? length : 0;
+    sample({ time, length = duration, rate = 1, playing = false, ended = false }) {
+      // YouTube can reset both getters to zero at ENDED. Keep its last known
+      // duration and validate the final segment with the same elapsed-time guard.
+      if (Number.isFinite(length) && length > 0) duration = length;
+      if (ended && duration > 0) {
+        time = duration;
+        playing = true;
+      }
       const elapsed = Math.max(0, (now() - clock) / 1000);
       const advance = time - position;
       if (!completed && time > frontier + 0.15) {

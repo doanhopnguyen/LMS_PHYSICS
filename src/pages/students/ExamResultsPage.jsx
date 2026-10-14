@@ -10,10 +10,10 @@ import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
+import { examMaxScore, tenPointScore, formatAttemptScore } from '../../lib/examScoring.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
-const scoreText = (value) => Number(value).toFixed(2).replace(/\.00$/, '');
 const durationText = (startedAt, submittedAt) => {
   if (!startedAt || !submittedAt) return '—';
   return `${Math.max(0, Math.round((new Date(submittedAt) - new Date(startedAt)) / 60000))} phút`;
@@ -87,8 +87,7 @@ export function ExamResultsPage() {
     questions.filter((question) => (question.selectedOptionIds || []).length || question.answerText).length;
   const submitted = Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
   const graded = attempt?.status === 'GRADED' && attempt?.totalScore !== null && attempt?.totalScore !== undefined;
-  const hasManualQuestions = questions.some((question) => question.questionType === 'SHORT_ANSWER');
-  const canShowAutoScore = graded && questions.length > 0 && !hasManualQuestions;
+  const canShowAutoScore = graded && questions.length > 0;
 
   return (
     <AppShell currentPage="exam_results.html" title={`${title} · PTIT Physics LMS`}>
@@ -130,10 +129,14 @@ export function ExamResultsPage() {
               <div className="flex flex-wrap items-end justify-between gap-5">
                 <div>
                   <span className="text-body-sm text-[#64748B]">
-                    {canShowAutoScore ? 'Điểm tự chấm' : 'Trạng thái chấm điểm'}
+                    {canShowAutoScore ? 'Điểm bài thi' : 'Trạng thái chấm điểm'}
                   </span>
                   <strong className="mt-1 block text-headline-md text-primary">
-                    {canShowAutoScore ? scoreText(attempt.totalScore) : 'Chờ giảng viên chấm'}
+                    {canShowAutoScore
+                      ? formatAttemptScore(attempt, questions)
+                      : graded
+                        ? 'Chưa xác định thang điểm'
+                        : 'Chờ giảng viên chấm'}
                   </strong>
                 </div>
                 <StatusBadge tone={submitted ? 'success' : 'warning'}>
@@ -204,7 +207,7 @@ export function ExamResultsPage() {
                         >
                           {hasCorrectness
                             ? question.isCorrect
-                              ? `Đúng${question.score != null ? ` · ${scoreText(question.score)} điểm` : ''}`
+                              ? `Đúng${question.score != null ? ` · ${tenPointScore(question.score, examMaxScore(questions)) ?? '—'} điểm` : ''}`
                               : 'Sai'
                             : answered
                               ? 'Đã trả lời'

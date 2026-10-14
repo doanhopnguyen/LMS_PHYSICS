@@ -1,6 +1,16 @@
 localStorage.setItem('ptit-physics-demo-session',JSON.stringify({role:'INSTRUCTOR',userId:'teacher1',name:'Giảng viên Một'}));
 localStorage.setItem('ptit-physics-access-token','isolated-test');
 window.calls=[];
+const gradingQuestions = [
+  { questionId: 'q0', topicId: 't1', content: 'Câu có trọng số 2', questionType: 'MCQ_SINGLE', scoreWeight: 2, options: [{ optionId: 'a0', content: 'Đúng' }, { optionId: 'b0', content: 'Sai' }], selectedOptionIds: ['a0'], isCorrect: true, score: 2 },
+  { questionId: 'q5', topicId: 't1', content: 'Câu có trọng số 3', questionType: 'FILL_BLANK', scoreWeight: 3, answerText: 'Sai', isCorrect: false, score: 0 },
+];
+const examAttempts = [
+  { attemptId: 'attempt1', examId: 'exam1', studentId: 'stu1', studentName: 'Sinh viên Một', status: 'GRADED', totalScore: 2, questions: gradingQuestions },
+  { attemptId: 'attempt2', examId: 'exam1', studentId: 'stu2', studentName: 'Sinh viên Hai', status: 'SUBMITTED', totalScore: null, questions: gradingQuestions },
+  { attemptId: 'attempt3', examId: 'exam1', studentId: 'stu3', studentName: 'Sinh viên Ba', status: 'IN_PROGRESS', totalScore: 0, questions: gradingQuestions },
+  { attemptId: 'attempt4', examId: 'exam1', studentId: 'stu4', studentName: 'Sinh viên Bốn', status: 'GRADED', totalScore: 0, questions: gradingQuestions },
+];
 const subjects=[{subjectId:'s0',subjectCode:'PHY0',subjectName:'Cơ học',isActive:true},{subjectId:'s1',subjectCode:'PHY1',subjectName:'Điện học',isActive:true},{subjectId:'s2',subjectCode:'OTHER',subjectName:'Môn không được phân dạy',isActive:true}];
 const classes=Array.from({length:106},(_,i)=>({classId:'c'+i,subjectId:i===105?'s1':'s0',semesterId:i%2===0?'sem1':'sem2',classCode:'VL-'+i,status:'ACTIVE',instructorId:'teacher1',maxStudents:40}));
 const semesters=[{semesterId:'sem1',semesterName:'Học kỳ 1',academicYear:'2026–2027'},{semesterId:'sem2',semesterName:'Học kỳ 2',academicYear:'2026–2027'}];
@@ -48,9 +58,15 @@ window.fetch=async(input,options={})=>{
   if(p.startsWith('/api/v1/exams/class/'))data=exams.filter(row=>row.classId===p.split('/').pop());
   if(p==='/api/v1/exams'&&m==='POST'){data={...body,examId:'new-exam',totalQuestions:0};exams.push(data);}
   if(p.startsWith('/api/v1/exams/')&&p.split('/').length===5){data=exams.find(row=>row.examId===p.split('/').pop());if(m==='PUT')Object.assign(data,body);}
-  if(p.endsWith('/exam1/questions'))data=[{questionId:'q0',content:'Câu hỏi 0',questionType:'MCQ_SINGLE',topicId:'t1'}];
-  if(p.endsWith('/attempts'))data=[{attemptId:'attempt1',examId:'exam1',studentId:'stu1',fullName:'Sinh viên Một',status:'SUBMITTED',totalScore:8}];
-  if(p.includes('/attempts/attempt1')&&p.split('/').length===6)data={attemptId:'attempt1',examId:'exam1',studentId:'stu1',status:'SUBMITTED',totalScore:8,answers:[]};
+  if(p.endsWith('/exam1/questions'))data=gradingQuestions;
+  if(p.endsWith('/attempts'))data=examAttempts;
+  if(p.includes('/exams/attempts/')) {
+    const attempt = examAttempts.find(row => row.attemptId === p.split('/')[5]);
+    if (attempt) {
+      if (m === 'PUT' && p.endsWith('/grade')) Object.assign(attempt, {totalScore:body.totalScore,status:'GRADED'});
+      data = attempt;
+    }
+  }
   if(p.endsWith('/roster'))data={students:[{studentId:'stu1',fullName:'Sinh viên Một'}]};
   if(p==='/api/v1/exam-matrices')data=[];
   if(p==='/api/v1/experiments')data=[{experimentId:'exp1',subjectId:'s0',title:'Thí nghiệm Newton',description:'Mô phỏng chuyển động'}];

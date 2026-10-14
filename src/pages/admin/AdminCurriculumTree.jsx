@@ -13,6 +13,7 @@ import { MaterialContentFields, materialFormats } from '../../components/Materia
 import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
 import { MarkdownContent } from '../../components/MarkdownContent.jsx';
 import { api, apiRequest } from '../../lib/apiClient.js';
+import { approveAdminMaterial } from '../../lib/adminMaterialApproval.js';
 import { loadAllPages } from '../../lib/lecturerUtils.js';
 import { validateVideoMaterial } from '../../lib/materialSources.js';
 import { matches, PagedCards, ResourceState } from './AdminManagementShared.jsx';
@@ -84,6 +85,7 @@ export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [pendingMaterial, setPendingMaterial] = useState(null);
   const chapterIdOf = (topic) =>
     chapters.some((chapter) => chapter.chapterId === topic.chapterId) ? topic.chapterId : 'unassigned';
   const allChapters = topics.some((topic) => chapterIdOf(topic) === 'unassigned')
@@ -132,6 +134,10 @@ export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false 
   }
   function open(kind, item = {}, parentId = selectedChapter?.chapterId) {
     if (readOnly) return;
+    if (kind === 'material' && pendingMaterial) {
+      setError('Hãy hoàn tất lưu học liệu trước đó bằng nút thử lại.');
+      return;
+    }
     setError('');
     setMaterialType(item.type || 'MARKDOWN');
     setModal({
@@ -189,6 +195,7 @@ export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false 
     setBusy(true);
     setError('');
     setMessage('');
+    let savedMaterial = null;
     try {
       let result;
       if (kind === 'chapter')
@@ -211,6 +218,12 @@ export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false 
           throw new Error('Vui lòng nhập nội dung học liệu.');
         if (!form.get('file')?.size) form.delete('file');
         result = id ? await api.materials.update(topicId, id, form) : await api.materials.create(topicId, form);
+        savedMaterial = { topicId, material: result };
+        setPendingMaterial(savedMaterial);
+        setModal(null);
+        resource.reload();
+        result = await approveAdminMaterial(topicId, result);
+        setPendingMaterial(null);
       }
       if (kind === 'topic' && result?.topicId) {
         select('topic', result.topicId);
@@ -223,6 +236,21 @@ export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false 
       resource.reload();
       setModal(null);
       setMessage(`Đã ${id ? 'cập nhật' : 'tạo'} ${labels[kind]}.`);
+    } catch (e) {
+      setError(savedMaterial ? `Học liệu đã được lưu nhưng chưa thể hoàn tất. ${e.message}` : e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function retryMaterialSave() {
+    if (!pendingMaterial || busy || readOnly) return;
+    setBusy(true);
+    setError('');
+    try {
+      await approveAdminMaterial(pendingMaterial.topicId, pendingMaterial.material);
+      setPendingMaterial(null);
+      resource.reload();
+      setMessage('Đã lưu học liệu.');
     } catch (e) {
       setError(e.message);
     } finally {
@@ -261,6 +289,16 @@ export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false 
     <>
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{!modal && !removeTarget && error}</AuthAlert>
+      {pendingMaterial && !busy && !readOnly && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-body-sm">
+            Chưa hoàn tất lưu học liệu “{pendingMaterial.material?.title || 'Học liệu mới'}”.
+          </p>
+          <Button variant="secondary" onClick={retryMaterialSave}>
+            Thử lại lưu học liệu
+          </Button>
+        </div>
+      )}
       <ResourceState resource={resource}>
         <ResizablePanels leftWidth={treeWidth} onLeftWidthChange={setTreeWidth}>
           <Card className="curriculum-tree-panel min-w-0 p-4" aria-label="Cây chương trình đào tạo">
