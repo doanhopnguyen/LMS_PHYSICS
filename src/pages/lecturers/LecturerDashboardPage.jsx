@@ -21,17 +21,9 @@ import {
   lecturerUtilityNavigation,
 } from '../../data/lecturerData.js';
 import { loadLabGradings } from '../../lib/labGradingState.js';
-
-function getSkyPeriod(hour) {
-  if (hour >= 5 && hour < 8) return 'dawn';
-  if (hour >= 8 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 20) return 'sunset';
-  return 'night';
-}
+import { UnifiedDashboardBanner } from '../../components/UnifiedDashboardBanner.jsx';
 
 export function LecturerDashboardPage() {
-  const [skyPeriod, setSkyPeriod] = useState(() => getSkyPeriod(new Date().getHours()));
   const managedStudents = lecturerCourses.reduce((sum, course) => sum + course.students, 0);
   const openAssessments = assessments.filter((assessment) => assessment.status === 'OPEN').length;
   const gradings = loadLabGradings();
@@ -43,11 +35,6 @@ export function LecturerDashboardPage() {
   const dashboardTasks = lecturerDashboardTasks.map((task) =>
     task.id === 1 ? { ...task, title: `${pendingLabReports} báo cáo thí nghiệm chờ chấm` } : task
   );
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setSkyPeriod(getSkyPeriod(new Date().getHours())), 60 * 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   return (
     <AppShell
@@ -62,44 +49,7 @@ export function LecturerDashboardPage() {
       showChatLauncher={false}
     >
       <main className="p-4 md:p-8 max-w-[1360px] mx-auto space-y-8">
-        <Card
-          as="section"
-          className="dashboard-sky relative overflow-hidden p-6 md:p-8 text-white"
-          data-sky-period={skyPeriod}
-        >
-          <div className="dashboard-sky__aurora pointer-events-none" />
-          <div className="dashboard-sky__sun-or-moon pointer-events-none" aria-hidden="true" />
-          <div className="dashboard-sky__cloud dashboard-sky__cloud--one pointer-events-none" aria-hidden="true" />
-          <div className="dashboard-sky__cloud dashboard-sky__cloud--two pointer-events-none" aria-hidden="true" />
-          <div className="dashboard-sky__cloud dashboard-sky__cloud--three pointer-events-none" aria-hidden="true" />
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="max-w-2xl space-y-2">
-              <StatusBadge tone="primary" className="bg-white/10 text-white border-white/20">
-                Học kỳ 1 · Năm học 2026-2027
-              </StatusBadge>
-              <h1 className="text-headline-lg font-headline-lg font-bold tracking-tight">
-                Xin chào, TS. Nguyễn Văn B!
-              </h1>
-              <p className="text-body-lg leading-relaxed text-white/90">
-                Đây là tổng quan hoạt động giảng dạy Vật lý đại cương 1 hôm nay.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <a
-                href="lecturer_assessments.html"
-                className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-body-md-medium text-primary shadow-sm transition-all hover:bg-[#FEE2E2]"
-              >
-                <span className="material-symbols-outlined text-xl">add_task</span>Tạo bài kiểm tra
-              </a>
-              <a
-                href="lecturer_labs.html"
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/15 px-5 py-3 font-body-md-medium text-white transition-all hover:bg-white/25"
-              >
-                <span className="material-symbols-outlined text-xl">science</span>Giao thí nghiệm
-              </a>
-            </div>
-          </div>
-        </Card>
+        <UnifiedDashboardBanner role="LECTURER" />
 
         <DashboardOverview role="INSTRUCTOR">
           <StatCard

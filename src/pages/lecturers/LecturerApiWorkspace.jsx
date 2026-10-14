@@ -13,6 +13,7 @@ import { DashboardOverview } from '../../components/DashboardOverview.jsx';
 import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
+import { UnifiedDashboardBanner } from '../../components/UnifiedDashboardBanner.jsx';
 import { Table, useResource } from './LecturerShared.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
 import { SelectField } from '../../components/SelectField.jsx';
@@ -1147,8 +1148,11 @@ export function LecturerDashboardApiPage() {
       title="Tổng quan giảng viên"
       eyebrow="KHU VỰC GIẢNG VIÊN"
       description="Theo dõi lớp học, kỳ thi và hoạt động giảng dạy."
+      hideTitle
     >
-      <DashboardOverview role="INSTRUCTOR">
+      <div className="space-y-6">
+        <UnifiedDashboardBanner role="LECTURER" />
+        <DashboardOverview role="INSTRUCTOR">
         <MetricGrid
           items={[
             {
@@ -1229,6 +1233,7 @@ export function LecturerDashboardApiPage() {
           </Resource>
         </Card>
       </DashboardOverview>
+      </div>
     </LecturerPageShell>
   );
 }

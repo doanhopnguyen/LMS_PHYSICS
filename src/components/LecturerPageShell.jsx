@@ -6,7 +6,7 @@ import { getPageFile } from '../lib/routes.js';
 import { lecturerBackLink } from '../lib/detailNavigation.js';
 import { lecturerNavigation, lecturerUser, lecturerUtilityNavigation } from '../data/lecturerData.js';
 
-export function LecturerPageShell({ currentPage, title, eyebrow, description, actions, children, backHref }) {
+export function LecturerPageShell({ currentPage, title, eyebrow, description, actions, children, backHref, hideTitle = false }) {
   const page = getPageFile();
   const query = new URLSearchParams(window.location.search);
   const scopedBack =
@@ -26,7 +26,7 @@ export function LecturerPageShell({ currentPage, title, eyebrow, description, ac
       backHref={backHref || scopedBack}
     >
       <PageContainer>
-        <PageTitle eyebrow={eyebrow} title={title} description={description} actions={actions} />
+        {!hideTitle && <PageTitle eyebrow={eyebrow} title={title} description={description} actions={actions} />}
         {children}
       </PageContainer>
     </AppShell>

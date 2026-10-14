@@ -3003,3 +3003,443 @@ input.exam-checkbox[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowe
   }
 }
 
+/* ==========================================================================
+   UNIFIED VIETNAM LANDSCAPE & WEATHER HERO BANNER
+   ========================================================================== */
+
+.vietnam-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  min-height: 270px;
+  isolation: isolate;
+  background-color: #090d16;
+  box-shadow: 0 20px 40px -15px rgba(2, 6, 23, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  transition: background 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sophisticated Dynamic Sky Gradients */
+.vietnam-banner[data-period='dawn'] {
+  background: radial-gradient(120% 120% at 85% 15%, rgba(225, 29, 72, 0.25) 0%, transparent 60%),
+    linear-gradient(118deg, #090a1a 0%, #17153b 30%, #311847 65%, #180d2b 100%);
+}
+
+.vietnam-banner[data-period='morning'] {
+  background: radial-gradient(120% 120% at 85% 15%, rgba(56, 189, 248, 0.25) 0%, transparent 60%),
+    linear-gradient(118deg, #05192d 0%, #0c3559 35%, #075985 70%, #0369a1 100%);
+}
+
+.vietnam-banner[data-period='afternoon'] {
+  background: radial-gradient(120% 120% at 85% 15%, rgba(14, 165, 233, 0.25) 0%, transparent 60%),
+    linear-gradient(118deg, #031c34 0%, #083c66 35%, #0369a1 70%, #0284c7 100%);
+}
+
+.vietnam-banner[data-period='sunset'] {
+  background: radial-gradient(120% 120% at 85% 15%, rgba(249, 115, 22, 0.28) 0%, transparent 60%),
+    linear-gradient(118deg, #18051e 0%, #360a35 32%, #5c133f 65%, #2a0b27 100%);
+}
+
+.vietnam-banner[data-period='night'] {
+  background: radial-gradient(120% 120% at 85% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 60%),
+    linear-gradient(118deg, #030712 0%, #090d1a 35%, #0d1527 70%, #111d35 100%);
+}
+
+/* Weather Condition Gradients */
+.vietnam-banner[data-weather='cloudy'] {
+  background: linear-gradient(118deg, #090d16 0%, #151d2a 40%, #1f2b3e 75%, #24344d 100%) !important;
+}
+
+.vietnam-banner[data-weather='rain'] {
+  background: linear-gradient(118deg, #040913 0%, #0d192a 40%, #15273d 75%, #1d334e 100%) !important;
+}
+
+.vietnam-banner[data-weather='storm'] {
+  background: linear-gradient(118deg, #02040a 0%, #0a0b16 35%, #18112d 70%, #1a1636 100%) !important;
+}
+
+/* Ambient Breathing Aurora Mesh */
+.vietnam-banner__aurora {
+  position: absolute;
+  top: -8rem;
+  right: 12%;
+  width: 32rem;
+  height: 32rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(99, 102, 241, 0.08) 45%, transparent 70%);
+  filter: blur(55px);
+  pointer-events: none;
+  animation: aurora-breathe 8s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-breathe {
+  0% { transform: scale(0.92) translate(0, 0); opacity: 0.7; }
+  100% { transform: scale(1.08) translate(-15px, 10px); opacity: 1; }
+}
+
+/* Modern Cityscape Skyline */
+.vietnam-banner__cityscape {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 120px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vietnam-banner__city-building {
+  fill: rgba(255, 255, 255, 0.07);
+  transition: fill 1.2s ease;
+}
+
+.vietnam-banner[data-period='night'] .vietnam-banner__city-building {
+  fill: rgba(6, 11, 23, 0.8);
+}
+
+.vietnam-banner[data-period='dawn'] .vietnam-banner__city-building {
+  fill: rgba(24, 21, 56, 0.5);
+}
+
+.vietnam-banner[data-period='sunset'] .vietnam-banner__city-building {
+  fill: rgba(38, 10, 36, 0.55);
+}
+
+/* Window lights: active and blinking at night, unlit during the day */
+.vietnam-banner__window {
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.vietnam-banner[data-period='night'] .vietnam-banner__window {
+  opacity: 0.88;
+}
+
+.vietnam-banner[data-period='night'] .vietnam-banner__window--twinkle-1 {
+  animation: window-twinkle-1 2.4s ease-in-out infinite alternate;
+}
+
+.vietnam-banner[data-period='night'] .vietnam-banner__window--twinkle-2 {
+  animation: window-twinkle-2 3.6s ease-in-out infinite alternate -1s;
+}
+
+.vietnam-banner[data-period='night'] .vietnam-banner__window--twinkle-3 {
+  animation: window-twinkle-3 4.5s ease-in-out infinite alternate -2.2s;
+}
+
+.vietnam-banner[data-period='night'] .vietnam-banner__window--twinkle-4 {
+  animation: window-twinkle-4 5.2s ease-in-out infinite alternate -3.1s;
+}
+
+@keyframes window-twinkle-1 {
+  0% { opacity: 0.2; }
+  45% { opacity: 1; filter: drop-shadow(0 0 3px currentColor); }
+  100% { opacity: 0.35; }
+}
+
+@keyframes window-twinkle-2 {
+  0% { opacity: 0.9; filter: drop-shadow(0 0 2px currentColor); }
+  60% { opacity: 0.15; }
+  100% { opacity: 0.85; }
+}
+
+@keyframes window-twinkle-3 {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
+  100% { opacity: 0.25; }
+}
+
+@keyframes window-twinkle-4 {
+  0% { opacity: 0.1; }
+  30% { opacity: 0.8; }
+  70% { opacity: 0.2; }
+  100% { opacity: 0.95; }
+}
+
+/* Red / Amber Beacon Light on Tower Antenna */
+.vietnam-banner__beacon {
+  opacity: 0;
+  transform-origin: center;
+  transition: opacity 1.2s ease;
+}
+
+.vietnam-banner[data-period='night'] .vietnam-banner__beacon {
+  opacity: 1;
+  animation: beacon-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes beacon-blink {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.35); filter: drop-shadow(0 0 8px #ef4444); }
+}
+
+/* Fireflies / Glowing night motes above city */
+.vietnam-banner__firefly {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: #fef08a;
+  box-shadow: 0 0 8px 2px rgba(250, 204, 21, 0.8), 0 0 16px rgba(250, 204, 21, 0.35);
+  animation: firefly-glow 5s ease-in-out infinite alternate;
+}
+
+@keyframes firefly-glow {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.7);
+    opacity: 0.2;
+  }
+  40% {
+    transform: translate3d(24px, -18px, 0) scale(1.3);
+    opacity: 1;
+    filter: drop-shadow(0 0 8px #fde047);
+  }
+  75% {
+    transform: translate3d(42px, 8px, 0) scale(0.85);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translate3d(15px, -8px, 0) scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+/* Twinkling Stars for night */
+.vietnam-banner__star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  animation: star-blink 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes star-blink {
+  0% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 0.85; transform: scale(1.2); }
+  100% { opacity: 0.3; transform: scale(0.9); }
+}
+
+/* Nắng: Sunny Radiant Shimmer & Sunbeams (active on clear day) */
+.vietnam-banner__sunshine {
+  position: absolute;
+  top: -80px;
+  right: 12%;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(254, 240, 138, 0.45) 0%, rgba(250, 204, 21, 0.22) 40%, rgba(251, 146, 60, 0.08) 65%, transparent 75%);
+  filter: blur(16px);
+  pointer-events: none;
+  animation: sun-pulse 8s ease-in-out infinite alternate;
+  z-index: 2;
+}
+
+.vietnam-banner__sunbeam {
+  position: absolute;
+  top: -120px;
+  right: 6%;
+  width: 440px;
+  height: 440px;
+  background: conic-gradient(from 180deg at 50% 50%,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.12) 20deg,
+    transparent 45deg,
+    rgba(254, 240, 138, 0.15) 75deg,
+    transparent 110deg,
+    rgba(255, 255, 255, 0.1) 140deg,
+    transparent 175deg,
+    rgba(254, 240, 138, 0.14) 210deg,
+    transparent 240deg,
+    rgba(255, 255, 255, 0.1) 275deg,
+    transparent 320deg,
+    rgba(254, 240, 138, 0.12) 345deg,
+    transparent 360deg
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sunbeam-rotate 50s linear infinite;
+  filter: blur(5px);
+  opacity: 0.7;
+  z-index: 2;
+}
+
+@keyframes sun-pulse {
+  0% { transform: scale(0.92); opacity: 0.65; }
+  100% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 35px rgba(250, 204, 21, 0.35)); }
+}
+
+@keyframes sunbeam-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Lá bay: Floating and Drifting Elegant Leaves */
+.vietnam-banner__leaves {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 3;
+}
+
+.vietnam-banner__leaf {
+  position: absolute;
+  left: -40px;
+  pointer-events: none;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+}
+
+.vietnam-banner__leaf--drift-1 {
+  animation: leaf-drift-1 linear infinite;
+}
+
+.vietnam-banner__leaf--drift-2 {
+  animation: leaf-drift-2 linear infinite;
+}
+
+.vietnam-banner__leaf--drift-3 {
+  animation: leaf-drift-3 linear infinite;
+}
+
+@keyframes leaf-drift-1 {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) rotateY(0deg) rotateX(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.9;
+  }
+  45% {
+    transform: translate3d(48vw, 42px, 0) rotate(190deg) rotateY(180deg) rotateX(35deg);
+  }
+  82% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(110vw, 85px, 0) rotate(380deg) rotateY(360deg) rotateX(0deg);
+    opacity: 0;
+  }
+}
+
+@keyframes leaf-drift-2 {
+  0% {
+    transform: translate3d(0, 15px, 0) rotate(20deg) rotateY(180deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate3d(52vw, -28px, 0) rotate(-160deg) rotateY(0deg) rotateX(-30deg);
+  }
+  85% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate3d(110vw, 35px, 0) rotate(-340deg) rotateY(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes leaf-drift-3 {
+  0% {
+    transform: translate3d(0, -10px, 0) rotate(-15deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  55% {
+    transform: translate3d(50vw, 30px, 0) rotate(220deg) rotateY(180deg);
+  }
+  85% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(110vw, -8px, 0) rotate(430deg) rotateY(360deg);
+    opacity: 0;
+  }
+}
+
+/* Rain Effect (Diagonal, luminous and atmospheric) */
+.vietnam-banner__rain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.vietnam-banner__rain-drop {
+  position: absolute;
+  top: -30px;
+  width: 1.5px;
+  height: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(186, 230, 253, 0.7) 100%);
+  animation: rain-fall linear infinite;
+  transform: rotate(14deg);
+  will-change: transform, opacity;
+}
+
+@keyframes rain-fall {
+  0% {
+    transform: translate3d(0, -30px, 0) rotate(14deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(-35px, 340px, 0) rotate(14deg);
+    opacity: 0;
+  }
+}
+
+/* Lightning flash for storm */
+.vietnam-banner__lightning {
+  position: absolute;
+  inset: 0;
+  background: rgba(224, 242, 254, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  animation: storm-lightning 9s infinite;
+  z-index: 3;
+}
+
+@keyframes storm-lightning {
+  0%, 88%, 92%, 100% { opacity: 0; }
+  89% { opacity: 0.35; }
+  90% { opacity: 0.05; }
+  91% { opacity: 0.5; }
+}
+
+/* Glassmorphic interactive widgets */
+.vietnam-glass-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vietnam-glass-pill:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.vietnam-glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.25);
+}
+
+
+

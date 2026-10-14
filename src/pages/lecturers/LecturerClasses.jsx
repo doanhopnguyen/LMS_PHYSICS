@@ -1,5 +1,6 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import React, { useEffect, useState } from 'react';
+import { UnifiedDashboardBanner } from '../../components/UnifiedDashboardBanner.jsx';
 import { api } from '../../lib/apiClient.js';
 import { queryPath } from '../../lib/lecturerUtils.js';
 import { navigate } from '../../lib/navigation.js';
@@ -87,8 +88,11 @@ export function LecturerDashboardApiPage() {
       title="Tổng quan giảng viên"
       eyebrow="KHU VỰC GIẢNG VIÊN"
       description="Theo dõi dữ liệu lớp học và lịch kỳ thi thực tế."
+      hideTitle
     >
-      <Tabs
+      <div className="space-y-6">
+        <UnifiedDashboardBanner role="LECTURER" />
+        <Tabs
         items={[{ id: 'overview', label: 'Tổng quan' }]}
         actions={
           <SelectField
@@ -137,6 +141,7 @@ export function LecturerDashboardApiPage() {
           </>
         )}
       </Tabs>
+      </div>
     </LecturerPageShell>
   );
 }
