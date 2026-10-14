@@ -1,0 +1,102 @@
+.resizable-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  min-width: 0;
+}
+.resizable-panels-left,
+.resizable-panels-right {
+  min-width: 0;
+  min-height: 0;
+}
+.resizable-panels-left {
+  height: 480px;
+}
+.resizable-panels-handle {
+  display: none;
+}
+.curriculum-material-toolbar .select-field {
+  min-width: 0;
+  flex: 1;
+}
+@media (max-width: 639px) {
+  .curriculum-material-toolbar .select-field__label {
+    display: none;
+  }
+}
+.resizable-panels .curriculum-tree-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding-bottom: 92px;
+}
+.curriculum-tree-navigation {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+.curriculum-tree-search {
+  position: absolute;
+  bottom: 16px;
+  left: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.curriculum-tree-search .form-field__control {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+}
+.curriculum-materials-grid > .grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+@media (min-width: 1024px) {
+  .resizable-panels {
+    grid-template-columns: var(--panel-left-width) 16px minmax(0, 1fr);
+    gap: 0;
+    height: 640px;
+  }
+  .resizable-panels-left {
+    height: 100%;
+  }
+  .resizable-panels-right {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+  }
+  .resizable-panels-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: col-resize;
+    touch-action: none;
+    outline: none;
+  }
+  .resizable-panels-handle span {
+    height: 52px;
+    width: 4px;
+    border-radius: var(--ptit-radius-pill);
+    background: var(--ptit-border);
+    transition: background 150ms;
+  }
+  .resizable-panels-handle:hover span,
+  .resizable-panels-handle:focus-visible span,
+  .resizable-panels.is-resizing .resizable-panels-handle span {
+    background: var(--ptit-primary);
+  }
+  .resizable-panels-handle:focus-visible {
+    box-shadow: inset 0 0 0 1px var(--ptit-primary);
+    border-radius: var(--ptit-radius-compact);
+  }
+  .resizable-panels.is-resizing {
+    user-select: none;
+  }
+}

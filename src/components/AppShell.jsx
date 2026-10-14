@@ -29,6 +29,7 @@ export function AppShell({
   navigationItems,
   utilityItems,
   filterActions,
+  showBackButton = true,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const actualPage = getPageFile();
@@ -112,7 +113,7 @@ export function AppShell({
         }}
       >
         {chromeVisible && (
-          <Header onMenuClick={() => setSidebarOpen((open) => !open)} user={user} homeHref={homeHref} />
+          <Header onMenuClick={() => setSidebarOpen((open) => !open)} user={user} homeHref={homeHref} showBackButton={showBackButton} />
         )}
         {chromeVisible && (
           <Sidebar

@@ -16,6 +16,8 @@ export function StatCard({
   fillProgress,
   accentColor,
   onClick,
+  onOpen,
+  headerActions,
   active = false,
   footer,
   ribbonLabel,
@@ -26,7 +28,11 @@ export function StatCard({
   const accent = accentColor ?? palette[seed % palette.length];
   const hasChart = chart || trend?.length || progress !== undefined;
   const Container = onClick ? 'button' : 'section';
-  const ribbon = <div className="stat-card__ribbon">{ribbonLabel || (fillProgress !== undefined || progress !== undefined ? 'TIẾN ĐỘ' : 'THỐNG KÊ HỌC TẬP')}</div>;
+  const ribbon = (
+    <div className="stat-card__ribbon">
+      {ribbonLabel || (fillProgress !== undefined || progress !== undefined ? 'TIẾN ĐỘ' : 'THỐNG KÊ HỌC TẬP')}
+    </div>
+  );
 
   return (
     <Container
@@ -48,14 +54,19 @@ export function StatCard({
         ) : null}
         <div className="stat-card__content">
           <div className="stat-card__heading">
-            <h3>{label}</h3>
-            <span className="stat-card__icon" aria-hidden="true">
-              <span className="material-symbols-outlined text-lg">{icon}</span>
-            </span>
+            <h3 className="min-w-0 break-words">{label}</h3>
+            <div className="relative z-20 flex shrink-0 items-center gap-2">
+              <span className="stat-card__icon" aria-hidden="true">
+                <span className="material-symbols-outlined text-lg">{icon}</span>
+              </span>
+              {headerActions}
+            </div>
           </div>
           <div className="stat-card__metrics">
-            <div className="stat-card__value">
-              <span className="text-display-lg-mobile text-on-surface font-bold tracking-tight">{formatPercentText(value)}</span>
+            <div className="stat-card__value min-w-0 max-w-full">
+              <span className="max-w-full break-words text-display-lg-mobile text-on-surface font-bold tracking-tight">
+                {formatPercentText(value)}
+              </span>
               {detail && <span className="text-body-md text-[#64748B]">{formatPercentText(detail)}</span>}
             </div>
             {sideChart && <div className="stat-card__side-chart">{sideChart}</div>}
@@ -70,6 +81,15 @@ export function StatCard({
             </div>
           ) : null}
           {footer ? <div className="stat-card__footer">{footer}</div> : null}
+          {onOpen && (
+            <button
+              type="button"
+              onClick={onOpen}
+              className="absolute inset-0 z-10 rounded-[14px] text-left transition-colors hover:bg-black/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            >
+              <span className="sr-only">{label}</span>
+            </button>
+          )}
         </div>
       </div>
       {ribbonPosition === 'bottom' && ribbon}

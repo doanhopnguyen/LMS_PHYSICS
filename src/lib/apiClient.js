@@ -160,6 +160,15 @@ export const api = {
     deleteTopic: (subjectId, topicId) => apiRequest(`/api/v1/subjects/${subjectId}/topics/${topicId}`, { method: 'DELETE' }),
   },
 
+  clos: {
+    list: (subjectId, query = { activeOnly: false }) => apiRequest(`/api/v1/subjects/${subjectId}/clos`, { query }),
+    get: (id) => apiRequest(`/api/v1/clos/${id}`),
+    create: (subjectId, body) => apiRequest(`/api/v1/subjects/${subjectId}/clos`, { method: 'POST', body }),
+    update: (id, body) => apiRequest(`/api/v1/clos/${id}`, { method: 'PUT', body }),
+    toggleStatus: (id, isActive) => apiRequest(`/api/v1/clos/${id}/toggle-status`, { method: 'PATCH', query: { isActive } }),
+    remove: (id) => apiRequest(`/api/v1/clos/${id}`, { method: 'DELETE' }),
+  },
+
   // ─── Learning Materials ──────────────────────────────────────────────────────
   materials: {
     list: (topicId) => apiRequest(`/api/v1/topics/${topicId}/materials`),
@@ -215,12 +224,15 @@ export const api = {
 
   // ─── Questions Bank ──────────────────────────────────────────────────────────
   questions: {
+    assignClos: (id, cloIds) => apiRequest(`/api/v1/questions/${id}/clos`, { method: 'PUT', body: cloIds }),
     list: (query) => apiRequest('/api/v1/questions', { query }),
     get: (id) => apiRequest(`/api/v1/questions/${id}`),
     create: (body) => apiRequest('/api/v1/questions', { method: 'POST', body }),
     update: (id, body) => apiRequest(`/api/v1/questions/${id}`, { method: 'PUT', body }),
     remove: (id) => apiRequest(`/api/v1/questions/${id}`, { method: 'DELETE' }),
-    approve: (id) => apiRequest(`/api/v1/questions/${id}/approve`, { method: 'PUT' }),
+    approve: (id, comment) => apiRequest(`/api/v1/questions/${id}/approve${comment?.trim() ? `?comment=${encodeURIComponent(comment.trim())}` : ''}`, { method: 'PUT' }),
+    reject: (id, body) => apiRequest(`/api/v1/questions/${id}/reject`, { method: 'PUT', body }),
+    submitReview: (id, comment) => apiRequest(`/api/v1/questions/${id}/submit-review${comment?.trim() ? `?comment=${encodeURIComponent(comment.trim())}` : ''}`, { method: 'PUT' }),
     downloadTemplate: () => apiRequest('/api/v1/questions/import-excel/template', { responseType: 'blob' }),
     importExcel: (formData, query) => apiRequest('/api/v1/questions/import-excel', { method: 'POST', formData, query }),
   },

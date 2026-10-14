@@ -2,7 +2,15 @@ import React, { useId, useRef } from 'react';
 import { Button } from './Button.jsx';
 import { FormDialog } from './FormDialog.jsx';
 
-export function ConfirmDialog({ title, description, confirmLabel = 'Xác nhận', busy = false, onCancel, onConfirm }) {
+export function ConfirmDialog({
+  title,
+  description,
+  confirmLabel = 'Xác nhận',
+  busy = false,
+  onCancel,
+  onConfirm,
+  error,
+}) {
   const cancelButtonRef = useRef(null);
 
   const descriptionId = useId();
@@ -23,6 +31,11 @@ export function ConfirmDialog({ title, description, confirmLabel = 'Xác nhận'
       <p id={descriptionId} className="mt-2 text-body-md text-[#64748B]">
         {description}
       </p>
+      {error && (
+        <p role="alert" className="mt-3 text-body-sm text-red-700">
+          {error}
+        </p>
+      )}
       <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <Button ref={cancelButtonRef} type="button" variant="secondary" disabled={busy} onClick={onCancel}>
           Hủy

@@ -21,6 +21,8 @@ import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
+import { useCloCatalog } from '../../components/CloPicker.jsx';
+import { validateCloIds } from '../../lib/cloSelection.js';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api, apiRequest } from '../../lib/apiClient.js';
 import { questionTopicName } from '../../lib/topicLabels.js';
@@ -570,8 +572,8 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   );
 }
 
-export function MatrixManager({ classes, createPage = false }) {
-  const [subjectId, setSubjectId] = useState(() => new URLSearchParams(window.location.search).get('subjectId') || '');
+export function MatrixManager({ classes, createPage = false, scopedSubjectId = '' }) {
+  const [subjectId, setSubjectId] = useState(() => scopedSubjectId || new URLSearchParams(window.location.search).get('subjectId') || '');
   const [modal, setModal] = useState(createPage ? { mode: 'create' } : null);
   const EditorContainer = createPage ? AuthoringPanel : Modal;
   const [details, setDetails] = useState([
@@ -580,10 +582,17 @@ export function MatrixManager({ classes, createPage = false }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [validation, setValidation] = useState(null);
   const subjects = useApiData('/api/v1/subjects?isActive=true&page=0&size=100');
-  const topics = useApiData(subjectId ? `/api/v1/subjects/${encodeURIComponent(subjectId)}/topics` : null);
+  const matrixSubjectId = modal?.row?.subjectId || subjectId;
+  const topics = useApiData(matrixSubjectId ? `/api/v1/subjects/${encodeURIComponent(matrixSubjectId)}/topics` : null);
+  const clos = useCloCatalog([matrixSubjectId]);
   const matrices = useApiData(`/api/v1/exam-matrices${subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : ''}`);
   const action = useAction();
-  const openCreate = () => navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
+  const openCreate = () => {
+    if (scopedSubjectId) {
+      setDetails([{ topicId: '', difficultyLevel: 'MEDIUM', numQuestions: 1, weightPercent: 100 }]);
+      setModal({ mode: 'create' });
+    } else navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
+  };
   const openEdit = async (row) => {
     const data = await action.run(`/api/v1/exam-matrices/${encodeURIComponent(row.matrixId)}`, {}, '');
     if (data) {
@@ -603,14 +612,14 @@ export function MatrixManager({ classes, createPage = false }) {
       !Number.isFinite(totalPoints) ||
       totalPoints <= 0 ||
       details.some((item) => {
-        const key = `${item.topicId}:${item.difficultyLevel}`;
+        const key = `${item.topicId}:${item.cloId || ''}:${item.difficultyLevel}`;
         const duplicate = duplicateCriteria.has(key);
         duplicateCriteria.add(key);
         return !item.topicId || Number(item.numQuestions) < 1 || Number(item.weightPercent) <= 0 || duplicate;
       })
     ) {
       action.setError(
-        'Nhập tên, tổng điểm; mỗi dòng cần chủ đề, mức khó, ít nhất 1 câu và trọng số hợp lệ. Không lặp cùng chủ đề và mức khó.'
+        'Nhập tên, tổng điểm; mỗi dòng cần chủ đề, mức khó, ít nhất 1 câu và trọng số hợp lệ. Không lặp cùng chủ đề, CLO và mức khó.'
       );
       return;
     }
@@ -618,10 +627,17 @@ export function MatrixManager({ classes, createPage = false }) {
       action.setError(`Tổng trọng số hiện là ${weightTotal}%; cần bằng 100%.`);
       return;
     }
-    if (!subjectId || !listItems(subjects.data).some((item) => item.subjectId === subjectId)) {
+    if (!matrixSubjectId || !listItems(subjects.data).some((item) => item.subjectId === matrixSubjectId)) {
       action.setError('Vui lòng chọn học phần.');
       return;
     }
+    if (details.some(item => !listItems(topics.data).some(topic => topic.topicId === item.topicId))) {
+      action.setError('Chủ đề đã chọn không thuộc học phần này.'); return;
+    }
+    const cloIds = details.map(item => item.cloId).filter(Boolean);
+    if (cloIds.length && (clos.loading || clos.error)) { action.setError('Vui lòng tải đầy đủ CLO trước khi lưu.'); return; }
+    const cloError = validateCloIds(cloIds, clos.data, matrixSubjectId);
+    if (cloError) { action.setError(cloError); return; }
     const body = {
       subjectId: modal.row?.subjectId || subjectId,
       matrixName: values.matrixName.trim(),
@@ -629,7 +645,9 @@ export function MatrixManager({ classes, createPage = false }) {
       description: values.description.trim(),
       totalPoints,
       details: details.map((item) => ({
-        ...item,
+        topicId: item.topicId,
+        cloId: item.cloId || null,
+        difficultyLevel: item.difficultyLevel,
         numQuestions: Number(item.numQuestions),
         weightPercent: Number(item.weightPercent),
       })),
@@ -672,8 +690,8 @@ export function MatrixManager({ classes, createPage = false }) {
   };
   return (
     <>
-      {action.feedback}
-      <AuthAlert error>{subjects.error || topics.error}</AuthAlert>
+      {!modal && action.feedback}
+      <AuthAlert error>{!modal && (subjects.error || topics.error || clos.error)}</AuthAlert>
       {deleteTarget && (
         <ConfirmDialog
           title="Xóa ma trận đề"
@@ -719,6 +737,7 @@ export function MatrixManager({ classes, createPage = false }) {
           <SelectField
             label="Học phần"
             value={subjectId}
+            disabled={Boolean(scopedSubjectId)}
             onChange={(event) => {
               setSubjectId(event.target.value);
               if (createPage)
@@ -774,6 +793,7 @@ export function MatrixManager({ classes, createPage = false }) {
             !action.busy && (createPage ? navigate('lecturer_assessments.html?tab=matrices') : setModal(null))
           }
         >
+          {(action.error || clos.error) && <p role="alert" className="mb-4 text-body-sm text-red-700">{action.error || clos.error}</p>}
           <Form className="grid gap-4" onSubmit={save}>
             <SharedFormField
               name="matrixName"
@@ -820,9 +840,10 @@ export function MatrixManager({ classes, createPage = false }) {
                 100%.
               </p>
               {details.map((item, index) => (
-                <div className="mt-3 grid gap-2 md:grid-cols-4" key={index}>
+                <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-5" key={index}>
                   <SharedSelectField
                     value={item.topicId}
+                    name={`topicId-${index}`}
                     onChange={(event) =>
                       setDetails((rows) =>
                         rows.map((row, i) =>
@@ -848,6 +869,10 @@ export function MatrixManager({ classes, createPage = false }) {
                         {topic.topicName}
                       </option>
                     ))}
+                  </SharedSelectField>
+                  <SharedSelectField name={`cloId-${index}`} label="CLO" value={item.cloId || ''} disabled={clos.loading || Boolean(clos.error)} onChange={event => setDetails(rows => rows.map((row,i) => i === index ? { ...row, cloId: event.target.value } : row))}>
+                    <option value="">Không giới hạn CLO</option>
+                    {clos.data.filter(clo => clo.subjectId === matrixSubjectId && (clo.isActive || clo.cloId === item.cloId)).map(clo => <option key={clo.cloId} value={clo.cloId} disabled={!clo.isActive}>{clo.cloCode}{!clo.isActive ? ' · ngừng hoạt động' : ''}</option>)}
                   </SharedSelectField>
                   <SharedSelectField
                     value={item.difficultyLevel}

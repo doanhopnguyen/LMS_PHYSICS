@@ -16,7 +16,8 @@ import { loadAdminMaterials } from '../../lib/adminMaterials.js';
 import { labelOf, safeUrl } from '../../lib/lecturerUtils.js';
 import { materialVideoSource } from '../../lib/materialSources.js';
 
-export function AdminMaterialsPage() {
+export function AdminMaterialsPage({ embedded = false }) {
+  const Shell = embedded ? React.Fragment : AdminPageShell;
   const [version, setVersion] = useState(0);
   const [resource, setResource] = useState({ loading: true, error: '', data: null });
   const [subjectId, setSubjectId] = useState('');
@@ -85,13 +86,9 @@ export function AdminMaterialsPage() {
     }
   }
   return (
-    <AdminPageShell
-      currentPage="admin_materials.html"
-      title="Duyệt học liệu"
-      description="Xem nội dung và duyệt học liệu theo học phần, chủ đề."
-    >
+    <Shell {...(embedded ? {} : { currentPage: 'admin_materials.html', title: 'Duyệt học liệu' })}>
       <AuthAlert>{message}</AuthAlert>
-      <AuthAlert error>{error}</AuthAlert>
+      <AuthAlert error>{!approving && error}</AuthAlert>
       <Card className="mt-6 p-5">
         <div className="filter-grid">
           <FormField
@@ -130,7 +127,12 @@ export function AdminMaterialsPage() {
                 </option>
               ))}
           </SelectField>
-          <SelectField label="Trạng thái" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <SelectField
+            name="materialStatus"
+            label="Trạng thái"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
             <option value="">Tất cả trạng thái</option>
             {['PENDING', 'APPROVED', 'REJECTED', 'DRAFT'].map((value) => (
               <option key={value} value={value}>
@@ -181,7 +183,13 @@ export function AdminMaterialsPage() {
                       Xem chi tiết
                     </Button>
                     {row.approvalStatus !== 'APPROVED' && (
-                      <Button disabled={busy} onClick={() => setApproving(row)}>
+                      <Button
+                        disabled={busy}
+                        onClick={() => {
+                          setError('');
+                          setApproving(row);
+                        }}
+                      >
                         Duyệt học liệu
                       </Button>
                     )}
@@ -198,6 +206,7 @@ export function AdminMaterialsPage() {
           busy={busy}
           wide={previewOpen}
           reader={previewOpen}
+          expandable={!previewOpen}
           onClose={() => setDetail(null)}
         >
           {previewOpen ? (
@@ -249,7 +258,13 @@ export function AdminMaterialsPage() {
                   Đóng
                 </Button>
                 {detail.approvalStatus !== 'APPROVED' && (
-                  <Button disabled={busy} onClick={() => setApproving(detail)}>
+                  <Button
+                    disabled={busy}
+                    onClick={() => {
+                      setError('');
+                      setApproving(detail);
+                    }}
+                  >
                     Duyệt học liệu
                   </Button>
                 )}
@@ -264,10 +279,11 @@ export function AdminMaterialsPage() {
           description={`Xác nhận duyệt học liệu “${approving.title}”?`}
           confirmLabel="Duyệt học liệu"
           busy={busy}
+          error={error}
           onCancel={() => setApproving(null)}
           onConfirm={approve}
         />
       )}
-    </AdminPageShell>
+    </Shell>
   );
 }

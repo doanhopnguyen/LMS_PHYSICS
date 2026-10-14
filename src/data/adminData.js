@@ -2,13 +2,12 @@ export const adminUser = { name: 'Nguyễn Quang T.', role: 'Quản trị viên'
 
 export const adminNavigation = [
   ['admin_dashboard.html', 'dashboard', 'Tổng quan'],
-  ['admin_users.html', 'manage_accounts', 'Người dùng & phân quyền'],
-  ['admin_academics.html', 'account_tree', 'Học kỳ & học phần'],
-  ['admin_questions.html', 'quiz', 'Ngân hàng câu hỏi'],
-  ['admin_materials.html', 'fact_check', 'Duyệt học liệu'],
-  ['admin_assessments.html', 'assignment', 'Ma trận đề & ghi danh'],
+  ['admin_users.html', 'manage_accounts', 'Quản trị người dùng'],
+  ['admin_academics.html', 'calendar_month', 'Quản trị học kỳ'],
+  ['admin_subjects.html', 'menu_book', 'Quản trị học phần'],
+  ['admin_classes.html', 'school', 'Quản trị lớp học'],
+  ['admin_materials.html', 'fact_check', 'Duyệt ngân hàng & học liệu'],
   ['admin_analytics.html', 'analytics', 'Phân tích học tập'],
-  ['admin_operations.html', 'settings', 'Cấu hình & nhật ký'],
   ['account.html', 'manage_accounts', 'Tài khoản & bảo mật'],
 ];
 

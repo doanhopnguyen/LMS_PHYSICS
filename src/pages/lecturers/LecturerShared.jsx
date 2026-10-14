@@ -109,7 +109,7 @@ export function Lookup({ resource, label, idKey, value, onChange, placeholder = 
   );
 }
 export function Table({ columns, rows, cells, server = false, asCards = false }) {
-  if (asCards) return <DataTable asCards columns={columns} rows={rows} cells={cells} paginate={false} />;
+  if (asCards) return <DataTable asCards columns={columns} rows={rows} cells={cells} paginate={!server} />;
   return (
     <Card className="mt-4 overflow-auto p-4">
       {rows.length ? (
