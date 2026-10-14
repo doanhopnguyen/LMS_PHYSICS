@@ -151,7 +151,12 @@ function QuestionFormModal({ question, questions, approvedMaterials, onClose, on
   };
 
   return (
-    <SharedFormDialog title={<>{question ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'}</>} onClose={onClose} wide>
+    <SharedFormDialog
+      title={<>{question ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'}</>}
+      onClose={onClose}
+      wide
+      contentClassName="p-0"
+    >
       {!question && (
         <div
           className="flex gap-2 border-b border-[#E2E8F0] bg-white px-5 py-4 md:px-6"
@@ -404,7 +409,7 @@ function QuestionFormModal({ question, questions, approvedMaterials, onClose, on
           </div>
         </section>
 
-        <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-col-reverse gap-2 border-t border-[#E2E8F0] bg-white p-5 sm:flex-row sm:justify-end md:-mx-6 md:-mb-6 md:px-6">
+        <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-[#E2E8F0] bg-white p-5 sm:flex-row sm:justify-end md:px-6">
           <Button type="button" variant="secondary" onClick={onClose}>
             Hủy
           </Button>

@@ -85,7 +85,7 @@
 .picker-placeholder {
   color: var(--ptit-text-muted);
 }
-.app-form .select-field__picker {
+:is(.app-form, .form-dialog, .filter-grid, .tabs-filters, [class*="grid-cols-"], .authoring-page) .select-field__picker {
   flex: none;
   width: 100%;
 }

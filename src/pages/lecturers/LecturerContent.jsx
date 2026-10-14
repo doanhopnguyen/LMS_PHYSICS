@@ -37,6 +37,20 @@ import {
   useResource,
   useQueryState,
 } from './LecturerShared.jsx';
+import { DataTable } from '../../components/DataTable.jsx';
+
+const questionTypes = [
+  ['MCQ_SINGLE', 'Một đáp án'],
+  ['MCQ_MULTI', 'Nhiều đáp án'],
+  ['TRUE_FALSE', 'Đúng / Sai'],
+  ['SHORT_ANSWER', 'Trả lời ngắn'],
+];
+const difficulties = [
+  ['EASY', 'Dễ'],
+  ['MEDIUM', 'Trung bình'],
+  ['HARD', 'Khó'],
+];
+const labelFor = (options, value) => options.find(([id]) => id === value)?.[1] || labelOf(value);
 
 function useAllMaterials(enabled, subjectsData, subjectFilter) {
   const [version, setVersion] = useState(0);
@@ -349,6 +363,7 @@ export function LecturerAuthoringApiPage({
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [cloFilter, setCloFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [topicId, setTopic] = useQueryState('topicId');
   const [difficulty, setDifficulty] = useState('');
   const [page, setPage] = useState(0);
@@ -385,12 +400,37 @@ export function LecturerAuthoringApiPage({
   const validFormSubject = itemsOf(subjects.data).some((row) => row.subjectId === formSubjectId);
   const currentUserId = getDemoSession()?.userId;
   const canManage = (row) => Boolean(currentUserId) && row.createdBy === currentUserId;
+  const topicNameOf = (row) => {
+    const rowTopicId = row.topicId || row._topicId;
+    const found = itemsOf(topics.data).find((t) => t.topicId === rowTopicId);
+    return found?.topicName || row.topicName || '—';
+  };
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+      validTopic ||
+      cloFilter ||
+      typeFilter ||
+      difficulty ||
+      (!bankMode && status)
+  );
+  const resetAllFilters = () => {
+    setSearch('');
+    setTopic('');
+    setCloFilter('');
+    setTypeFilter('');
+    setDifficulty('');
+    setStatus('');
+    setPage(0);
+  };
   const filteredRows = itemsOf(displayedResource.data).filter(
     (row) =>
       (!search.trim() ||
         `${row.title || row.content || ''}`.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi'))) &&
       (!status || row.approvalStatus === status) &&
       (!cloFilter || row.cloIds?.includes(cloFilter)) &&
+      (!typeFilter || (row.type || row.questionType) === typeFilter) &&
+      (!difficulty || row.difficultyLevel === difficulty) &&
+      (!validTopic || (row.topicId || row._topicId) === validTopic) &&
       (!bankMode || row.approvalStatus === 'APPROVED') &&
       (materialMode || questionMode !== 'contributions' || row.createdBy === currentUserId)
   );
@@ -615,98 +655,50 @@ export function LecturerAuthoringApiPage({
               : [{ id: 'questions', label: 'Câu hỏi' }]
           }
           filters={
-            <>
-              {!materialMode && (
-                <Field
-                  type="search"
-                  name="contentSearch"
-                  label="Tìm câu hỏi"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(0);
-                  }}
-                />
-              )}
-              <Lookup
-                label="Học phần"
-                idKey="subjectId"
-                resource={subjects}
-                value={subjectId}
-                disabled={Boolean(scopedSubjectId) || subjects.loading}
-                onChange={changeSubject}
-                placeholder={materialMode ? 'Tất cả học phần' : 'Chọn học phần'}
-              />
-              {tab !== 'topics' && (
+            materialMode ? (
+              <>
                 <Lookup
-                  label="Chủ đề"
-                  idKey="topicId"
-                  resource={topics}
-                  value={validTopic}
-                  onChange={(v) => {
-                    setTopic(v);
-                    setPage(0);
-                  }}
-                  placeholder={materialMode ? 'Chọn chủ đề' : 'Tất cả chủ đề'}
+                  label="Học phần"
+                  idKey="subjectId"
+                  resource={subjects}
+                  value={subjectId}
+                  disabled={Boolean(scopedSubjectId) || subjects.loading}
+                  onChange={changeSubject}
+                  placeholder="Tất cả học phần"
                 />
-              )}
-              {!materialMode && (
-                <SelectField
-                  label="Độ khó"
-                  name="difficultyLevel"
-                  value={difficulty}
-                  onChange={(e) => {
-                    setDifficulty(e.target.value);
-                    setPage(0);
-                  }}
-                >
-                  <option value="">Tất cả</option>
-                  {['EASY', 'MEDIUM', 'HARD'].map((v) => (
-                    <option key={v} value={v}>
-                      {labelOf(v)}
-                    </option>
-                  ))}
-                </SelectField>
-              )}
-              {!bankMode && tab !== 'topics' && (
-                <SelectField
-                  name="contentStatus"
-                  label="Trạng thái"
-                  value={status}
-                  onChange={(event) => {
-                    setStatus(event.target.value);
-                    setPage(0);
-                  }}
-                >
-                  <option value="">Tất cả trạng thái</option>
-                  {['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'].map((value) => (
-                    <option key={value} value={value}>
-                      {labelOf(value)}
-                    </option>
-                  ))}
-                </SelectField>
-              )}
-              {!materialMode && (
-                <SelectField
-                  name="lecturerCloFilter"
-                  label="CLO"
-                  value={cloFilter}
-                  disabled={catalogue.loading}
-                  onChange={(event) => {
-                    setCloFilter(event.target.value);
-                    setPage(0);
-                  }}
-                >
-                  <option value="">Tất cả CLO</option>
-                  {catalogue.data.map((row) => (
-                    <option key={row.cloId} value={row.cloId}>
-                      {row.cloCode}
-                      {row.isActive ? '' : ' · ngừng hoạt động'}
-                    </option>
-                  ))}
-                </SelectField>
-              )}
-            </>
+                {tab !== 'topics' && (
+                  <Lookup
+                    label="Chủ đề"
+                    idKey="topicId"
+                    resource={topics}
+                    value={validTopic}
+                    onChange={(v) => {
+                      setTopic(v);
+                      setPage(0);
+                    }}
+                    placeholder="Chọn chủ đề"
+                  />
+                )}
+                {tab !== 'topics' && (
+                  <SelectField
+                    name="contentStatus"
+                    label="Trạng thái"
+                    value={status}
+                    onChange={(event) => {
+                      setStatus(event.target.value);
+                      setPage(0);
+                    }}
+                  >
+                    <option value="">Tất cả trạng thái</option>
+                    {['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'].map((value) => (
+                      <option key={value} value={value}>
+                        {labelOf(value)}
+                      </option>
+                    ))}
+                  </SelectField>
+                )}
+              </>
+            ) : null
           }
           actions={actionsTarget ? undefined : authoringActions}
         >
@@ -738,57 +730,306 @@ export function LecturerAuthoringApiPage({
                 )}
               </Resource>
             ) : (
-              <Resource value={displayedResource} empty="Đang tải tất cả học liệu…">
-                {(data) => (
-                  <>
-                    <Table
-                      rows={displayRows}
-                      server={!materialMode}
-                      asCards
-                      columns={[
-                        'Nội dung',
-                        'Loại',
-                        materialMode ? 'Phiên bản' : 'Độ khó',
-                        ...(!materialMode ? ['CLO'] : []),
-                        'Trạng thái',
-                        'Thao tác',
-                      ]}
-                      cells={(row) => [
-                        materialMode ? row.title : row.content,
-                        labelOf(row.type || row.questionType),
-                        materialMode ? row.version : labelOf(row.difficultyLevel),
-                        ...(!materialMode ? [<CloLabels ids={row.cloIds} rows={catalogue.data} />] : []),
-                        <StatusBadge status={row.approvalStatus} />,
-                        <ActionMenu
-                          label={`Thao tác với ${materialMode ? row.title : row.content || 'câu hỏi'}`}
-                          disabled={action.busy}
-                          items={[
-                            { label: 'Xem chi tiết', onSelect: () => open('view', row) },
-                            !bankMode &&
+              <Resource value={displayedResource} empty="Đang tải dữ liệu…">
+                {(data) =>
+                  materialMode ? (
+                    <>
+                      <Table
+                        rows={displayRows}
+                        server={false}
+                        asCards
+                        columns={['Học liệu', 'Loại', 'Phiên bản', 'Trạng thái', 'Thao tác']}
+                        cells={(row) => [
+                          row.title,
+                          labelOf(row.type),
+                          row.version,
+                          <StatusBadge status={row.approvalStatus} />,
+                          <ActionMenu
+                            label={`Thao tác với ${row.title || 'học liệu'}`}
+                            disabled={action.busy}
+                            items={[
+                              { label: 'Xem chi tiết', onSelect: () => open('view', row) },
                               canManage(row) && {
                                 label: 'Chỉnh sửa',
-                                onSelect: () => open(materialMode ? 'material' : 'question', row),
+                                onSelect: () => open('material', row),
                               },
-                            !materialMode &&
-                              !bankMode &&
-                              canManage(row) &&
-                              ['DRAFT', 'REJECTED'].includes(row.approvalStatus) && {
-                                label: row.approvalStatus === 'REJECTED' ? 'Gửi duyệt lại' : 'Gửi duyệt',
-                                onSelect: () =>
-                                  action.confirm(
-                                    'Gửi câu hỏi vào hàng chờ để Admin phê duyệt?',
-                                    () => api.questions.submitReview(row.questionId),
-                                    displayedResource.reload
-                                  ),
-                              },
-                            !bankMode && canManage(row) && { label: 'Xóa', danger: true, onSelect: () => remove(row) },
-                          ]}
-                        />,
-                      ]}
-                    />
-                    {!materialMode && <Pager data={questionPage} page={page} onChange={setPage} />}
-                  </>
-                )}
+                              canManage(row) && { label: 'Xóa', danger: true, onSelect: () => remove(row) },
+                            ]}
+                          />,
+                        ]}
+                      />
+                    </>
+                  ) : (
+                    <Card className="mt-4 p-5">
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-title-md font-bold text-slate-800">
+                            {bankMode ? 'Ngân hàng môn học' : 'Danh sách câu hỏi đóng góp'}
+                          </h2>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                            {filteredRows.length} câu hỏi
+                          </span>
+                          {hasActiveFilters && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2.5 py-0.5 text-xs font-medium text-primary">
+                              <span className="material-symbols-outlined text-xs">filter_alt</span>
+                              Đang lọc: {filteredRows.length} kết quả
+                            </span>
+                          )}
+                          {hasActiveFilters && (
+                            <button
+                              type="button"
+                              onClick={resetAllFilters}
+                              className="text-xs text-primary hover:underline font-medium ml-1"
+                            >
+                              Xóa tất cả lọc
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            variant="secondary"
+                            icon="refresh"
+                            disabled={action.busy || displayedResource.loading}
+                            onClick={() => displayedResource.reload()}
+                          >
+                            Làm mới
+                          </Button>
+                          {!actionsTarget && authoringActions}
+                        </div>
+                      </div>
+                      <DataTable
+                        paginate={false}
+                        columns={[
+                          'Nội dung',
+                          'Chủ đề',
+                          'CLO',
+                          'Loại',
+                          'Độ khó',
+                          ...(!bankMode ? ['Trạng thái'] : []),
+                          'Thao tác',
+                        ]}
+                        headerRows={
+                          <>
+                            <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
+                              <th scope="col" className="px-3 py-3 font-semibold text-left">
+                                Nội dung
+                              </th>
+                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[140px]">
+                                Chủ đề
+                              </th>
+                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[110px]">
+                                CLO
+                              </th>
+                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[120px]">
+                                Loại
+                              </th>
+                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[110px]">
+                                Độ khó
+                              </th>
+                              {!bankMode && (
+                                <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[130px]">
+                                  Trạng thái
+                                </th>
+                              )}
+                              <th scope="col" className="px-3 py-3 font-semibold text-center whitespace-nowrap w-[90px]">
+                                Thao tác
+                              </th>
+                            </tr>
+                            <tr className="border-b border-slate-200 bg-slate-100/70 excel-filter-row">
+                              <th className="p-2 font-normal">
+                                <div className="excel-filter-search">
+                                  <span className="material-symbols-outlined search-icon">search</span>
+                                  <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => {
+                                      setSearch(e.target.value);
+                                      setPage(0);
+                                    }}
+                                    placeholder="Lọc nội dung…"
+                                    className={`excel-filter-control ${search ? 'is-active' : ''}`}
+                                  />
+                                  {search && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSearch('');
+                                        setPage(0);
+                                      }}
+                                      className="clear-btn"
+                                      title="Xóa tìm kiếm"
+                                    >
+                                      <span className="material-symbols-outlined text-sm">close</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </th>
+                              <th className="p-2 font-normal">
+                                <select
+                                  value={validTopic}
+                                  onChange={(e) => {
+                                    setTopic(e.target.value);
+                                    setPage(0);
+                                  }}
+                                  className={`excel-filter-control ${validTopic ? 'is-active' : ''}`}
+                                >
+                                  <option value="">Tất cả chủ đề</option>
+                                  {itemsOf(topics.data).map((t) => (
+                                    <option key={t.topicId} value={t.topicId}>
+                                      {t.topicName}
+                                    </option>
+                                  ))}
+                                </select>
+                              </th>
+                              <th className="p-2 font-normal">
+                                <select
+                                  value={cloFilter}
+                                  disabled={catalogue.loading}
+                                  onChange={(e) => {
+                                    setCloFilter(e.target.value);
+                                    setPage(0);
+                                  }}
+                                  className={`excel-filter-control ${cloFilter ? 'is-active' : ''}`}
+                                >
+                                  <option value="">Tất cả CLO</option>
+                                  {catalogue.data.map((row) => (
+                                    <option key={row.cloId} value={row.cloId}>
+                                      {row.cloCode}
+                                      {row.isActive ? '' : ' · ngừng'}
+                                    </option>
+                                  ))}
+                                </select>
+                              </th>
+                              <th className="p-2 font-normal">
+                                <select
+                                  value={typeFilter}
+                                  onChange={(e) => {
+                                    setTypeFilter(e.target.value);
+                                    setPage(0);
+                                  }}
+                                  className={`excel-filter-control ${typeFilter ? 'is-active' : ''}`}
+                                >
+                                  <option value="">Tất cả loại</option>
+                                  {questionTypes.map(([val, lbl]) => (
+                                    <option key={val} value={val}>
+                                      {lbl}
+                                    </option>
+                                  ))}
+                                </select>
+                              </th>
+                              <th className="p-2 font-normal">
+                                <select
+                                  value={difficulty}
+                                  onChange={(e) => {
+                                    setDifficulty(e.target.value);
+                                    setPage(0);
+                                  }}
+                                  className={`excel-filter-control ${difficulty ? 'is-active' : ''}`}
+                                >
+                                  <option value="">Tất cả độ khó</option>
+                                  {difficulties.map(([val, lbl]) => (
+                                    <option key={val} value={val}>
+                                      {lbl}
+                                    </option>
+                                  ))}
+                                </select>
+                              </th>
+                              {!bankMode && (
+                                <th className="p-2 font-normal">
+                                  <select
+                                    value={status}
+                                    onChange={(e) => {
+                                      setStatus(e.target.value);
+                                      setPage(0);
+                                    }}
+                                    className={`excel-filter-control ${status ? 'is-active' : ''}`}
+                                  >
+                                    <option value="">Tất cả trạng thái</option>
+                                    {['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'].map((st) => (
+                                      <option key={st} value={st}>
+                                        {labelOf(st)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </th>
+                              )}
+                              <th className="p-2 font-normal text-center">
+                                {hasActiveFilters ? (
+                                  <button
+                                    type="button"
+                                    onClick={resetAllFilters}
+                                    className="excel-filter-clear-btn"
+                                    title="Xóa tất cả bộ lọc"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">filter_alt_off</span>
+                                    <span>Xóa</span>
+                                  </button>
+                                ) : (
+                                  <span className="text-[11px] text-slate-400 font-medium">Lọc</span>
+                                )}
+                              </th>
+                            </tr>
+                          </>
+                        }
+                        rows={displayRows}
+                        renderRow={(row) => (
+                          <tr key={row.questionId} className="border-t border-[#E2E8F0]">
+                            <td className="max-w-md p-3 font-medium">
+                              <p className="line-clamp-2">{row.content || '—'}</p>
+                            </td>
+                            <td className="p-3 whitespace-nowrap text-slate-600">
+                              {topicNameOf(row)}
+                            </td>
+                            <td className="p-3">
+                              <CloLabels ids={row.cloIds} rows={catalogue.data} />
+                            </td>
+                            <td className="p-3 whitespace-nowrap">
+                              {labelFor(questionTypes, row.type || row.questionType)}
+                            </td>
+                            <td className="p-3 whitespace-nowrap">
+                              {labelFor(difficulties, row.difficultyLevel)}
+                            </td>
+                            {!bankMode && (
+                              <td className="p-3 whitespace-nowrap">
+                                <StatusBadge status={row.approvalStatus} />
+                              </td>
+                            )}
+                            <td className="p-3 text-center">
+                              <ActionMenu
+                                label={`Thao tác với ${row.content || 'câu hỏi'}`}
+                                disabled={action.busy}
+                                items={[
+                                  { label: 'Xem chi tiết', onSelect: () => open('view', row) },
+                                  !bankMode &&
+                                    canManage(row) && {
+                                      label: 'Chỉnh sửa',
+                                      onSelect: () => open('question', row),
+                                    },
+                                  !bankMode &&
+                                    canManage(row) &&
+                                    ['DRAFT', 'REJECTED'].includes(row.approvalStatus) && {
+                                      label: row.approvalStatus === 'REJECTED' ? 'Gửi duyệt lại' : 'Gửi duyệt',
+                                      onSelect: () =>
+                                        action.confirm(
+                                          'Gửi câu hỏi vào hàng chờ để Admin phê duyệt?',
+                                          () => api.questions.submitReview(row.questionId),
+                                          displayedResource.reload
+                                        ),
+                                    },
+                                  !bankMode && canManage(row) && { label: 'Xóa', danger: true, onSelect: () => remove(row) },
+                                ]}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      />
+                      {!displayRows.length && (
+                        <p className="py-6 text-center text-[#64748B]">Không có câu hỏi phù hợp.</p>
+                      )}
+                      <Pager data={questionPage} page={page} onChange={setPage} />
+                    </Card>
+                  )
+                }
               </Resource>
             )
           }

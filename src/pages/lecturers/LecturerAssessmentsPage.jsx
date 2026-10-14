@@ -1128,7 +1128,7 @@ export function LecturerAssessmentsPage() {
             onChange={(event) => setQuery(event.target.value)}
             type="search"
             placeholder="Tìm bài kiểm tra..."
-            className="mt-2 w-full"
+            className="w-full"
             label={<>Tìm bài kiểm tra</>}
             wrapperClassName="text-body-sm font-semibold xl:col-span-2"
           />

@@ -46,16 +46,10 @@ function LabDetailModal({ lab, assignments, onClose, onAssign }) {
   const assigned = assignments.filter((item) => item.labId === lab.id);
   return (
     <SharedFormDialog title={<>{lab.title}</>} onClose={onClose} wide>
-      <div>
-        <div>
-          <p className="text-label-md font-bold text-primary">{lab.code}</p>
-
-          <p className="mt-1 text-body-sm text-[#64748B]">
-            {lab.chapter} · {lab.duration} phút
-          </p>
-        </div>
-      </div>
-      <div className="space-y-6 p-5 md:p-6">
+      <div className="space-y-6">
+        <p className="text-body-sm text-[#64748B]">
+          {lab.code} · {lab.chapter} · {lab.duration} phút
+        </p>
         <div>
           <h3 className="font-bold">Mục tiêu</h3>
           <p className="mt-2 text-body-md text-[#64748B]">{lab.objective}</p>
@@ -160,17 +154,16 @@ function AssignmentWizard({ lab, onCancel, onConfirm }) {
   );
   return (
     <SharedFormDialog title={<>Giao thí nghiệm cho lớp</>} onClose={step ? () => setStep(0) : onCancel} wide>
-      <div className="border-b border-[#E2E8F0] p-5 md:p-6">
-        <p className="text-label-md font-bold text-primary">
-          {step === 0 ? 'BƯỚC 1 · THIẾT LẬP' : 'BƯỚC 2 · XÁC NHẬN'}
+      <div className="border-b border-[#E2E8F0] pb-3 mb-4">
+        <p className="text-body-sm font-medium text-primary">
+          {step === 0 ? 'Bước 1: Thiết lập' : 'Bước 2: Xác nhận'}
         </p>
-
-        <p className="mt-1 text-body-sm text-[#64748B]">
+        <p className="text-body-sm text-[#64748B]">
           {lab.code} · {lab.title}
         </p>
       </div>
       {step === 0 ? (
-        <div className="space-y-5 p-5 md:p-6">
+        <div className="space-y-5">
           <fieldset>
             <legend className="font-semibold">Lớp học *</legend>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -322,7 +315,10 @@ function AssignmentWizard({ lab, onCancel, onConfirm }) {
           </div>
         </div>
       )}
-      <div>
+      <div className="mt-6 flex flex-col-reverse gap-2 border-t border-[#E2E8F0] pt-4 sm:flex-row sm:justify-end">
+        <Button variant="secondary" onClick={step ? () => setStep(0) : onCancel}>
+          {step ? 'Quay lại' : 'Hủy'}
+        </Button>
         <Button onClick={() => (step ? onConfirm(form) : validate() && setStep(1))}>
           {step ? 'Xác nhận giao bài' : 'Tiếp tục'}
         </Button>
@@ -641,7 +637,7 @@ export function LecturerLabsPage() {
                     value={reportQuery}
                     onChange={(event) => setReportQuery(event.target.value)}
                     placeholder="Tìm theo tên hoặc mã sinh viên..."
-                    className="mt-2 w-full"
+                    className="w-full"
                     label={<>Tìm báo cáo</>}
                     wrapperClassName="text-body-sm font-semibold"
                   />

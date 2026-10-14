@@ -25,18 +25,22 @@ export function ConfirmDialog({
       describedBy={descriptionId}
       initialFocusRef={cancelButtonRef}
     >
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FEE2E2] text-primary">
-        <span className="material-symbols-outlined">warning</span>
-      </span>
-      <p id={descriptionId} className="mt-2 text-body-md text-[#64748B]">
-        {description}
-      </p>
-      {error && (
-        <p role="alert" className="mt-3 text-body-sm text-red-700">
-          {error}
-        </p>
-      )}
-      <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+      <div className="flex items-start gap-3.5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FEE2E2] text-primary">
+          <span className="material-symbols-outlined text-xl">warning</span>
+        </span>
+        <div className="min-w-0 flex-1 pt-1">
+          <p id={descriptionId} className="text-body-md text-[#475569]">
+            {description}
+          </p>
+          {error && (
+            <p role="alert" className="mt-2 text-body-sm text-red-700">
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
         <Button ref={cancelButtonRef} type="button" variant="secondary" disabled={busy} onClick={onCancel}>
           Hủy
         </Button>

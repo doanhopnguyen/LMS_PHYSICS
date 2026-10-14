@@ -13,6 +13,7 @@ export function FormDialog({
   dialogRole = 'dialog',
   describedBy,
   initialFocusRef,
+  contentClassName = '',
 }) {
   const ref = useRef(null);
   const [expanded, setExpanded] = useState(false);
@@ -33,7 +34,7 @@ export function FormDialog({
   }, []);
   const dialog = (
     <div
-      className={`fixed inset-0 ${dialogRole === 'alertdialog' ? 'z-[1200]' : 'z-[1100]'} flex items-center justify-center bg-slate-900/20 ${expanded ? 'p-0' : reader ? 'p-2 sm:p-3' : 'p-4'}`}
+      className={`fixed inset-0 ${dialogRole === 'alertdialog' ? 'z-[1200]' : 'z-[1100]'} flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px] transition-all ${expanded ? 'p-0' : reader ? 'p-2 sm:p-3' : 'p-4'}`}
       onMouseDown={(e) => e.target === e.currentTarget && !busy && onClose()}
     >
       <section
@@ -43,7 +44,7 @@ export function FormDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={describedBy}
-        className={`form-dialog flex w-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-xl ${expanded ? 'h-[100dvh] max-h-[100dvh] max-w-none' : reader ? 'h-[calc(100dvh-16px)] max-h-[calc(100dvh-16px)] max-w-[1600px] sm:h-[calc(100dvh-24px)] sm:max-h-[calc(100dvh-24px)]' : `max-h-[calc(100dvh-32px)] ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}`}
+        className={`form-dialog flex w-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl ${expanded ? 'h-[100dvh] max-h-[100dvh] max-w-none' : reader ? 'h-[calc(100dvh-16px)] max-h-[calc(100dvh-16px)] max-w-[1600px] sm:h-[calc(100dvh-24px)] sm:max-h-[calc(100dvh-24px)]' : `max-h-[calc(100dvh-32px)] ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}`}
         onKeyDown={(e) => {
           // Events from a nested portal belong to its own dialog and focus trap.
           if (!ref.current.contains(e.target)) return;
@@ -95,14 +96,14 @@ export function FormDialog({
               aria-label="Đóng"
               disabled={busy}
               onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary hover:bg-[#FEF2F2] disabled:opacity-60"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 hover:text-primary hover:bg-[#FEF2F2] transition-colors disabled:opacity-60"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
         </div>
         <div
-          className={`min-h-0 min-w-0 flex-1 ${reader ? 'flex flex-col overflow-hidden' : 'overflow-y-auto overscroll-contain p-4 sm:p-6'}`}
+          className={`min-h-0 min-w-0 flex-1 ${reader ? 'flex flex-col overflow-hidden' : `overflow-y-auto overscroll-contain ${contentClassName || 'p-4 sm:p-6'}`}`}
         >
           {children}
         </div>

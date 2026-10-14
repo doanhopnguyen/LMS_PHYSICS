@@ -2830,3 +2830,176 @@ input.exam-checkbox[type="checkbox"]:disabled { opacity: 0.5; cursor: not-allowe
 .chat-widget-messages {
   scrollbar-color: #e52220 transparent;
 }
+
+/* Filter & Search Harmonization */
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) :is(.select-field, .lookup-field) {
+  width: 100%;
+  max-width: 100%;
+}
+
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) > :is(.select-field, .lookup-field, div:has(> .select-field), div:has(> .lookup-field)),
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) .select-field:not(.tabs-actions .select-field) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) .select-field:not(.tabs-actions .select-field) .select-field__label {
+  flex: none;
+  max-width: 100%;
+  overflow: visible;
+  white-space: normal;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  line-height: 18px;
+}
+
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) .select-field:not(.tabs-actions .select-field) .select-field__picker {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+}
+
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) .select-field:not(.tabs-actions .select-field) .select-field__control {
+  flex: none;
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+}
+
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) .form-field .form-field__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  line-height: 18px;
+}
+
+:is(.tabs-filters, .filter-grid, [class*="grid-cols-"]) .form-field .form-field__control:not(textarea) {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+/* Excel-Style Filter Row */
+.excel-filter-row th {
+  padding: 6px 8px;
+  background-color: #f8fafc;
+  vertical-align: middle;
+}
+
+.excel-filter-control {
+  width: 100%;
+  height: 32px;
+  font-size: 12px;
+  line-height: 1.4;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #1e293b;
+  padding: 4px 8px;
+  outline: none;
+  transition: all 150ms ease-in-out;
+}
+
+.excel-filter-control:hover {
+  border-color: #94a3b8;
+}
+
+.excel-filter-control:focus {
+  border-color: #e52220 !important;
+  box-shadow: 0 0 0 2px rgba(229, 34, 32, 0.15) !important;
+  background-color: #ffffff !important;
+}
+
+.excel-filter-control.is-active {
+  border-color: #e52220 !important;
+  background-color: #fff5f5 !important;
+  color: #c41e1a !important;
+  font-weight: 500;
+}
+
+.excel-filter-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.excel-filter-search input.excel-filter-control {
+  padding-left: 26px;
+  padding-right: 22px;
+}
+
+.excel-filter-search .search-icon {
+  position: absolute;
+  left: 6px;
+  font-size: 16px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.excel-filter-search .clear-btn {
+  position: absolute;
+  right: 6px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.excel-filter-search .clear-btn:hover {
+  color: #e52220;
+}
+
+.excel-filter-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c41e1a;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+  white-space: nowrap;
+}
+
+.excel-filter-clear-btn:hover {
+  background: #fca5a5;
+  color: #991b1b;
+  border-color: #f87171;
+}
+
+.form-dialog {
+  animation: modal-enter 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+

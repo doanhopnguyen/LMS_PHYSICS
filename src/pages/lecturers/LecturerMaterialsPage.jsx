@@ -52,9 +52,7 @@ function formatDate(value) {
 function MaterialCreateModal({ onClose }) {
   return (
     <SharedFormDialog title={<>Thêm học liệu</>} onClose={onClose} wide>
-      <div className="px-4 pb-6 md:px-6">
-        <MaterialCreateForm />
-      </div>
+      <MaterialCreateForm />
     </SharedFormDialog>
   );
 }
@@ -95,7 +93,7 @@ function MaterialFormModal({ material, onClose, onSave }) {
 
   return (
     <SharedFormDialog title={<>{material ? 'Chỉnh sửa học liệu' : 'Thêm học liệu'}</>} onClose={onClose} wide>
-      <Form onSubmit={submit} className="space-y-5 p-5 md:p-6">
+      <Form onSubmit={submit} className="space-y-5">
         <SharedFormField
           value={form.title}
           onChange={(event) => update('title', event.target.value)}
@@ -229,17 +227,15 @@ function MaterialDetailModal({ material, onClose }) {
   const status = materialStatusMeta[material.status];
   return (
     <SharedFormDialog title={<>{material.title}</>} onClose={onClose}>
-      <div>
-        <div className="flex gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FEE2E2] text-primary">
+      <div className="space-y-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FEE2E2] text-primary">
             <span className="material-symbols-outlined">{typeIcons[material.type]}</span>
           </span>
-          <div>
-            <p className="text-label-md font-bold text-primary">{materialTypeLabels[material.type]}</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-slate-800">{materialTypeLabels[material.type]}</p>
           </div>
         </div>
-      </div>
-      <div className="space-y-5 p-5 md:p-6">
         <div className="flex flex-wrap gap-2">
           <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
           <StatusBadge tone="neutral">{materialChapterLabels[material.chapter]}</StatusBadge>
@@ -427,9 +423,9 @@ export function LecturerMaterialsPage() {
       </section>
       <Card className="p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-          <label className="text-body-sm font-semibold md:col-span-2">
-            <span className="sr-only">Tìm kiếm học liệu</span>
-            <span className="relative block">
+          <div className="md:col-span-2">
+            <span className="mb-1 block text-body-sm font-semibold text-[#475569]">Tìm kiếm</span>
+            <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]">
                 search
               </span>
@@ -441,16 +437,12 @@ export function LecturerMaterialsPage() {
                 className="w-full pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
                 bare
               />
-            </span>
-          </label>
+            </div>
+          </div>
           <SharedSelectField
             value={chapter}
             onChange={(event) => setChapter(event.target.value)}
-            label={
-              <>
-                <span className="mb-2 block">Chương</span>
-              </>
-            }
+            label={<>Chương</>}
             className="text-body-sm font-semibold"
           >
             <option value="ALL_FILTER">Tất cả</option>
@@ -465,11 +457,7 @@ export function LecturerMaterialsPage() {
           <SharedSelectField
             value={status}
             onChange={(event) => setStatus(event.target.value)}
-            label={
-              <>
-                <span className="mb-2 block">Trạng thái</span>
-              </>
-            }
+            label={<>Trạng thái</>}
             className="text-body-sm font-semibold"
           >
             <option value="ALL">Tất cả</option>

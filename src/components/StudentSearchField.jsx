@@ -42,13 +42,13 @@ export function StudentSearchField({ onSelect, mapResults = (student) => [studen
       <label htmlFor={inputId} className="block text-sm font-medium">
         Tên đăng nhập, mã sinh viên hoặc email
       </label>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <SharedFormField
           id={inputId}
           value={keyword}
           disabled={disabled}
           placeholder="Nhập thông tin sinh viên"
-          className="min-w-0 flex-1"
+          className="min-w-0 flex-1 !min-h-[36px] !h-9 text-body-sm"
           onChange={(event) => {
             ++request.current;
             setKeyword(event.target.value);

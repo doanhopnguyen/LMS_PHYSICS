@@ -46,7 +46,6 @@ export function LecturerStudentsPage() {
           variant="secondary"
           icon="download"
           disabled
-          title="Chức năng xuất file chưa có trong phạm vi frontend demo"
         >
           Xuất danh sách
         </Button>
@@ -59,7 +58,7 @@ export function LecturerStudentsPage() {
             onChange={(event) => setQuery(event.target.value)}
             type="search"
             placeholder="Họ tên hoặc mã sinh viên"
-            className="mt-2 w-full focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
+            className="w-full focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]"
             label={<>Tìm sinh viên</>}
             wrapperClassName="text-body-sm font-semibold xl:col-span-2"
           />
@@ -157,7 +156,7 @@ export function LecturerStudentsPage() {
             className="mt-4 rounded-xl border border-[#86EFAC] bg-[#F0FDF4] p-4 text-body-sm text-[#15803D]"
             role="status"
           >
-            Đã gửi yêu cầu reset mật khẩu cho {resetRequest.studentName}. Đây là dữ liệu mô phỏng frontend.
+            Đã gửi yêu cầu reset mật khẩu cho {resetRequest.studentName}.
           </p>
         )}
       </Card>

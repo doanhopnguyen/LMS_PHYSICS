@@ -36,115 +36,110 @@ export function AddParticipantsDialog({ title, context, students, participants, 
     );
   return (
     <SharedFormDialog title={<>{title}</>} onClose={onCancel} wide>
-      <div>
-        <div>
-          <p className="text-label-md font-bold text-primary">{context}</p>
-          <p className="mt-1 text-body-sm text-[#64748B]">
-            {sessions[0]?.name} · {sessions[0]?.startAt?.replace('T', ' ')}
-          </p>
-        </div>
+      {sessions[0]?.name && (
+        <p className="mb-4 text-body-sm text-[#64748B]">
+          {sessions[0]?.name} · {sessions[0]?.startAt?.replace('T', ' ')}
+        </p>
+      )}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <SharedFormField
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Tìm theo tên hoặc mã sinh viên..."
+          className="w-full"
+          label={<>Tìm sinh viên</>}
+          wrapperClassName="text-body-sm font-semibold"
+        />
+        <SharedSelectField
+          value={classFilter}
+          onChange={(event) => setClassFilter(event.target.value)}
+          label={<>Lớp</>}
+          className="text-body-sm font-semibold"
+        >
+          <option value="ALL">Tất cả lớp</option>
+          {[...new Set(students.map((student) => student.className))].map((value) => (
+            <option key={value}>{value}</option>
+          ))}
+        </SharedSelectField>
       </div>
-      <div className="p-5">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <SharedFormField
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Tìm theo tên hoặc mã sinh viên..."
-            className="mt-2 w-full"
-            label={<>Tìm sinh viên</>}
-            wrapperClassName="text-body-sm font-semibold"
-          />
-          <SharedSelectField
-            value={classFilter}
-            onChange={(event) => setClassFilter(event.target.value)}
-            label={<>Lớp</>}
-            className="text-body-sm font-semibold"
-          >
-            <option value="ALL">Tất cả lớp</option>
-            {[...new Set(students.map((student) => student.className))].map((value) => (
-              <option key={value}>{value}</option>
-            ))}
-          </SharedSelectField>
-        </div>
-        {filtered.length ? (
-          <>
-            <div className="mt-4 overflow-x-auto rounded-xl border border-[#E2E8F0]">
-              <SharedDataTable
-                rows={pagination.pageItems}
-                renderRow={(student) => {
-                  const exists = activeIds.has(student.id);
-                  return (
-                    <tr key={student.id} className="border-t border-[#E2E8F0]">
-                      <td className="px-3 py-3">
-                        <input
-                          type="checkbox"
-                          disabled={exists}
-                          checked={selectedStudentIds.includes(student.id)}
-                          onChange={() =>
-                            setSelectedStudentIds((current) =>
-                              current.includes(student.id)
-                                ? current.filter((id) => id !== student.id)
-                                : [...current, student.id]
-                            )
-                          }
-                          aria-label={`Chọn ${student.name}`}
-                        />
-                      </td>
-                      <td className="px-3 py-3 font-mono">{student.id}</td>
-                      <td className="px-3 py-3 font-semibold">{student.name}</td>
-                      <td className="px-3 py-3">{student.className}</td>
-                      <td className="px-3 py-3">
-                        <StatusBadge tone={exists ? 'neutral' : 'success'}>
-                          {exists ? 'Đã tham gia' : 'Có thể thêm'}
-                        </StatusBadge>
-                      </td>
-                    </tr>
-                  );
-                }}
-                paginate={false}
-                headerRows={
-                  <>
-                    <tr>
-                      <th className="px-3 py-3">
-                        <input
-                          type="checkbox"
-                          checked={pageSelected}
-                          onChange={togglePage}
-                          aria-label="Chọn tất cả sinh viên có thể thêm trên trang hiện tại"
-                        />
-                      </th>
-                      <th className="px-3 py-3">Mã SV</th>
-                      <th className="px-3 py-3">Họ tên</th>
-                      <th className="px-3 py-3">Lớp</th>
-                      <th className="px-3 py-3">Trạng thái</th>
-                    </tr>
-                  </>
-                }
-                tableClassName="w-full text-left text-body-sm"
-              />
-            </div>
-            <Pagination
-              currentPage={pagination.currentPage}
-              pageSize={pagination.pageSize}
-              totalItems={filtered.length}
-              onPageChange={pagination.setCurrentPage}
-              onPageSizeChange={pagination.setPageSize}
+      {filtered.length ? (
+        <>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-[#E2E8F0]">
+            <SharedDataTable
+              rows={pagination.pageItems}
+              renderRow={(student) => {
+                const exists = activeIds.has(student.id);
+                return (
+                  <tr key={student.id} className="border-t border-[#E2E8F0]">
+                    <td className="px-3 py-3">
+                      <input
+                        type="checkbox"
+                        disabled={exists}
+                        checked={selectedStudentIds.includes(student.id)}
+                        onChange={() =>
+                          setSelectedStudentIds((current) =>
+                            current.includes(student.id)
+                              ? current.filter((id) => id !== student.id)
+                              : [...current, student.id]
+                          )
+                        }
+                        aria-label={`Chọn ${student.name}`}
+                      />
+                    </td>
+                    <td className="px-3 py-3 font-mono">{student.id}</td>
+                    <td className="px-3 py-3 font-semibold">{student.name}</td>
+                    <td className="px-3 py-3">{student.className}</td>
+                    <td className="px-3 py-3">
+                      <StatusBadge tone={exists ? 'neutral' : 'success'}>
+                        {exists ? 'Đã tham gia' : 'Có thể thêm'}
+                      </StatusBadge>
+                    </td>
+                  </tr>
+                );
+              }}
+              paginate={false}
+              headerRows={
+                <>
+                  <tr>
+                    <th className="px-3 py-3">
+                      <input
+                        type="checkbox"
+                        checked={pageSelected}
+                        onChange={togglePage}
+                        aria-label="Chọn tất cả sinh viên có thể thêm trên trang hiện tại"
+                      />
+                    </th>
+                    <th className="px-3 py-3">Mã SV</th>
+                    <th className="px-3 py-3">Họ tên</th>
+                    <th className="px-3 py-3">Lớp</th>
+                    <th className="px-3 py-3">Trạng thái</th>
+                  </tr>
+                </>
+              }
+              tableClassName="w-full text-left text-body-sm"
             />
-          </>
-        ) : (
-          <div className="py-10 text-center">
-            <h3 className="font-bold">Không tìm thấy sinh viên phù hợp.</h3>
           </div>
-        )}
-        <div className="sticky bottom-0 mt-5 flex flex-col-reverse gap-2 border-t border-[#E2E8F0] bg-white pt-4 sm:flex-row sm:justify-end">
-          <Button variant="secondary" onClick={onCancel}>
-            Hủy
-          </Button>
-          <Button disabled={!selectedStudentIds.length} onClick={() => onConfirm(selectedStudentIds)}>
-            Thêm {selectedStudentIds.length} sinh viên
-          </Button>
+          <Pagination
+            currentPage={pagination.currentPage}
+            pageSize={pagination.pageSize}
+            totalItems={filtered.length}
+            onPageChange={pagination.setCurrentPage}
+            onPageSizeChange={pagination.setPageSize}
+          />
+        </>
+      ) : (
+        <div className="py-10 text-center">
+          <h3 className="font-bold">Không tìm thấy sinh viên phù hợp.</h3>
         </div>
+      )}
+      <div className="sticky bottom-0 mt-5 flex flex-col-reverse gap-2 border-t border-[#E2E8F0] bg-white pt-4 sm:flex-row sm:justify-end">
+        <Button variant="secondary" onClick={onCancel}>
+          Hủy
+        </Button>
+        <Button disabled={!selectedStudentIds.length} onClick={() => onConfirm(selectedStudentIds)}>
+          Thêm {selectedStudentIds.length} sinh viên
+        </Button>
       </div>
     </SharedFormDialog>
   );
@@ -169,8 +164,7 @@ export function ReassignParticipantDialog({ mode, participant, student, sessions
       }
       onClose={onCancel}
     >
-      <p className="text-label-md font-bold text-primary">{makeup ? 'BỐ TRÍ CA BÙ' : 'CHUYỂN CA'}</p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-[#F8FAFC] p-4">
+      <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#F8FAFC] p-4">
         <div>
           <dt className="text-[#64748B]">Sinh viên</dt>
           <dd className="font-semibold">{student.name}</dd>

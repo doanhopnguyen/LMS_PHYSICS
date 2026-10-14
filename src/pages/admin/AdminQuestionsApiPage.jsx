@@ -292,6 +292,7 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
   const [deleting, setDeleting] = useState(null);
   const [cloTarget, setCloTarget] = useState(null);
   const [cloFilter, setCloFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [approvalFilter, setApprovalFilter] = useState(reviewOnly ? 'PENDING' : '');
   const [search, setSearch] = useState('');
   const [review, setReview] = useState(null);
@@ -307,9 +308,28 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
     if (difficulty) parameters.set('difficultyLevel', difficulty);
     return parameters.toString();
   }, [difficulty, page, subjectId, topicId]);
-  const localFilters = Boolean(reviewOnly || cloFilter || approvalFilter || search.trim());
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+      subjectId ||
+      topicId ||
+      cloFilter ||
+      typeFilter ||
+      difficulty ||
+      (reviewOnly ? approvalFilter !== 'PENDING' : approvalFilter)
+  );
+  const resetAllFilters = () => {
+    setSearch('');
+    setSubjectId('');
+    setTopicId('');
+    setCloFilter('');
+    setTypeFilter('');
+    setDifficulty('');
+    setApprovalFilter(reviewOnly ? 'PENDING' : '');
+    setPage(0);
+  };
+  const localFilters = Boolean(reviewOnly || cloFilter || approvalFilter || typeFilter || search.trim());
   const questions = useApiData(localFilters ? null : `/api/v1/questions?${query}`);
-  // CLO, approval status and text search are not API filters: load all pages first.
+  // CLO, approval status, type and text search are not API filters: load all pages first.
   const allQuery = new URLSearchParams(query);
   allQuery.delete('page');
   const allQuestions = useCollection(localFilters ? `/api/v1/questions?${allQuery}` : null);
@@ -317,6 +337,7 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
     (question) =>
       (!cloFilter || question.cloIds?.includes(cloFilter)) &&
       (!approvalFilter || question.approvalStatus === approvalFilter) &&
+      (!typeFilter || question.questionType === typeFilter) &&
       (!search.trim() || question.content?.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi')))
   );
   useEffect(() => {
@@ -708,97 +729,40 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
         />
       )}
       <Card className="mt-6 p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="filter-grid flex-1">
-            {reviewOnly && (
-              <SharedFormField
-                type="search"
-                name="questionSearch"
-                label="Tìm câu hỏi"
-                placeholder="Tìm theo nội dung…"
-                value={search}
-                onChange={(event) => changeFilter(setSearch, event.target.value)}
-              />
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-title-md font-bold text-slate-800">
+              {reviewOnly ? 'Danh sách duyệt câu hỏi' : 'Danh sách câu hỏi'}
+            </h2>
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+              {total} câu hỏi
+            </span>
+            {hasActiveFilters && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2.5 py-0.5 text-xs font-medium text-primary">
+                <span className="material-symbols-outlined text-xs">filter_alt</span>
+                Đang lọc: {questionRows.length} kết quả
+              </span>
             )}
-            <SelectField
-              label="Học phần"
-              value={subjectId}
-              disabled={Boolean(scopedSubjectId)}
-              onChange={(event) => {
-                changeFilter(setSubjectId, event.target.value);
-                setTopicId('');
-                setCloFilter('');
-              }}
-            >
-              <option value="">Tất cả học phần</option>
-              {subjectRows.map((subject) => (
-                <option key={subject.subjectId} value={subject.subjectId}>
-                  {subject.subjectCode || subject.subjectName}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label="Chủ đề"
-              value={topicId}
-              disabled={!subjectId}
-              onChange={(event) => changeFilter(setTopicId, event.target.value)}
-            >
-              <option value="">Tất cả chủ đề</option>
-              {topicRows.map((topic) => (
-                <option key={topic.topicId} value={topic.topicId}>
-                  {topic.topicName}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label="CLO"
-              name="cloFilter"
-              value={cloFilter}
-              disabled={!subjectId || clos.loading || Boolean(clos.error)}
-              onChange={(event) => changeFilter(setCloFilter, event.target.value)}
-            >
-              <option value="">Tất cả CLO</option>
-              {clos.data
-                .filter((clo) => clo.subjectId === subjectId)
-                .map((clo) => (
-                  <option key={clo.cloId} value={clo.cloId}>
-                    {clo.cloCode}
-                    {!clo.isActive ? ' · ngừng hoạt động' : ''}
-                  </option>
-                ))}
-            </SelectField>
-            <SelectField
-              label="Độ khó"
-              value={difficulty}
-              onChange={(event) => changeFilter(setDifficulty, event.target.value)}
-            >
-              <option value="">Tất cả độ khó</option>
-              {difficulties.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label="Trạng thái"
-              name="approvalFilter"
-              value={approvalFilter}
-              onChange={(event) => changeFilter(setApprovalFilter, event.target.value)}
-            >
-              <option value="">Tất cả trạng thái</option>
-              {['PENDING', 'DRAFT', 'APPROVED', 'REJECTED'].map((status) => (
-                <option key={status} value={status}>
-                  {labelOf(status)}
-                </option>
-              ))}
-            </SelectField>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className="text-xs text-primary hover:underline font-medium ml-1"
+              >
+                Xóa tất cả lọc
+              </button>
+            )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {reviewOnly ? (
-              <Button variant="secondary" icon="refresh" disabled={busy || questionResource.loading} onClick={reload}>
-                Làm mới
-              </Button>
-            ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              icon="refresh"
+              disabled={busy || questionResource.loading}
+              onClick={reload}
+            >
+              Làm mới
+            </Button>
+            {!reviewOnly && (
               <>
                 <Button variant="secondary" disabled={busy} onClick={downloadTemplate}>
                   Tải mẫu Excel
@@ -820,8 +784,6 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
             )}
           </div>
         </div>
-      </Card>
-      <Card className="mt-5 overflow-x-auto p-5">
         {questionResource.loading ? (
           <p role="status">Đang tải câu hỏi…</p>
         ) : questionResource.error ? (
@@ -836,6 +798,167 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
             <DataTable
               paginate={false}
               columns={['Nội dung', 'Học phần', 'CLO', 'Loại', 'Độ khó', 'Trạng thái', '']}
+              headerRows={
+                <>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
+                    <th scope="col" className="px-3 py-3 font-semibold text-left">
+                      Nội dung
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[170px]">
+                      Học phần
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[120px]">
+                      CLO
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[130px]">
+                      Loại
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[120px]">
+                      Độ khó
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[140px]">
+                      Trạng thái
+                    </th>
+                    <th scope="col" className="px-3 py-3 font-semibold text-center whitespace-nowrap w-[100px]">
+                      Thao tác
+                    </th>
+                  </tr>
+                  <tr className="border-b border-slate-200 bg-slate-100/70 excel-filter-row">
+                    <th className="p-2 font-normal">
+                      <div className="excel-filter-search">
+                        <span className="material-symbols-outlined search-icon">search</span>
+                        <input
+                          type="text"
+                          value={search}
+                          onChange={(e) => changeFilter(setSearch, e.target.value)}
+                          placeholder="Lọc nội dung…"
+                          className={`excel-filter-control ${search ? 'is-active' : ''}`}
+                        />
+                        {search && (
+                          <button
+                            type="button"
+                            onClick={() => changeFilter(setSearch, '')}
+                            className="clear-btn"
+                            title="Xóa tìm kiếm"
+                          >
+                            <span className="material-symbols-outlined text-sm">close</span>
+                          </button>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-2 font-normal">
+                      <div className="space-y-1">
+                        <select
+                          value={subjectId}
+                          disabled={Boolean(scopedSubjectId)}
+                          onChange={(e) => {
+                            changeFilter(setSubjectId, e.target.value);
+                            setTopicId('');
+                            setCloFilter('');
+                          }}
+                          className={`excel-filter-control ${subjectId ? 'is-active' : ''}`}
+                        >
+                          <option value="">Tất cả học phần</option>
+                          {subjectRows.map((subject) => (
+                            <option key={subject.subjectId} value={subject.subjectId}>
+                              {subject.subjectCode || subject.subjectName}
+                            </option>
+                          ))}
+                        </select>
+                        {subjectId && topicRows.length > 0 && (
+                          <select
+                            value={topicId}
+                            onChange={(e) => changeFilter(setTopicId, e.target.value)}
+                            className={`excel-filter-control ${topicId ? 'is-active' : ''}`}
+                          >
+                            <option value="">Tất cả chủ đề</option>
+                            {topicRows.map((topic) => (
+                              <option key={topic.topicId} value={topic.topicId}>
+                                {topic.topicName}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    </th>
+                    <th className="p-2 font-normal">
+                      <select
+                        value={cloFilter}
+                        disabled={!subjectId || clos.loading || Boolean(clos.error)}
+                        onChange={(e) => changeFilter(setCloFilter, e.target.value)}
+                        className={`excel-filter-control ${cloFilter ? 'is-active' : ''}`}
+                      >
+                        <option value="">Tất cả CLO</option>
+                        {clos.data
+                          .filter((clo) => clo.subjectId === subjectId)
+                          .map((clo) => (
+                            <option key={clo.cloId} value={clo.cloId}>
+                              {clo.cloCode}
+                              {!clo.isActive ? ' · ngừng' : ''}
+                            </option>
+                          ))}
+                      </select>
+                    </th>
+                    <th className="p-2 font-normal">
+                      <select
+                        value={typeFilter}
+                        onChange={(e) => changeFilter(setTypeFilter, e.target.value)}
+                        className={`excel-filter-control ${typeFilter ? 'is-active' : ''}`}
+                      >
+                        <option value="">Tất cả loại</option>
+                        {questionTypes.map(([val, lbl]) => (
+                          <option key={val} value={val}>
+                            {lbl}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+                    <th className="p-2 font-normal">
+                      <select
+                        value={difficulty}
+                        onChange={(e) => changeFilter(setDifficulty, e.target.value)}
+                        className={`excel-filter-control ${difficulty ? 'is-active' : ''}`}
+                      >
+                        <option value="">Tất cả độ khó</option>
+                        {difficulties.map(([val, lbl]) => (
+                          <option key={val} value={val}>
+                            {lbl}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+                    <th className="p-2 font-normal">
+                      <select
+                        value={approvalFilter}
+                        onChange={(e) => changeFilter(setApprovalFilter, e.target.value)}
+                        className={`excel-filter-control ${approvalFilter ? 'is-active' : ''}`}
+                      >
+                        <option value="">Tất cả trạng thái</option>
+                        {['PENDING', 'DRAFT', 'APPROVED', 'REJECTED'].map((st) => (
+                          <option key={st} value={st}>
+                            {labelOf(st)}
+                          </option>
+                        ))}
+                      </select>
+                    </th>
+                    <th className="p-2 font-normal text-center">
+                      {hasActiveFilters ? (
+                        <button
+                          type="button"
+                          onClick={resetAllFilters}
+                          className="excel-filter-clear-btn"
+                          title="Xóa tất cả bộ lọc"
+                        >
+                          <span className="material-symbols-outlined text-sm">filter_alt_off</span>
+                          <span>Xóa</span>
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 font-medium">Lọc</span>
+                      )}
+                    </th>
+                  </tr>
+                </>
+              }
               rows={questionRows}
               renderRow={(question) => (
                 <tr key={question.questionId} className="border-t border-[#E2E8F0]">
