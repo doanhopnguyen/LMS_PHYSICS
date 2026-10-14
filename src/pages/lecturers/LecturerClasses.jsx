@@ -1,5 +1,5 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../../lib/apiClient.js';
 import { queryPath } from '../../lib/lecturerUtils.js';
 import { navigate } from '../../lib/navigation.js';
@@ -10,6 +10,10 @@ import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { LecturerProgressView } from './LecturerProgressView.jsx';
+import { useTeachingScope, TeachingSubjectCards } from './LecturerTeachingScope.jsx';
+import { AdminCurriculumTree } from '../admin/AdminCurriculumTree.jsx';
+import { LecturerClassMaterials } from './LecturerClassMaterials.jsx';
+import { LecturerAssessmentApiPage, LecturerExperimentsApiPage } from './LecturerApiWorkspace.jsx';
 import {
   Button,
   Card,
@@ -137,33 +141,49 @@ export function LecturerDashboardApiPage() {
   );
 }
 export function LecturerClassesApiPage({ mode = 'classes' }) {
-  const subjects = useResource('/api/v1/subjects', true);
-  const activeSubjects = useResource('/api/v1/subjects?isActive=true', true);
+  const teachingScope = useTeachingScope();
+  const subjects = teachingScope.subjects;
+  const activeSubjects = { ...subjects, data: itemsOf(subjects.data).filter((row) => row.isActive) };
   const semesters = useResource('/api/v1/semesters');
-  const [filters, setFilters] = useState({ subjectId: '', semesterId: '', status: '' });
+  const [filters, setFilters] = useState({
+    subjectId: routeParam('subjectId'),
+    semesterId: routeParam('semesterId'),
+    status: routeParam('status'),
+  });
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useQueryState('classId');
   const [modal, setModal] = useState(null);
   const action = useMutation();
-  const classes = useResource(
-    queryPath('/api/v1/classes', { ...filters, page: search.trim() ? undefined : page, size: 20 }),
-    Boolean(search.trim())
-  );
+  const classes = teachingScope.classes;
   const filteredClasses = itemsOf(classes.data).filter(
     (row) =>
-      !search.trim() ||
-      `${row.classCode || ''} ${itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId)?.subjectName || ''}`
-        .toLocaleLowerCase('vi')
-        .includes(search.trim().toLocaleLowerCase('vi'))
+      (!filters.subjectId || row.subjectId === filters.subjectId) &&
+      (!filters.semesterId || row.semesterId === filters.semesterId) &&
+      (!filters.status || row.status === filters.status) &&
+      (!search.trim() ||
+        `${row.classCode || ''} ${itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId)?.subjectName || ''}`
+          .toLocaleLowerCase('vi')
+          .includes(search.trim().toLocaleLowerCase('vi')))
   );
-  const classRows = search.trim() ? filteredClasses.slice(page * 20, (page + 1) * 20) : filteredClasses;
-  const classPage = search.trim() ? { size: 20, totalElements: filteredClasses.length } : classes.data;
+  const classRows = filteredClasses.slice(page * 20, (page + 1) * 20);
+  const classPage = { size: 20, totalElements: filteredClasses.length };
+  useEffect(() => {
+    if (!classes.loading)
+      setPage((current) => Math.min(current, Math.max(0, Math.ceil(filteredClasses.length / 20) - 1)));
+  }, [classes.loading, filteredClasses.length]);
   const lookup = useResource(mode === 'students' ? '/api/v1/classes' : null, true);
   const detail = routeParam('classId');
   const change = (key, value) => {
     setFilters((f) => ({ ...f, [key]: value }));
     setPage(0);
+    if (key === 'subjectId') {
+      setSearch('');
+    }
+    const url = new URL(window.location.href);
+    if (value) url.searchParams.set(key, value);
+    else url.searchParams.delete(key);
+    window.history.replaceState(window.history.state, '', url.pathname + url.search);
   };
   if (detail && mode !== 'students') return <LecturerClassDetail classId={detail} />;
   const save = async (e) => {
@@ -196,7 +216,13 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
   return (
     <LecturerPageShell
       currentPage={mode === 'students' ? 'lecturer_students.html' : 'lecturer_courses.html'}
-      title={mode === 'students' ? 'Sinh viên lớp học' : 'Học phần & lớp học'}
+      title={
+        mode === 'students'
+          ? 'Sinh viên lớp học'
+          : filters.subjectId
+            ? `Lớp học · ${itemsOf(subjects.data).find((row) => row.subjectId === filters.subjectId)?.subjectName || 'Môn học'}`
+            : 'Lớp học'
+      }
       eyebrow="QUẢN LÝ LỚP"
       description="Quản lý lớp được phân công và theo dõi hoạt động học tập."
     >
@@ -266,66 +292,84 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
             </>
           }
         >
-          {() => (
-            <Resource value={classes}>
-              {(data) => (
-                <>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {classRows.map((row) => (
-                      <StatCard
-                        key={row.classId}
-                        label={displayName(row)}
-                        value={row.maxStudents ?? '—'}
-                        detail="sĩ số tối đa"
-                        icon="school"
-                        ribbonLabel={
-                          itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId)?.subjectCode ||
-                          'LỚP HỌC PHẦN'
-                        }
-                        accentColor={
-                          row.status === 'ACTIVE' ? '#E52220' : row.status === 'COMPLETED' ? '#15803D' : '#B45309'
-                        }
-                        onOpen={() => navigate(`lecturer_course_detail.html?classId=${idPath(row.classId)}`)}
-                        footer={
-                          <div className="space-y-2 text-body-sm text-slate-500">
-                            <StatusBadge tone={row.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                              {labelOf(row.status)}
-                            </StatusBadge>
-                            <p>
-                              {displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}
-                            </p>
-                            <p>
-                              {displayName(itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId))}
-                            </p>
-                          </div>
-                        }
-                        headerActions={
-                          <ActionMenu
-                            label={`Thao tác với ${displayName(row)}`}
-                            disabled={action.busy}
-                            items={[
-                              { label: 'Chỉnh sửa', onSelect: () => edit(row) },
-                              ...CLASS_STATES.filter((status) => status !== row.status).map((status) => ({
-                                label: `Chuyển sang ${labelOf(status)}`,
-                                onSelect: () =>
-                                  action.confirm(
-                                    `Chuyển ${displayName(row)} sang ${labelOf(status)}?`,
-                                    () => api.classes.updateStatus(row.classId, { status }),
-                                    classes.reload
-                                  ),
-                              })),
-                            ]}
-                          />
-                        }
-                      />
-                    ))}
-                  </div>
-                  {!classRows.length && <Card className="p-5 text-slate-500">Không có lớp học phù hợp.</Card>}
-                  <Pager data={classPage} page={page} onChange={setPage} />
-                </>
-              )}
-            </Resource>
-          )}
+          {() =>
+            !filters.subjectId ? (
+              <TeachingSubjectCards
+                resource={subjects}
+                classes={filteredClasses}
+                search={search}
+                onSelect={(value) => change('subjectId', value)}
+              />
+            ) : (
+              <Resource value={classes}>
+                {(data) => (
+                  <>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      {classRows.map((row) => (
+                        <StatCard
+                          key={row.classId}
+                          label={displayName(row)}
+                          value={row.maxStudents ?? '—'}
+                          detail="sĩ số tối đa"
+                          icon="school"
+                          ribbonLabel={
+                            itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId)?.subjectCode ||
+                            'LỚP HỌC PHẦN'
+                          }
+                          accentColor={
+                            row.status === 'ACTIVE' ? '#E52220' : row.status === 'COMPLETED' ? '#15803D' : '#B45309'
+                          }
+                          onOpen={() =>
+                            navigate(
+                              queryPath('lecturer_course_detail.html', {
+                                classId: row.classId,
+                                semesterId: filters.semesterId,
+                              })
+                            )
+                          }
+                          footer={
+                            <div className="space-y-2 text-body-sm text-slate-500">
+                              <StatusBadge tone={row.status === 'ACTIVE' ? 'success' : 'neutral'}>
+                                {labelOf(row.status)}
+                              </StatusBadge>
+                              <p>
+                                {displayName(itemsOf(subjects.data).find((item) => item.subjectId === row.subjectId))}
+                              </p>
+                              <p>
+                                {displayName(
+                                  itemsOf(semesters.data).find((item) => item.semesterId === row.semesterId)
+                                )}
+                              </p>
+                            </div>
+                          }
+                          headerActions={
+                            <ActionMenu
+                              label={`Thao tác với ${displayName(row)}`}
+                              disabled={action.busy}
+                              items={[
+                                { label: 'Chỉnh sửa', onSelect: () => edit(row) },
+                                ...CLASS_STATES.filter((status) => status !== row.status).map((status) => ({
+                                  label: `Chuyển sang ${labelOf(status)}`,
+                                  onSelect: () =>
+                                    action.confirm(
+                                      `Chuyển ${displayName(row)} sang ${labelOf(status)}?`,
+                                      () => api.classes.updateStatus(row.classId, { status }),
+                                      classes.reload
+                                    ),
+                                })),
+                              ]}
+                            />
+                          }
+                        />
+                      ))}
+                    </div>
+                    {!classRows.length && <Card className="p-5 text-slate-500">Không có lớp học phù hợp.</Card>}
+                    <Pager data={classPage} page={page} onChange={setPage} />
+                  </>
+                )}
+              </Resource>
+            )
+          }
         </Tabs>
       )}
       {modal && (
@@ -363,7 +407,8 @@ export function LecturerClassesApiPage({ mode = 'classes' }) {
     </LecturerPageShell>
   );
 }
-function ClassPeople({ classId, staff = false }) {
+function ClassPeople({ classId, subjectId = '', staff = false }) {
+  const [progressStudent, setProgressStudent] = useState(null);
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(0);
   const [addingStudent, setAddingStudent] = useState(false);
@@ -419,7 +464,16 @@ function ClassPeople({ classId, staff = false }) {
               cells={(row) => {
                 const studentId = row.studentId || row.userId;
                 return [
-                  displayName(row),
+                  staff ? (
+                    displayName(row)
+                  ) : (
+                    <button
+                      className="text-left font-semibold text-primary hover:underline"
+                      onClick={() => setProgressStudent(row)}
+                    >
+                      {displayName(row)}
+                    </button>
+                  ),
                   row.username,
                   row.email,
                   labelOf(staff ? row.roleInClass : row.status),
@@ -466,6 +520,21 @@ function ClassPeople({ classId, staff = false }) {
           </>
         )}
       </Resource>
+      {progressStudent && (
+        <Modal
+          title={`Tiến độ · ${displayName(progressStudent)}`}
+          wide
+          expandable
+          onClose={() => setProgressStudent(null)}
+        >
+          <ClassObservation
+            classId={classId}
+            subjectId={subjectId}
+            studentId={progressStudent.studentId || progressStudent.userId}
+            tabs={['progress']}
+          />
+        </Modal>
+      )}
       {addingStudent && (
         <Modal
           wide
@@ -636,9 +705,13 @@ function ClassSchedules({ classId }) {
 
 function ClassNotification({ classId }) {
   const action = useMutation();
+  const history = useResource(`/api/v1/notifications/classes/${idPath(classId)}/sent`, true);
+  const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState('');
   const submit = async (event) => {
     event.preventDefault();
-    const values = Object.fromEntries(new FormData(event.currentTarget));
+    const form = event.currentTarget;
+    const values = Object.fromEntries(new FormData(form));
     const result = await action.run(
       () =>
         api.notifications.sendToClass(classId, {
@@ -646,24 +719,66 @@ function ClassNotification({ classId }) {
           content: values.content.trim(),
           type: values.type,
           referenceType: 'CLASS',
+          referenceId: classId,
         }),
-      'Đã gửi thông báo đến sinh viên đang học trong lớp.'
+      'Đã tạo thông báo cho lớp.'
     );
-    if (result.ok) event.currentTarget.reset();
+    if (result.ok) {
+      form.reset();
+      setCreating(false);
+      history.reload();
+    }
   };
   return (
-    <Card className="mt-4 max-w-3xl p-5">
+    <>
       {action.feedback}
-      <Form className="grid gap-4" onSubmit={submit}>
-        <Field label="Tiêu đề *" name="title" required />
-        <Field label="Nội dung *" name="content" multiline rows={5} required />
-        <SelectField label="Loại thông báo" name="type" defaultValue="ANNOUNCEMENT">
-          <option value="ANNOUNCEMENT">Thông báo chung</option>
-          <option value="SYSTEM">Hệ thống</option>
-        </SelectField>
-        <SubmitButton busy={action.busy}>Gửi thông báo</SubmitButton>
-      </Form>
-    </Card>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <Field
+          label="Tìm thông báo đã gửi"
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+        <Button
+          icon="add"
+          onClick={() => {
+            action.clear();
+            setCreating(true);
+          }}
+        >
+          Tạo thông báo cho lớp
+        </Button>
+      </div>
+      <Resource value={history}>
+        {(data) => (
+          <Table
+            rows={itemsOf(data).filter((row) =>
+              `${row.title} ${row.content}`.toLocaleLowerCase('vi').includes(search.trim().toLocaleLowerCase('vi'))
+            )}
+            columns={['Tiêu đề', 'Nội dung', 'Loại', 'Đã gửi lúc']}
+            cells={(row) => [row.title, row.content, labelOf(row.type), dateText(row.createdAt)]}
+          />
+        )}
+      </Resource>
+      {creating && (
+        <Modal title="Tạo thông báo cho lớp" busy={action.busy} onClose={() => !action.busy && setCreating(false)}>
+          {action.error && (
+            <p role="alert" className="mb-3 text-red-700">
+              {action.error}
+            </p>
+          )}
+          <Form className="grid gap-4" onSubmit={submit}>
+            <Field label="Tiêu đề *" name="title" required />
+            <Field label="Nội dung *" name="content" multiline rows={5} required />
+            <SelectField label="Loại thông báo" name="type" defaultValue="ANNOUNCEMENT">
+              <option value="ANNOUNCEMENT">Thông báo chung</option>
+              <option value="SYSTEM">Hệ thống</option>
+            </SelectField>
+            <SubmitButton busy={action.busy}>Gửi thông báo</SubmitButton>
+          </Form>
+        </Modal>
+      )}
+    </>
   );
 }
 const observationLabels = { progress: 'Tiến độ', evidence: 'Minh chứng', activity: 'Hoạt động' };
@@ -737,7 +852,7 @@ export function ClassObservation({ classId, subjectId, studentId, tabs = ['progr
   );
 }
 export function LecturerClassDetail({ classId = routeParam('classId') }) {
-  const resource = useResource(classId ? `/api/v1/classes/${idPath(classId)}` : null);
+  const resource = useResource(classId ? `/api/v1/instructor/classes/${idPath(classId)}` : null);
   const [tab, setTab] = useState('overview');
   const snapshot = useResource(classId && tab === 'overview' ? `/api/v1/dashboard/class/${idPath(classId)}` : null);
   return (
@@ -745,6 +860,10 @@ export function LecturerClassDetail({ classId = routeParam('classId') }) {
       currentPage="lecturer_courses.html"
       title={resource.data ? `${displayName(resource.data)} · ${labelOf(resource.data.status)}` : 'Chi tiết lớp học'}
       eyebrow="QUẢN LÝ LỚP"
+      backHref={queryPath('lecturer_courses.html', {
+        subjectId: resource.data?.subjectId,
+        semesterId: routeParam('semesterId'),
+      })}
     >
       <Resource value={resource} empty="Mở chi tiết từ danh sách lớp học.">
         {(row) => (
@@ -754,14 +873,13 @@ export function LecturerClassDetail({ classId = routeParam('classId') }) {
               onChange={setTab}
               items={[
                 ['overview', 'Tổng quan'],
-                ['students', 'Sinh viên'],
-                ['staff', 'Nhân sự'],
-                ['schedules', 'Lịch học'],
+                ['students', 'Danh sách sinh viên'],
+                ['curriculum', 'Khung chương trình'],
+                ['private-materials', 'Học liệu riêng của lớp'],
                 ['notifications', 'Thông báo'],
                 ['progress', 'Tiến độ'],
-                ['evidence', 'Minh chứng'],
-                ['activity', 'Hoạt động'],
                 ['exams', 'Bài thi'],
+                ['grading', 'Chấm bài'],
                 ['experiments', 'Thí nghiệm'],
               ].map(([id, label]) => ({ id, label }))}
             >
@@ -771,27 +889,20 @@ export function LecturerClassDetail({ classId = routeParam('classId') }) {
                     <p className="my-4">Sĩ số tối đa: {row?.maxStudents ?? '—'}</p>
                     <Snapshot resource={snapshot} />
                   </>
-                ) : ['students', 'staff'].includes(tab) ? (
-                  <ClassPeople key={`${classId}:${tab}`} classId={classId} staff={tab === 'staff'} />
-                ) : tab === 'schedules' ? (
-                  <ClassSchedules classId={classId} />
+                ) : tab === 'students' ? (
+                  <ClassPeople key={`${classId}:${tab}`} classId={classId} subjectId={row.subjectId} />
+                ) : tab === 'curriculum' ? (
+                  <AdminCurriculumTree subjectId={row.subjectId} classId={classId} readOnly />
+                ) : tab === 'private-materials' ? (
+                  <LecturerClassMaterials classId={classId} subjectId={row.subjectId} />
                 ) : tab === 'notifications' ? (
                   <ClassNotification classId={classId} />
                 ) : ['progress', 'evidence', 'activity'].includes(tab) ? (
                   <ClassObservation key={tab} classId={classId} subjectId={row?.subjectId} tabs={[tab]} />
+                ) : tab === 'exams' || tab === 'grading' ? (
+                  <LecturerAssessmentApiPage embedded scopedClassId={classId} grading={tab === 'grading'} />
                 ) : (
-                  <Card className="mt-4 p-5">
-                    <a
-                      className="font-semibold text-primary"
-                      href={
-                        tab === 'exams'
-                          ? `lecturer_assessments.html?classId=${idPath(classId)}`
-                          : `lecturer_labs.html?classId=${idPath(classId)}&subjectId=${idPath(row?.subjectId || '')}`
-                      }
-                    >
-                      Mở {tab === 'exams' ? 'bài thi' : 'thí nghiệm'} của lớp →
-                    </a>
-                  </Card>
+                  <LecturerExperimentsApiPage embedded scopedClassId={classId} scopedSubjectId={row.subjectId} />
                 )
               }
             </Tabs>

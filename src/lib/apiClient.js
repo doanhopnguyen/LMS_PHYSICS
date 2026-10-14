@@ -171,6 +171,8 @@ export const api = {
 
   // ─── Learning Materials ──────────────────────────────────────────────────────
   materials: {
+    listForClass: (classId) => apiRequest(`/api/v1/classes/${classId}/materials`),
+    createForClass: (classId, topicId, formData) => apiRequest(`/api/v1/classes/${classId}/topics/${topicId}/materials`, {method:'POST',formData}),
     list: (topicId) => apiRequest(`/api/v1/topics/${topicId}/materials`),
     get: (topicId, materialId) => apiRequest(`/api/v1/topics/${topicId}/materials/${materialId}`),
     create: (topicId, formData) => apiRequest(`/api/v1/topics/${topicId}/materials`, { method: 'POST', formData }),

@@ -27,7 +27,7 @@ export function LecturerProgressView({ students, topics, progress, studentId }) 
           rows={active?.chapters || []}
           columns={['Chương / Chủ đề', 'Tiến độ', 'Trạng thái', 'Truy cập gần nhất']}
           cells={(row) => [
-            row.topicName || row.title || `Chủ đề ${row.topicId}`,
+            row.topicName || row.title || 'Chủ đề chưa có tên',
             percent(row.progressPercent),
             row.progressPercent === 100 ? 'Đã hoàn thành' : row.progressPercent > 0 ? 'Đang học' : 'Chưa học',
             dateText(row.lastAccessedAt),

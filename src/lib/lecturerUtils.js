@@ -1,4 +1,10 @@
 export const itemsOf = (data) => (Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : []);
+export function localDateTimeInput(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
 export const displayName = (row) =>
   row?.fullName ||
   row?.studentName ||
@@ -75,6 +81,7 @@ export const labels = {
   STUDENT: 'Sinh viên',
   TA: 'Trợ giảng',
   MCQ_SINGLE: 'Một đáp án',
+  FILL_BLANK: 'Điền đáp án',
   SINGLE_CHOICE: 'Một đáp án',
   MULTIPLE_CHOICE: 'Nhiều đáp án',
   MCQ_MULTI: 'Nhiều đáp án',
@@ -96,6 +103,8 @@ export const labels = {
   GRADED: 'Đã chấm',
   EXPERIMENT: 'Thí nghiệm',
   PDF: 'PDF',
+  SLIDE: 'Slide',
+  OTHER: 'Khác',
   VIDEO: 'Video',
   TEXT: 'Văn bản',
   MARKDOWN: 'Markdown',

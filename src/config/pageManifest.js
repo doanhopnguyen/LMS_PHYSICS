@@ -25,7 +25,7 @@ export const pageManifest = [
   { file: 'lecturer_material_create.html', component: 'LecturerAuthoringApiPage', layout: 'AppShell' },
   { file: 'lecturer_exam_create.html', component: 'LecturerAssessmentApiPage', layout: 'AppShell' },
   { file: 'lecturer_matrix_create.html', component: 'LecturerMatrixCreatePage', layout: 'AppShell' },
-  { file: 'lecturer_question_bank.html', component: 'LecturerQuestionBankPage', layout: 'AppShell' },
+  { file: 'lecturer_question_bank.html', component: 'LecturerQuestionWorkspace', layout: 'AppShell' },
   { file: 'lecturer_assessments.html', component: 'LecturerAssessmentsPage', layout: 'AppShell' },
   { file: 'lecturer_assessment_results.html', component: 'LecturerAssessmentResultsPage', layout: 'AppShell' },
   { file: 'lecturer_attempt_detail.html', component: 'LecturerAttemptDetailPage', layout: 'AppShell' },

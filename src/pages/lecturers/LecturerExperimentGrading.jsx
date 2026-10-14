@@ -4,10 +4,11 @@ import { ExperimentSubmissionList, ExperimentSubmissionGrader } from '../../comp
 import { useResource } from './LecturerShared.jsx';
 import { navigate } from '../../lib/navigation.js';
 
-export function ExperimentGradingPanel({ classes }) {
+export function ExperimentGradingPanel({ classes, classId }) {
   return (
     <ExperimentSubmissionList
       classes={classes}
+      classId={classId}
       onSelect={(row) =>
         navigate(
           `lecturer_lab_grading.html?submissionId=${encodeURIComponent(row.submissionId)}&classId=${encodeURIComponent(row.classId || '')}`
