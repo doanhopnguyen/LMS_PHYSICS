@@ -29,7 +29,7 @@ const subjectBadge = (subject) => (
   </StatusBadge>
 );
 
-function AcademicForm({ modal, busy, onClose, onSubmit }) {
+export function AcademicForm({ modal, busy, onClose, onSubmit, error = '' }) {
   const topic = modal.type.includes('topic');
   const semester = modal.type.includes('semester');
   const item = modal.item || {};
@@ -39,6 +39,7 @@ function AcademicForm({ modal, busy, onClose, onSubmit }) {
       title={`${modal.type.startsWith('create') ? 'Tạo' : 'Cập nhật'} ${entityName(modal.type)}`}
       onClose={onClose}
     >
+      <AuthAlert error>{error}</AuthAlert>
       <Form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
         {semester && modal.type === 'create-semester' && (
           <FormField label="Mã học kỳ" name="semesterCode" required disabled={busy} />

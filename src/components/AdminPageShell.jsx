@@ -12,6 +12,8 @@ export function AdminPageShell({
   actions,
   children,
   pageTitleInHeader = true,
+  contentClass = '',
+  showBackButton = true,
 }) {
   return (
     <AppShell
@@ -22,6 +24,8 @@ export function AdminPageShell({
       navigationItems={adminNavigation}
       utilityItems={[]}
       showChatLauncher={false}
+      contentClass={contentClass}
+      showBackButton={showBackButton}
     >
       <PageContainer>
         <PageTitle

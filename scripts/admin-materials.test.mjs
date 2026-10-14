@@ -66,3 +66,38 @@ test('approval sends authenticated PUT and accepts empty success; failures remai
   globalThis.fetch = async () => Response.json({ message: 'Không được phép duyệt' }, { status: 403 });
   await assert.rejects(api.materials.approve('t0', 'm0'), /Không được phép duyệt/);
 });
+
+test('question approval transmits an encoded optional comment through the documented query', async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(new URL(url).pathname, '/api/v1/questions/q1/approve');
+    assert.equal(new URL(url).searchParams.get('comment'), 'Đúng & đủ');
+    assert.equal(options.method, 'PUT');
+    assert.equal(options.body, undefined);
+    return Response.json({ data: { questionId: 'q1', approvalStatus: 'APPROVED' } });
+  };
+  assert.equal((await api.questions.approve('q1', ' Đúng & đủ ')).approvalStatus, 'APPROVED');
+});
+
+test('question rejection sends its mandatory reason in a JSON body and preserves API failures', async () => {
+  const body = { rejectionReason: 'Sai đáp án', comment: 'Cần sửa' };
+  globalThis.fetch = async (url, options) => {
+    assert.equal(new URL(url).pathname, '/api/v1/questions/q1/reject');
+    assert.equal(options.method, 'PUT');
+    assert.deepEqual(JSON.parse(options.body), body);
+    return Response.json({ data: { approvalStatus: 'REJECTED', rejectionReason: body.rejectionReason } });
+  };
+  assert.equal((await api.questions.reject('q1', body)).approvalStatus, 'REJECTED');
+  globalThis.fetch = async () => Response.json({ message: 'Câu hỏi đã được duyệt' }, { status: 400 });
+  await assert.rejects(api.questions.reject('q1', body), (error) => error.status === 400);
+});
+
+test('Admin submission sends PUT with an optional query comment and no body', async () => {
+  globalThis.fetch = async (url, options) => {
+    assert.equal(new URL(url).pathname, '/api/v1/questions/q1/submit-review');
+    assert.equal(new URL(url).searchParams.get('comment'), 'Đã sửa & bổ sung');
+    assert.equal(options.method, 'PUT');
+    assert.equal(options.body, undefined);
+    return Response.json({ data: { questionId: 'q1', approvalStatus: 'PENDING' } });
+  };
+  assert.equal((await api.questions.submitReview('q1', ' Đã sửa & bổ sung ')).approvalStatus, 'PENDING');
+});

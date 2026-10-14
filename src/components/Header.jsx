@@ -15,7 +15,7 @@ const defaultUser = {
   initials: 'TK',
 };
 
-export function Header({ onMenuClick, homeHref = 'dashboard.html' }) {
+export function Header({ onMenuClick, homeHref = 'dashboard.html', showBackButton = true }) {
   const session = useCurrentUser();
   const user = session ? { ...session, role: session.label } : defaultUser;
   const home = session?.home || homeHref;
@@ -49,7 +49,7 @@ export function Header({ onMenuClick, homeHref = 'dashboard.html' }) {
         >
           <span className="material-symbols-outlined">menu</span>
         </button>
-        {!isHome && (
+        {showBackButton && !isHome && (
           <button
             type="button"
             className="header-back-button"

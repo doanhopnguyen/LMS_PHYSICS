@@ -4,6 +4,7 @@
   --shell-red-gradient: linear-gradient(120deg, #e52220 0%, #df2035 100%);
 }
 .app-shell .page-body { display: flow-root; min-width: 0; padding-top: var(--page-header-gap); }
+.admin-subject-detail-content { --page-header-gap: 4px; }
 /* Shell owns the initial gap; page wrappers retain side/bottom padding. */
 .app-shell .page-body > :first-child { margin-top: 0 !important; }
 .app-shell .page-body > :first-child:is(main, div:not(.lms-card)) { padding-top: 0 !important; }

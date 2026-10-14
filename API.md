@@ -374,6 +374,57 @@ Lỗi trả:
 { "examId":"uuid", "maxAttempts":3, "usedAttempts":1, "hasInProgressAttempt":true, "inProgressAttemptId":"uuid", "canStart":false, "reason":"..." }
 ```
 
+### Chuẩn đầu ra học phần (CLO)
+
+Đối chiếu OpenAPI tại `http://localhost:8080/v3/api-docs` ngày 14/10/2026. Các đường dẫn dưới đây dùng tiền tố `/api/v1`.
+
+| Thao tác | Endpoint | Dữ liệu |
+| --- | --- | --- |
+| Danh sách CLO của học phần | `GET /subjects/{subjectId}/clos?activeOnly=false` | Mảng CLO; dùng `activeOnly=true` để chỉ lấy CLO hoạt động |
+| Tạo CLO | `POST /subjects/{subjectId}/clos` | `cloCode`, `description`, `orderIndex`, `isActive` |
+| Chi tiết/cập nhật/xóa | `GET`, `PUT`, `DELETE /clos/{cloId}` | PUT dùng các trường như tạo mới |
+| Thay đổi trạng thái | `PATCH /clos/{cloId}/toggle-status?isActive=true` | Trạng thái nằm trong query, không gửi body |
+| Gán CLO cho câu hỏi | `PUT /questions/{questionId}/clos` | Mảng UUID trực tiếp, ví dụ `["uuid-clo-1", "uuid-clo-2"]`; `[]` bỏ toàn bộ liên kết |
+
+CLO trả về `cloId`, `subjectId`, `cloCode`, `description`, `orderIndex`, `isActive`, `questionCount`, `createdAt`, `updatedAt`. Mã CLO tối đa 50 ký tự; mã, mô tả và thứ tự bắt buộc. Không thể tạo CLO khi học phần ngừng hoạt động.
+
+Tạo/cập nhật câu hỏi hỗ trợ `cloIds`; câu hỏi trả về cùng trường này. CLO được gán phải thuộc học phần của câu hỏi và đang hoạt động. Khi chỉnh sửa, giữ liên kết CLO cũ để người dùng xử lý rõ ràng nếu CLO đã ngừng hoạt động. Xóa CLO có câu hỏi liên kết trả về HTTP 409. Gán CLO sai học phần hoặc ngừng hoạt động trả về HTTP 400.
+
+Chi tiết tiêu chí ma trận hỗ trợ `cloId` đơn, tùy chọn. Gửi `null` khi không giới hạn CLO; nếu có giá trị, CLO phải đang hoạt động và thuộc học phần của ma trận.
+
+`GET /questions` chưa có bộ lọc CLO: frontend tải tất cả các trang theo bộ lọc học phần/chủ đề/độ khó rồi lọc `cloIds` và phân trang tại client. API nhập Excel chưa có tham số CLO.
+
+### Chuẩn đầu ra học phần (CLO)
+
+Đối chiếu OpenAPI tại `http://localhost:8080/v3/api-docs` ngày 14/10/2026. Các đường dẫn dưới đây dùng tiền tố `/api/v1`.
+
+| Thao tác | Endpoint | Dữ liệu |
+| --- | --- | --- |
+| Danh sách CLO của học phần | `GET /subjects/{subjectId}/clos?activeOnly=false` | Mảng CLO; dùng `activeOnly=true` để chỉ lấy CLO hoạt động |
+| Tạo CLO | `POST /subjects/{subjectId}/clos` | `cloCode`, `description`, `orderIndex`, `isActive` |
+| Chi tiết/cập nhật/xóa | `GET`, `PUT`, `DELETE /clos/{cloId}` | PUT dùng các trường như tạo mới |
+| Thay đổi trạng thái | `PATCH /clos/{cloId}/toggle-status?isActive=true` | Trạng thái nằm trong query, không gửi body |
+| Gán CLO cho câu hỏi | `PUT /questions/{questionId}/clos` | Mảng UUID trực tiếp, ví dụ `["uuid-clo-1", "uuid-clo-2"]`; `[]` bỏ toàn bộ liên kết |
+
+CLO trả về `cloId`, `subjectId`, `cloCode`, `description`, `orderIndex`, `isActive`, `questionCount`, `createdAt`, `updatedAt`. Mã CLO tối đa 50 ký tự; mã, mô tả và thứ tự bắt buộc. Không thể tạo CLO khi học phần ngừng hoạt động.
+
+Tạo/cập nhật câu hỏi hỗ trợ `cloIds`; câu hỏi trả về cùng trường này. CLO được gán phải thuộc học phần của câu hỏi và đang hoạt động. Khi chỉnh sửa, giữ liên kết CLO cũ để người dùng xử lý rõ ràng nếu CLO đã ngừng hoạt động. Xóa CLO có câu hỏi liên kết trả về HTTP 409. Gán CLO sai học phần hoặc ngừng hoạt động trả về HTTP 400.
+
+Chi tiết tiêu chí ma trận hỗ trợ `cloId` đơn, tùy chọn. Gửi `null` khi không giới hạn CLO; nếu có giá trị, CLO phải đang hoạt động và thuộc học phần của ma trận.
+
+`GET /questions` chưa có bộ lọc CLO: frontend tải tất cả các trang theo bộ lọc học phần/chủ đề/độ khó rồi lọc `cloIds` và phân trang tại client. API nhập Excel chưa có tham số CLO.
+
+### Admin duyệt ngân hàng câu hỏi và học liệu
+
+- `PUT /questions/{questionId}/approve?comment=...`: nhận xét tùy chọn nằm trong query, không gửi body.
+- `PUT /questions/{questionId}/reject`: JSON `{ "rejectionReason": "Lý do bắt buộc", "comment": "Nhận xét tùy chọn" }`.
+- Câu hỏi phải ở trạng thái `PENDING`. `DRAFT` cần gửi duyệt trước; `REJECTED` cần sửa/gửi lại. Duyệt lại `APPROVED` trả về 409. DTO trả về `reviewedBy`, `reviewedAt`, `rejectionReason`.
+- `PUT /questions/{questionId}/submit-review?comment=...` gửi bản nháp hoặc câu hỏi bị từ chối vào hàng chờ (ADMIN/INSTRUCTOR theo quyền backend).
+- `PUT /topics/{topicId}/materials/{materialId}/approve`: duyệt học liệu, không gửi body. API hiện tại chưa có endpoint từ chối học liệu.
+- `GET /questions` chưa hỗ trợ `approvalStatus` hoặc tìm kiếm nội dung; frontend tải hết các trang rồi lọc và phân trang kết quả tại client.
+- POST tạo câu hỏi không chấp nhận `APPROVED`/`REJECTED` trực tiếp. Để Admin tạo và duyệt ngay, frontend gửi `approvalStatus: "PENDING"` rồi tự động gọi approve cho mã câu vừa tạo.
+- Kết quả import Excel trả về `questions[]`, gồm mã và trạng thái từng câu. Luồng Admin tự động gọi submit-review khi câu còn DRAFT, sau đó approve; giữ danh sách mã câu để thử duyệt lại nếu có lỗi mà không nhập trùng. Không gửi tham số trạng thái ngoài hợp đồng của import-excel. Luồng giảng viên không bật tự động duyệt.
+
 ### Thí nghiệm, AI, notification và dashboard
 
 ```json
