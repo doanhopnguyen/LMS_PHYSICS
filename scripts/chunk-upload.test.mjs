@@ -273,6 +273,9 @@ test('the public API file upload uses chunk/merge endpoints with authentication 
     assert.equal(options.headers.Authorization, 'Bearer access-token');
     const path = new URL(url).pathname;
     paths.push(path);
+    if (path.endsWith('/download-url'))
+      return Response.json({ data: { downloadUrl: '/api/v1/files/verified/download?token=test', fileName: file.name } });
+    if (path === '/api/v1/files/verified/download') return new Response(file);
     return Response.json(
       await backend.request(path, {
         ...options,
@@ -287,7 +290,9 @@ test('the public API file upload uses chunk/merge endpoints with authentication 
     assert.equal(result.url, result.fileUrl);
     assert.equal(result.size, file.size);
     assert.equal(result.contentType, file.type);
-    assert.deepEqual(paths, ['/api/v1/files/chunks', '/api/v1/files/chunks', '/api/v1/files/chunks/merge']);
+    assert.deepEqual(paths.slice(0, 3), ['/api/v1/files/chunks', '/api/v1/files/chunks', '/api/v1/files/chunks/merge']);
+    assert.equal(paths.at(-2).endsWith('/download-url'), true);
+    assert.equal(paths.at(-1), '/api/v1/files/verified/download');
   } finally {
     globalThis.window = previousWindow;
     globalThis.fetch = previousFetch;
