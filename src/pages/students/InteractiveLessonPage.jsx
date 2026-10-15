@@ -235,7 +235,7 @@ export function InteractiveLessonPage() {
                             {material.contentText || 'Giảng viên chưa cập nhật nội dung văn bản cho học liệu này.'}
                           </div>
                         ))}
-                      {(material.fileUrl || material.downloadUrl || material.url) && (
+                      {(material.fileId || material.fileUrl || material.downloadUrl || material.url) && (
                         <MaterialFilePreview key={material.materialId} material={material} />
                       )}
                     </section>
@@ -249,7 +249,7 @@ export function InteractiveLessonPage() {
                     <h2 className="mt-3 text-headline-sm font-bold">
                       {materialTypeLabel[material.type] || 'Tệp học liệu'}
                     </h2>
-                    {material.fileUrl || material.downloadUrl || material.url ? (
+                    {material.fileId || material.fileUrl || material.downloadUrl || material.url ? (
                       <div className="mt-4">
                         <MaterialFilePreview key={material.materialId} material={material} />
                       </div>

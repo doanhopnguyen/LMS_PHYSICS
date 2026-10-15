@@ -1,4 +1,5 @@
 import { Form, SubmitButton } from '../../components/Form.jsx';
+import { QuestionMediaField } from '../../components/QuestionMediaField.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../../lib/apiClient.js';
@@ -168,6 +169,7 @@ export function MaterialEditorForm({ initial = {}, onSubmit, busy }) {
 }
 
 function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
+  const [mediaPending, setMediaPending] = useState(false);
   const [type, setType] = useState(initial.questionType || 'MCQ_SINGLE');
   const [options, setOptions] = useState(() =>
     Array.isArray(initial.options) && initial.options.length
@@ -201,6 +203,7 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
       className="grid gap-4"
       onSubmit={(e) => {
         e.preventDefault();
+        if (busy || mediaPending) return;
         const values = Object.fromEntries(new FormData(e.currentTarget));
         const acceptedAnswers = String(values.acceptedAnswers || '')
           .split('\n')
@@ -224,7 +227,7 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
           topicId,
           questionType: type,
           content: values.content.trim(),
-          mediaUrl: values.mediaUrl.trim(),
+          mediaUrl: api.files.persistedUrl(values.mediaUrl.trim()),
           difficultyLevel: values.difficultyLevel,
           cognitiveLevel: values.cognitiveLevel,
           cloIds,
@@ -319,7 +322,7 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
           </Button>
         </>
       )}
-      <Field label="URL hình ảnh (không bắt buộc)" name="mediaUrl" type="url" defaultValue={initial.mediaUrl || ''} />
+      <QuestionMediaField initialUrl={initial.mediaUrl || ''} disabled={busy} onPendingChange={setMediaPending} />
       {error && (
         <p role="alert" className="text-red-700">
           {error}
@@ -331,12 +334,12 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
             variant="secondary"
             name="intent"
             value="draft"
-            disabled={busy || clos.loading || Boolean(clos.error)}
+            disabled={busy || mediaPending || clos.loading || Boolean(clos.error)}
           >
             Lưu bản nháp
           </SubmitButton>
         )}
-        <SubmitButton name="intent" value="submit" disabled={busy || clos.loading || Boolean(clos.error)}>
+        <SubmitButton name="intent" value="submit" disabled={busy || mediaPending || clos.loading || Boolean(clos.error)}>
           {initial.approvalStatus === 'PENDING' ? 'Lưu cập nhật' : 'Lưu và gửi duyệt'}
         </SubmitButton>
       </div>
@@ -1228,7 +1231,7 @@ export function LecturerAuthoringApiPage({
                   {materialMode ? modal.row.contentText || modal.row.sourceCitation : modal.row.content}
                 </p>
               )}
-              {modal.row.fileUrl && <FileLink url={modal.row.fileUrl} />}
+              {(modal.row.fileId || modal.row.fileUrl) && <FileLink url={modal.row.fileUrl} fileId={modal.row.fileId} />}
               {modal.row.mediaUrl && <FileLink url={modal.row.mediaUrl}>Xem hình ảnh</FileLink>}
               {!materialMode && <CloLabels ids={modal.row.cloIds} rows={catalogue.data} />}
               {modal.row.rejectionReason && (

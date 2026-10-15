@@ -10,6 +10,15 @@ if (new URL(location.href).searchParams.get('format') === 'YOUTUBE') {
   window.YT = {
     Player: class {
       constructor(mount, options) {
+        this.mount = mount;
+        this.parent = mount.parentNode;
+        this.frame = document.createElement('iframe');
+        this.frame.title = `Video: ${options.videoId}`;
+        this.frame.dataset.videoTest = options.videoId;
+        this.frame.src = 'about:blank';
+        mount.replaceWith(this.frame);
+        window.__youtubePlayers ??= [];
+        window.__youtubePlayers.push(this);
         this.time = 0;
         this.duration = 10;
         this.state = 2;
@@ -39,7 +48,12 @@ if (new URL(location.href).searchParams.get('format') === 'YOUTUBE') {
       seekTo(time) {
         this.time = time;
       }
-      destroy() {}
+      destroy() {
+        this.destroyed = true;
+        this.frame.remove();
+        // Model SDK teardown that restores its mount asynchronously.
+        setTimeout(() => this.parent.append(this.mount), 20);
+      }
     },
   };
 }

@@ -811,7 +811,7 @@ export function ClassObservation({ classId, subjectId, studentId, tabs = ['progr
                     ? [
                         person(row.studentId),
                         labelOf(row.sourceType),
-                        <FileLink url={row.fileUrl}>Xem minh chứng</FileLink>,
+                        <FileLink url={row.fileUrl} fileId={row.fileId}>Xem minh chứng</FileLink>,
                         dateText(row.createdAt),
                       ]
                     : [person(row.userId), labelOf(row.actionType), labelOf(row.objectType), dateText(row.createdAt)]

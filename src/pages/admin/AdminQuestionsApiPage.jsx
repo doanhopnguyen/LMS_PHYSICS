@@ -1,4 +1,6 @@
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { QuestionMediaField } from '../../components/QuestionMediaField.jsx';
+import { FileImage } from '../../components/FileImage.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
@@ -43,6 +45,7 @@ const optionRows = (initial) =>
     : Array.from({ length: 2 }, () => ({ content: '', isCorrect: false, explanation: '' }));
 
 function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError }) {
+  const [mediaPending, setMediaPending] = useState(false);
   const [subjectId, setSubjectId] = useState(initial?.subjectId || '');
   const [topicId, setTopicId] = useState(initial?.topicId || '');
   const [type, setType] = useState(initial?.questionType || 'MCQ_SINGLE');
@@ -68,6 +71,7 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError
     );
   const submit = (event) => {
     event.preventDefault();
+    if (busy || mediaPending) return;
     const values = Object.fromEntries(new FormData(event.currentTarget));
     const preparedOptions = options
       .map((option, orderIndex) => ({
@@ -91,7 +95,7 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError
       topicId,
       questionType: type,
       content: values.content.trim(),
-      mediaUrl: values.mediaUrl.trim(),
+      mediaUrl: api.files.persistedUrl(values.mediaUrl.trim()),
       difficultyLevel: values.difficultyLevel,
       cognitiveLevel: values.cognitiveLevel.trim(),
       cloIds: [...new Set(cloIds)],
@@ -169,15 +173,8 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError
             label={<>Mức nhận thức</>}
             wrapperClassName="grid gap-1.5 text-body-sm font-medium"
           />
-          <SharedFormField
-            name="mediaUrl"
-            type="url"
-            defaultValue={initial?.mediaUrl || ''}
-            className="h-10"
-            label={<>URL hình ảnh</>}
-            wrapperClassName="grid gap-1.5 text-body-sm font-medium"
-          />
         </div>
+        <QuestionMediaField initialUrl={initial?.mediaUrl || ''} disabled={busy} onPendingChange={setMediaPending} />
         <CloPicker subjectId={subjectId} resource={clos} value={cloIds} onChange={setCloIds} disabled={busy} />
         <fieldset className="grid gap-3">
           <legend className="font-semibold">Đáp án</legend>
@@ -242,7 +239,7 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError
         )}
         <SubmitButton
           busy={busy}
-          disabled={clos.loading || Boolean(clos.error) || topics.loading || Boolean(topics.error)}
+          disabled={mediaPending || clos.loading || Boolean(clos.error) || topics.loading || Boolean(topics.error)}
         >
           {initial?.questionId ? 'Lưu thay đổi' : 'Tạo câu hỏi'}
         </SubmitButton>
@@ -572,7 +569,7 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
             {review.kind === 'preview' ? (
               <>
                 {safeUrl(review.question.mediaUrl) && (
-                  <img
+                  <FileImage
                     className="max-h-80 max-w-full rounded-xl object-contain"
                     src={safeUrl(review.question.mediaUrl)}
                     alt="Hình minh họa câu hỏi"

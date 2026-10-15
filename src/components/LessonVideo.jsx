@@ -5,6 +5,7 @@ import { AuthAlert } from './AuthLayout.jsx';
 import { SelectField } from './SelectField.jsx';
 import { materialVideoSource } from '../lib/materialSources.js';
 import { MaterialVideoPlayer } from './MaterialVideoPlayer.jsx';
+import { useFileSource } from '../hooks/useFileSource.js';
 
 const formatTime = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
@@ -20,17 +21,34 @@ export function LessonVideo({ lesson }) {
   const resolved = materialVideoSource(material);
   const source = resolved?.url;
   const embedded = resolved?.type === 'embed';
+  const playback = useFileSource(
+    {
+      fileId:
+        !source || source === (material.downloadUrl || material.fileUrl || material.url) ? lesson.fileId : undefined,
+      fileUrl: source,
+    },
+    { enabled: resolved?.type === 'video' }
+  );
 
   return (
     <div className="lesson-video">
       <div className="lesson-video__player">
         {embedded ? (
           <MaterialVideoPlayer material={material} />
+        ) : playback.loading ? (
+          <p role="status">Đang tải video…</p>
+        ) : playback.error ? (
+          <p role="alert">
+            {playback.error}{' '}
+            <button type="button" onClick={playback.retry}>
+              Thử lại
+            </button>
+          </p>
         ) : source ? (
           <video
-            key={source}
+            key={playback.url}
             ref={player}
-            src={source}
+            src={playback.url}
             controls
             playsInline
             preload="metadata"

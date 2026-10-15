@@ -7,14 +7,15 @@ import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { ProgressBar } from '../../components/ProgressBar.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
-import { FormDialog } from '../../components/FormDialog.jsx';
-import { DataTable } from '../../components/DataTable.jsx';
+import { ExamHistoryDialog } from '../../components/ExamHistoryDialog.jsx';
+import { ExamWaitingRoom } from './ExamWaitingRoom.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { api } from '../../lib/apiClient.js';
 import { attemptScore, formatAttemptScore } from '../../lib/examScoring.js';
 import { navigate } from '../../lib/navigation.js';
 import { AttemptSession } from './ExamSessionPage.jsx';
+import { studentExamAvailability } from '../../lib/studentExamAvailability.js';
 
 const rowsOf = (value) =>
   Array.isArray(value)
@@ -26,7 +27,6 @@ const rowsOf = (value) =>
         : [];
 const isFinished = (attempt) =>
   Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
-const statusText = (attempt) => (isFinished(attempt) ? 'Đã nộp' : attempt ? 'Đang làm' : 'Chưa làm');
 const hasActiveAttempt = (exam) => exam.attempts?.some((attempt) => !isFinished(attempt));
 const examTypeText = (value) =>
   ({ PRACTICE: 'Luyện tập', QUIZ: 'Kiểm tra ngắn', MIDTERM: 'Kiểm tra giữa kỳ', FINAL: 'Thi cuối kỳ' })[value] ||
@@ -45,6 +45,8 @@ const examProgress = (exam, latest, active) => {
 export function ExamPracticePage() {
   const params = new URLSearchParams(window.location.search);
   const examId = params.get('examId');
+  if (examId && params.get('mode') === 'waiting')
+    return <ExamWaitingRoom key={examId} examId={examId} workspace="practice" />;
   if (examId) {
     return (
       <AttemptSession
@@ -67,6 +69,12 @@ function PracticeCenter() {
   const [notice, setNotice] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
   const [historyExam, setHistoryExam] = useState(null);
+  const [now, setNow] = useState(Date.now);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -94,11 +102,17 @@ function PracticeCenter() {
         const withAttempts = await Promise.all(
           [...unique.values()].map(async (exam) => {
             const [attemptData, policy] = await Promise.all([
-              api.exams.myAttempts(exam.examId).catch(() => []),
+              api.exams.myAttempts(exam.examId).catch(() => null),
               api.exams.attemptPolicy(exam.examId).catch(() => null),
             ]);
             const attempts = rowsOf(attemptData);
             const active = attempts.find((attempt) => !isFinished(attempt));
+            const graded = attempts.find((attempt) => attempt.status === 'GRADED' && attempt.totalScore != null);
+            const scoringQuestions = graded?.questions?.length
+              ? graded.questions
+              : graded?.attemptId
+                ? rowsOf(await api.exams.attemptQuestions(graded.attemptId).catch(() => []))
+                : [];
             return {
               ...exam,
               classLabel:
@@ -106,8 +120,9 @@ function PracticeCenter() {
                 classById.get(String(exam.classId))?.className ||
                 exam.classLabel ||
                 'Đề được chuyển',
-              attempts,
+              attempts: attemptData === null ? null : attempts,
               policy,
+              scoringQuestions,
               activeProgress: active?.attemptId
                 ? await api.exams.attemptProgress(active.attemptId).catch(() => null)
                 : null,
@@ -136,7 +151,12 @@ function PracticeCenter() {
     };
   }, [reloadKey]);
 
-  const allAttempts = examRows.flatMap((exam) => rowsOf(exam.attempts));
+  const allAttempts = examRows.flatMap((exam) =>
+    rowsOf(exam.attempts).map((attempt) => ({
+      ...attempt,
+      questions: attempt.questions?.length ? attempt.questions : exam.scoringQuestions,
+    }))
+  );
   const completedAttempts = allAttempts.filter(isFinished);
   const scored = completedAttempts.filter((item) => Number.isFinite(attemptScore(item)));
   const averageScore = scored.length
@@ -144,24 +164,9 @@ function PracticeCenter() {
     : '—';
   const displayedExamRows = examRows.filter((exam) => exam.examType === 'PRACTICE');
   const start = async (exam) => {
-    const policy = exam.policy;
-    const ended = Boolean(
-      policy?.ended || policy?.isEnded || (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now())
-    );
-    if (ended) {
-      setNotice('Đề thi đã hết thời gian làm bài, bạn không thể bắt đầu lượt mới.');
-      return;
-    }
-    if (policy && !policy.canStartAttempt) {
-      setNotice(
-        policy.remainingAttempts <= 0
-          ? 'Bạn đã sử dụng hết số lượt làm bài cho đề này.'
-          : 'Hiện không thể bắt đầu lượt làm bài mới theo chính sách của đề.'
-      );
-      return;
-    }
-    if (!Number(exam.totalQuestions)) {
-      setError('Đề thi chưa có câu hỏi nên chưa thể bắt đầu làm bài.');
+    const availability = studentExamAvailability(exam);
+    if (startingId || !availability.canOpen) {
+      setNotice(availability.reason);
       return;
     }
     setStartingId(exam.examId);
@@ -178,7 +183,11 @@ function PracticeCenter() {
     }
   };
   const openExam = (exam) => {
-    const activeAttempt = exam.attempts?.find((attempt) => !isFinished(attempt));
+    const { activeAttempt, canOpen, reason } = studentExamAvailability(exam);
+    if (startingId || !canOpen) {
+      setNotice(reason);
+      return;
+    }
     if (activeAttempt?.attemptId) {
       navigate(
         `exam_practice_center.html?examId=${encodeURIComponent(exam.examId)}&attemptId=${encodeURIComponent(activeAttempt.attemptId)}&mode=take`
@@ -268,14 +277,8 @@ function PracticeCenter() {
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
               {displayedExamRows.map((exam, index) => {
                 const latest = exam.attempts?.[0];
-                const active = exam.attempts?.find((item) => !isFinished(item));
+                const availability = studentExamAvailability(exam, now);
                 const policy = exam.policy;
-                const ended = Boolean(
-                  policy?.ended ||
-                  policy?.isEnded ||
-                  (policy?.endTime && new Date(policy.endTime).getTime() <= Date.now())
-                );
-                const hasQuestions = Number(exam.totalQuestions) > 0;
                 return (
                   <StatCard
                     key={exam.examId}
@@ -290,7 +293,7 @@ function PracticeCenter() {
                       <>
                         <div className="flex items-center justify-between gap-3 text-body-sm">
                           <span className="truncate text-[#64748B]">{exam.classLabel}</span>
-                          <span className="font-semibold text-[#334155]">{statusText(latest)}</span>
+                          <StatusBadge tone={availability.tone}>{availability.statusLabel}</StatusBadge>
                         </div>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-body-sm text-[#64748B]">
                           <span>{exam.totalQuestions ?? '—'} câu hỏi</span>
@@ -300,37 +303,43 @@ function PracticeCenter() {
                               Lượt: {policy.usedAttempts ?? 0}/{policy.maxAttempts ?? '—'}
                             </span>
                           )}
-                          {latest?.status === 'GRADED' && <span>Điểm: {formatAttemptScore(latest)}</span>}
+                          {latest?.status === 'GRADED' && (
+                            <span>Điểm: {formatAttemptScore(latest, exam.scoringQuestions)}</span>
+                          )}
                           {latest?.attemptNumber && <span>Lần làm: {latest.attemptNumber}</span>}
                         </div>
-                        {!hasQuestions && <p className="mt-2 text-body-sm text-[#B45309]">Đề chưa có câu hỏi.</p>}
+                        {availability.reason && (
+                          <p className="mt-2 text-body-sm text-[#B45309]">{availability.reason}</p>
+                        )}
                         <Button
                           className="mt-3 w-full"
-                          icon={active ? 'play_arrow' : 'assignment'}
-                          disabled={startingId === exam.examId || (!active && !hasQuestions)}
+                          icon={availability.canOpen ? 'play_arrow' : 'lock'}
+                          disabled={Boolean(startingId) || !availability.canOpen}
                           onClick={() => openExam(exam)}
                         >
-                          {startingId === exam.examId
-                            ? 'Đang mở…'
-                            : active
-                              ? 'Tiếp tục làm'
-                              : hasQuestions
-                                ? ended
-                                  ? 'Đã hết thời gian'
-                                  : policy?.canStartAttempt === false
-                                    ? policy?.remainingAttempts <= 0
-                                      ? 'Đã hết lượt làm'
-                                      : 'Chưa thể bắt đầu'
-                                    : 'Bắt đầu ôn luyện'
-                                : 'Chưa thể làm đề'}
+                          {startingId === exam.examId ? 'Đang mở…' : availability.actionLabel}
                         </Button>
+                        {availability.canWait && (
+                          <Button
+                            variant="secondary"
+                            icon="hourglass_top"
+                            className="mt-2 w-full"
+                            onClick={() =>
+                              navigate(
+                                `exam_practice_center.html?examId=${encodeURIComponent(exam.examId)}&mode=waiting`
+                              )
+                            }
+                          >
+                            Vào sảnh chờ
+                          </Button>
+                        )}
                         <Button
                           variant="secondary"
                           className="mt-2 w-full"
                           icon="history"
                           onClick={() => setHistoryExam(exam)}
                         >
-                          Lịch sử lần thi
+                          Lịch sử bài thi
                         </Button>
                       </>
                     }
@@ -343,52 +352,7 @@ function PracticeCenter() {
             )}
           </>
         )}
-        {historyExam && (
-          <FormDialog
-            title={`Lịch sử làm bài · ${historyExam.title || 'Đề thi'}`}
-            onClose={() => setHistoryExam(null)}
-            wide
-          >
-            <DataTable
-              paginate={false}
-              columns={['Lần làm', 'Bắt đầu', 'Nộp bài', 'Trạng thái', 'Điểm', '']}
-              rows={historyExam.attempts || []}
-              renderRow={(attempt) => {
-                const graded =
-                  attempt.status === 'GRADED' && attempt.totalScore !== null && attempt.totalScore !== undefined;
-                return (
-                  <tr className="border-t border-[#E2E8F0]" key={attempt.attemptId}>
-                    <td className="p-3">{attempt.attemptNumber || '—'}</td>
-                    <td className="p-3">
-                      {attempt.startedAt ? new Date(attempt.startedAt).toLocaleString('vi-VN') : '—'}
-                    </td>
-                    <td className="p-3">
-                      {attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleString('vi-VN') : 'Chưa nộp'}
-                    </td>
-                    <td className="p-3">
-                      <StatusBadge tone={graded ? 'success' : isFinished(attempt) ? 'warning' : 'neutral'}>
-                        {graded ? 'Đã chấm' : isFinished(attempt) ? 'Chờ chấm' : 'Đang làm'}
-                      </StatusBadge>
-                    </td>
-                    <td className="p-3">{graded ? formatAttemptScore(attempt) : '—'}</td>
-                    <td className="p-3">
-                      {isFinished(attempt) && (
-                        <a
-                          href={`exam_results.html?examId=${encodeURIComponent(historyExam.examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}
-                        >
-                          <Button variant="secondary">Xem</Button>
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                );
-              }}
-            />
-            {!historyExam.attempts?.length && (
-              <p className="py-6 text-center text-[#64748B]">Bạn chưa có lượt làm bài nào cho đề này.</p>
-            )}
-          </FormDialog>
-        )}
+        {historyExam && <ExamHistoryDialog exam={historyExam} onClose={() => setHistoryExam(null)} />}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>

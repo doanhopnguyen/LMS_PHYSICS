@@ -4,7 +4,7 @@ import { Button } from './Button.jsx';
 import { FormDialog } from './FormDialog.jsx';
 import { JsonDataView } from './JsonDataView.jsx';
 import { api } from '../lib/apiClient.js';
-import { safeUrl } from '../lib/lecturerUtils.js';
+import { FileDownloadButton } from './FileDownloadButton.jsx';
 import { previewType, readEvidenceFiles } from '../lib/evidencePreview.js';
 
 function EvidenceFile({ file }) {
@@ -77,16 +77,10 @@ export function SubmissionEvidence({ submission }) {
     setLoading(true);
     (async () => {
       try {
-        const response = fileId ? await api.files.downloadUrl(fileId) : null;
+        const result = await api.files.read({ fileId, evidenceUrl, fileName }, { signal: controller.signal });
         if (controller.signal.aborted) return;
-        const url = safeUrl(response?.downloadUrl || response?.url || evidenceUrl);
-        if (!url) throw new Error('Không có liên kết tệp hợp lệ.');
-        setSourceUrl(url);
-        const result = await fetch(url, { signal: controller.signal });
-        if (!result.ok) throw new Error(`Không thể tải minh chứng (${result.status}).`);
-        const name =
-          fileName || response?.fileName || decodeURIComponent(new URL(url).pathname.split('/').pop()) || 'minh-chung';
-        const entries = await readEvidenceFiles(await result.blob(), name);
+        setSourceUrl(result.url);
+        const entries = await readEvidenceFiles(result.blob, result.fileName);
         if (!controller.signal.aborted) setFiles(entries);
       } catch (err) {
         if (!controller.signal.aborted) setError(err.message || 'Không thể xem minh chứng.');
@@ -148,14 +142,12 @@ export function SubmissionEvidence({ submission }) {
             )}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
               {sourceUrl ? (
-                <a
-                  href={sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <FileDownloadButton
+                  file={{ fileId, evidenceUrl, fileName }}
                   className="text-body-sm font-medium text-primary"
                 >
-                  Mở tệp gốc
-                </a>
+                  Tải tệp gốc
+                </FileDownloadButton>
               ) : (
                 <span />
               )}

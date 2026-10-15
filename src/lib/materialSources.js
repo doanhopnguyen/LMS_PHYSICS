@@ -47,7 +47,7 @@ export function materialSourceParts(value) {
 export function materialVideoSource(material) {
   const citation = materialSourceParts(material?.sourceCitation).find((part) => part.url);
   const source = citation?.url || material?.downloadUrl || material?.fileUrl || material?.url;
-  if (!source) return null;
+  if (!source) return material?.fileId ? { type: 'video', url: null } : null;
   try {
     const url = new URL(source, 'http://local');
     if (!['http:', 'https:'].includes(url.protocol)) return null;

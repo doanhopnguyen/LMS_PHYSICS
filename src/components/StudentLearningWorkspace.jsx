@@ -125,7 +125,7 @@ export function StudentLearningWorkspace({
           </Card>
         )}
         {lesson ? (
-          <>
+          <div key={lesson.materialId} className="chapter-active-lesson space-y-5">
             <div className="chapter-panel-heading">
               <div>
                 <span>
@@ -165,7 +165,7 @@ export function StudentLearningWorkspace({
               onNext={next}
               onComplete={() => learning.markComplete(lesson.materialId)}
             />
-          </>
+          </div>
         ) : (
           <div className="chapter-empty">
             <span className="material-symbols-outlined" aria-hidden="true">

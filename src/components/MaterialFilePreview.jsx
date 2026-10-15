@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from './Button.jsx';
 import { FormDialog } from './FormDialog.jsx';
 import { previewType, formatJson } from '../lib/evidencePreview.js';
-import { safeUrl } from '../lib/lecturerUtils.js';
+import { api } from '../lib/apiClient.js';
 import { MaterialVideoPlayer } from './MaterialVideoPlayer.jsx';
 import { MarkdownContent } from './MarkdownContent.jsx';
 
@@ -16,12 +16,7 @@ export function MaterialFilePreview({ material, fill = false }) {
     let objectUrl;
     setState({ loading: true });
     (async () => {
-      const source = safeUrl(material.downloadUrl || material.fileUrl || material.url);
-      if (!source) throw new Error('Không có liên kết tài liệu hợp lệ.');
-      const response = await fetch(source, { signal: controller.signal });
-      if (!response.ok) throw new Error(`Không thể tải tài liệu (${response.status}).`);
-      const blob = await response.blob();
-      const name = material.fileName || decodeURIComponent(new URL(source).pathname.split('/').pop()) || material.title;
+      const { blob, fileName: name } = await api.files.read(material, { signal: controller.signal });
       const isMarkdown =
         material.type === 'MARKDOWN' ||
         /\.(md|markdown)$/i.test(name) ||
@@ -43,7 +38,16 @@ export function MaterialFilePreview({ material, fill = false }) {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [material.downloadUrl, material.fileUrl, material.url, material.fileName, material.title, material.type, attempt]);
+  }, [
+    material.fileId,
+    material.downloadUrl,
+    material.fileUrl,
+    material.url,
+    material.fileName,
+    material.title,
+    material.type,
+    attempt,
+  ]);
   if (material.type === 'VIDEO') return <MaterialVideoPlayer material={material} fill={fill} />;
   if (state.loading) return <p role="status">Đang tải tài liệu…</p>;
   if (state.error)

@@ -6,6 +6,8 @@ import {
   rawScoreFromTen,
   attemptScore,
   formatAttemptScore,
+  attemptMaxScore,
+  examScoringSummary,
 } from '../src/lib/examScoring.js';
 
 test('weighted totals, not correct-answer counts, determine the ten-point score', () => {
@@ -13,6 +15,56 @@ test('weighted totals, not correct-answer counts, determine the ten-point score'
   assert.equal(examMaxScore(questions), 5);
   assert.equal(attemptScore({ status: 'GRADED', totalScore: 2, questions }), 4);
   assert.equal(attemptScore({ status: 'GRADED', totalScore: 3, questions }), 6);
+});
+
+test('saved matrix weights and equal manual questions use the same ten-point display', () => {
+  const matrixQuestions = [
+    ...Array.from({ length: 6 }, () => ({ scoreWeight: 1 })),
+    ...Array.from({ length: 2 }, () => ({ scoreWeight: 2 })),
+  ];
+  assert.equal(attemptScore({ status: 'GRADED', totalScore: 6 }, matrixQuestions), 6);
+  assert.equal(attemptScore({ status: 'GRADED', totalScore: 4 }, matrixQuestions), 4);
+  const savedMatrixWeights = [
+    ...Array.from({ length: 6 }, () => ({ scoreWeight: 40 })),
+    ...Array.from({ length: 2 }, () => ({ scoreWeight: 60 })),
+  ];
+  assert.equal(examMaxScore(savedMatrixWeights), 360);
+  assert.equal(attemptScore({ status: 'GRADED', totalScore: 240 }, savedMatrixWeights), 6.67);
+  assert.equal(rawScoreFromTen(8, examMaxScore(savedMatrixWeights)), 288);
+  assert.equal(examScoringSummary({ matrixId: 'matrix' }, matrixQuestions).label, 'Điểm theo ma trận');
+  assert.equal(
+    examScoringSummary(
+      {},
+      Array.from({ length: 8 }, () => ({}))
+    ).label,
+    'Chia đều điểm'
+  );
+  assert.equal(
+    attemptScore(
+      { status: 'GRADED', totalScore: 6 },
+      Array.from({ length: 8 }, () => ({}))
+    ),
+    7.5
+  );
+  assert.equal(examScoringSummary({}, [{ scoreWeight: 2 }, { scoreWeight: 3 }]).label, 'Điểm theo trọng số');
+});
+
+test('historical attempt weights take precedence over a current exam definition', () => {
+  const attempt = {
+    status: 'GRADED',
+    totalScore: 2,
+    totalQuestions: 2,
+    questions: [{ scoreWeight: 2 }, { scoreWeight: 3 }],
+  };
+  assert.equal(attemptMaxScore(attempt, [{ scoreWeight: 5 }, { scoreWeight: 5 }]), 5);
+  assert.equal(attemptScore(attempt, [{ scoreWeight: 5 }, { scoreWeight: 5 }]), 4);
+});
+
+test('incomplete question metadata cannot silently produce a wrong denominator', () => {
+  const attempt = { status: 'GRADED', totalScore: 2, totalQuestions: 3 };
+  assert.equal(attemptScore(attempt, [{ scoreWeight: 2 }, { scoreWeight: 3 }]), null);
+  assert.equal(examMaxScore([{}, {}], 3), null);
+  assert.equal(attemptScore({ ...attempt, questions: [{ scoreWeight: 2 }] }, [{ scoreWeight: 2 }, {}, {}]), null);
 });
 test('missing weights use the backend default of one and floating sums remain stable', () => {
   assert.equal(examMaxScore([{}, { scoreWeight: null }, { scoreWeight: '2' }]), 4);

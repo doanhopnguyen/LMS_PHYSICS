@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { FormDialog } from './FormDialog.jsx';
 import { materialSourceParts } from '../lib/materialSources.js';
+import { FileDownloadButton } from './FileDownloadButton.jsx';
+import { api } from '../lib/apiClient.js';
 
 export function MaterialSource({ value, title = 'Video nguồn học liệu' }) {
   const [viewing, setViewing] = useState(null);
@@ -10,6 +12,10 @@ export function MaterialSource({ value, title = 'Video nguồn học liệu' }) 
         {materialSourceParts(value).map((part, index) =>
           !part.url ? (
             <React.Fragment key={index}>{part.text}</React.Fragment>
+          ) : api.files.isBackendUrl(part.url) ? (
+            <FileDownloadButton key={index} file={part.url}>
+              {part.text}
+            </FileDownloadButton>
           ) : part.video ? (
             <button
               type="button"

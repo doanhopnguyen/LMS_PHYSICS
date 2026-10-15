@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ProgressBar } from './ProgressBar.jsx';
 import { progressKey, readMaterialProgress, reconcileMaterialProgress } from '../lib/materialProgress.js';
 
@@ -52,6 +52,19 @@ export function StudentLearningTree({
       chapterName: chapters.length ? 'Chủ đề chưa phân chương' : 'Chương trình học',
       topics: ungrouped,
     });
+  const initialChapter =
+    groups.find((chapter) => chapter.topics.some((topic) => String(topic.topicId) === String(activeTopicId))) ||
+    groups[0];
+  const initialChapterId = initialChapter ? String(initialChapter.chapterId) : null;
+  const initialTopicId =
+    initialChapter?.topics.find((topic) => String(topic.topicId) === String(activeTopicId))?.topicId ??
+    initialChapter?.topics[0]?.topicId;
+  const initialTopicKey = initialTopicId == null ? null : String(initialTopicId);
+  const [expanded, setExpanded] = useState({ chapterId: initialChapterId, topicId: initialTopicKey });
+  useEffect(() => {
+    // Reveal the selected lesson's branch, including links opened directly.
+    setExpanded({ chapterId: initialChapterId, topicId: initialTopicKey });
+  }, [classId, subjectId, scope, activeTopicId, activeMaterialId, initialChapterId, initialTopicKey]);
   const total = topicNodes.reduce((sum, topic) => sum + topic.materials.length, 0);
   const done = topicNodes.reduce((sum, topic) => sum + topic.done, 0);
   return (
@@ -69,18 +82,24 @@ export function StudentLearningTree({
         </p>
       </div>
       <nav aria-label="Cây chương trình học" className="student-learning-tree__nodes">
-        {groups.map((chapter, chapterIndex) => {
+        {groups.map((chapter) => {
           const chapterTotal = chapter.topics.reduce((sum, topic) => sum + topic.materials.length, 0);
           const chapterDone = chapter.topics.reduce((sum, topic) => sum + topic.done, 0);
           return (
             <details
               key={chapter.chapterId}
-              open={
-                chapterIndex === 0 || chapter.topics.some((topic) => String(topic.topicId) === String(activeTopicId))
-              }
+              open={expanded.chapterId === String(chapter.chapterId)}
               className="student-learning-tree__chapter"
             >
-              <summary>
+              <summary
+                onClick={(event) => {
+                  event.preventDefault();
+                  setExpanded((current) => ({
+                    chapterId: current.chapterId === String(chapter.chapterId) ? null : String(chapter.chapterId),
+                    topicId: null,
+                  }));
+                }}
+              >
                 <span className="material-symbols-outlined student-learning-tree__chevron" aria-hidden="true">
                   chevron_right
                 </span>
@@ -95,16 +114,23 @@ export function StudentLearningTree({
                 </span>
               </summary>
               <div className="student-learning-tree__branch">
-                {chapter.topics.map((topic, topicIndex) => (
+                {chapter.topics.map((topic) => (
                   <details
                     key={topic.topicId}
                     open={
-                      String(topic.topicId) === String(activeTopicId) ||
-                      (!activeTopicId && chapterIndex === 0 && topicIndex === 0)
+                      expanded.chapterId === String(chapter.chapterId) && expanded.topicId === String(topic.topicId)
                     }
                     className="student-learning-tree__topic"
                   >
-                    <summary>
+                    <summary
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setExpanded((current) => ({
+                          chapterId: String(chapter.chapterId),
+                          topicId: current.topicId === String(topic.topicId) ? null : String(topic.topicId),
+                        }));
+                      }}
+                    >
                       <span className="material-symbols-outlined student-learning-tree__chevron" aria-hidden="true">
                         chevron_right
                       </span>

@@ -244,7 +244,7 @@ export function AdminMaterialsPage({ embedded = false }) {
                   </p>
                 )}
               </div>
-              {(safeUrl(detail.fileUrl) || (detail.type === 'VIDEO' && materialVideoSource(detail))) && (
+              {(detail.fileId || safeUrl(detail.fileUrl) || (detail.type === 'VIDEO' && materialVideoSource(detail))) && (
                 <Button
                   variant="secondary"
                   aria-expanded={previewOpen}

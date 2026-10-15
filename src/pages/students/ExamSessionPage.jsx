@@ -12,6 +12,10 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
 import { navigate } from '../../lib/navigation.js';
+import { studentExamAvailability } from '../../lib/studentExamAvailability.js';
+import { ExamHistoryDialog } from '../../components/ExamHistoryDialog.jsx';
+import { ExamWaitingRoom } from './ExamWaitingRoom.jsx';
+import { FileImage } from '../../components/FileImage.jsx';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const finished = (attempt) =>
@@ -39,9 +43,18 @@ function ExamSelection() {
   const [loading, setLoading] = useState(true);
   const [startingId, setStartingId] = useState('');
   const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
+  const [historyExam, setHistoryExam] = useState(null);
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     let alive = true;
     (async () => {
+      setLoading(true);
+      setError('');
       try {
         const classes = rowsOf(await api.students.myClasses());
         const grouped = await Promise.all(
@@ -60,11 +73,16 @@ function ExamSelection() {
         ].forEach((exam) => unique.set(String(exam.examId), exam));
         const withAttempts = await Promise.all(
           [...unique.values()].map(async (exam) => {
-            const attempts = rowsOf(await api.exams.myAttempts(exam.examId).catch(() => []));
+            const [attemptData, policy] = await Promise.all([
+              api.exams.myAttempts(exam.examId).catch(() => null),
+              api.exams.attemptPolicy(exam.examId).catch(() => null),
+            ]);
+            const attempts = rowsOf(attemptData);
             const active = attempts.find((attempt) => !finished(attempt));
             return {
               ...exam,
-              attempts,
+              attempts: attemptData === null ? null : attempts,
+              policy,
               activeProgress: active?.attemptId
                 ? await api.exams.attemptProgress(active.attemptId).catch(() => null)
                 : null,
@@ -81,8 +99,16 @@ function ExamSelection() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [reloadKey]);
   const start = async (exam) => {
+    const availability = studentExamAvailability(exam);
+    if (startingId || !availability.canOpen) return;
+    if (availability.activeAttempt?.attemptId) {
+      navigate(
+        `exam_session.html?examId=${encodeURIComponent(exam.examId)}&attemptId=${encodeURIComponent(availability.activeAttempt.attemptId)}&mode=take`
+      );
+      return;
+    }
     setStartingId(exam.examId);
     setError('');
     try {
@@ -97,7 +123,20 @@ function ExamSelection() {
     }
   };
   return (
-    <AppShell currentPage="exam_session.html" title="Kiểm tra · PTIT Physics LMS">
+    <AppShell
+      currentPage="exam_session.html"
+      title="Kiểm tra · PTIT Physics LMS"
+      filterActions={
+        <Button
+          variant="secondary"
+          icon="refresh"
+          disabled={loading}
+          onClick={() => setReloadKey((value) => value + 1)}
+        >
+          Tải lại
+        </Button>
+      }
+    >
       <PageContainer>
         <PageTitle
           eyebrow="KIỂM TRA"
@@ -116,7 +155,8 @@ function ExamSelection() {
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             {exams.map((exam, index) => {
               const latest = exam.attempts?.[0];
-              const active = exam.attempts?.find((attempt) => !finished(attempt));
+              const availability = studentExamAvailability(exam, now);
+              const active = availability.activeAttempt;
               const progress = selectionProgress(exam, latest, active);
               return (
                 <StatCard
@@ -132,27 +172,46 @@ function ExamSelection() {
                     <>
                       <div className="flex items-center justify-between gap-3 text-body-sm">
                         <span className="truncate text-[#64748B]">{exam.classLabel || 'Đề được chuyển'}</span>
-                        <span className="font-semibold text-[#334155]">
-                          {finished(latest) ? 'Đã nộp' : active ? 'Đang làm' : 'Chưa làm'}
-                        </span>
+                        <StatusBadge tone={availability.tone}>{availability.statusLabel}</StatusBadge>
                       </div>
                       <p className="mt-2 text-body-sm text-[#64748B]">
                         {exam.totalQuestions ?? '—'} câu hỏi ·{' '}
                         {exam.durationMinutes ? `${exam.durationMinutes} phút` : 'Không giới hạn thời gian'}
                       </p>
+                      {exam.policy && (
+                        <p className="mt-2 text-body-sm text-[#64748B]">
+                          Lượt: {exam.policy.usedAttempts ?? exam.attempts?.length ?? 0}/
+                          {exam.policy.maxAttempts ?? exam.maxAttempts ?? '—'}
+                        </p>
+                      )}
+                      {availability.reason && <p className="mt-2 text-body-sm text-[#B45309]">{availability.reason}</p>}
                       <Button
                         className="mt-3 w-full"
-                        icon="play_arrow"
-                        disabled={startingId === exam.examId}
-                        onClick={() =>
-                          active?.attemptId
-                            ? navigate(
-                                `exam_session.html?examId=${encodeURIComponent(exam.examId)}&attemptId=${encodeURIComponent(active.attemptId)}&mode=take`
-                              )
-                            : start(exam)
-                        }
+                        icon={availability.canOpen ? 'play_arrow' : 'lock'}
+                        disabled={Boolean(startingId) || !availability.canOpen}
+                        onClick={() => start(exam)}
                       >
-                        {startingId === exam.examId ? 'Đang mở…' : active ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài'}
+                        {startingId === exam.examId ? 'Đang mở…' : availability.actionLabel}
+                      </Button>
+                      {availability.canWait && (
+                        <Button
+                          variant="secondary"
+                          icon="hourglass_top"
+                          className="mt-2 w-full"
+                          onClick={() =>
+                            navigate(`exam_session.html?examId=${encodeURIComponent(exam.examId)}&mode=waiting`)
+                          }
+                        >
+                          Vào sảnh chờ
+                        </Button>
+                      )}
+                      <Button
+                        variant="secondary"
+                        icon="history"
+                        className="mt-2 w-full"
+                        onClick={() => setHistoryExam(exam)}
+                      >
+                        Lịch sử bài thi
                       </Button>
                     </>
                   }
@@ -164,16 +223,21 @@ function ExamSelection() {
         {!loading && !error && !exams.length && (
           <Card className="p-10 text-center text-[#64748B]">Chưa có đề kiểm tra nào.</Card>
         )}
+        {historyExam && <ExamHistoryDialog exam={historyExam} onClose={() => setHistoryExam(null)} />}
       </PageContainer>
     </AppShell>
   );
 }
 
-export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam' }) {
+export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode, workspace = 'exam' }) {
   const practiceWorkspace = workspace === 'practice';
   const sessionPage = practiceWorkspace ? 'exam_practice_center.html' : 'exam_session.html';
   const overviewPage = practiceWorkspace ? 'exam_practice_center.html' : 'exam_session.html';
   const [exam, setExam] = useState(null);
+  const [policy, setPolicy] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const waitingForStart = studentExamAvailability({ ...exam, policy }).canWait;
+  const takeMode = requestedTakeMode && !waitingForStart;
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
@@ -198,13 +262,15 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
       setLoading(true);
       setError('');
       try {
-        const [examData, attemptData] = await Promise.all([
+        const [examData, attemptData, policyData] = await Promise.all([
           api.exams.get(examId),
           attemptId ? api.exams.getAttempt(attemptId) : api.exams.myAttempt(examId).catch(() => null),
+          api.exams.attemptPolicy(examId).catch(() => null),
         ]);
         if (!alive) return;
         setExam(examData);
         setAttempt(attemptData);
+        setPolicy(policyData);
       } catch (loadError) {
         if (alive) setError(loadError?.message || 'Không thể tải phiên kiểm tra.');
       } finally {
@@ -374,6 +440,14 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
     );
   };
   const start = async () => {
+    const access = studentExamAvailability({ ...exam, policy, attempts: attempt ? [attempt] : [] });
+    if (starting || !access.canOpen) return;
+    if (access.activeAttempt?.attemptId) {
+      navigate(
+        `${sessionPage}?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(access.activeAttempt.attemptId)}&mode=take`
+      );
+      return;
+    }
     setStarting(true);
     setError('');
     try {
@@ -390,6 +464,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
   };
   const title = exam?.title || 'Phiên kiểm tra';
   const isCompleted = finished(attempt);
+  const availability = studentExamAvailability({ ...exam, policy, attempts: attempt ? [attempt] : [] });
   const isGraded = attempt?.status === 'GRADED';
   const statusLabel = isCompleted ? 'Đã nộp bài' : attempt ? 'Phiên đang mở' : 'Chưa bắt đầu';
   const metrics = [
@@ -426,6 +501,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
       tone: isGraded ? 'success' : 'warning',
     },
   ];
+  if (!loading && exam && waitingForStart) return <ExamWaitingRoom examId={examId} workspace={workspace} />;
   return (
     <AppShell
       currentPage={sessionPage}
@@ -461,6 +537,10 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                   {submitting ? 'Đang nộp…' : 'Nộp bài'}
                 </Button>
               </div>
+            ) : !takeMode && exam ? (
+              <Button variant="secondary" icon="history" onClick={() => setHistoryOpen(true)}>
+                Lịch sử bài thi
+              </Button>
             ) : null
           }
         />
@@ -492,16 +572,22 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       )}
                     </div>
                     {!attempt && (
-                      <Button icon="play_arrow" disabled={starting} onClick={start}>
-                        {starting ? 'Đang bắt đầu…' : 'Bắt đầu làm bài'}
+                      <Button
+                        icon={availability.canOpen ? 'play_arrow' : 'lock'}
+                        disabled={starting || !availability.canOpen}
+                        onClick={start}
+                      >
+                        {starting ? 'Đang bắt đầu…' : availability.actionLabel}
                       </Button>
                     )}
                     {attempt && !isCompleted && (
-                      <a
-                        href={`${sessionPage}?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}&mode=take`}
+                      <Button
+                        icon={availability.canOpen ? 'play_arrow' : 'lock'}
+                        disabled={!availability.canOpen}
+                        onClick={start}
                       >
-                        <Button icon="play_arrow">Vào làm bài</Button>
-                      </a>
+                        {availability.actionLabel}
+                      </Button>
                     )}
                     {isCompleted && (
                       <a
@@ -511,6 +597,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                       </a>
                     )}
                   </div>
+                  {!isCompleted && availability.reason && <p className="mt-3 text-body-sm">{availability.reason}</p>}
                 </div>
                 <div className="p-5 md:p-6">
                   <MetricGrid items={metrics} />
@@ -549,7 +636,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                             </Button>
                           </div>
                           {question.mediaUrl && (
-                            <img src={question.mediaUrl} alt="Nội dung minh họa" className="mt-3 max-h-64 rounded-lg" />
+                            <FileImage src={question.mediaUrl} alt="Nội dung minh họa" className="mt-3 max-h-64 rounded-lg" />
                           )}
                           {['SHORT_ANSWER'].includes(question.questionType) ? (
                             <SharedFormField
@@ -687,9 +774,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                     <dl className="mt-5 space-y-4 text-body-sm">
                       <div className="border-b border-[#E2E8F0] pb-3">
                         <dt className="text-[#64748B]">Loại đề</dt>
-                        <dd className="mt-1 font-semibold">
-                          {labelOf(exam?.examType)}
-                        </dd>
+                        <dd className="mt-1 font-semibold">{labelOf(exam?.examType)}</dd>
                       </div>
                       <div className="border-b border-[#E2E8F0] pb-3">
                         <dt className="text-[#64748B]">Thời gian mở đề</dt>
@@ -717,17 +802,19 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
                   </div>
                 </div>
                 {!attempt && (
-                  <Button className="mt-6" icon="play_arrow" disabled={starting} onClick={start}>
-                    {starting ? 'Đang bắt đầu…' : 'Bắt đầu làm bài'}
+                  <Button
+                    className="mt-6"
+                    icon="play_arrow"
+                    disabled={starting || !availability.canOpen}
+                    onClick={start}
+                  >
+                    {starting ? 'Đang bắt đầu…' : availability.actionLabel}
                   </Button>
                 )}
                 {attempt && !isCompleted && (
-                  <a
-                    className="mt-6 inline-block"
-                    href={`${sessionPage}?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}&mode=take`}
-                  >
-                    <Button icon="play_arrow">Vào làm bài</Button>
-                  </a>
+                  <Button className="mt-6" icon="play_arrow" disabled={!availability.canOpen} onClick={start}>
+                    {availability.actionLabel}
+                  </Button>
                 )}
                 {isCompleted && (
                   <a
@@ -741,6 +828,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
             )}
           </div>
         )}
+        {historyOpen && exam && <ExamHistoryDialog exam={exam} onClose={() => setHistoryOpen(false)} />}
       </PageContainer>
     </AppShell>
   );
@@ -749,6 +837,7 @@ export function AttemptSession({ examId, attemptId, takeMode, workspace = 'exam'
 export function ExamSessionPage() {
   const params = new URLSearchParams(window.location.search);
   const examId = params.get('examId');
+  if (examId && params.get('mode') === 'waiting') return <ExamWaitingRoom key={examId} examId={examId} />;
   return examId ? (
     <AttemptSession examId={examId} attemptId={params.get('attemptId')} takeMode={params.get('mode') === 'take'} />
   ) : (

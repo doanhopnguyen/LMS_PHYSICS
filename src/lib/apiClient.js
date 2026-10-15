@@ -1,4 +1,7 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+import { uploadFileInChunks } from './chunkUpload.js';
+import { fileUrls, createFileReader } from './fileAccess.js';
+
+const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const ACCESS_TOKEN_KEY = 'ptit-physics-access-token';
 const REFRESH_TOKEN_KEY = 'ptit-physics-refresh-token';
 
@@ -83,8 +86,10 @@ export async function apiRequest(path, options = {}) {
       method,
       headers: requestHeaders,
       body: formData || (body === undefined ? undefined : JSON.stringify(body)),
+      signal: options.signal,
     });
   } catch (networkError) {
+    if (options.signal?.aborted || networkError.name === 'AbortError') throw networkError;
     throw new ApiError('Không thể kết nối tới máy chủ API. Kiểm tra VITE_API_BASE_URL hoặc backend tại cổng 8080.');
   }
 
@@ -106,6 +111,13 @@ export async function apiRequest(path, options = {}) {
   }
   return payload?.data ?? payload;
 }
+
+const fileUrlTools = () => fileUrls(API_BASE_URL, window.location.origin);
+const fileReader = createFileReader({
+  request: apiRequest,
+  resolve: (value) => fileUrlTools().resolve(value),
+  isBackend: (value) => fileUrlTools().isBackend(value),
+});
 
 export const api = {
   // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -249,10 +261,6 @@ export const api = {
     sendToClass: (classId, body) => apiRequest(`/api/v1/notifications/classes/${classId}`, { method: 'POST', body }),
   },
 
-  files: {
-    upload: (formData) => apiRequest('/api/v1/files/upload', { method: 'POST', formData }),
-  },
-
   examMatrices: {
     list: (query) => apiRequest('/api/v1/exam-matrices', { query }),
     get: (id) => apiRequest(`/api/v1/exam-matrices/${id}`),
@@ -349,9 +357,21 @@ export const api = {
 
   // ─── Files ───────────────────────────────────────────────────────────────────
   files: {
-    upload: (formData, query) => apiRequest('/api/v1/files/upload', { method: 'POST', formData, query }),
+    upload: async (fileOrForm, options = {}) => {
+      const file = fileOrForm instanceof FormData ? fileOrForm.get('file') : fileOrForm;
+      const result = await uploadFileInChunks(file, apiRequest, options);
+      return { ...result, url: result.fileUrl, size: result.fileSize, contentType: file.type || 'application/octet-stream' };
+    },
+    uploadStatus: (uploadId) => apiRequest(`/api/v1/files/chunks/${encodeURIComponent(uploadId)}/status`),
+    resolveUrl: (fileUrl) => fileUrlTools().resolve(fileUrl),
+    persistedUrl: (fileUrl) => fileUrlTools().persisted(fileUrl),
+    isBackendUrl: (fileUrl) => fileUrlTools().isBackend(fileUrl),
+    read: fileReader.read,
+    location: fileReader.location,
+    download: fileReader.download,
+    uploadDirect: (formData, query) => apiRequest('/api/v1/files/upload', { method: 'POST', formData, query }),
     downloadUrl: (fileId) => apiRequest(`/api/v1/files/${fileId}/download-url`, { method: 'POST' }),
-    /** Get a public read-only URL for a stored file (no auth needed). */
-    url: (filePath) => makeUrl(`/api/v1/files/${filePath}`, {}),
+    /** Resolve a stored file path against the backend (protected files still require authorization). */
+    url: (filePath) => fileUrlTools().resolve(filePath),
   },
 };

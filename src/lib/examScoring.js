@@ -6,11 +6,13 @@ const finiteScore = (value) =>
       : null;
 export const roundScore = (value) =>
   Math.round((Number(value) + Number.EPSILON * Math.max(1, Math.abs(Number(value)))) * 100) / 100;
-export function examMaxScore(questions) {
+export const questionWeight = (question) => (question?.scoreWeight == null ? 1 : finiteScore(question.scoreWeight));
+export function examMaxScore(questions, expectedCount) {
   if (!Array.isArray(questions) || !questions.length) return null;
+  if (expectedCount != null && Number(expectedCount) > 0 && questions.length !== Number(expectedCount)) return null;
   let total = 0;
   for (const question of questions) {
-    const weight = question.scoreWeight == null ? 1 : finiteScore(question.scoreWeight);
+    const weight = questionWeight(question);
     if (weight === null || weight < 0) return null;
     total += weight;
   }
@@ -29,7 +31,26 @@ export function rawScoreFromTen(value, maxScore) {
   return Math.min(maxScore, roundScore((score * maxScore) / 10));
 }
 export function attemptScore(attempt, questions = attempt?.questions) {
-  return attempt?.status === 'GRADED' ? tenPointScore(attempt.totalScore, examMaxScore(questions)) : null;
+  return attempt?.status === 'GRADED' ? tenPointScore(attempt.totalScore, attemptMaxScore(attempt, questions)) : null;
+}
+export function attemptMaxScore(attempt, questions) {
+  const snapshot = attempt?.questions?.length ? attempt.questions : questions;
+  return examMaxScore(snapshot, attempt?.totalQuestions);
+}
+export function examScoringSummary(exam, questions) {
+  const maxScore = examMaxScore(questions);
+  const equal =
+    questions?.length > 0 && questions.every((question) => questionWeight(question) === questionWeight(questions[0]));
+  const matrix = Boolean(exam?.matrixId);
+  return {
+    maxScore,
+    label: matrix ? 'Điểm theo ma trận' : equal ? 'Chia đều điểm' : 'Điểm theo trọng số',
+    description: matrix
+      ? 'Điểm từng câu dùng trọng số đã lưu trong đề từ ma trận; kết quả cuối cùng quy đổi về thang 10.'
+      : equal
+        ? `Đề không có ma trận: ${questions.length} câu được chia đều trên thang 10.`
+        : 'Đề không có ma trận: tính theo trọng số riêng đã lưu cho từng câu và quy đổi về thang 10.',
+  };
 }
 export function formatAttemptScore(attempt, questions = attempt?.questions) {
   if (attempt?.status !== 'GRADED' || finiteScore(attempt.totalScore) === null) return 'Chưa chấm';

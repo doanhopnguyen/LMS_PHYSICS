@@ -114,7 +114,9 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Saigon' });
   await send('Page.addScriptToEvaluateOnNewDocument', {
-    source: await readFile('scripts/fixtures/student-course-materials-api.js', 'utf8'),
+    source:
+      (await readFile('scripts/fixtures/student-course-materials-api.js', 'utf8')) +
+      "\nstudentTopics.push({topicId:'topic4',topicName:'Extra topic',subjectId:'subject1',chapterId:'chapter1'});",
   });
 
   await go('course_detail.html?classId=course1');
@@ -133,7 +135,7 @@ try {
     assert.equal(await evaluate(`document.querySelectorAll('a[href*="scope=CLASS"]').length`), 12);
     assert.equal(await evaluate(`document.querySelectorAll('a[href*="scope=SHARED"]').length`), 0);
   });
-  await check('Chapters and topics expand and collapse independently', async () => {
+  await check('The open topic can be collapsed and reopened', async () => {
     assert.equal(await evaluate(`document.querySelectorAll('.student-learning-tree__chapter').length`), 1);
     await evaluate(`document.querySelector('.student-learning-tree__topic summary').click()`);
     assert.equal(await evaluate(`document.querySelector('.student-learning-tree__topic').open`), false);
@@ -202,11 +204,28 @@ try {
       true
     );
   });
+  await check('Opening a topic or chapter closes the previous branch', async () => {
+    await evaluate(
+      `document.querySelectorAll('.student-learning-tree__chapter')[0].querySelectorAll('.student-learning-tree__topic summary')[1].click()`
+    );
+    assert.equal(await evaluate(`document.querySelectorAll('.student-learning-tree__topic[open]').length`), 1);
+    assert.equal(await evaluate(`document.querySelector('.student-learning-tree__topic').open`), false);
+    await evaluate(`document.querySelectorAll('.student-learning-tree__chapter')[1].querySelector('summary').click()`);
+    assert.equal(await evaluate(`document.querySelectorAll('.student-learning-tree__chapter[open]').length`), 1);
+    assert.equal(await evaluate(`document.querySelector('.student-learning-tree__chapter').open`), false);
+    assert.equal(await evaluate(`document.querySelectorAll('.student-learning-tree__topic[open]').length`), 0);
+    await evaluate(
+      `document.querySelectorAll('.student-learning-tree__chapter')[1].querySelector('.student-learning-tree__topic summary').click()`
+    );
+    assert.equal(await evaluate(`document.querySelectorAll('.student-learning-tree__topic[open]').length`), 1);
+  });
   await evaluate(`document.querySelector('.chapter-outline a[href*="materialId=shared-next"]').click()`);
   await wait(
     `location.search.includes('topicId=topic2') && document.querySelector('a[aria-current=page][href*="shared-next"]')`
   );
   await check('Selecting another chapter opens its lesson and uses its own progress', async () => {
+    assert.equal(await evaluate(`document.querySelectorAll('.student-learning-tree__chapter[open]').length`), 1);
+    assert.equal(await evaluate(`document.querySelectorAll('.student-learning-tree__topic[open]').length`), 1);
     await evaluate(`document.querySelector('.lesson-controls button:nth-child(2)').click()`);
     await wait(`calls.some(c=>c.method==='PUT' && c.body?.topicId==='topic2' && c.body?.progressPercent===100)`);
     assert.equal(
@@ -311,6 +330,26 @@ try {
       ),
       true
     );
+  });
+  await check('Switching and closing lessons removes old YouTube players instead of stacking them', async () => {
+    for (let repeat = 0; repeat < 3; repeat++) {
+      const previousPlayer = await evaluate(`window.__youtubePlayers.length - 1`);
+      await evaluate(`document.querySelector('a[href*="materialId=shared1&"]').click()`);
+      await wait(`document.querySelector('#chapter-lesson-panel h1')?.textContent.includes('1')`);
+      await pause(80);
+      assert.equal(await evaluate(`document.querySelectorAll('#chapter-lesson-panel iframe').length`), 0);
+      assert.equal(await evaluate(`window.__youtubePlayers[${previousPlayer}].destroyed`), true);
+      assert.equal(await evaluate(`document.querySelectorAll('.chapter-panel-heading').length`), 1);
+      await evaluate(`document.querySelector('a[href*="materialId=shared0&"]').click()`);
+      await wait(`document.querySelector('#chapter-lesson-panel iframe')`);
+      assert.equal(await evaluate(`document.querySelectorAll('#chapter-lesson-panel iframe').length`), 1);
+      assert.equal(await evaluate(`window.__youtubePlayers.filter(player=>!player.destroyed).length`), 1);
+    }
+    await evaluate(`document.querySelector('button[aria-label="Đóng học liệu"]').click()`);
+    await wait(`document.querySelector('#chapter-lesson-panel .chapter-empty')`);
+    await pause(80);
+    assert.equal(await evaluate(`document.querySelectorAll('#chapter-lesson-panel iframe').length`), 0);
+    assert.equal(await evaluate(`window.__youtubePlayers.filter(player=>!player.destroyed).length`), 0);
   });
   assert.deepEqual(errors, []);
 

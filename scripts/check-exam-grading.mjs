@@ -4,6 +4,7 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const origin = process.env.UI_ORIGIN || 'http://127.0.0.1:5198';
+const matrixMode = process.env.GRADING_MATRIX === '1';
 const directory = path.resolve('.tmp-exam-grading');
 await mkdir(directory, { recursive: true });
 const browser = spawn(
@@ -114,7 +115,8 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await send('Emulation.setTimezoneOverride', { timezoneId: 'Asia/Saigon' });
   await send('Page.addScriptToEvaluateOnNewDocument', {
-    source: await readFile('scripts/fixtures/lecturer-workspace-api.js', 'utf8'),
+    source: (await readFile('scripts/fixtures/lecturer-workspace-api.js', 'utf8')) +
+      (matrixMode ? "\nexams[0].matrixId = 'matrix-test';" : ''),
   });
 
   await go('lecturer_grading.html?classId=c0');
@@ -156,6 +158,9 @@ try {
   await wait(`document.querySelector('[role=dialog] tbody tr')`);
   await evaluate(`document.querySelector('[role=dialog] tbody tr').querySelectorAll('button')[1].click()`);
   await wait(`document.querySelector('input[name=totalScore]')`);
+  await check('Grading explains the saved scoring weights for this exam type', async () => {
+    assert.equal(await evaluate(`document.body.innerText.includes(${JSON.stringify(matrixMode ? 'từ ma trận' : 'Đề không có ma trận')})`), true);
+  });
   const saveLabel = await evaluate(
     `document.querySelector('input[name=totalScore]').form.querySelector('button[type=submit]').textContent.trim()`
   );
@@ -194,6 +199,7 @@ try {
     localStorage.setItem('ptit-physics-demo-session',JSON.stringify({role:'STUDENT',userId:'stu1',name:'Student'}));
     const oldFetch=window.fetch;
     const own=[{attemptId:'own1',examId:'exam1',status:'GRADED',totalScore:3,questions:gradingQuestions,submittedAt:'2026-10-14T01:00:00Z'},{attemptId:'own2',examId:'exam1',status:'GRADED',totalScore:0,questions:gradingQuestions,submittedAt:'2026-10-14T02:00:00Z'},{attemptId:'own3',examId:'exam1',status:'SUBMITTED',totalScore:null,questions:gradingQuestions,submittedAt:'2026-10-14T03:00:00Z'}];
+    own.forEach(attempt => { delete attempt.questions; attempt.totalQuestions = gradingQuestions.length; });
     window.fetch=async(input,options={})=>{
       const u=new URL(typeof input==='string'?input:input.url,location.origin),p=u.pathname;
       let data;

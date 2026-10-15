@@ -8,7 +8,7 @@ import { Tabs } from '../../components/Tabs.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api } from '../../lib/apiClient.js';
-import { MatrixManager } from '../lecturers/LecturerApiWorkspace.jsx';
+import { LecturerAssessmentApiPage, MatrixManager } from '../lecturers/LecturerApiWorkspace.jsx';
 
 function EnrollmentManager() {
   const [classId, setClassId] = useState('');
@@ -95,7 +95,9 @@ function EnrollmentManager() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="font-semibold">Danh sách ghi danh hàng loạt ({bulkStudents.length})</h3>
-              <p className="mt-1 text-body-sm text-[#64748B]">Các sinh viên trong danh sách sẽ được ghi danh vào lớp đã chọn.</p>
+              <p className="mt-1 text-body-sm text-[#64748B]">
+                Các sinh viên trong danh sách sẽ được ghi danh vào lớp đã chọn.
+              </p>
             </div>
             <Button disabled={!classId || busy} onClick={enrollBulk} icon="group_add">
               Ghi danh hàng loạt
@@ -124,22 +126,31 @@ function EnrollmentManager() {
 }
 
 export function AdminAssessmentsPage() {
-  const [tab, setTab] = useState('matrices');
+  const [tab, setTab] = useState('exams');
   return (
     <AdminPageShell
       currentPage="admin_assessments.html"
-      title="Ma trận đề & ghi danh"
-      description="Thiết lập ma trận đề thi và quản lý ghi danh sinh viên vào lớp."
+      title="Đề thi & ma trận"
+      description="Tạo đề thi cuối kỳ, thiết lập ma trận và quản lý ghi danh sinh viên vào lớp."
     >
       <Tabs
         items={[
+          { id: 'exams', label: 'Đề thi cuối kỳ' },
           { id: 'matrices', label: 'Ma trận đề' },
           { id: 'enrollments', label: 'Ghi danh sinh viên' },
         ]}
         activeId={tab}
         onChange={setTab}
       >
-        {() => (tab === 'matrices' ? <MatrixManager /> : <EnrollmentManager />)}
+        {() =>
+          tab === 'exams' ? (
+            <LecturerAssessmentApiPage embedded adminFinal />
+          ) : tab === 'matrices' ? (
+            <MatrixManager />
+          ) : (
+            <EnrollmentManager />
+          )
+        }
       </Tabs>
     </AdminPageShell>
   );

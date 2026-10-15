@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { materialVideoSource } from '../lib/materialSources.js';
 import { createVideoWatchGuard } from '../lib/videoWatchGuard.js';
 import { loadYouTube, loadVimeo } from '../lib/videoPlayerApi.js';
 import { AuthAlert } from './AuthLayout.jsx';
+import { useFileSource } from '../hooks/useFileSource.js';
 
 export function GuardedVideoPlayer({ material, completed = false, watchedSeconds = 0, onProgress, fill = false }) {
   const source = materialVideoSource(material);
@@ -15,6 +16,16 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
   const [message, setMessage] = useState(null);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const playback = useFileSource(
+    {
+      fileId:
+        !source?.url || source.url === (material.downloadUrl || material.fileUrl || material.url)
+          ? material.fileId
+          : undefined,
+      fileUrl: source?.url,
+    },
+    { enabled: source?.type === 'video', attempt }
+  );
   const resetting = useRef(false);
   const ended = useRef(false);
   const emit = (result) => callback.current?.(result);
@@ -74,7 +85,7 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
       finish();
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!source || source.type !== 'embed') return;
     let active = true;
     let player;
@@ -83,8 +94,14 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
     setError('');
     ended.current = false;
     resetting.current = false;
+    // The SDK replaces its mount and may restore it during destroy(). Give
+    // each effect its own subtree so late SDK work cannot alter the next player.
+    const host = container.current;
+    const playerRoot = document.createElement('div');
+    playerRoot.className = 'h-full w-full';
     const mount = document.createElement('div');
-    container.current.replaceChildren(mount);
+    playerRoot.append(mount);
+    host.replaceChildren(playerRoot);
     const fail = (failure) => active && setError(failure?.message || 'Không thể phát video này.');
     const youtube = new URL(source.url).hostname.includes('youtube');
     const reset = () => {
@@ -182,14 +199,31 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
     return () => {
       active = false;
       clearInterval(interval);
+      // Detach first: even asynchronous SDK teardown stays outside live UI.
+      playerRoot.remove();
       if (player) {
-        const disposed = youtube ? player.destroy() : player.destroy();
-        disposed?.catch?.(() => {});
+        try {
+          const disposed = player.destroy();
+          disposed?.catch?.(() => {});
+        } catch {
+          // Some SDKs throw when React has already detached their iframe.
+          // The isolated subtree above has still been removed completely.
+        }
       }
     };
   }, [source?.url, attempt, guard]);
 
   if (!source) return <p className="p-4 text-slate-500">Video bài giảng chưa được cung cấp.</p>;
+  if (source.type === 'video' && playback.loading) return <p role="status">Đang tải video…</p>;
+  if (source.type === 'video' && playback.error)
+    return (
+      <p role="alert">
+        {playback.error}{' '}
+        <button type="button" onClick={playback.retry}>
+          Thử lại
+        </button>
+      </p>
+    );
   return (
     <div className={fill ? 'flex min-h-0 w-full flex-1 flex-col' : 'space-y-2'}>
       {message && (
@@ -220,10 +254,10 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
         />
       ) : (
         <video
-          key={source.url}
+          key={playback.url}
           ref={native}
           aria-label={material.title || 'Video bài giảng'}
-          src={source.url}
+          src={playback.url}
           controls
           playsInline
           preload="metadata"

@@ -30,7 +30,7 @@ export function LessonContent({
           )}
         </section>
       )}
-      {fileUrl && !isVideo && (
+      {(fileUrl || material?.fileId) && !isVideo && (
         <section className="lesson-question">
           <h3>Tài liệu học tập</h3>
           <MaterialFilePreview key={material.materialId || fileUrl} material={material} />
@@ -42,7 +42,7 @@ export function LessonContent({
           <MaterialSource value={material.sourceCitation} title={material.title} />
         </section>
       )}
-      {!material?.contentText && !fileUrl && !material?.sourceCitation && (
+      {!material?.contentText && !fileUrl && !material?.fileId && !material?.sourceCitation && (
         <section className="lesson-question">
           <h3>Nội dung chưa được cung cấp</h3>
           <p>Giảng viên đã công bố học liệu này nhưng chưa đính kèm nội dung hoặc tệp.</p>

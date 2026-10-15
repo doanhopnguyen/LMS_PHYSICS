@@ -29,6 +29,10 @@ import { useTeachingScope } from './LecturerTeachingScope.jsx';
 import { listItems, useApiData } from '../../hooks/useApiData.js';
 import { api, apiRequest } from '../../lib/apiClient.js';
 import { questionTopicName } from '../../lib/topicLabels.js';
+import { ExamTargetClasses } from '../../components/ExamTargetClasses.jsx';
+import { prepareExamDistribution, runExamDistribution, validateExamTargets } from '../../lib/examDistribution.js';
+import { examUpdatePayload } from '../../lib/examEditing.js';
+import { ExamQuestionConfirmation } from '../../components/ExamQuestionConfirmation.jsx';
 import { labelOf } from '../../lib/lecturerUtils.js';
 import {
   examMaxScore,
@@ -36,6 +40,9 @@ import {
   rawScoreFromTen,
   attemptScore,
   formatAttemptScore,
+  attemptMaxScore,
+  examScoringSummary,
+  questionWeight,
 } from '../../lib/examScoring.js';
 
 const nameOf = (row) =>
@@ -114,7 +121,18 @@ function useAction() {
   };
 }
 
-function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMode = false, onClose, onChanged }) {
+function ExamManagementModal({
+  exam,
+  subjectId,
+  initialTab = 'questions',
+  pageMode = false,
+  onClose,
+  onChanged,
+  onEdit,
+  onCopy,
+  parentBusy = false,
+  parentError,
+}) {
   const Container = pageMode ? AuthoringPanel : Modal;
   const [tab, setTab] = useState(initialTab);
   const [questionTopicId, setQuestionTopicId] = useState('');
@@ -124,6 +142,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   const [gradeValue, setGradeValue] = useState('');
   const [viewAttempt, setViewAttempt] = useState(null);
   const [removeTarget, setRemoveTarget] = useState(null);
+  const [questionConfirmation, setQuestionConfirmation] = useState(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferStudent, setTransferStudent] = useState(null);
   const detail = useApiData(`/api/v1/exams/${encodeURIComponent(exam.examId)}`);
@@ -141,31 +160,46 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   const candidates = useApiData(subjectId ? `/api/v1/questions?${candidateQuery}` : null);
   const action = useAction();
   const questions = listItems(examQuestions.data);
+  const nextQuestionOrder = questions.reduce((maximum, item) => Math.max(maximum, Number(item.orderIndex) || 0), 0) + 1;
   const maxScore = examQuestions.loading || examQuestions.error ? null : examMaxScore(questions);
+  const gradingMaxScore = attemptMaxScore(gradingAttempt, questions);
+  const scoringInfo = examScoringSummary(detail.data || exam, questions);
   const questionsLocked = attempts.loading || Boolean(attempts.error) || listItems(attempts.data).length > 0;
   const openGrading = (attempt) => {
     action.clear();
-    setGradeValue(tenPointScore(attempt.totalScore, maxScore) ?? '');
+    const maximum = attemptMaxScore(attempt, questions);
+    if (!maximum) {
+      action.setError('Chưa tải đủ trọng số câu hỏi của lượt làm để chấm điểm.');
+      return;
+    }
+    setGradeValue(tenPointScore(attempt.totalScore, maximum) ?? '');
     setGradingAttempt(attempt);
   };
   const topicNameOf = (question) => questionTopicName(question, listItems(candidateTopics.data));
   const addQuestion = async (question) => {
+    if (action.busy || parentBusy) return;
+    if (examQuestions.loading || examQuestions.error) {
+      action.setError('Chưa tải được danh sách câu hỏi hiện tại. Vui lòng thử lại.');
+      return;
+    }
     if (questionsLocked) {
       action.setError('Đề đã có lượt làm, không thể thay đổi câu hỏi.');
       return;
     }
     const result = await action.run(
       `/api/v1/exams/${encodeURIComponent(exam.examId)}/questions`,
-      { method: 'POST', body: { questionId: question.questionId } },
+      { method: 'POST', body: { questionId: question.questionId, scoreWeight: 1, orderIndex: nextQuestionOrder } },
       'Đã thêm câu hỏi vào đề.'
     );
     if (result) {
+      setQuestionConfirmation(null);
       examQuestions.reload();
       detail.reload();
       onChanged?.();
     }
   };
   const generate = async () => {
+    if (action.busy || parentBusy) return;
     if (questionsLocked) {
       action.setError('Đề đã có lượt làm, không thể thay đổi câu hỏi.');
       return;
@@ -176,6 +210,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
       'Đã sinh câu hỏi theo ma trận.'
     );
     if (result) {
+      setQuestionConfirmation(null);
       examQuestions.reload();
       detail.reload();
       onChanged?.();
@@ -205,7 +240,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
     let rawScore;
     try {
       if (!['SUBMITTED', 'GRADED'].includes(gradingAttempt?.status)) throw new Error('Chỉ chấm bài đã nộp.');
-      rawScore = rawScoreFromTen(values.totalScore, maxScore);
+      rawScore = rawScoreFromTen(values.totalScore, gradingMaxScore);
       if (
         gradingAttempt.status === 'GRADED' &&
         rawScore !== Number(gradingAttempt.totalScore) &&
@@ -222,7 +257,7 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
         method: 'PUT',
         body: {
           totalScore: rawScore,
-          feedback: `Điểm quy đổi: ${tenPointScore(rawScore, maxScore)}/10.${values.feedback.trim() ? ` ${values.feedback.trim()}` : ''}`,
+          feedback: `Điểm quy đổi: ${tenPointScore(rawScore, gradingMaxScore)}/10.${values.feedback.trim() ? ` ${values.feedback.trim()}` : ''}`,
         },
       },
       'Đã cập nhật điểm bài làm.'
@@ -260,6 +295,21 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
   };
   return (
     <>
+      {questionConfirmation && (
+        <ExamQuestionConfirmation
+          exam={detail.data || exam}
+          question={questionConfirmation.question}
+          generating={questionConfirmation.kind === 'generate'}
+          questionCount={questions.length}
+          nextOrder={nextQuestionOrder}
+          busy={action.busy}
+          error={action.error}
+          onCancel={() => !action.busy && setQuestionConfirmation(null)}
+          onConfirm={() =>
+            questionConfirmation.kind === 'generate' ? generate() : addQuestion(questionConfirmation.question)
+          }
+        />
+      )}
       {removeTarget && (
         <ConfirmDialog
           title="Gỡ câu hỏi khỏi đề"
@@ -273,11 +323,48 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
       <Container
         wide
         title={`Quản lý đề thi · ${exam.title || 'Đề thi'}`}
-        busy={action.busy}
-        onClose={() => !action.busy && onClose()}
+        busy={action.busy || parentBusy}
+        onClose={() => !action.busy && !parentBusy && onClose()}
       >
         <AuthAlert>{action.notice}</AuthAlert>
         <AuthAlert error>{action.error}</AuthAlert>
+        {parentError && (
+          <p
+            role="alert"
+            className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-body-sm text-primary"
+          >
+            {parentError}
+          </p>
+        )}
+        {(onEdit || onCopy) && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {onEdit && (
+              <Button
+                variant="secondary"
+                icon="edit"
+                disabled={action.busy || parentBusy || questionsLocked}
+                onClick={() => onEdit({ ...exam, ...detail.data, classId: detail.data?.classId || exam.classId })}
+              >
+                Sửa thông tin đề
+              </Button>
+            )}
+            {onCopy && (
+              <Button
+                variant="secondary"
+                icon="content_copy"
+                disabled={action.busy || parentBusy}
+                onClick={() => onCopy(detail.data || exam)}
+              >
+                {parentBusy ? 'Đang xử lý…' : 'Sao chép / giao lớp khác'}
+              </Button>
+            )}
+            {questionsLocked && (
+              <p className="w-full text-body-sm text-[#64748B]">
+                Đề đã có lượt làm hoặc chưa kiểm tra được bài làm. Bạn có thể sao chép để chỉnh sửa bản mới.
+              </p>
+            )}
+          </div>
+        )}
         <Tabs
           items={[
             { id: 'questions', label: 'Câu hỏi' },
@@ -288,7 +375,15 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
           onChange={setTab}
           actions={
             tab === 'questions' && detail.data?.matrixId ? (
-              <Button disabled={action.busy || questionsLocked} onClick={generate}>
+              <Button
+                disabled={
+                  action.busy || parentBusy || questionsLocked || examQuestions.loading || Boolean(examQuestions.error)
+                }
+                onClick={() => {
+                  action.clear();
+                  setQuestionConfirmation({ kind: 'generate' });
+                }}
+              >
                 Sinh theo ma trận
               </Button>
             ) : null
@@ -297,6 +392,13 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
           {() =>
             tab === 'questions' ? (
               <>
+                {maxScore && (
+                  <div className="mb-4 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 text-body-sm text-[#1E3A8A]">
+                    <strong>{scoringInfo.label}</strong>
+                    <p className="mt-1">{scoringInfo.description}</p>
+                    <p className="mt-1">Tổng điểm gốc: {maxScore.toLocaleString('vi-VN')} · Thang hiển thị: 10.</p>
+                  </div>
+                )}
                 {listItems(attempts.data).length > 0 && (
                   <p className="mb-4 text-body-sm text-[#64748B]">
                     Đề đã có lượt làm. Danh sách câu hỏi được giữ cố định.
@@ -306,14 +408,14 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                   {(rows) => (
                     <Table
                       rows={rows}
-                      columns={['Câu hỏi', 'Chủ đề', 'Độ khó', '']}
+                      columns={['Câu hỏi', 'Chủ đề', 'Độ khó', 'Điểm / 10', '']}
                       cells={(item) => [
                         item.content || item.questionText || '—',
                         topicNameOf(item),
-                        <span>
-                          {labelOf(item.difficultyLevel)}
-                          {item.scoreWeight != null ? ` · ${item.scoreWeight} điểm` : ''}
-                        </span>,
+                        labelOf(item.difficultyLevel),
+                        tenPointScore(questionWeight(item), maxScore)?.toLocaleString('vi-VN', {
+                          maximumFractionDigits: 2,
+                        }) ?? '—',
                         <Button
                           variant="secondary"
                           disabled={action.busy || questionsLocked}
@@ -379,7 +481,19 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                               item.content || '—',
                               topicNameOf(item),
                               item.difficultyLevel || '—',
-                              <Button disabled={action.busy || questionsLocked} onClick={() => addQuestion(item)}>
+                              <Button
+                                disabled={
+                                  action.busy ||
+                                  parentBusy ||
+                                  questionsLocked ||
+                                  examQuestions.loading ||
+                                  Boolean(examQuestions.error)
+                                }
+                                onClick={() => {
+                                  action.clear();
+                                  setQuestionConfirmation({ kind: 'add', question: item });
+                                }}
+                              >
                                 Thêm vào đề
                               </Button>,
                             ]}
@@ -434,7 +548,11 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                           </Button>
                           <Button
                             variant="secondary"
-                            disabled={action.busy || !maxScore || !['SUBMITTED', 'GRADED'].includes(item.status)}
+                            disabled={
+                              action.busy ||
+                              !attemptMaxScore(item, questions) ||
+                              !['SUBMITTED', 'GRADED'].includes(item.status)
+                            }
                             onClick={() => openGrading(item)}
                           >
                             {item.status !== 'GRADED' ? 'Chấm bài' : 'Sửa điểm'}
@@ -648,12 +766,16 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
                 {action.error}
               </p>
             )}
-            <p className="text-body-sm text-[#64748B]">Điểm theo thang 10, quy đổi theo trọng số từng câu trong đề.</p>
-            {maxScore && String(gradeValue).trim() !== '' && Number(gradeValue) >= 0 && Number(gradeValue) <= 10 && (
-              <p className="text-body-sm text-[#64748B]">
-                Điểm quy đổi sau khi lưu: {tenPointScore(rawScoreFromTen(gradeValue, maxScore), maxScore)}/10.
-              </p>
-            )}
+            <p className="text-body-sm text-[#64748B]">{scoringInfo.description}</p>
+            {gradingMaxScore &&
+              String(gradeValue).trim() !== '' &&
+              Number(gradeValue) >= 0 &&
+              Number(gradeValue) <= 10 && (
+                <p className="text-body-sm text-[#64748B]">
+                  Điểm quy đổi sau khi lưu:{' '}
+                  {tenPointScore(rawScoreFromTen(gradeValue, gradingMaxScore), gradingMaxScore)}/10.
+                </p>
+              )}
             <SharedFormField
               name="totalScore"
               type="number"
@@ -675,10 +797,10 @@ function ExamManagementModal({ exam, subjectId, initialTab = 'questions', pageMo
               label={<>Nhận xét gửi cho sinh viên</>}
               required={
                 gradingAttempt.status === 'GRADED' &&
-                tenPointScore(gradingAttempt.totalScore, maxScore) !== Number(gradeValue)
+                tenPointScore(gradingAttempt.totalScore, gradingMaxScore) !== Number(gradeValue)
               }
             />
-            <SubmitButton busy={action.busy} disabled={!maxScore}>
+            <SubmitButton busy={action.busy} disabled={!gradingMaxScore}>
               Lưu điểm
             </SubmitButton>
           </Form>
@@ -709,7 +831,7 @@ export function MatrixManager({ classes, createPage = false, scopedSubjectId = '
   const matrices = useApiData(`/api/v1/exam-matrices${subjectId ? `?subjectId=${encodeURIComponent(subjectId)}` : ''}`);
   const action = useAction();
   const openCreate = () => {
-    if (scopedSubjectId) {
+    if (adminMode || scopedSubjectId) {
       setDetails([{ topicId: '', difficultyLevel: 'MEDIUM', numQuestions: 1, weightPercent: 100 }]);
       setModal({ mode: 'create' });
     } else navigate(queryPath('lecturer_matrix_create.html', { subjectId }));
@@ -1243,12 +1365,13 @@ export function LecturerAssessmentApiPage({
   createPage = false,
   embedded = false,
   scopedClassId = '',
+  adminFinal = false,
 }) {
   const Shell = embedded ? React.Fragment : LecturerPageShell;
-  const classes = useResource('/api/v1/instructor/classes', true);
+  const classes = useResource(adminFinal ? '/api/v1/classes' : '/api/v1/instructor/classes', true);
   const rows = listItems(classes.data);
   const [tab, setTab] = useState(
-    new URLSearchParams(window.location.search).get('tab') === 'matrices' ? 'matrices' : 'exams'
+    !adminFinal && new URLSearchParams(window.location.search).get('tab') === 'matrices' ? 'matrices' : 'exams'
   );
   const [classId, setClassId] = useState(
     () => scopedClassId || new URLSearchParams(window.location.search).get('classId') || ''
@@ -1256,16 +1379,25 @@ export function LecturerAssessmentApiPage({
   const [creating, setCreating] = useState(createPage);
   const [editing, setEditing] = useState(null);
   const [managing, setManaging] = useState(null);
+  const [copySource, setCopySource] = useState(null);
+  const [additionalClassIds, setAdditionalClassIds] = useState([]);
+  const [distribution, setDistribution] = useState(null);
+  const [distributing, setDistributing] = useState(false);
+  const distributionRef = useRef(null);
+  const distributionRunning = useRef(false);
   const [deleteExam, setDeleteExam] = useState(null);
   const [allExams, setAllExams] = useState([]);
   const [allExamsLoading, setAllExamsLoading] = useState(false);
   const [allExamsError, setAllExamsError] = useState('');
   const EditorContainer = createPage ? AuthoringPanel : Modal;
   const selected = scopedClassId || classId || 'ALL';
+  const formClassId = editing?.classId || selected;
+  const draftExam = editing || copySource;
+  const copySubjectId = copySource ? rows.find((item) => item.classId === copySource.classId)?.subjectId : '';
   const exams = useApiData(selected !== 'ALL' ? `/api/v1/exams/class/${encodeURIComponent(selected)}` : null);
   const matrices = useApiData(
-    selected !== 'ALL' && rows.find((row) => row.classId === selected)?.subjectId
-      ? `/api/v1/exam-matrices?subjectId=${encodeURIComponent(rows.find((row) => row.classId === selected).subjectId)}`
+    formClassId !== 'ALL' && rows.find((row) => row.classId === formClassId)?.subjectId
+      ? `/api/v1/exam-matrices?subjectId=${encodeURIComponent(rows.find((row) => row.classId === formClassId).subjectId)}`
       : null
   );
   const reloadAllExams = async () => {
@@ -1289,22 +1421,72 @@ export function LecturerAssessmentApiPage({
       ? { data: allExams, loading: allExamsLoading, error: allExamsError, reload: reloadAllExams }
       : exams;
   const action = useAction();
+  const editorBusy = action.busy || distributing;
+  const hasPendingDistribution = distribution?.targets.some((target) => !target.complete);
+  const changeTargetClass = (nextClassId) => {
+    setClassId(nextClassId);
+    setAdditionalClassIds([]);
+  };
+  const continueDistribution = async (job) => {
+    if (distributionRunning.current) return;
+    distributionRunning.current = true;
+    setDistributing(true);
+    action.clear();
+    try {
+      const results = await runExamDistribution(job, api.exams, setDistribution);
+      action.setNotice(
+        `Đã ${copySource ? 'sao chép' : 'tạo'} đề cho ${results.length} lớp. Mỗi lớp có một bản đề riêng.`
+      );
+      setCopySource(null);
+      setAdditionalClassIds([]);
+      if (results.length === 1) setManaging(results[0]);
+    } catch (error) {
+      action.setError(
+        `Chưa giao xong đề cho tất cả lớp. ${error.message} Bạn có thể tiếp tục các lớp còn lại bên dưới.`
+      );
+    } finally {
+      distributionRunning.current = false;
+      setDistributing(false);
+      examResource.reload();
+    }
+  };
   const createExam = async (event) => {
     event.preventDefault();
+    if (editorBusy || distributionRunning.current) return;
     const values = Object.fromEntries(new FormData(event.currentTarget));
-    if (selected === 'ALL' || !rows.some((item) => item.classId === selected)) {
-      action.setError('Vui lòng chọn lớp học.');
+    let targets;
+    try {
+      if (!editing) targets = validateExamTargets(rows, formClassId, additionalClassIds, copySubjectId);
+    } catch (error) {
+      action.setError(error.message);
       return;
     }
-    if (!values.title.trim() || new Date(values.endTime) <= new Date(values.startTime)) {
+    if (
+      !values.title.trim() ||
+      !Number.isFinite(Date.parse(values.startTime)) ||
+      !Number.isFinite(Date.parse(values.endTime)) ||
+      new Date(values.endTime) <= new Date(values.startTime)
+    ) {
       action.setError('Nhập tên đề thi và thời gian kết thúc sau thời gian bắt đầu.');
       return;
     }
+    if (!editing && Date.parse(values.endTime) <= Date.now()) {
+      action.setError('Chọn thời gian kết thúc trong tương lai để tạo hoặc sao chép đề.');
+      return;
+    }
+    const examType = adminFinal ? 'FINAL' : values.examType || editing?.examType;
+    if (
+      !adminFinal &&
+      !['PRACTICE', 'QUIZ', 'MIDTERM'].includes(examType) &&
+      !(editing && examType === editing.examType)
+    ) {
+      action.setError('Chọn loại đề luyện tập, kiểm tra ngắn hoặc giữa kỳ để tiếp tục.');
+      return;
+    }
     const body = {
-      ...(!editing ? { classId: selected } : {}),
-      ...(values.matrixId ? { matrixId: values.matrixId } : {}),
+      ...(copySource?.matrixId || values.matrixId ? { matrixId: copySource?.matrixId || values.matrixId } : {}),
       title: values.title.trim(),
-      examType: values.examType,
+      examType,
       durationMinutes: Number(values.durationMinutes),
       startTime: new Date(values.startTime).toISOString(),
       endTime: new Date(values.endTime).toISOString(),
@@ -1313,21 +1495,83 @@ export function LecturerAssessmentApiPage({
       shuffleOptions: values.shuffleOptions === 'on',
       isPublished: values.isPublished === 'on',
     };
+    if (!editing) {
+      let job;
+      try {
+        job = prepareExamDistribution(body, targets, copySource?.sourceQuestions);
+      } catch (error) {
+        action.setError(error.message);
+        return;
+      }
+      distributionRef.current = job;
+      setDistribution({ ...job });
+      setCreating(false);
+      await continueDistribution(job);
+      return;
+    }
+    const update = examUpdatePayload(editing, values);
+    if (!Object.keys(update).length) {
+      action.setNotice('Thông tin đề thi đã được lưu, không có thay đổi mới.');
+      setManaging(editing);
+      setEditing(null);
+      return;
+    }
     const result = await action.run(
-      editing ? `/api/v1/exams/${encodeURIComponent(editing.examId)}` : '/api/v1/exams',
-      { method: editing ? 'PUT' : 'POST', body },
-      editing ? 'Đã cập nhật đề thi.' : 'Đã tạo đề thi.'
+      `/api/v1/exams/${encodeURIComponent(editing.examId)}`,
+      { method: 'PUT', body: update },
+      'Đã cập nhật đề thi.'
     );
     if (result) {
       setCreating(false);
       setEditing(null);
       examResource.reload();
-      if (!editing) setManaging(result);
+      setManaging({ ...editing, ...update, ...(typeof result === 'object' ? result : {}) });
     }
   };
   const editExam = async (exam) => {
+    if (editorBusy || distributionRunning.current) return;
     const result = await action.run(`/api/v1/exams/${encodeURIComponent(exam.examId)}`, {}, '');
-    if (result) setEditing(result);
+    if (result) {
+      setManaging(null);
+      setCreating(false);
+      setCopySource(null);
+      setEditing({
+        ...exam,
+        ...result,
+        classId: result.classId || exam.classId || (selected !== 'ALL' ? selected : undefined),
+      });
+    }
+  };
+  const copyExam = async (exam) => {
+    if (editorBusy || distributionRunning.current) return;
+    if (hasPendingDistribution) {
+      action.setError('Hoàn tất các lớp đang giao trước khi sao chép đề mới.');
+      return;
+    }
+    setDistributing(true);
+    distributionRunning.current = true;
+    action.clear();
+    try {
+      const [source, questions] = await Promise.all([api.exams.get(exam.examId), api.exams.questions(exam.examId)]);
+      if (!rows.find((item) => item.classId === source.classId)?.subjectId)
+        throw new Error('Chưa xác định được môn học của lớp nguồn. Vui lòng tải lại danh sách lớp.');
+      setManaging(null);
+      setEditing(null);
+      setClassId(scopedClassId || source.classId);
+      setAdditionalClassIds([]);
+      setCopySource({
+        ...source,
+        title: `${source.title || 'Đề thi'} (bản sao)`,
+        isPublished: false,
+        sourceQuestions: listItems(questions),
+      });
+      setCreating(true);
+    } catch (error) {
+      action.setError(error.message || 'Không thể tải đề nguồn để sao chép.');
+    } finally {
+      setDistributing(false);
+      distributionRunning.current = false;
+    }
   };
   return (
     <Shell
@@ -1341,6 +1585,50 @@ export function LecturerAssessmentApiPage({
     >
       <AuthAlert>{action.notice}</AuthAlert>
       <AuthAlert error>{action.error}</AuthAlert>
+      {distribution && (
+        <Card className="mt-4 space-y-3 p-5">
+          <h2 className="text-headline-sm font-bold">
+            {distributing
+              ? 'Đang giao đề cho các lớp…'
+              : hasPendingDistribution
+                ? 'Có lớp chưa giao xong đề'
+                : 'Các lớp đã nhận đề'}
+          </h2>
+          <p role="status" className="text-body-sm text-[#64748B]">
+            Đã hoàn tất {distribution.targets.filter((target) => target.complete).length}/{distribution.targets.length}{' '}
+            lớp. Các bản đề được chỉnh sửa độc lập.
+          </p>
+          <div className="space-y-2">
+            {distribution.targets.map((target) => (
+              <div
+                key={target.classId}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#E2E8F0] p-3"
+              >
+                <div>
+                  <strong className="text-body-md">
+                    {nameOf(rows.find((item) => item.classId === target.classId))}
+                  </strong>
+                  <p className={`mt-1 text-body-sm ${target.error ? 'text-primary' : 'text-[#64748B]'}`}>
+                    {target.complete
+                      ? 'Đã giao đề'
+                      : target.error || (target.exam ? 'Đang hoàn thiện bản đề' : 'Chưa tạo đề')}
+                  </p>
+                </div>
+                {target.complete && (
+                  <Button variant="secondary" disabled={editorBusy} onClick={() => setManaging(target.exam)}>
+                    Quản lý đề
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          {hasPendingDistribution && (
+            <Button icon="refresh" disabled={editorBusy} onClick={() => continueDistribution(distributionRef.current)}>
+              Tiếp tục giao các lớp còn lại
+            </Button>
+          )}
+        </Card>
+      )}
       {deleteExam && (
         <ConfirmDialog
           title="Xóa đề thi"
@@ -1356,7 +1644,7 @@ export function LecturerAssessmentApiPage({
             );
             if (result) {
               setDeleteExam(null);
-              exams.reload();
+              examResource.reload();
             }
           }}
         />
@@ -1382,14 +1670,16 @@ export function LecturerAssessmentApiPage({
                 {!grading && tab === 'exams' && (
                   <Button
                     icon="add"
-                    disabled={!selected || selected === 'ALL'}
+                    disabled={
+                      (!adminFinal && (!selected || selected === 'ALL')) || editorBusy || hasPendingDistribution
+                    }
                     onClick={() =>
                       embedded
-                        ? setCreating(true)
+                        ? (setCopySource(null), setAdditionalClassIds([]), setCreating(true))
                         : navigate(queryPath('lecturer_exam_create.html', { classId: selected }))
                     }
                   >
-                    Tạo đề thi
+                    {adminFinal ? 'Tạo đề thi cuối kỳ' : 'Tạo đề thi'}
                   </Button>
                 )}
               </>
@@ -1403,8 +1693,8 @@ export function LecturerAssessmentApiPage({
                   {(items) => (
                     <Table
                       asCards
-                      rows={items}
-                      columns={['Kỳ thi', 'Loại', 'Thời gian', 'Số câu', 'Thao tác']}
+                      rows={adminFinal ? items.filter((item) => item.examType === 'FINAL') : items}
+                      columns={['Kỳ thi', 'Lớp nhận đề', 'Hiển thị', 'Loại', 'Thời gian', 'Số câu', 'Thao tác']}
                       cells={(item) => [
                         <button
                           className="text-left font-semibold text-primary hover:underline"
@@ -1412,18 +1702,28 @@ export function LecturerAssessmentApiPage({
                         >
                           {nameOf(item)}
                         </button>,
+                        rows.find((row) => row.classId === item.classId)?.classCode ||
+                          nameOf(rows.find((row) => row.classId === item.classId)),
+                        <StatusBadge tone={item.isPublished === true ? 'success' : 'neutral'}>
+                          {item.isPublished === true
+                            ? 'Đang hiển thị'
+                            : item.isPublished === false
+                              ? 'Chưa hiển thị'
+                              : 'Chưa có thông tin'}
+                        </StatusBadge>,
                         labelOf(item.examType),
                         item.startTime ? new Date(item.startTime).toLocaleString('vi-VN') : '—',
                         item.totalQuestions ?? '—',
                         <ActionMenu
                           label={`Thao tác với ${nameOf(item)}`}
-                          disabled={action.busy}
+                          disabled={editorBusy}
                           items={
                             grading
                               ? [{ label: 'Xem danh sách bài làm', onSelect: () => setManaging(item) }]
                               : [
-                                  { label: 'Chỉnh sửa đề thi', onSelect: () => setManaging(item) },
+                                  { label: 'Câu hỏi & bài làm', onSelect: () => setManaging(item) },
                                   { label: 'Sửa thông tin đề thi', onSelect: () => editExam(item) },
+                                  { label: 'Sao chép / giao lớp khác', onSelect: () => copyExam(item) },
                                   { label: 'Xóa đề thi', danger: true, onSelect: () => setDeleteExam(item) },
                                 ]
                           }
@@ -1440,20 +1740,46 @@ export function LecturerAssessmentApiPage({
       {createPage && <AuthAlert error>{matrices.error}</AuthAlert>}
       {(creating || editing) && (
         <EditorContainer
-          title={editing ? 'Chỉnh sửa đề thi' : 'Thiết lập đề thi'}
+          wide
+          key={editing?.examId || (copySource ? `copy-${copySource.examId}` : 'new-exam')}
+          title={
+            editing
+              ? 'Chỉnh sửa đề thi'
+              : copySource
+                ? 'Sao chép / giao đề cho lớp khác'
+                : adminFinal
+                  ? 'Tạo đề thi cuối kỳ'
+                  : 'Thiết lập đề thi'
+          }
           description="Chuẩn bị thông tin, cấu trúc và lịch thi trước khi thêm câu hỏi."
           icon="quiz"
-          busy={action.busy}
+          busy={editorBusy}
           onClose={() => {
+            if (editorBusy) return;
             if (createPage) {
               navigate(queryPath('lecturer_assessments.html', { classId }));
               return;
             }
             setCreating(false);
             setEditing(null);
+            setCopySource(null);
           }}
         >
-          <Form className="authoring-grouped-form" busy={action.busy} onSubmit={createExam}>
+          {action.error && (
+            <p
+              role="alert"
+              className="mb-4 rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-3 text-body-sm text-primary"
+            >
+              {action.error}
+            </p>
+          )}
+          <Form className="authoring-grouped-form" busy={editorBusy} onSubmit={createExam}>
+            {copySource && (
+              <p className="rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] p-4 text-body-sm text-[#1E3A8A]">
+                Sao chép {copySource.sourceQuestions.length} câu hỏi cùng thứ tự và trọng số. Bản sao mặc định chưa hiển
+                thị cho sinh viên; chọn lại lịch thi và lớp nhận đề bên dưới.
+              </p>
+            )}
             <AuthoringSection
               number="01"
               icon="school"
@@ -1461,14 +1787,41 @@ export function LecturerAssessmentApiPage({
               description="Chọn lớp học và đặt tên để dễ nhận diện đề thi."
             >
               <div className="authoring-fields authoring-fields--exam-info">
-                {createPage && (
+                {!editing && !scopedClassId && (
                   <Resource resource={classes}>
-                    {() => <ClassSelect classes={rows} value={selected} onChange={setClassId} />}
+                    {() => (
+                      <SharedSelectField
+                        name="classId"
+                        label="Lớp nhận đề chính *"
+                        value={selected === 'ALL' ? '' : selected}
+                        onChange={(event) => changeTargetClass(event.target.value)}
+                        required
+                      >
+                        <option value="">Chọn lớp nhận đề</option>
+                        {rows
+                          .filter((item) => !copySource || item.subjectId === copySubjectId)
+                          .map((item) => (
+                            <option key={item.classId} value={item.classId}>
+                              {nameOf(item)}
+                            </option>
+                          ))}
+                      </SharedSelectField>
+                    )}
                   </Resource>
+                )}
+                {(editing || scopedClassId) && (
+                  <p className="text-body-sm text-[#64748B]">
+                    Lớp nhận đề:{' '}
+                    <strong>
+                      {rows.find((item) => item.classId === formClassId)?.classCode ||
+                        editing?.classCode ||
+                        'Giữ nguyên lớp của đề thi'}
+                    </strong>
+                  </p>
                 )}
                 <SharedFormField
                   name="title"
-                  defaultValue={editing?.title || ''}
+                  defaultValue={draftExam?.title || ''}
                   placeholder="Ví dụ: Kiểm tra giữa kỳ — Vật lý đại cương"
                   required
                   className="mt-2 w-full"
@@ -1476,6 +1829,15 @@ export function LecturerAssessmentApiPage({
                   wrapperClassName="text-body-sm font-semibold"
                 />
               </div>
+              {!editing && (
+                <ExamTargetClasses
+                  classes={rows}
+                  primaryClassId={selected}
+                  selectedIds={additionalClassIds}
+                  onChange={setAdditionalClassIds}
+                  disabled={editorBusy}
+                />
+              )}
             </AuthoringSection>
             <div className="authoring-exam-columns">
               <AuthoringSection
@@ -1487,19 +1849,30 @@ export function LecturerAssessmentApiPage({
                 <div className="authoring-fields">
                   <SharedSelectField
                     name="examType"
-                    defaultValue={editing?.examType || 'PRACTICE'}
+                    defaultValue={adminFinal ? 'FINAL' : draftExam?.examType || 'PRACTICE'}
+                    required
+                    disabled={editing?.examType === 'FINAL'}
                     label={<>Loại đề</>}
                     className="text-body-sm font-semibold"
                   >
-                    <option value="PRACTICE">Luyện tập</option>
-                    <option value="QUIZ">Kiểm tra ngắn</option>
-                    <option value="MIDTERM">Giữa kỳ</option>
+                    {(adminFinal || draftExam?.examType === 'FINAL') && (
+                      <option value="FINAL" disabled={!adminFinal && !editing}>
+                        {adminFinal || editing ? 'Thi cuối kỳ' : 'Thi cuối kỳ · chọn loại đề mới'}
+                      </option>
+                    )}
+                    {!adminFinal && (
+                      <>
+                        <option value="PRACTICE">Luyện tập</option>
+                        <option value="QUIZ">Kiểm tra ngắn</option>
+                        <option value="MIDTERM">Giữa kỳ</option>
+                      </>
+                    )}
                   </SharedSelectField>
                   <SharedFormField
                     name="durationMinutes"
                     type="number"
                     min="1"
-                    defaultValue={editing?.durationMinutes || ''}
+                    defaultValue={draftExam?.durationMinutes || ''}
                     required
                     className="mt-2 w-full"
                     label={<>Thời lượng (phút)</>}
@@ -1510,8 +1883,13 @@ export function LecturerAssessmentApiPage({
                   key={selected}
                   label="Ma trận đề"
                   name="matrixId"
-                  defaultValue={editing?.matrixId || ''}
-                  disabled={matrices.loading || Boolean(matrices.error)}
+                  defaultValue={draftExam?.matrixId || ''}
+                  disabled={
+                    Boolean(copySource) ||
+                    !rows.some((item) => item.classId === formClassId && item.subjectId) ||
+                    matrices.loading ||
+                    Boolean(matrices.error)
+                  }
                 >
                   <option value="">Không sử dụng ma trận</option>
                   {listItems(matrices.data).map((matrix) => (
@@ -1531,7 +1909,7 @@ export function LecturerAssessmentApiPage({
                   <SharedFormField
                     name="startTime"
                     type="datetime-local"
-                    defaultValue={localDateTimeInput(editing?.startTime)}
+                    defaultValue={localDateTimeInput(draftExam?.startTime)}
                     required
                     className="mt-2 w-full"
                     label={<>Bắt đầu</>}
@@ -1540,7 +1918,7 @@ export function LecturerAssessmentApiPage({
                   <SharedFormField
                     name="endTime"
                     type="datetime-local"
-                    defaultValue={localDateTimeInput(editing?.endTime)}
+                    defaultValue={localDateTimeInput(draftExam?.endTime)}
                     required
                     className="mt-2 w-full"
                     label={<>Kết thúc</>}
@@ -1558,7 +1936,7 @@ export function LecturerAssessmentApiPage({
                 min="1"
                 step="1"
                 required
-                defaultValue={editing?.maxAttempts ?? 1}
+                defaultValue={draftExam?.maxAttempts ?? 1}
               />
               <div className="mt-4 flex flex-wrap gap-5 text-body-sm">
                 <label className="flex items-center gap-2">
@@ -1566,7 +1944,7 @@ export function LecturerAssessmentApiPage({
                     type="checkbox"
                     className="exam-checkbox"
                     name="shuffleQuestions"
-                    defaultChecked={editing?.shuffleQuestions ?? false}
+                    defaultChecked={draftExam?.shuffleQuestions ?? false}
                   />
                   Xáo trộn câu hỏi
                 </label>
@@ -1575,7 +1953,7 @@ export function LecturerAssessmentApiPage({
                     type="checkbox"
                     className="exam-checkbox"
                     name="shuffleOptions"
-                    defaultChecked={editing?.shuffleOptions ?? false}
+                    defaultChecked={draftExam?.shuffleOptions ?? false}
                   />
                   Xáo trộn đáp án
                 </label>
@@ -1584,9 +1962,9 @@ export function LecturerAssessmentApiPage({
                     type="checkbox"
                     className="exam-checkbox"
                     name="isPublished"
-                    defaultChecked={editing?.isPublished ?? false}
+                    defaultChecked={draftExam?.isPublished ?? false}
                   />
-                  Cho phép sinh viên truy cập
+                  Hiển thị đề và cho phép sinh viên truy cập các lớp đã chọn
                 </label>
               </div>
             </AuthoringSection>
@@ -1595,7 +1973,9 @@ export function LecturerAssessmentApiPage({
                 <span className="material-symbols-outlined" aria-hidden="true">
                   playlist_add
                 </span>
-                Sau khi tạo đề, bạn có thể thêm câu hỏi hoặc sinh câu hỏi từ ma trận.
+                {copySource
+                  ? 'Bản sao có đầy đủ câu hỏi của đề nguồn. Mỗi lớp có thể chỉnh sửa riêng.'
+                  : 'Sau khi tạo, chọn từng bản đề để thêm câu hỏi. Có thể sao chép đề đã hoàn thiện sang lớp khác.'}
               </p>
               <div className="authoring-page__footer-actions">
                 <Button
@@ -1614,10 +1994,14 @@ export function LecturerAssessmentApiPage({
                   Hủy
                 </Button>
                 <SubmitButton
-                  busy={action.busy}
-                  disabled={selected === 'ALL' || classes.loading || Boolean(classes.error)}
+                  busy={editorBusy}
+                  disabled={!editing && (formClassId === 'ALL' || classes.loading || Boolean(classes.error))}
                 >
-                  {editing ? 'Lưu thay đổi' : 'Tạo đề thi'}
+                  {editing
+                    ? 'Lưu thay đổi'
+                    : copySource
+                      ? `Sao chép cho ${additionalClassIds.length + 1} lớp`
+                      : `Tạo đề cho ${additionalClassIds.length + 1} lớp`}
                 </SubmitButton>
               </div>
             </div>
@@ -1639,6 +2023,10 @@ export function LecturerAssessmentApiPage({
             createPage ? navigate(queryPath('lecturer_assessments.html', { classId })) : setManaging(null)
           }
           onChanged={examResource.reload}
+          onEdit={!grading ? editExam : undefined}
+          onCopy={!grading ? copyExam : undefined}
+          parentBusy={editorBusy}
+          parentError={action.error}
         />
       )}
     </Shell>

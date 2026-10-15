@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { apiRequest } from '../../lib/apiClient.js';
+import { api, apiRequest } from '../../lib/apiClient.js';
+import { FileDownloadButton } from '../../components/FileDownloadButton.jsx';
 import { itemsOf, loadAllPages, displayName, labelOf, safeUrl } from '../../lib/lecturerUtils.js';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -143,8 +144,12 @@ export function Pager({ data, page, onChange }) {
     />
   );
 }
-export function FileLink({ url, children = 'Mở tài liệu' }) {
+export function FileLink({ url, fileId, children = 'Mở tài liệu' }) {
   const href = safeUrl(url);
+  let backendFile = false;
+  try { backendFile = Boolean(url && api.files.isBackendUrl(api.files.resolveUrl(url))); } catch { /* Invalid links stay non-clickable below. */ }
+  if (fileId || backendFile)
+    return <FileDownloadButton file={{ fileId, fileUrl: url }}>{children}</FileDownloadButton>;
   return href ? (
     <a className="font-semibold text-primary underline" target="_blank" rel="noreferrer" href={href}>
       {children}

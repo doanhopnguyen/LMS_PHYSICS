@@ -88,16 +88,9 @@ export function StudentEvidencePage() {
   }, []);
   const openEvidence = async (item) => {
     setFileError('');
-    if (!item.fileId) {
-      if (item.fileUrl) window.open(item.fileUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
     setOpeningId(item.evidenceId);
     try {
-      const response = await api.files.downloadUrl(item.fileId);
-      const url = response?.downloadUrl || response?.url;
-      if (!url) throw new Error('Không nhận được liên kết tải tệp từ hệ thống.');
-      window.open(url, '_blank', 'noopener,noreferrer');
+      await api.files.download(item);
     } catch (requestError) {
       setFileError(requestError?.message || 'Không thể mở tệp minh chứng.');
     } finally {

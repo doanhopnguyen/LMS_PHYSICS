@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
-import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
 import { MetricGrid } from '../../components/MetricGrid.jsx';
@@ -10,7 +9,13 @@ import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
-import { examMaxScore, tenPointScore, formatAttemptScore } from '../../lib/examScoring.js';
+import {
+  examMaxScore,
+  tenPointScore,
+  formatAttemptScore,
+  attemptMaxScore,
+  examScoringSummary,
+} from '../../lib/examScoring.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
@@ -87,7 +92,9 @@ export function ExamResultsPage() {
     questions.filter((question) => (question.selectedOptionIds || []).length || question.answerText).length;
   const submitted = Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
   const graded = attempt?.status === 'GRADED' && attempt?.totalScore !== null && attempt?.totalScore !== undefined;
-  const canShowAutoScore = graded && questions.length > 0;
+  const maxScore = attemptMaxScore(attempt, questions);
+  const scoringInfo = examScoringSummary(exam, questions);
+  const canShowAutoScore = graded && maxScore !== null;
 
   return (
     <AppShell currentPage="exam_results.html" title={`${title} · PTIT Physics LMS`}>
@@ -99,20 +106,6 @@ export function ExamResultsPage() {
             attempt?.submittedAt
               ? `Đã nộp lúc ${dateText(attempt.submittedAt)}.`
               : 'Dữ liệu được lấy từ lượt làm bài của bạn.'
-          }
-          actions={
-            <>
-              <a href="dashboard.html">
-                <Button variant="secondary" icon="home">
-                  Về trang chủ
-                </Button>
-              </a>
-              <a href="exam_practice_center.html">
-                <Button variant="secondary" icon="quiz">
-                  Về ôn luyện
-                </Button>
-              </a>
-            </>
           }
         />
         {loading ? (
@@ -143,6 +136,7 @@ export function ExamResultsPage() {
                   {submitted ? 'Đã nộp bài' : attempt?.status ? labelOf(attempt.status) : 'Đang cập nhật'}
                 </StatusBadge>
               </div>
+              {canShowAutoScore && <p className="mt-3 text-body-sm text-[#64748B]">{scoringInfo.description}</p>}
             </Card>
             <MetricGrid
               items={[
