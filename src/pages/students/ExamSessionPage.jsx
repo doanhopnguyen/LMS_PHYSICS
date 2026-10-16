@@ -5,7 +5,6 @@ import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
-import { MetricGrid } from '../../components/MetricGrid.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
 import { PageTitle } from '../../components/PageTitle.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
@@ -17,6 +16,7 @@ import { studentExamAvailability } from '../../lib/studentExamAvailability.js';
 import { ExamHistoryDialog } from '../../components/ExamHistoryDialog.jsx';
 import { ExamWaitingRoom } from './ExamWaitingRoom.jsx';
 import { FileImage } from '../../components/FileImage.jsx';
+import '../../styles/exam-session.css';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const finished = (attempt) =>
@@ -230,18 +230,18 @@ function ExamSelection() {
   );
 }
 
-export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode, workspace = 'exam' }) {
+export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
   const practiceWorkspace = workspace === 'practice';
   const sessionPage = practiceWorkspace ? 'exam_practice_center.html' : 'exam_session.html';
-  const overviewPage = practiceWorkspace ? 'exam_practice_center.html' : 'exam_session.html';
+  const listPage = sessionPage;
+  const previousPage = useRef(window.history.state?.ptitPrevious);
+  const openingAttempt = useRef(null);
   const [exam, setExam] = useState(null);
   const [policy, setPolicy] = useState(null);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const waitingForStart = studentExamAvailability({ ...exam, policy }).canWait;
-  const takeMode = requestedTakeMode && !waitingForStart;
+  const takeMode = !waitingForStart;
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
   const [questions, setQuestions] = useState([]);
   const [allQuestions, setAllQuestions] = useState([]);
@@ -254,6 +254,31 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
   const [remainingSeconds, setRemainingSeconds] = useState(null);
   const canLeaveAttempt = useRef(false);
   const autoSubmitStarted = useRef(false);
+  useEffect(() => {
+    const navigator = document.querySelector('.exam-taking-navigator');
+    const page = navigator?.closest('.exam-taking-page');
+    if (!navigator || !page) return undefined;
+    const resize = () => page.style.setProperty('--exam-dock-height', `${navigator.getBoundingClientRect().height}px`);
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(navigator);
+    return () => {
+      observer.disconnect();
+      page.style.removeProperty('--exam-dock-height');
+    };
+  }, [loading, attempt?.attemptId, attempt?.status, error]);
+  useEffect(() => {
+    const strip = document.querySelector('.exam-taking-question-grid');
+    const selected = strip?.querySelector('[aria-current="step"]');
+    if (!strip || !selected) return;
+    const stripBounds = strip.getBoundingClientRect();
+    const selectedBounds = selected.getBoundingClientRect();
+    if (selectedBounds.left < stripBounds.left || selectedBounds.right > stripBounds.right)
+      strip.scrollTo({
+        left:
+          strip.scrollLeft + selectedBounds.left - stripBounds.left - (strip.clientWidth - selectedBounds.width) / 2,
+      });
+  }, [activeQuestion, allQuestions.length]);
   useEffect(() => {
     if (takeMode && attempt?.attemptId && !finished(attempt)) canLeaveAttempt.current = false;
   }, [attempt?.attemptId, attempt?.status, attempt?.submittedAt, takeMode]);
@@ -270,8 +295,36 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
         ]);
         if (!alive) return;
         setExam(examData);
-        setAttempt(attemptData);
         setPolicy(policyData);
+        const existingAttempt = attemptData?.attemptId ? attemptData : null;
+        if (attemptId && !existingAttempt)
+          throw new Error('Không tìm thấy lượt làm bài. Vui lòng mở lại từ danh sách đề.');
+        if (finished(existingAttempt)) {
+          canLeaveAttempt.current = true;
+          navigate(
+            `exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attemptData.attemptId)}`
+          );
+          return;
+        }
+        let currentAttempt = existingAttempt;
+        const access = studentExamAvailability({
+          ...examData,
+          policy: policyData,
+          attempts: existingAttempt ? [existingAttempt] : [],
+        });
+        if (!currentAttempt && access.canOpen && (practiceWorkspace || examData.examType !== 'PRACTICE')) {
+          if (openingAttempt.current?.examId !== examId) {
+            openingAttempt.current = {
+              examId,
+              promise: access.activeAttempt?.attemptId
+                ? api.exams.getAttempt(access.activeAttempt.attemptId)
+                : api.exams.startAttempt(examId),
+            };
+          }
+          currentAttempt = await openingAttempt.current.promise;
+          if (!currentAttempt?.attemptId) throw new Error('Chưa xác định được lượt làm bài. Vui lòng thử lại.');
+        }
+        if (alive) setAttempt(currentAttempt);
       } catch (loadError) {
         if (alive) setError(loadError?.message || 'Không thể tải phiên kiểm tra.');
       } finally {
@@ -433,75 +486,25 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
     autoSubmitStarted.current = true;
     submitAttempt({ automatic: true });
   }, [attempt?.attemptId, attempt?.status, attempt?.submittedAt, remainingSeconds, takeMode]);
-  const returnToOverview = () => {
-    if (!window.confirm('Quay về trang tổng quan đề? Các câu trả lời đã lưu vẫn được giữ lại.')) return;
-    canLeaveAttempt.current = true;
-    navigate(
-      `${sessionPage}?examId=${encodeURIComponent(examId)}${attempt?.attemptId ? `&attemptId=${encodeURIComponent(attempt.attemptId)}` : ''}`
-    );
-  };
-  const start = async () => {
-    const access = studentExamAvailability({ ...exam, policy, attempts: attempt ? [attempt] : [] });
-    if (starting || !access.canOpen) return;
-    if (access.activeAttempt?.attemptId) {
-      navigate(
-        `${sessionPage}?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(access.activeAttempt.attemptId)}&mode=take`
-      );
+  const returnToPrevious = () => {
+    if (attempt && !finished(attempt) && !window.confirm('Về trang trước? Các câu trả lời đã lưu vẫn được giữ lại.'))
       return;
+    canLeaveAttempt.current = true;
+    let destination = listPage;
+    if (
+      typeof previousPage.current === 'string' &&
+      previousPage.current.startsWith('/') &&
+      !previousPage.current.startsWith('//')
+    ) {
+      const previous = new URL(previousPage.current, window.location.origin);
+      if (previous.origin === window.location.origin && previous.searchParams.get('examId') !== examId)
+        destination = `${previous.pathname}${previous.search}${previous.hash}`;
     }
-    setStarting(true);
-    setError('');
-    try {
-      const created = await api.exams.startAttempt(examId);
-      setAttempt(created);
-      navigate(
-        `${sessionPage}?examId=${encodeURIComponent(examId)}${created?.attemptId ? `&attemptId=${encodeURIComponent(created.attemptId)}` : ''}&mode=take`
-      );
-    } catch (startError) {
-      setError(startError?.message || 'Không thể bắt đầu lượt làm bài.');
-    } finally {
-      setStarting(false);
-    }
+    navigate(destination);
   };
   const title = exam?.title || 'Phiên kiểm tra';
   const isCompleted = finished(attempt);
   const availability = studentExamAvailability({ ...exam, policy, attempts: attempt ? [attempt] : [] });
-  const isGraded = attempt?.status === 'GRADED';
-  const statusLabel = isCompleted ? 'Đã nộp bài' : attempt ? 'Phiên đang mở' : 'Chưa bắt đầu';
-  const metrics = [
-    {
-      label: 'Số câu hỏi',
-      value: exam?.totalQuestions ?? '—',
-      detail: 'Theo cấu hình đề',
-      icon: 'format_list_numbered',
-      tone: 'primary',
-    },
-    {
-      label: 'Thời lượng',
-      value: exam?.durationMinutes ?? '—',
-      detail: exam?.durationMinutes ? 'phút làm bài' : 'Không giới hạn',
-      icon: 'schedule',
-      tone: 'warning',
-    },
-    {
-      label: 'Trạng thái',
-      value: isCompleted ? 'Đã nộp' : attempt ? 'Đang làm' : 'Sẵn sàng',
-      detail: attempt?.attemptNumber ? `Lượt làm ${attempt.attemptNumber}` : 'Chưa tạo lượt làm',
-      icon: 'assignment_turned_in',
-      tone: isCompleted ? 'success' : 'primary',
-    },
-    {
-      label: 'Kết quả',
-      value: isGraded ? 'Đã chấm' : isCompleted ? 'Chờ chấm' : '—',
-      detail: isGraded
-        ? 'Mở bài đã nộp để xem kết quả.'
-        : isCompleted
-          ? 'Giảng viên sẽ chấm và công bố điểm sau.'
-          : 'Điểm không hiển thị trong khi làm bài.',
-      icon: isGraded ? 'task_alt' : 'pending_actions',
-      tone: isGraded ? 'success' : 'warning',
-    },
-  ];
   if (!loading && exam && waitingForStart) return <ExamWaitingRoom examId={examId} workspace={workspace} />;
   return (
     <AppShell
@@ -509,6 +512,9 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
       title={`${title} · PTIT Physics LMS`}
       footer={false}
       showChrome={!takeMode}
+      showAcademicFilters={false}
+      showChatLauncher={!takeMode}
+      contentClass={takeMode ? 'exam-taking-page' : ''}
       toolbar={
         <DetailToolbar
           title={title}
@@ -517,18 +523,18 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
               ? `Lượt làm ${attempt.attemptNumber || '—'} · ${isCompleted ? 'Đã nộp' : 'Đang làm'}`
               : 'Sẵn sàng bắt đầu'
           }
-          backHref={
-            takeMode
-              ? `${sessionPage}?examId=${encodeURIComponent(examId)}${attemptId ? `&attemptId=${encodeURIComponent(attemptId)}` : ''}`
-              : overviewPage
-          }
-          backLabel={takeMode ? 'Về tổng quan đề' : practiceWorkspace ? 'Về ôn luyện' : 'Về kiểm tra'}
-          onBack={takeMode ? returnToOverview : undefined}
+          backHref={listPage}
+          backLabel="Về trang trước"
+          onBack={returnToPrevious}
           showBack
           actions={
             takeMode && attempt && !isCompleted ? (
-              <div className="flex items-center gap-3">
-                <div className="text-right">
+              <div className="exam-taking-actions">
+                <div
+                  className={`exam-taking-timer ${remainingSeconds !== null && remainingSeconds <= 300 ? 'is-urgent' : ''}`}
+                  role="timer"
+                  aria-label="Thời gian còn lại"
+                >
                   <span className="block text-xs text-white/80">Thời gian còn lại</span>
                   <strong className="text-sm text-white">
                     {remainingSeconds === null ? 'Đang đồng bộ…' : formatRemaining(remainingSeconds)}
@@ -538,10 +544,6 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
                   {submitting ? 'Đang nộp…' : 'Nộp bài'}
                 </Button>
               </div>
-            ) : !takeMode && exam ? (
-              <Button variant="secondary" icon="history" onClick={() => setHistoryOpen(true)}>
-                Lịch sử bài thi
-              </Button>
             ) : null
           }
         />
@@ -555,281 +557,219 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
             <p role="alert" className="text-primary">
               {error}
             </p>
-            <a href={overviewPage} className="mt-4 inline-block">
+            <a href={listPage} className="mt-4 inline-block">
               <Button>Quay lại danh sách đề</Button>
             </a>
           </Card>
         ) : (
           <div className="mx-auto max-w-6xl space-y-6">
-            {!takeMode && (
-              <Card className="overflow-hidden p-0">
-                <div className="bg-gradient-to-r from-primary to-[#4338CA] p-6 text-white md:p-8">
-                  <StatusBadge tone={isCompleted ? 'success' : 'neutral'}>{statusLabel}</StatusBadge>
-                  <div className="mt-5 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-                    <div>
-                      <h1 className="mt-1 text-headline-md font-bold">{title}</h1>
-                      {attempt?.startedAt && (
-                        <p className="mt-2 text-body-sm text-white/80">Bắt đầu lúc {formatDate(attempt.startedAt)}</p>
-                      )}
-                    </div>
-                    {!attempt && (
-                      <Button
-                        icon={availability.canOpen ? 'play_arrow' : 'lock'}
-                        disabled={starting || !availability.canOpen}
-                        onClick={start}
-                      >
-                        {starting ? 'Đang bắt đầu…' : availability.actionLabel}
-                      </Button>
-                    )}
-                    {attempt && !isCompleted && (
-                      <Button
-                        icon={availability.canOpen ? 'play_arrow' : 'lock'}
-                        disabled={!availability.canOpen}
-                        onClick={start}
-                      >
-                        {availability.actionLabel}
-                      </Button>
-                    )}
-                    {isCompleted && (
-                      <a
-                        href={`exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}
-                      >
-                        <Button icon="visibility">Xem bài đã nộp</Button>
-                      </a>
-                    )}
-                  </div>
-                  {!isCompleted && availability.reason && <p className="mt-3 text-body-sm">{availability.reason}</p>}
-                </div>
-                <div className="p-5 md:p-6">
-                  <MetricGrid items={metrics} />
-                </div>
-              </Card>
-            )}
-
-            {takeMode ? (
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-                <Card className="p-6 md:p-8">
-                  {!attempt && (
-                    <Card as="div" className="mt-6 border-[#BFDBFE] bg-[#EFF6FF] p-5">
-                      <h3 className="font-bold text-[#1E3A8A]">Sẵn sàng bắt đầu</h3>
-                    </Card>
-                  )}
-                  {attempt && !isCompleted && questions.length > 0 && (
-                    <div className="space-y-5">
-                      {questions.map((question, index) => (
-                        <Card as="section" key={question.questionId} className="p-5">
-                          <div className="flex items-start justify-between gap-3">
-                            <h3 className="font-bold">
-                              Câu {question.orderIndex || index + 1}. {question.content}
-                            </h3>
-                            <Button
-                              variant="secondary"
-                              icon={flaggedQuestions.includes(question.questionId) ? 'outlined_flag' : 'flag'}
-                              onClick={() =>
-                                setFlaggedQuestions((rows) =>
-                                  rows.includes(question.questionId)
-                                    ? rows.filter((id) => id !== question.questionId)
-                                    : [...rows, question.questionId]
-                                )
-                              }
-                            >
-                              {flaggedQuestions.includes(question.questionId) ? 'Bỏ cờ' : 'Cờ'}
-                            </Button>
-                          </div>
-                          {question.mediaUrl && (
-                            <FileImage src={question.mediaUrl} alt="Nội dung minh họa" className="mt-3 max-h-64 rounded-lg" />
-                          )}
-                          {['SHORT_ANSWER'].includes(question.questionType) ? (
-                            <SharedFormField
-                              defaultValue={question.answerText || ''}
-                              onBlur={(event) =>
-                                saveAnswer(question, {
-                                  answerText: event.target.value,
-                                })
-                              }
-                              className="mt-4 w-full"
-                              rows={3}
-                              placeholder="Nhập câu trả lời"
-                              disabled={savingQuestion === question.questionId}
-                              bare
-                              multiline
-                            />
-                          ) : (
-                            <div className="mt-4 space-y-2">
-                              {(question.options || []).map((option) => {
-                                const checked = (question.selectedOptionIds || []).includes(option.optionId);
-                                return (
-                                  <label
-                                    key={option.optionId}
-                                    className="flex cursor-pointer items-center gap-3 rounded-xl border p-3"
-                                  >
-                                    <input
-                                      type={question.questionType === 'MCQ_MULTI' ? 'checkbox' : 'radio'}
-                                      name={`question-${question.questionId}`}
-                                      checked={checked}
-                                      disabled={savingQuestion === question.questionId}
-                                      onChange={() => {
-                                        const ids =
-                                          question.questionType === 'MCQ_MULTI'
-                                            ? checked
-                                              ? (question.selectedOptionIds || []).filter(
-                                                  (id) => id !== option.optionId
-                                                )
-                                              : [...(question.selectedOptionIds || []), option.optionId]
-                                            : [option.optionId];
-                                        saveAnswer(question, { selectedOptionIds: ids });
-                                      }}
-                                    />
-                                    {option.content}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                  {attempt && !isCompleted && layout === 'single' && allQuestions[activeQuestion] && (
-                    <nav aria-label="Chuyển câu hỏi" className="mt-4 flex flex-wrap justify-between gap-2">
-                      <Button
-                        variant="secondary"
-                        disabled={activeQuestion === 0}
-                        onClick={() => setActiveQuestion((value) => value - 1)}
-                        icon="chevron_left"
-                      >
-                        Câu trước
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        disabled={activeQuestion >= allQuestions.length - 1}
-                        onClick={() => setActiveQuestion((value) => value + 1)}
-                        icon="chevron_right"
-                      >
-                        Câu sau
-                      </Button>
-                    </nav>
-                  )}
-                  {false && attempt && !isCompleted && (
-                    <Card as="div" className="mt-6 border-[#FDE68A] bg-[#FFFBEB] p-5">
-                      <span className="material-symbols-outlined text-[#B45309]" aria-hidden="true">
-                        info
-                      </span>
-                      <h3 className="mt-2 font-bold text-[#92400E]">Chưa thể tải câu hỏi của bài thi</h3>
-                      <p className="mt-2 text-body-sm text-[#92400E]">
-                        Chưa thể tải nội dung bài thi. Vui lòng thử lại sau hoặc liên hệ giảng viên.
-                      </p>
-                    </Card>
-                  )}
-                  {isCompleted && (
-                    <Card as="div" className="mt-6 border-[#A7F3D0] bg-[#ECFDF5] p-5">
-                      <h3 className="font-bold text-[#065F46]">Bạn đã hoàn thành lượt làm bài</h3>
-                    </Card>
-                  )}
-                </Card>
-                <div className="space-y-6">
-                  {attempt && !isCompleted && (
-                    <Card className="p-5">
-                      <h2 className="text-headline-sm font-bold">Chọn câu</h2>
-                      <div className="mt-3 flex gap-2">
-                        <Button
-                          variant={layout === 'single' ? 'primary' : 'secondary'}
-                          onClick={() => setLayout('single')}
-                        >
-                          Từng câu
-                        </Button>
-                        <Button variant={layout === 'all' ? 'primary' : 'secondary'} onClick={() => setLayout('all')}>
-                          Theo thứ tự
-                        </Button>
-                      </div>
-                      <div className="mt-4 grid grid-cols-5 gap-2">
-                        {allQuestions.map((question, index) => {
-                          const answered = Boolean((question.selectedOptionIds || []).length || question.answerText);
-                          const flagged = flaggedQuestions.includes(question.questionId);
-                          return (
-                            <button
-                              type="button"
-                              key={question.questionId}
-                              onClick={() => {
-                                setActiveQuestion(index);
-                                setLayout('single');
-                              }}
-                              className={`rounded-lg border p-2 text-sm font-bold ${flagged ? 'border-amber-300 bg-amber-100 text-amber-800' : index === activeQuestion && layout === 'single' ? 'border-primary bg-[#FEE2E2] text-primary' : answered ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-[#CBD5E1]'}`}
-                            >
-                              {index + 1}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <p className="mt-3 text-body-sm text-[#64748B]">
-                        Đã trả lời{' '}
-                        {progress?.answeredQuestions ??
-                          allQuestions.filter((item) => (item.selectedOptionIds || []).length || item.answerText)
-                            .length}
-                        /{progress?.totalQuestions ?? allQuestions.length} câu.
-                      </p>
-                    </Card>
-                  )}
-                  <Card className="p-6">
-                    <h2 className="text-headline-sm font-bold">Thông tin đề</h2>
-                    <dl className="mt-5 space-y-4 text-body-sm">
-                      <div className="border-b border-[#E2E8F0] pb-3">
-                        <dt className="text-[#64748B]">Loại đề</dt>
-                        <dd className="mt-1 font-semibold">{labelOf(exam?.examType)}</dd>
-                      </div>
-                      <div className="border-b border-[#E2E8F0] pb-3">
-                        <dt className="text-[#64748B]">Thời gian mở đề</dt>
-                        <dd className="mt-1 font-semibold">{formatDate(exam?.startTime)}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-[#64748B]">Hạn kết thúc</dt>
-                        <dd className="mt-1 font-semibold">{formatDate(exam?.endTime)}</dd>
-                      </div>
-                    </dl>
-                  </Card>
-                </div>
-              </div>
-            ) : (
-              <Card className="mx-auto max-w-3xl p-6 md:p-8">
-                <div className="flex items-start gap-3">
-                  <span
-                    className="material-symbols-outlined rounded-xl bg-[#EEF2FF] p-2 text-primary"
-                    aria-hidden="true"
-                  >
-                    assignment
-                  </span>
-                  <div>
-                    <h2 className="text-headline-sm font-bold">Sẵn sàng làm bài</h2>
-                  </div>
-                </div>
+            <div className="exam-taking-layout">
+              <Card className="exam-taking-workspace">
                 {!attempt && (
-                  <Button
-                    className="mt-6"
-                    icon="play_arrow"
-                    disabled={starting || !availability.canOpen}
-                    onClick={start}
-                  >
-                    {starting ? 'Đang bắt đầu…' : availability.actionLabel}
-                  </Button>
+                  <p role="status" className="text-body-sm text-[#64748B]">
+                    {availability.reason || 'Đang mở bài thi…'}
+                  </p>
                 )}
-                {attempt && !isCompleted && (
-                  <Button className="mt-6" icon="play_arrow" disabled={!availability.canOpen} onClick={start}>
-                    {availability.actionLabel}
-                  </Button>
+                {attempt && !isCompleted && questions.length > 0 && (
+                  <div className="space-y-5">
+                    {questions.map((question, index) => (
+                      <Card
+                        as="section"
+                        id={`exam-question-${question.questionId}`}
+                        key={question.questionId}
+                        className="exam-taking-question"
+                      >
+                        <div className="exam-taking-question-heading">
+                          <h3>
+                            <span className="exam-taking-question-number">
+                              Câu {question.orderIndex || (layout === 'single' ? activeQuestion + 1 : index + 1)}
+                            </span>
+                            <span>{question.content}</span>
+                          </h3>
+                          <Button
+                            variant="secondary"
+                            icon={flaggedQuestions.includes(question.questionId) ? 'outlined_flag' : 'flag'}
+                            aria-pressed={flaggedQuestions.includes(question.questionId)}
+                            onClick={() =>
+                              setFlaggedQuestions((rows) =>
+                                rows.includes(question.questionId)
+                                  ? rows.filter((id) => id !== question.questionId)
+                                  : [...rows, question.questionId]
+                              )
+                            }
+                          >
+                            {flaggedQuestions.includes(question.questionId) ? 'Bỏ cờ' : 'Cờ'}
+                          </Button>
+                        </div>
+                        {question.mediaUrl && (
+                          <FileImage
+                            src={question.mediaUrl}
+                            alt="Nội dung minh họa"
+                            className="mt-3 max-h-64 rounded-lg"
+                          />
+                        )}
+                        {['SHORT_ANSWER'].includes(question.questionType) ? (
+                          <SharedFormField
+                            defaultValue={question.answerText || ''}
+                            onBlur={(event) =>
+                              saveAnswer(question, {
+                                answerText: event.target.value,
+                              })
+                            }
+                            className="mt-4 w-full"
+                            rows={3}
+                            placeholder="Nhập câu trả lời"
+                            disabled={savingQuestion === question.questionId}
+                            bare
+                            multiline
+                          />
+                        ) : (
+                          <div className="mt-4 space-y-2">
+                            {(question.options || []).map((option) => {
+                              const checked = (question.selectedOptionIds || []).includes(option.optionId);
+                              return (
+                                <label key={option.optionId} className="exam-taking-option" data-selected={checked}>
+                                  <input
+                                    type={question.questionType === 'MCQ_MULTI' ? 'checkbox' : 'radio'}
+                                    name={`question-${question.questionId}`}
+                                    checked={checked}
+                                    disabled={savingQuestion === question.questionId}
+                                    onChange={() => {
+                                      const ids =
+                                        question.questionType === 'MCQ_MULTI'
+                                          ? checked
+                                            ? (question.selectedOptionIds || []).filter((id) => id !== option.optionId)
+                                            : [...(question.selectedOptionIds || []), option.optionId]
+                                          : [option.optionId];
+                                      saveAnswer(question, { selectedOptionIds: ids });
+                                    }}
+                                  />
+                                  {option.content}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                {attempt && !isCompleted && layout === 'single' && allQuestions[activeQuestion] && (
+                  <nav aria-label="Chuyển câu hỏi" className="exam-taking-pagination">
+                    <Button
+                      variant="secondary"
+                      disabled={activeQuestion === 0}
+                      onClick={() => setActiveQuestion((value) => value - 1)}
+                      icon="chevron_left"
+                    >
+                      Câu trước
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={activeQuestion >= allQuestions.length - 1}
+                      onClick={() => setActiveQuestion((value) => value + 1)}
+                      icon="chevron_right"
+                    >
+                      Câu sau
+                    </Button>
+                  </nav>
+                )}
+                {false && attempt && !isCompleted && (
+                  <Card as="div" className="mt-6 border-[#FDE68A] bg-[#FFFBEB] p-5">
+                    <span className="material-symbols-outlined text-[#B45309]" aria-hidden="true">
+                      info
+                    </span>
+                    <h3 className="mt-2 font-bold text-[#92400E]">Chưa thể tải câu hỏi của bài thi</h3>
+                    <p className="mt-2 text-body-sm text-[#92400E]">
+                      Chưa thể tải nội dung bài thi. Vui lòng thử lại sau hoặc liên hệ giảng viên.
+                    </p>
+                  </Card>
                 )}
                 {isCompleted && (
-                  <a
-                    className="mt-6 inline-block"
-                    href={`exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}
-                  >
-                    <Button icon="visibility">Xem kết quả</Button>
-                  </a>
+                  <Card as="div" className="mt-6 border-[#A7F3D0] bg-[#ECFDF5] p-5">
+                    <h3 className="font-bold text-[#065F46]">Bạn đã hoàn thành lượt làm bài</h3>
+                  </Card>
                 )}
+              </Card>
+              <aside className="exam-taking-sidebar">
+                <Card className="exam-taking-info">
+                  <h2 className="text-headline-sm font-bold">Thông tin đề</h2>
+                  <dl className="mt-5 space-y-4 text-body-sm">
+                    <div className="border-b border-[#E2E8F0] pb-3">
+                      <dt className="text-[#64748B]">Loại đề</dt>
+                      <dd className="mt-1 font-semibold">{labelOf(exam?.examType)}</dd>
+                    </div>
+                    <div className="border-b border-[#E2E8F0] pb-3">
+                      <dt className="text-[#64748B]">Thời gian mở đề</dt>
+                      <dd className="mt-1 font-semibold">{formatDate(exam?.startTime)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#64748B]">Hạn kết thúc</dt>
+                      <dd className="mt-1 font-semibold">{formatDate(exam?.endTime)}</dd>
+                    </div>
+                  </dl>
+                </Card>
+              </aside>
+            </div>
+            {attempt && !isCompleted && (
+              <Card as="nav" aria-label="Chọn câu hỏi" className="exam-taking-navigator">
+                <h2 className="text-headline-sm font-bold">Chọn câu</h2>
+                <div className="exam-taking-view-toggle">
+                  <Button
+                    variant={layout === 'single' ? 'primary' : 'secondary'}
+                    aria-pressed={layout === 'single'}
+                    onClick={() => setLayout('single')}
+                  >
+                    Từng câu
+                  </Button>
+                  <Button
+                    variant={layout === 'all' ? 'primary' : 'secondary'}
+                    aria-pressed={layout === 'all'}
+                    onClick={() => setLayout('all')}
+                  >
+                    Theo thứ tự
+                  </Button>
+                </div>
+                <div className="exam-taking-question-grid">
+                  {allQuestions.map((question, index) => {
+                    const answered = Boolean((question.selectedOptionIds || []).length || question.answerText);
+                    const flagged = flaggedQuestions.includes(question.questionId);
+                    return (
+                      <button
+                        type="button"
+                        key={question.questionId}
+                        aria-label={`Câu ${index + 1}${answered ? ', đã trả lời' : ', chưa trả lời'}${flagged ? ', đã đánh dấu' : ''}`}
+                        aria-current={index === activeQuestion ? 'step' : undefined}
+                        onClick={() => {
+                          setActiveQuestion(index);
+                          if (layout === 'all') {
+                            document
+                              .getElementById(`exam-question-${question.questionId}`)
+                              ?.scrollIntoView({
+                                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                                  ? 'instant'
+                                  : 'smooth',
+                                block: 'start',
+                              });
+                          }
+                        }}
+                        className={`rounded-lg border p-2 text-sm font-bold ${flagged ? 'border-amber-300 bg-amber-100 text-amber-800' : index === activeQuestion ? 'border-primary bg-[#FEE2E2] text-primary' : answered ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-[#CBD5E1]'}`}
+                      >
+                        {index + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-body-sm text-[#64748B]">
+                  Đã trả lời{' '}
+                  {progress?.answeredQuestions ??
+                    allQuestions.filter((item) => (item.selectedOptionIds || []).length || item.answerText).length}
+                  /{progress?.totalQuestions ?? allQuestions.length} câu.
+                </p>
               </Card>
             )}
           </div>
         )}
-        {historyOpen && exam && <ExamHistoryDialog exam={exam} onClose={() => setHistoryOpen(false)} />}
       </PageContainer>
     </AppShell>
   );
@@ -839,9 +779,5 @@ export function ExamSessionPage() {
   const params = new URLSearchParams(window.location.search);
   const examId = params.get('examId');
   if (examId && params.get('mode') === 'waiting') return <ExamWaitingRoom key={examId} examId={examId} />;
-  return examId ? (
-    <AttemptSession examId={examId} attemptId={params.get('attemptId')} takeMode={params.get('mode') === 'take'} />
-  ) : (
-    <ExamSelection />
-  );
+  return examId ? <AttemptSession examId={examId} attemptId={params.get('attemptId')} /> : <ExamSelection />;
 }

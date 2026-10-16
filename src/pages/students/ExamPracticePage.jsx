@@ -49,14 +49,7 @@ export function ExamPracticePage() {
   if (examId && params.get('mode') === 'waiting')
     return <ExamWaitingRoom key={examId} examId={examId} workspace="practice" />;
   if (examId) {
-    return (
-      <AttemptSession
-        examId={examId}
-        attemptId={params.get('attemptId')}
-        takeMode={params.get('mode') === 'take'}
-        workspace="practice"
-      />
-    );
+    return <AttemptSession examId={examId} attemptId={params.get('attemptId')} workspace="practice" />;
   }
   return <PracticeCenter />;
 }

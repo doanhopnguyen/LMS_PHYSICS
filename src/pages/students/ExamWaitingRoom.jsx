@@ -12,6 +12,7 @@ import { ExamHistoryDialog } from '../../components/ExamHistoryDialog.jsx';
 import { api } from '../../lib/apiClient.js';
 import { navigate } from '../../lib/navigation.js';
 import { studentExamAvailability } from '../../lib/studentExamAvailability.js';
+import '../../styles/exam-waiting.css';
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
 async function loadExam(examId) {
@@ -99,8 +100,13 @@ export function ExamWaitingRoom({ examId, workspace = 'exam' }) {
     .join(':');
 
   return (
-    <AppShell currentPage={page} title="Sảnh chờ bài thi · PTIT Physics LMS">
-      <PageContainer>
+    <AppShell
+      currentPage={page}
+      title="Sảnh chờ bài thi · PTIT Physics LMS"
+      contentClass="exam-waiting-page"
+      showAcademicFilters={false}
+    >
+      <PageContainer className="exam-waiting-container">
         <PageTitle
           eyebrow={page === 'exam_practice_center.html' ? 'ÔN LUYỆN' : 'KIỂM TRA'}
           title="Sảnh chờ bài thi"
@@ -126,24 +132,20 @@ export function ExamWaitingRoom({ examId, workspace = 'exam' }) {
         {loading ? (
           <LoadingIndicator className="p-6">Đang tải thông tin bài thi…</LoadingIndicator>
         ) : exam ? (
-          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
-            <Card className="min-w-0 space-y-5 p-5 md:p-6 lg:col-span-2">
+          <div className="exam-waiting-layout">
+            <Card className="exam-waiting-main">
               <SectionHeader icon="quiz" title={exam.title || 'Đề thi'} />
-              <p className="text-body-md text-[#64748B]">
+              <p className="exam-waiting-intro">
                 Chuẩn bị sẵn sàng trước giờ thi. Bạn có thể bắt đầu khi đề mở và được phép làm bài.
               </p>
-              <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-8 text-center md:py-10">
+              <div className={`exam-waiting-countdown ${canEnter ? 'is-ready' : ''}`}>
                 <StatusBadge tone={seconds > 0 ? 'warning' : canEnter ? 'success' : 'neutral'}>
                   {seconds > 0 ? 'Chưa đến giờ thi' : canEnter ? 'Đề thi đã mở' : 'Chưa thể vào làm bài'}
                 </StatusBadge>
                 <p className="mt-4 text-body-sm text-[#64748B]">
                   {seconds > 0 ? 'Thời gian còn lại đến giờ mở đề' : 'Đã đến giờ mở đề'}
                 </p>
-                <p
-                  role="timer"
-                  aria-label="Đếm ngược đến giờ thi"
-                  className="mt-3 break-words text-4xl font-bold tabular-nums tracking-wide text-on-surface sm:text-6xl"
-                >
+                <p role="timer" aria-label="Đếm ngược đến giờ thi" className="exam-waiting-clock">
                   {countdown}
                 </p>
                 <p role="status" className="mt-3 text-body-sm text-[#64748B]">
@@ -152,7 +154,7 @@ export function ExamWaitingRoom({ examId, workspace = 'exam' }) {
                     : availability.reason || 'Đang kiểm tra quyền làm bài…'}
                 </p>
               </div>
-              <p className="text-body-sm leading-relaxed text-[#64748B]">
+              <p className="exam-waiting-note">
                 {availability.activeAttempt
                   ? 'Lượt làm bài đã bắt đầu trước đó; thời gian của lượt làm vẫn tiếp tục được tính.'
                   : 'Thời gian làm bài chỉ bắt đầu khi bạn nhấn bắt đầu.'}{' '}
@@ -167,18 +169,18 @@ export function ExamWaitingRoom({ examId, workspace = 'exam' }) {
                 {starting ? 'Đang mở…' : seconds > 0 ? 'Chờ đến giờ thi' : availability.actionLabel}
               </Button>
             </Card>
-            <Card className="min-w-0 p-5 md:p-6">
+            <Card className="exam-waiting-details">
               <SectionHeader icon="event_note" title="Thông tin bài thi" />
-              <dl className="mt-2 divide-y divide-[#E2E8F0] text-body-md">
+              <dl>
                 {[
                   ['Giờ mở đề', formatDate(exam.policy?.startTime || exam.startTime)],
                   ['Hạn kết thúc', formatDate(exam.policy?.endTime || exam.endTime)],
                   ['Thời lượng', exam.durationMinutes ? `${exam.durationMinutes} phút` : 'Không giới hạn'],
                   ['Số câu hỏi', exam.totalQuestions ?? '—'],
                 ].map(([label, value]) => (
-                  <div key={label} className="py-4">
+                  <div key={label}>
                     <dt className="text-body-sm text-[#64748B]">{label}</dt>
-                    <dd className="mt-1 break-words font-semibold text-on-surface">{value}</dd>
+                    <dd>{value}</dd>
                   </div>
                 ))}
               </dl>

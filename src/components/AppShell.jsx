@@ -29,6 +29,7 @@ export function AppShell({
   navigationItems,
   utilityItems,
   filterActions,
+  showAcademicFilters = true,
   showBackButton = true,
   backHref,
 }) {
@@ -150,7 +151,7 @@ export function AppShell({
                 backLabel={actualPage === 'exam_results.html' ? 'Về danh sách bài kiểm tra' : 'Về trang chính'}
               />
             ))}
-          <AcademicFilters page={actualPage} actions={filterActions} />
+          {showAcademicFilters && <AcademicFilters page={actualPage} actions={filterActions} />}
           <div className="page-body">
             {academicPages[actualPage] && !readAcademicScope().available ? (
               <main className="mx-auto w-full max-w-[1440px] p-6">
