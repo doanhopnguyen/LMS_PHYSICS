@@ -6,7 +6,7 @@ export function AuthoringSection({ number, icon, title, description, className =
   return (
     <Card className={`authoring-section ${className}`} aria-labelledby={titleId} {...props}>
       <div className="authoring-section__heading">
-        <span className="authoring-section__number" aria-hidden="true">
+        <span className="creation-step-badge authoring-section__number" aria-hidden="true">
           {number}
         </span>
         <div>

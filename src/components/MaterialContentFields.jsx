@@ -3,6 +3,8 @@ import { Card } from './Card.jsx';
 import { FormField } from './FormField.jsx';
 import { MarkdownContent } from './MarkdownContent.jsx';
 import { VideoSourceFields } from './VideoSourceFields.jsx';
+import { Button } from './Button.jsx';
+import { FormDialog } from './FormDialog.jsx';
 
 export const materialFormats = [
   ['MARKDOWN', 'Markdown'],
@@ -15,6 +17,7 @@ export const materialFormats = [
 
 export function MaterialContentFields({ type, initial = {}, busy = false }) {
   const [content, setContent] = useState(initial.contentText || '');
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const editorId = useId();
   const previewId = useId();
   if (type === 'MARKDOWN')
@@ -50,6 +53,9 @@ export function MaterialContentFields({ type, initial = {}, busy = false }) {
               visibility
             </span>
             <h3 id={previewId}>Xem trước Markdown</h3>
+            <Button variant="ghost" icon="fullscreen" className="ml-auto" onClick={() => setPreviewExpanded(true)}>
+              Mở rộng
+            </Button>
           </div>
           <div className="markdown-editor__body markdown-editor__preview">
             {content.trim() ? (
@@ -59,6 +65,19 @@ export function MaterialContentFields({ type, initial = {}, busy = false }) {
             )}
           </div>
         </Card>
+        {previewExpanded && (
+          <FormDialog title="Xem trước Markdown" reader expandable onClose={() => setPreviewExpanded(false)}>
+            <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-8">
+              <div className="mx-auto w-full max-w-5xl">
+                {content.trim() ? (
+                  <MarkdownContent content={content} />
+                ) : (
+                  <p className="text-slate-500">Nhập nội dung Markdown để xem trước bài học.</p>
+                )}
+              </div>
+            </div>
+          </FormDialog>
+        )}
       </div>
     );
   if (type === 'VIDEO')

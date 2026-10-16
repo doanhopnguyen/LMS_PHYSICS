@@ -31,10 +31,9 @@ export function LessonContent({
         </section>
       )}
       {(fileUrl || material?.fileId) && !isVideo && (
-        <section className="lesson-question">
-          <h3>Tài liệu học tập</h3>
-          <MaterialFilePreview key={material.materialId || fileUrl} material={material} />
-        </section>
+        <div className="min-w-0">
+          <MaterialFilePreview key={material.materialId || fileUrl} material={material} compact />
+        </div>
       )}
       {material?.sourceCitation && !isVideo && (
         <section>

@@ -4,8 +4,16 @@ import { createVideoWatchGuard } from '../lib/videoWatchGuard.js';
 import { loadYouTube, loadVimeo } from '../lib/videoPlayerApi.js';
 import { AuthAlert } from './AuthLayout.jsx';
 import { useFileSource } from '../hooks/useFileSource.js';
+import { MediaViewer, ViewerStatus } from './MediaViewer.jsx';
 
-export function GuardedVideoPlayer({ material, completed = false, watchedSeconds = 0, onProgress, fill = false }) {
+export function GuardedVideoPlayer({
+  material,
+  completed = false,
+  watchedSeconds = 0,
+  onProgress,
+  fill = false,
+  compact = false,
+}) {
   const source = materialVideoSource(material);
   const native = useRef(null);
   const container = useRef(null);
@@ -213,19 +221,28 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
     };
   }, [source?.url, attempt, guard]);
 
-  if (!source) return <p className="p-4 text-slate-500">Video bài giảng chưa được cung cấp.</p>;
-  if (source.type === 'video' && playback.loading) return <p role="status">Đang tải video…</p>;
-  if (source.type === 'video' && playback.error)
+  if (!source || (source.type === 'video' && (playback.loading || playback.error)))
     return (
-      <p role="alert">
-        {playback.error}{' '}
-        <button type="button" onClick={playback.retry}>
-          Thử lại
-        </button>
-      </p>
+      <MediaViewer
+        title={material.title || 'Video bài giảng'}
+        label="Video bài học"
+        icon="play_circle"
+        fill={fill}
+        compact={compact}
+      >
+        <ViewerStatus error={!source || Boolean(playback.error)} onRetry={playback.error ? playback.retry : undefined}>
+          {!source ? 'Video bài giảng chưa được cung cấp.' : playback.error || 'Đang tải video…'}
+        </ViewerStatus>
+      </MediaViewer>
     );
   return (
-    <div className={fill ? 'flex min-h-0 w-full flex-1 flex-col' : 'space-y-2'}>
+    <MediaViewer
+      title={material.title || 'Video bài giảng'}
+      label="Video bài học"
+      icon="play_circle"
+      fill={fill}
+      compact={compact}
+    >
       {message && (
         <AuthAlert key={message.id} error>
           {message.text}
@@ -247,34 +264,32 @@ export function GuardedVideoPlayer({ material, completed = false, watchedSeconds
           </button>
         </div>
       )}
-      {source.type === 'embed' ? (
-        <div
-          ref={container}
-          className={`guarded-video-embed ${fill ? 'min-h-0 flex-1' : 'aspect-video'} w-full overflow-hidden bg-slate-950`}
-        />
-      ) : (
-        <video
-          key={playback.url}
-          ref={native}
-          aria-label={material.title || 'Video bài giảng'}
-          src={playback.url}
-          controls
-          playsInline
-          preload="metadata"
-          className={fill ? 'min-h-0 w-full flex-1' : 'aspect-video w-full rounded-xl bg-slate-950'}
-          onPlay={() => guard.baseline(native.current.currentTime)}
-          onTimeUpdate={() => tickNative()}
-          onEnded={() => tickNative(true)}
-          onSeeking={() => {
-            if (!resetting.current) check(guard.seek(native.current.currentTime), nativeReset);
-          }}
-          onRateChange={() => {
-            if (!resetting.current)
-              check(guard.rate(native.current.playbackRate, native.current.currentTime), nativeReset);
-          }}
-          onError={() => setError('Không thể phát video bài giảng.')}
-        />
-      )}
-    </div>
+      <div className="media-viewer__stage media-viewer__stage--video">
+        {source.type === 'embed' ? (
+          <div ref={container} className="guarded-video-embed" />
+        ) : (
+          <video
+            key={playback.url}
+            ref={native}
+            aria-label={material.title || 'Video bài giảng'}
+            src={playback.url}
+            controls
+            playsInline
+            preload="metadata"
+            onPlay={() => guard.baseline(native.current.currentTime)}
+            onTimeUpdate={() => tickNative()}
+            onEnded={() => tickNative(true)}
+            onSeeking={() => {
+              if (!resetting.current) check(guard.seek(native.current.currentTime), nativeReset);
+            }}
+            onRateChange={() => {
+              if (!resetting.current)
+                check(guard.rate(native.current.playbackRate, native.current.currentTime), nativeReset);
+            }}
+            onError={() => setError('Không thể phát video bài giảng.')}
+          />
+        )}
+      </div>
+    </MediaViewer>
   );
 }

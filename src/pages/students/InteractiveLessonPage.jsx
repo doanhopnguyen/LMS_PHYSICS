@@ -205,6 +205,7 @@ export function InteractiveLessonPage() {
                 {material.type === 'VIDEO' ? (
                   <div className="lesson-video">
                     <GuardedVideoPlayer
+                      compact
                       key={material.materialId}
                       material={material}
                       completed={completed}
@@ -236,27 +237,21 @@ export function InteractiveLessonPage() {
                           </div>
                         ))}
                       {(material.fileId || material.fileUrl || material.downloadUrl || material.url) && (
-                        <MaterialFilePreview key={material.materialId} material={material} />
+                        <MaterialFilePreview key={material.materialId} material={material} compact />
                       )}
                     </section>
                   </article>
                 )}
                 {material.type !== 'MARKDOWN' && material.type !== 'TEXT' && material.type !== 'VIDEO' && (
-                  <Card className="p-6">
-                    <span className="material-symbols-outlined text-primary" aria-hidden="true">
-                      description
-                    </span>
-                    <h2 className="mt-3 text-headline-sm font-bold">
-                      {materialTypeLabel[material.type] || 'Tệp học liệu'}
-                    </h2>
+                  <div className="min-w-0">
                     {material.fileId || material.fileUrl || material.downloadUrl || material.url ? (
-                      <div className="mt-4">
-                        <MaterialFilePreview key={material.materialId} material={material} />
+                      <div className="min-w-0">
+                        <MaterialFilePreview key={material.materialId} material={material} compact />
                       </div>
                     ) : (
                       <p className="mt-4 text-body-sm text-[#64748B]">Học liệu này chưa có tệp đính kèm.</p>
                     )}
-                  </Card>
+                  </div>
                 )}
                 <div className="lesson-controls">
                   {material.sourceCitation && material.type !== 'VIDEO' && (

@@ -661,36 +661,33 @@ try {
       assert.equal((await geometry()).left, 340);
     }
   );
-  await check('Class creation validates required fields and preserves four-step context', async () => {
+  await check('Class creation validates required fields in three steps without student enrollment', async () => {
     await go('admin_class_create?subjectId=s0&semesterId=sem1');
-    assert.equal(await evaluate(`document.querySelector('ol[aria-label="Các bước tạo lớp"]').children.length`), 4);
+    assert.equal(await evaluate(`document.querySelector('ol[aria-label="Các bước tạo lớp"]').children.length`), 3);
     await click('Tiếp tục');
     assert.ok(await evaluate(`!!document.querySelector('input[required]')`));
     await set('input[pattern]', 'VL-NEW');
     await click('Tiếp tục');
     assert.ok(
-      await evaluate(`document.querySelector('ol li:first-child span.relative').className.includes('bg-green-600')`)
+      await evaluate(`document.querySelector('ol li:first-child .material-symbols-outlined')?.textContent==='check'`)
     );
     assert.deepEqual(await evaluate(`[...document.querySelector('select').options].map(o=>o.value)`), ['', 'teacher1']);
     await set('select', 'teacher1');
     await click('Tiếp tục');
-    await set('input[placeholder="Nhập thông tin sinh viên"]', 'sv1');
-    await click('Tìm kiếm');
-    await wait(`document.querySelector('input[type=radio]')`);
-    await evaluate(`document.querySelector('input[type=radio]').click()`);
-    await pause(100);
-    await click('Thêm vào danh sách');
-    await click('Tiếp tục');
+    assert.equal(await evaluate(`!!document.querySelector('input[placeholder="Nhập thông tin sinh viên"]')`), false);
+    assert.equal(await evaluate(`document.querySelector('ol li[aria-current=step]').textContent.includes('Xác nhận')`), true);
     await screenshot('wizard-confirmation');
   });
-  await check('Enrollment failure can be retried without creating a second class', async () => {
-    await evaluate('window.failEnrollment=true');
+  await check('Successful creation explains how to add students from the class list', async () => {
     await click('Xác nhận tạo lớp');
-    await wait(`document.body.textContent.includes('Thử lại ghi danh')`);
+    await wait(`document.body.textContent.includes('Tạo lớp VL-NEW thành công')`);
     assert.equal(await evaluate(`calls.filter(c=>c.path==='/api/v1/classes'&&c.method==='POST').length`), 1);
-    await evaluate('window.failEnrollment=false');
-    await click('Thử lại ghi danh');
-    await wait(`location.pathname.includes('admin_class_detail')`);
+    assert.equal(await evaluate(`calls.some(c=>c.path.includes('/created-class/')&&c.path.includes('enroll'))`), false);
+    assert.equal(await evaluate(`document.querySelector('[role=status]').textContent.includes('Thêm sinh viên')`), true);
+    assert.equal(await evaluate(`!!document.querySelector('form')`), false);
+    await screenshot('class-created-guidance');
+    await click('Về danh sách lớp');
+    await wait(`location.pathname.endsWith('/admin_classes')`);
   });
   await check('Class detail edits information, assigns instructor and removes student with confirmation', async () => {
     await go('admin_class_detail?classId=c0');

@@ -25,6 +25,26 @@
   --ptit-radius-compact: 0.75em;
 }
 
+.creation-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--ptit-primary);
+  border-radius: 50%;
+  background: var(--ptit-primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+[aria-current="step"] .creation-step-badge {
+  outline: 4px solid var(--ptit-primary-soft);
+  outline-offset: 3px;
+}
+
 .app-shell-content {
   min-width: 0;
 }

@@ -1456,7 +1456,7 @@ export function LecturerAssessmentApiPage({
     const values = Object.fromEntries(new FormData(event.currentTarget));
     let targets;
     try {
-      if (!editing) targets = validateExamTargets(rows, formClassId, additionalClassIds, copySubjectId);
+      if (!editing) targets = validateExamTargets(rows, formClassId, adminFinal ? [] : additionalClassIds, copySubjectId);
     } catch (error) {
       action.setError(error.message);
       return;
@@ -1652,6 +1652,7 @@ export function LecturerAssessmentApiPage({
       {!createPage && (
         <div className="mt-6">
           <Tabs
+            hideSingleTab={adminFinal}
             items={
               grading || embedded
                 ? [{ id: 'exams', label: 'Kỳ thi của lớp' }]
@@ -1829,7 +1830,7 @@ export function LecturerAssessmentApiPage({
                   wrapperClassName="text-body-sm font-semibold"
                 />
               </div>
-              {!editing && (
+              {!editing && !adminFinal && (
                 <ExamTargetClasses
                   classes={rows}
                   primaryClassId={selected}
@@ -1928,7 +1929,7 @@ export function LecturerAssessmentApiPage({
               </AuthoringSection>
             </div>
 
-            <AuthoringSection number="03" icon="settings" title="Cấu hình bài thi">
+            <AuthoringSection number="04" icon="settings" title="Cấu hình bài thi">
               <SharedFormField
                 label="Số lượt làm tối đa"
                 name="maxAttempts"

@@ -44,7 +44,7 @@ export function FormDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={describedBy}
-        className={`form-dialog flex w-full flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl ${expanded ? 'h-[100dvh] max-h-[100dvh] max-w-none' : reader ? 'h-[calc(100dvh-16px)] max-h-[calc(100dvh-16px)] max-w-[1600px] sm:h-[calc(100dvh-24px)] sm:max-h-[calc(100dvh-24px)]' : `max-h-[calc(100dvh-32px)] ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}`}
+        className={`form-dialog ${expanded ? 'form-dialog--expanded' : ''} flex w-full flex-col overflow-hidden ${expanded ? 'h-[100dvh] max-h-[100dvh] max-w-none' : reader ? 'h-[calc(100dvh-16px)] max-h-[calc(100dvh-16px)] max-w-[1600px] sm:h-[calc(100dvh-24px)] sm:max-h-[calc(100dvh-24px)]' : `max-h-[calc(100dvh-32px)] ${compact ? 'max-w-md' : wide ? 'max-w-5xl' : 'max-w-2xl'}`}`}
         onKeyDown={(e) => {
           // Events from a nested portal belong to its own dialog and focus trap.
           if (!ref.current.contains(e.target)) return;
@@ -68,11 +68,11 @@ export function FormDialog({
         }}
       >
         <div
-          className={`flex shrink-0 items-center justify-between gap-3 border-b border-[#E2E8F0] ${reader ? 'px-3 py-1' : 'px-4 py-4 sm:px-6'}`}
+          className={`form-dialog__header flex shrink-0 items-center justify-between gap-3 ${reader ? 'px-3 py-1' : 'px-4 py-4 sm:px-6'}`}
         >
           <h2
             id={titleId}
-            className={`min-w-0 font-medium ${reader ? 'truncate text-body-sm' : 'break-words text-headline-sm'}`}
+            className={`form-dialog__title min-w-0 ${reader ? 'truncate text-body-sm' : 'break-words text-headline-sm'}`}
           >
             {title}
           </h2>

@@ -148,6 +148,7 @@ export function StudentLearningWorkspace({
             </div>
             {lesson.type === 'VIDEO' && (
               <GuardedVideoPlayer
+                compact
                 key={lesson.materialId}
                 material={lesson}
                 completed={completed}

@@ -184,7 +184,6 @@ export function AdminClassCreatePage() {
     maxStudents: 50,
     instructorId: '',
   });
-  const [students, setStudents] = useState([]);
   const [createdId, setCreatedId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -195,8 +194,9 @@ export function AdminClassCreatePage() {
   const teacher = teachers.data.find((t) => t.userId === values.instructorId);
   async function submit(e) {
     e.preventDefault();
+    if (busy || createdId) return;
     setError('');
-    if (step < 4) {
+    if (step < 3) {
       setStep((s) => s + 1);
       return;
     }
@@ -208,48 +208,54 @@ export function AdminClassCreatePage() {
       setError('Kiểm tra lại học kỳ, học phần và giảng viên.');
       return;
     }
-    if (students.length > Number(values.maxStudents)) {
-      setError('Danh sách sinh viên vượt quá sĩ số tối đa.');
-      return;
-    }
     setBusy(true);
     try {
-      let classId = createdId;
-      if (!classId) {
-        const result = await api.classes.create({
-          ...values,
-          maxStudents: Number(values.maxStudents),
-          classCode: values.classCode.trim(),
-        });
-        classId = result.classId;
-        if (!classId) throw new Error('Không nhận được mã lớp từ hệ thống.');
-        setCreatedId(classId);
-      }
-      if (students.length) await api.classes.enrollBulk(classId, { studentIds: students.map((s) => s.userId) });
-      navigate(`admin_class_detail.html?classId=${classId}`);
+      const result = await api.classes.create({
+        ...values,
+        maxStudents: Number(values.maxStudents),
+        classCode: values.classCode.trim(),
+      });
+      if (!result.classId) throw new Error('Không nhận được mã lớp từ hệ thống.');
+      setCreatedId(result.classId);
     } catch (e) {
       setError(e.message);
     } finally {
       setBusy(false);
     }
   }
-  const steps = ['Học kỳ & học phần', 'Giảng viên phụ trách', 'Danh sách sinh viên', 'Xác nhận'];
-  return (
-    <AdminPageShell
-      currentPage="admin_classes.html"
-      title="Tạo mới lớp học"
-      actions={
-        createdId ? (
-          <Button
-            variant="secondary"
-            disabled={busy}
-            onClick={() => navigate(`admin_class_detail.html?classId=${createdId}`)}
+  const steps = ['Học kỳ & học phần', 'Giảng viên phụ trách', 'Xác nhận'];
+  if (createdId)
+    return (
+      <AdminPageShell currentPage="admin_classes.html" title="Tạo mới lớp học">
+        <Card className="mx-auto max-w-3xl p-6 sm:p-8" role="status">
+          <span
+            className="material-symbols-outlined mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-primary"
+            aria-hidden="true"
           >
-            Mở lớp đã tạo
-          </Button>
-        ) : undefined
-      }
-    >
+            check_circle
+          </span>
+          <h2 className="text-xl font-semibold">Tạo lớp {values.classCode.trim()} thành công</h2>
+          <p className="mt-3 leading-7 text-slate-600">
+            Để bổ sung danh sách sinh viên, vào <strong>Danh sách lớp</strong>, mở lớp vừa tạo, chọn tab{' '}
+            <strong>Sinh viên</strong> rồi nhấn <strong>Thêm sinh viên</strong>.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button icon="school" onClick={() => navigate('admin_classes.html')}>
+              Về danh sách lớp
+            </Button>
+            <Button
+              variant="secondary"
+              icon="arrow_forward"
+              onClick={() => navigate(`admin_class_detail.html?classId=${createdId}`)}
+            >
+              Mở lớp vừa tạo
+            </Button>
+          </div>
+        </Card>
+      </AdminPageShell>
+    );
+  return (
+    <AdminPageShell currentPage="admin_classes.html" title="Tạo mới lớp học">
       <ol aria-label="Các bước tạo lớp" className="mb-6 flex items-start">
         {steps.map((label, index) => (
           <li
@@ -257,15 +263,13 @@ export function AdminClassCreatePage() {
             aria-current={step === index + 1 ? 'step' : undefined}
             className="relative flex min-w-0 flex-1 flex-col items-center gap-2 px-1 text-center text-xs sm:text-sm"
           >
-            {index < 3 && (
+            {index < steps.length - 1 && (
               <span
                 aria-hidden="true"
-                className={`absolute left-1/2 top-5 h-1 w-full ${step > index + 1 ? 'bg-green-600' : 'bg-slate-200'}`}
+                className={`absolute left-1/2 top-5 h-1 w-full ${step > index + 1 ? 'bg-primary' : 'bg-slate-200'}`}
               />
             )}
-            <span
-              className={`relative z-[1] flex h-10 w-10 items-center justify-center rounded-full font-bold text-white ${step > index + 1 ? 'bg-green-600' : 'bg-red-600'}`}
-            >
+            <span className="creation-step-badge relative z-[1]">
               {step > index + 1 ? <span className="material-symbols-outlined">check</span> : index + 1}
             </span>
             <span className={step === index + 1 ? 'font-semibold text-slate-900' : 'text-slate-500'}>{label}</span>
@@ -274,9 +278,6 @@ export function AdminClassCreatePage() {
       </ol>
       <Card className="mx-auto max-w-4xl p-5 sm:p-6">
         <AuthAlert error>{error || semesters.error || subjects.error || teachers.error}</AuthAlert>
-        {createdId && (
-          <AuthAlert>Lớp đã được tạo. Bạn có thể thử lại bước ghi danh hoặc mở lớp để quản lý sinh viên.</AuthAlert>
-        )}
         <Form onSubmit={submit} className="space-y-5" busy={busy}>
           {step === 1 && (
             <div className="grid gap-4 sm:grid-cols-2">
@@ -317,14 +318,6 @@ export function AdminClassCreatePage() {
             </SelectField>
           )}
           {step === 3 && (
-            <>
-              <p className="text-sm text-slate-500">
-                Tìm và thêm sinh viên có tài khoản. Có thể bổ sung sinh viên sau khi tạo lớp.
-              </p>
-              <StudentPicker students={students} onChange={setStudents} busy={busy} />
-            </>
-          )}
-          {step === 4 && (
             <dl className="grid gap-4 sm:grid-cols-2">
               {[
                 ['Mã lớp', values.classCode],
@@ -332,7 +325,6 @@ export function AdminClassCreatePage() {
                 ['Học phần', subjects.data.find((s) => s.subjectId === values.subjectId)?.subjectName],
                 ['Giảng viên', teacher?.fullName || teacher?.username],
                 ['Sĩ số tối đa', values.maxStudents],
-                ['Sinh viên ghi danh', students.length],
               ].map(([label, value]) => (
                 <div key={label}>
                   <dt className="text-sm text-slate-500">{label}</dt>
@@ -342,16 +334,10 @@ export function AdminClassCreatePage() {
             </dl>
           )}
           <div className="flex justify-between gap-3 border-t pt-5">
-            <Button
-              variant="secondary"
-              disabled={step === 1 || busy || Boolean(createdId)}
-              onClick={() => setStep((s) => s - 1)}
-            >
+            <Button variant="secondary" disabled={step === 1 || busy} onClick={() => setStep((s) => s - 1)}>
               Bước trước
             </Button>
-            <SubmitButton busy={busy}>
-              {step === 4 ? (createdId ? 'Thử lại ghi danh' : 'Xác nhận tạo lớp') : 'Tiếp tục'}
-            </SubmitButton>
+            <SubmitButton busy={busy}>{step === 3 ? 'Xác nhận tạo lớp' : 'Tiếp tục'}</SubmitButton>
           </div>
         </Form>
       </Card>

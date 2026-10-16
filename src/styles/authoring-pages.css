@@ -66,17 +66,7 @@
   background: #f8fafc;
 }
 .authoring-section__number {
-  display: grid;
-  place-items: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #f6dcd8;
-  border-radius: 10px;
-  background: #fff1ef;
-  color: #c41e1a;
-  font-size: 12px;
-  font-weight: 700;
 }
 .authoring-section__heading h3 {
   font-size: 15px;

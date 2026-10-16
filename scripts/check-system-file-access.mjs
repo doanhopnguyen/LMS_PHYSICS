@@ -127,8 +127,9 @@ try {
       { method: 'GET', path: '/api/v1/files/protected/download', auth: 'Bearer isolated-test' },
     ]
   );
+  assert.equal(await evaluate(`!!document.querySelector('.lesson-content .media-viewer__toolbar')`), false);
   await evaluate(
-    `[...document.querySelectorAll('.lesson-content a')].find(a=>a.textContent.includes('Tải tài liệu')).click()`
+    `import('/src/lib/apiClient.js').then(async ({api})=>{await api.files.download({fileId:'protected'});return true;})`
   );
   for (let i = 0; i < 50 && !downloadEvents.length; i++) await pause(100);
   assert.equal(downloadEvents[0]?.suggestedFilename, 'Bài học Vật lý.pdf');

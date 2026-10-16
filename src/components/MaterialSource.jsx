@@ -3,6 +3,7 @@ import { FormDialog } from './FormDialog.jsx';
 import { materialSourceParts } from '../lib/materialSources.js';
 import { FileDownloadButton } from './FileDownloadButton.jsx';
 import { api } from '../lib/apiClient.js';
+import { MaterialVideoPlayer } from './MaterialVideoPlayer.jsx';
 
 export function MaterialSource({ value, title = 'Video nguồn học liệu' }) {
   const [viewing, setViewing] = useState(null);
@@ -40,25 +41,7 @@ export function MaterialSource({ value, title = 'Video nguồn học liệu' }) 
       </p>
       {viewing && (
         <FormDialog title={title} reader onClose={() => setViewing(null)}>
-          {viewing.type === 'embed' ? (
-            <iframe
-              title={title}
-              src={viewing.url}
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-              className="min-h-0 w-full flex-1 border-0"
-            />
-          ) : (
-            <video
-              aria-label={title}
-              src={viewing.url}
-              controls
-              playsInline
-              preload="metadata"
-              className="min-h-0 w-full flex-1"
-            />
-          )}
+          <MaterialVideoPlayer material={{ title, type: 'VIDEO', fileUrl: viewing.url }} fill />
         </FormDialog>
       )}
     </>

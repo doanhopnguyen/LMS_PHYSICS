@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from './Button.jsx';
-import { FormDialog } from './FormDialog.jsx';
+import { MediaViewer, ViewerStatus } from './MediaViewer.jsx';
 import { previewType, formatJson } from '../lib/evidencePreview.js';
 import { api } from '../lib/apiClient.js';
 import { MaterialVideoPlayer } from './MaterialVideoPlayer.jsx';
 import { MarkdownContent } from './MarkdownContent.jsx';
 
-export function MaterialFilePreview({ material, fill = false }) {
+export function MaterialFilePreview({ material, fill = false, compact = false }) {
   const [attempt, setAttempt] = useState(0);
-  const [expanded, setExpanded] = useState(false);
   const [state, setState] = useState({ loading: true });
   useEffect(() => {
     if (material.type === 'VIDEO') return;
@@ -30,7 +28,7 @@ export function MaterialFilePreview({ material, fill = false }) {
       const text = ['markdown', 'text', 'json'].includes(type) ? await blob.text() : '';
       if (controller.signal.aborted) return;
       objectUrl = URL.createObjectURL(type === 'pdf' ? new Blob([blob], { type: 'application/pdf' }) : blob);
-      setState({ loading: false, url: objectUrl, type, text, name });
+      setState({ loading: false, url: objectUrl, type, text, name, size: blob.size });
     })().catch((error) => {
       if (!controller.signal.aborted) setState({ loading: false, error: error.message });
     });
@@ -48,97 +46,118 @@ export function MaterialFilePreview({ material, fill = false }) {
     material.type,
     attempt,
   ]);
-  if (material.type === 'VIDEO') return <MaterialVideoPlayer material={material} fill={fill} />;
-  if (state.loading) return <p role="status">Đang tải tài liệu…</p>;
-  if (state.error)
+  if (material.type === 'VIDEO') return <MaterialVideoPlayer material={material} fill={fill} compact={compact} />;
+  if (state.type === 'pdf' || material.type === 'PDF') {
+    if (state.loading) return <ViewerStatus>Đang tải tài liệu…</ViewerStatus>;
+    if (state.error)
+      return (
+        <ViewerStatus error onRetry={() => setAttempt((value) => value + 1)}>
+          {state.error}
+        </ViewerStatus>
+      );
     return (
-      <div className="space-y-3">
-        <p role="alert">{state.error}</p>
-        <Button variant="secondary" onClick={() => setAttempt((value) => value + 1)}>
-          Thử lại
-        </Button>
-      </div>
+      <MediaViewer nativePdf title={material.title || state.name} label="PDF" fill={fill}>
+        <iframe title={`Tài liệu: ${material.title || state.name}`} src={state.url} />
+      </MediaViewer>
     );
-  const immersive = fill || expanded;
-  const preview = (
-    <section
-      aria-label="Trình xem tài liệu"
-      className={immersive ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden' : 'space-y-3'}
-    >
-      {!immersive && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button
-            variant="secondary"
-            icon={expanded ? 'fullscreen_exit' : 'fullscreen'}
-            onClick={() => setExpanded((value) => !value)}
-          >
-            {expanded ? 'Thu gọn' : 'Mở rộng khung xem'}
-          </Button>
-          <a href={state.url} download={state.name} className="inline-block font-semibold text-primary underline">
-            Tải tài liệu
-          </a>
-        </div>
-      )}
-      {state.type === 'pdf' && (
-        <iframe
-          title={`Tài liệu: ${material.title}`}
-          src={state.url}
-          className={
-            immersive
-              ? 'min-h-0 w-full flex-1 border-0'
-              : 'h-[80dvh] min-h-[240px] w-full rounded-xl border border-slate-200'
-          }
-        />
-      )}
-      {state.type === 'image' && (
-        <img
-          src={state.url}
-          alt={material.title || 'Tài liệu học tập'}
-          className={
-            immersive ? 'min-h-0 w-full flex-1 object-contain' : 'mx-auto max-h-[80dvh] max-w-full object-contain'
-          }
-        />
-      )}
-      {state.type === 'video' && (
-        <video
-          src={state.url}
-          controls
-          preload="metadata"
-          className={immersive ? 'min-h-0 w-full flex-1' : 'max-h-[80dvh] w-full'}
-        />
-      )}
-      {state.type === 'audio' && <audio src={state.url} controls preload="metadata" className="w-full" />}
-      {state.type === 'markdown' && (
-        <article
-          className={`${immersive ? 'min-h-0 flex-1' : 'max-h-[80dvh] rounded-xl'} overflow-auto bg-white p-4 sm:p-6`}
-        >
-          <MarkdownContent content={state.text} />
-        </article>
-      )}
-      {['text', 'json'].includes(state.type) && (
-        <pre
-          className={`${immersive ? 'min-h-0 flex-1' : 'max-h-[80dvh] rounded-xl'} overflow-auto whitespace-pre-wrap break-words bg-slate-50 p-4 text-body-sm`}
-        >
-          {state.type === 'json' ? formatJson(state.text) : state.text}
-        </pre>
-      )}
-      {state.type === 'download' && (
-        <div className="p-4">
-          <p>Định dạng tài liệu này chưa hỗ trợ xem trực tiếp trong trình duyệt.</p>
-          {immersive && (
-            <a href={state.url} download={state.name} className="font-semibold text-primary underline">
-              Tải tài liệu
+  }
+  const labels = {
+    pdf: 'PDF',
+    image: 'Hình ảnh',
+    video: 'Video',
+    audio: 'Âm thanh',
+    markdown: 'Markdown',
+    text: 'Văn bản',
+    json: 'JSON',
+  };
+  const size =
+    state.size >= 1024 * 1024
+      ? `${(state.size / 1024 / 1024).toFixed(1)} MB`
+      : `${Math.max(1, Math.ceil(state.size / 1024))} KB`;
+  return (
+    <MediaViewer
+      title={state.name || material.fileName || material.title}
+      label={labels[state.type] || 'Tài liệu'}
+      icon={state.type === 'pdf' ? 'picture_as_pdf' : state.type === 'image' ? 'image' : 'description'}
+      meta={state.size ? size : undefined}
+      fill={fill}
+      compact={compact}
+      actions={
+        state.url && (
+          <>
+            <a
+              className="media-viewer__action"
+              href={state.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Mở tài liệu trong tab mới"
+              aria-label="Mở tài liệu trong tab mới"
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                open_in_new
+              </span>
+              <span>Tab mới</span>
             </a>
+            <a
+              className="media-viewer__action"
+              href={state.url}
+              download={state.name}
+              aria-label="Tải tài liệu"
+              title="Tải tài liệu"
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                download
+              </span>
+              <span>Tải tài liệu</span>
+            </a>
+          </>
+        )
+      }
+    >
+      {state.loading ? (
+        <ViewerStatus>Đang tải tài liệu…</ViewerStatus>
+      ) : state.error ? (
+        <ViewerStatus error onRetry={() => setAttempt((value) => value + 1)}>
+          {state.error}
+        </ViewerStatus>
+      ) : (
+        <>
+          {state.type === 'image' && (
+            <div className="media-viewer__stage media-viewer__stage--image">
+              <img src={state.url} alt={material.title || 'Tài liệu học tập'} />
+            </div>
           )}
-        </div>
+          {state.type === 'video' && (
+            <div className="media-viewer__stage media-viewer__stage--video">
+              <video src={state.url} controls playsInline preload="metadata" />
+            </div>
+          )}
+          {state.type === 'audio' && (
+            <div className="media-viewer__stage media-viewer__stage--audio">
+              <audio src={state.url} controls preload="metadata" />
+            </div>
+          )}
+          {state.type === 'markdown' && (
+            <article className="media-viewer__reading">
+              <MarkdownContent content={state.text} />
+            </article>
+          )}
+          {['text', 'json'].includes(state.type) && (
+            <div className="media-viewer__reading">
+              <pre>{state.type === 'json' ? formatJson(state.text) : state.text}</pre>
+            </div>
+          )}
+          {state.type === 'download' && (
+            <div className="media-viewer__status">
+              <span className="material-symbols-outlined" aria-hidden="true">
+                folder_zip
+              </span>
+              <strong>Tệp đã sẵn sàng</strong>
+              <p>Định dạng này chưa hỗ trợ xem trực tiếp. Tải tài liệu để mở bằng ứng dụng trên thiết bị.</p>
+            </div>
+          )}
+        </>
       )}
-    </section>
-  );
-  return expanded ? (
-    <FormDialog title={material.title || 'Tài liệu học tập'} reader onClose={() => setExpanded(false)}>
-      {preview}
-    </FormDialog>
-  ) : (
-    preview
+    </MediaViewer>
   );
 }

@@ -115,6 +115,7 @@ try {
   });
   await go('admin_assessments.html');
   await wait(`document.body.textContent.includes('Tạo đề thi cuối kỳ')`);
+  assert.equal(await evaluate(`[...document.querySelectorAll('[role=tab]')].some(t=>t.textContent.includes('Kỳ thi của lớp'))`), false);
   assert.equal(await evaluate(`document.querySelector('a[href*="admin_assessments"]') !== null`), true);
   await click('Tạo đề thi cuối kỳ');
   await wait(`document.querySelector('select[name=classId] option[value=c1]')`);
@@ -123,9 +124,8 @@ try {
     ['FINAL']
   );
   await set('select[name=classId]', 'c1');
-  await wait(`document.querySelector('fieldset')?.textContent.includes('PHY-02')`);
-  assert.equal(await evaluate(`document.querySelector('fieldset').textContent.includes('MATH-01')`), false);
-  await evaluate(`document.querySelector('fieldset input[type=checkbox]').click()`);
+  assert.equal(await evaluate(`!!document.querySelector('fieldset')`), false);
+  assert.equal(await evaluate(`document.body.textContent.includes('Giao thêm cho lớp cùng môn')`), false);
   await set('input[name=title]', 'Đề thi cuối kỳ Vật lý');
   await set('input[name=durationMinutes]', '90');
   await set('input[name=startTime]', '2027-01-01T08:00');
@@ -133,7 +133,7 @@ try {
   await set('select[name=matrixId]', 'matrix1');
   await evaluate(`document.querySelector('form.authoring-grouped-form').requestSubmit()`);
   await wait(
-    `testExams.filter(e=>e.examId.startsWith('new-')).length===2&&document.body.textContent.includes('Đã hoàn tất 2/2')`
+    `testExams.filter(e=>e.examId.startsWith('new-')).length===1&&document.body.textContent.includes('Đã hoàn tất 1/1')`
   );
   assert.deepEqual(
     await evaluate(
@@ -141,17 +141,16 @@ try {
     ),
     [
       { type: 'FINAL', classId: 'c1', duration: 90 },
-      { type: 'FINAL', classId: 'c2', duration: 90 },
     ]
   );
   assert.deepEqual(
     await evaluate(`testQuestions['new-1'].map(q=>[q.questionId,q.scoreWeight])`),
-    await evaluate(`testQuestions['new-2'].map(q=>[q.questionId,q.scoreWeight])`)
+    [[ 'q1', 2 ], [ 'q2', 3 ]]
   );
   assert.equal(await evaluate(`document.body.textContent.includes('Đề nguồn')`), false);
   await screenshot('admin-final-created');
   console.log(
-    'PASS ADMIN creates FINAL exams for same-subject classes using the admin catalogue and saved matrix questions'
+    'PASS ADMIN creates a FINAL exam for the selected class without the extra class picker or redundant tab'
   );
   await click('Quản lý đề');
   await wait(`document.querySelector('[role=dialog]')?.textContent.includes('Câu hỏi thứ nhất')`);
@@ -167,6 +166,7 @@ try {
   });
   await go('lecturer_exam_create.html?classId=c1');
   await wait(`document.querySelector('select[name=examType]')`);
+  assert.equal(await evaluate(`!!document.querySelector('fieldset')`), true);
   assert.equal(
     await evaluate(`Array.from(document.querySelector('select[name=examType]').options).some(o=>o.value==='FINAL')`),
     false
