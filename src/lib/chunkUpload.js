@@ -54,7 +54,7 @@ export async function uploadFileInChunks(file, request, options = {}) {
   }
 }
 
-async function performUpload(file, request, { onProgress, signal, verify }, session) {
+async function performUpload(file, request, { onProgress, signal }, session) {
   const totalChunks = validateChunkFile(file);
   checkAbort(signal);
   let status;
@@ -184,7 +184,6 @@ async function performUpload(file, request, { onProgress, signal, verify }, sess
       result.totalChunks !== totalChunks
     )
       throw new Error('Máy chủ chưa xác nhận tệp đã ghép đầy đủ. Vui lòng thử lại.');
-    if (verify) await verify(result);
     progress('completed');
     return result;
   }

@@ -1,24 +1,6 @@
 const FILE_PREFIX = '/api/v1/files/';
 const localHost = (host) => ['localhost', '127.0.0.1', '[::1]'].includes(host);
 
-// Upload metadata alone does not prove storage retained the original bytes.
-export async function verifyStoredUpload(file, result, read, options = {}) {
-  try {
-    if (!result || !(result.fileId || result.fileUrl || result.url || result.evidenceUrl || result.downloadUrl))
-      throw new Error('BE chưa trả về thông tin tệp đã lưu.');
-    const stored = await read(result, options);
-    if (!stored.blob.size || stored.blob.size !== file.size)
-      throw new Error('Dung lượng tệp đã lưu không khớp tệp gốc.');
-    return result;
-  } catch (error) {
-    if (options.signal?.aborted || error.name === 'AbortError') throw error;
-    const failure = new Error(`BE đã tiếp nhận yêu cầu nhưng chưa xác minh được tệp lưu đầy đủ. ${error.message}`);
-    failure.code = 'UPLOAD_VERIFICATION_FAILED';
-    failure.cause = error;
-    throw failure;
-  }
-}
-
 export function fileUrls(apiBaseUrl, frontendOrigin) {
   const backend = new URL(apiBaseUrl || frontendOrigin, frontendOrigin);
   const resolve = (value) => {

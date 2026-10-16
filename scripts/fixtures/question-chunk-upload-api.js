@@ -15,14 +15,6 @@ window.fetch = async (input, options = {}) => {
   if (pathname === '/api/v1/users/me')
     return Response.json({ data: { userId: 'teacher1', role: questionTestAdmin ? 'ADMIN' : 'INSTRUCTOR' } });
   if (pathname === '/api/v1/files/upload') throw new Error('Question images must use chunk upload');
-  if (pathname === '/api/v1/files/image-id/download-url')
-    return Response.json({ data: { downloadUrl: '/api/v1/files/image-id/download?token=test', fileName: 'question.png' } });
-  if (pathname === '/api/v1/files/image-id/download') {
-    const session = [...imageSessions.values()].at(-1);
-    return new Response(new Blob([...session.parts.entries()].sort(([a], [b]) => a - b).map(([, part]) => part), {
-      type: 'image/png',
-    }));
-  }
   if (pathname.startsWith('/api/v1/files/chunks')) {
     const form = options.body;
     const uploadId =

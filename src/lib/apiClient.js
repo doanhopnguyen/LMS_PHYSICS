@@ -1,5 +1,5 @@
 import { uploadFileInChunks } from './chunkUpload.js';
-import { fileUrls, createFileReader, verifyStoredUpload } from './fileAccess.js';
+import { fileUrls, createFileReader } from './fileAccess.js';
 
 const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const ACCESS_TOKEN_KEY = 'ptit-physics-access-token';
@@ -109,13 +109,7 @@ export async function apiRequest(path, options = {}) {
     });
     throw detailedError;
   }
-  const result = payload?.data ?? payload;
-  const uploadedFile = formData?.get('file');
-  if (uploadedFile instanceof Blob && uploadedFile.size > 0 &&
-      /(?:\/materials(?:\/[^/]+)?$|\/files\/upload$|\/experiments\/assignments\/[^/]+\/submit$)/.test(path)) {
-    await verifyStoredUpload(uploadedFile, result, fileReader.read, { signal: options.signal });
-  }
-  return result;
+  return payload?.data ?? payload;
 }
 
 const fileUrlTools = () => fileUrls(API_BASE_URL, window.location.origin);
@@ -365,10 +359,7 @@ export const api = {
   files: {
     upload: async (fileOrForm, options = {}) => {
       const file = fileOrForm instanceof FormData ? fileOrForm.get('file') : fileOrForm;
-      const result = await uploadFileInChunks(file, apiRequest, {
-        ...options,
-        verify: (stored) => verifyStoredUpload(file, stored, fileReader.read, { signal: options.signal }),
-      });
+      const result = await uploadFileInChunks(file, apiRequest, options);
       return { ...result, url: result.fileUrl, size: result.fileSize, contentType: file.type || 'application/octet-stream' };
     },
     uploadStatus: (uploadId) => apiRequest(`/api/v1/files/chunks/${encodeURIComponent(uploadId)}/status`),
