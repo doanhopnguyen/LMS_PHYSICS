@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import { Form, SubmitButton } from './Form.jsx';
 import React, { useRef, useState } from 'react';
 import { Card } from './Card.jsx';
@@ -36,7 +37,7 @@ export function LessonVideo({ lesson }) {
         {embedded ? (
           <MaterialVideoPlayer material={material} />
         ) : playback.loading ? (
-          <p role="status">Đang tải video…</p>
+          <LoadingIndicator>Đang tải video…</LoadingIndicator>
         ) : playback.error ? (
           <p role="alert">
             {playback.error}{' '}

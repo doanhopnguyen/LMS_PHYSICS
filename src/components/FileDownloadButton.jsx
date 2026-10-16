@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { api } from '../lib/apiClient.js';
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 
 export function FileDownloadButton({
   file,
@@ -30,7 +31,7 @@ export function FileDownloadButton({
           }
         }}
       >
-        {busy ? 'Đang tải…' : children}
+        {busy ? <LoadingIndicator inline>Đang tải…</LoadingIndicator> : children}
       </button>
       {error && (
         <span role="alert" className="mt-1 block text-body-sm text-primary">

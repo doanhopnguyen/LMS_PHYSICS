@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../components/LoadingIndicator.jsx';
 import { FormField as SharedFormField } from '../components/FormField.jsx';
 import { Form, SubmitButton } from '../components/Form.jsx';
 import React, { useState } from 'react';
@@ -137,7 +138,7 @@ export function AccountPage() {
             <span className="material-symbols-outlined" aria-hidden="true">
               account_circle
             </span>
-            <p>Đang tải hồ sơ…</p>
+            <LoadingIndicator>Đang tải hồ sơ…</LoadingIndicator>
           </Card>
         ) : account.error || profile.error ? (
           <Card className="account-state p-8">

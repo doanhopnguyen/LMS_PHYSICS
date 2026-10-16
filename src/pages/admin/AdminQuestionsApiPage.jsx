@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { QuestionMediaField } from '../../components/QuestionMediaField.jsx';
 import { FileImage } from '../../components/FileImage.jsx';
@@ -782,7 +783,7 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
           </div>
         </div>
         {questionResource.loading ? (
-          <p role="status">Đang tải câu hỏi…</p>
+          <LoadingIndicator>Đang tải câu hỏi…</LoadingIndicator>
         ) : questionResource.error ? (
           <p role="alert">
             {questionResource.error}{' '}

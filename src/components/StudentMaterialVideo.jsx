@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { GuardedVideoPlayer } from './GuardedVideoPlayer.jsx';
 import { useMaterialProgress } from '../hooks/useMaterialProgress.js';
@@ -39,9 +40,7 @@ export function StudentMaterialVideo({ material, fill = false }) {
     );
   if (!ready)
     return (
-      <p role="status" className="p-4">
-        Đang tải tiến độ video…
-      </p>
+      <LoadingIndicator className="p-4">Đang tải tiến độ video…</LoadingIndicator>
     );
   return (
     <div className={fill ? 'flex min-h-0 flex-1 flex-col' : 'space-y-2'}>

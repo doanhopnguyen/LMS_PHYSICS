@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useMemo, useState } from 'react';
@@ -216,7 +217,7 @@ export function AdminAnalyticsPage() {
               </Form>
               <div className="mt-5 overflow-x-auto">
                 {resource.loading ? (
-                  <p role="status">Đang tải dữ liệu phân tích…</p>
+                  <LoadingIndicator>Đang tải dữ liệu phân tích…</LoadingIndicator>
                 ) : resource.error ? (
                   <p role="alert">
                     {resource.error} <Button onClick={resource.reload}>Thử lại</Button>

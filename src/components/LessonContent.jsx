@@ -24,7 +24,7 @@ export function LessonContent({
         <section>
           <h3>Nội dung học liệu</h3>
           {material.type === 'MARKDOWN' ? (
-            <MarkdownContent content={material.contentText} />
+            <MarkdownContent content={material.contentText} tocMode="fixed" />
           ) : (
             <div className="whitespace-pre-wrap leading-7 text-[#334155]">{material.contentText}</div>
           )}

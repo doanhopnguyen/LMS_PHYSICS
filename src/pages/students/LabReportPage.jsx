@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { Form as SharedForm, SubmitButton } from '../../components/Form.jsx';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useEffect, useState } from 'react';
@@ -122,7 +123,7 @@ export function LabReportPage() {
           </Card>
         )}
         {loading ? (
-          <p className="py-10 text-center text-[#64748B]">Đang tải thông tin thí nghiệm…</p>
+          <LoadingIndicator className="py-10 text-center text-[#64748B]">Đang tải thông tin thí nghiệm…</LoadingIndicator>
         ) : (
           experiment && (
             <>

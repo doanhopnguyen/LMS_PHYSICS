@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { Card } from './Card.jsx';
 import { Button } from './Button.jsx';
@@ -117,9 +118,7 @@ export function SubmissionEvidence({ submission }) {
         >
           <div className="space-y-4">
             {loading && (
-              <p role="status" className="text-body-sm text-slate-500">
-                Đang tải nội dung…
-              </p>
+              <LoadingIndicator className="text-body-sm text-slate-500">Đang tải nội dung…</LoadingIndicator>
             )}
             {error && (
               <div className="space-y-2">

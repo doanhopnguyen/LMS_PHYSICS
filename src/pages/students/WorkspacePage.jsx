@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { Button } from '../../components/Button.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -57,7 +58,7 @@ export function WorkspacePage() {
             <h2 className="font-bold">Hướng dẫn thực hành</h2>
           </div>
           {loading ? (
-            <p className="mt-4 text-body-sm text-slate-500">Đang tải hướng dẫn…</p>
+            <LoadingIndicator className="mt-4 text-body-sm text-slate-500">Đang tải hướng dẫn…</LoadingIndicator>
           ) : error ? (
             <p role="alert" className="mt-4 text-body-sm text-red-700">
               {error}
@@ -72,7 +73,7 @@ export function WorkspacePage() {
         </Card>
         <section className="flex min-h-[560px] items-center justify-center overflow-hidden rounded-2xl border border-slate-700 bg-[#0C121E] p-4">
           {loading ? (
-            <p className="text-slate-400">Đang tải không gian mô phỏng…</p>
+            <LoadingIndicator className="text-slate-400">Đang tải không gian mô phỏng…</LoadingIndicator>
           ) : error ? (
             <div className="text-center">
               <span className="material-symbols-outlined text-4xl text-red-300">error</span>

@@ -340,19 +340,6 @@
 .media-viewer--expanded .media-viewer__stage--image img {
   max-height: 100%;
 }
-.media-viewer__loading {
-  animation: viewer-spin 1.2s linear infinite;
-}
-@keyframes viewer-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .media-viewer__loading {
-    animation: none;
-  }
-}
 @media (max-width: 600px) {
   .pdf-file-viewer:not(.pdf-file-viewer--fill):not(.media-viewer--expanded) {
     height: 65dvh;

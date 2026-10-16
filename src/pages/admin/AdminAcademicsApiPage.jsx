@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import React, { useEffect, useState } from 'react';
@@ -311,7 +312,7 @@ export function AdminAcademicsApiPage() {
           tab === 'semesters' ? (
             <Card className="mt-5 overflow-x-auto p-5">
               {semesters.loading ? (
-                <p role="status">Đang tải học kỳ…</p>
+                <LoadingIndicator>Đang tải học kỳ…</LoadingIndicator>
               ) : semesters.error ? (
                 <p role="alert">
                   {semesters.error} <Button onClick={semesters.reload}>Thử lại</Button>
@@ -347,7 +348,7 @@ export function AdminAcademicsApiPage() {
           ) : tab === 'subjects' ? (
             <Card className="mt-5 overflow-x-auto p-5">
               {subjects.loading ? (
-                <p role="status">Đang tải học phần…</p>
+                <LoadingIndicator>Đang tải học phần…</LoadingIndicator>
               ) : subjects.error ? (
                 <p role="alert">
                   {subjects.error} <Button onClick={subjects.reload}>Thử lại</Button>
@@ -418,9 +419,7 @@ export function AdminAcademicsApiPage() {
               {!topicSubjectId ? (
                 <p className="mt-5 text-[#64748B]">Chọn học phần để quản lý chủ đề.</p>
               ) : topics.loading ? (
-                <p className="mt-5" role="status">
-                  Đang tải chủ đề…
-                </p>
+                <LoadingIndicator className="mt-5">Đang tải chủ đề…</LoadingIndicator>
               ) : topics.error ? (
                 <p className="mt-5" role="alert">
                   {topics.error} <Button onClick={topics.reload}>Thử lại</Button>

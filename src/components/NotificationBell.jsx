@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -79,9 +80,7 @@ export function NotificationBell() {
               </div>
             )}
             {loading && (
-              <p role="status" className="px-4 py-3 text-sm text-[#64748B]">
-                Đang tải thông báo…
-              </p>
+              <LoadingIndicator inline className="px-4 py-3 text-sm text-[#64748B]">Đang tải thông báo…</LoadingIndicator>
             )}
             {items.length ? (
               <ul className="notification-list">

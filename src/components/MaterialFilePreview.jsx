@@ -139,7 +139,7 @@ export function MaterialFilePreview({ material, fill = false, compact = false })
           )}
           {state.type === 'markdown' && (
             <article className="media-viewer__reading">
-              <MarkdownContent content={state.text} />
+              <MarkdownContent content={state.text} tocMode={compact && !material.contentText ? 'fixed' : 'inline'} />
             </article>
           )}
           {['text', 'json'].includes(state.type) && (

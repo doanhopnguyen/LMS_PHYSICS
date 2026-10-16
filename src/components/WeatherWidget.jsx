@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import { WeatherGraphic } from './WeatherIllustrations.jsx';
 
 export const CAMPUSES = [
@@ -354,9 +355,7 @@ export function WeatherWidget({ className = '', onWeatherChange }) {
             className="rounded-full p-1 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
             title="Làm mới thời tiết"
           >
-            <span className={`material-symbols-outlined text-sm ${weather.loading ? 'animate-spin' : ''}`}>
-              refresh
-            </span>
+            {weather.loading ? <LoadingIndicator inline size="tiny" aria-label="Đang cập nhật thời tiết">{null}</LoadingIndicator> : <span className="material-symbols-outlined text-sm">refresh</span>}
           </button>
         </div>
       </div>

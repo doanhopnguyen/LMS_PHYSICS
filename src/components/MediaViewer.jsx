@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import '../styles/media-viewer.css';
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 
 export function MediaViewer({
   title,
@@ -105,12 +106,16 @@ export function MediaViewer({
 }
 
 export function ViewerStatus({ error, children, onRetry }) {
+  if (!error)
+    return (
+      <LoadingIndicator className="media-viewer__status">{children || 'Đang chuẩn bị nội dung…'}</LoadingIndicator>
+    );
   return (
     <div className="media-viewer__status" role={error ? 'alert' : 'status'}>
-      <span className={`material-symbols-outlined ${error ? '' : 'media-viewer__loading'}`} aria-hidden="true">
-        {error ? 'error_outline' : 'progress_activity'}
+      <span className="material-symbols-outlined" aria-hidden="true">
+        error_outline
       </span>
-      <strong>{error ? 'Không thể mở nội dung' : 'Đang chuẩn bị nội dung'}</strong>
+      <strong>Không thể mở nội dung</strong>
       <p>{children}</p>
       {onRetry && (
         <button type="button" className="media-viewer__action" onClick={onRetry}>

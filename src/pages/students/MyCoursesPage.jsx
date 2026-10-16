@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
@@ -72,7 +73,7 @@ export function MyCoursesPage() {
     >
       <PageContainer>
         <PageTitle title="Học phần của tôi" description="Tổng quan tiến độ các học phần bạn đang theo học." />
-        {loading && <p className="text-body-md text-[#64748B] py-10 text-center">Đang tải danh sách lớp học...</p>}
+        {loading && <LoadingIndicator className="text-body-md text-[#64748B] py-10 text-center">Đang tải danh sách lớp học...</LoadingIndicator>}
         {error && <p className="text-body-md text-primary py-10 text-center">{error}</p>}
         {!loading && !error && classes.length === 0 && (
           <p className="text-body-md text-[#64748B] py-10 text-center">Bạn chưa đăng ký lớp học nào.</p>
@@ -127,7 +128,7 @@ export function MyCoursesPage() {
         <Card className="p-6">
           <h2 className="text-headline-md font-bold">Thời khóa biểu</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-            {scheduleLoading && <p className="text-body-sm text-[#64748B]">Đang tải thời khóa biểu…</p>}
+            {scheduleLoading && <LoadingIndicator className="text-body-sm text-[#64748B]">Đang tải thời khóa biểu…</LoadingIndicator>}
             {!scheduleLoading && scheduleError && (
               <p role="alert" className="text-body-sm text-primary">
                 {scheduleError}

@@ -1,4 +1,5 @@
 import { FormField as SharedFormField } from './FormField.jsx';
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import { DataTable as SharedDataTable } from './DataTable.jsx';
 import React, { useId, useRef, useState } from 'react';
 import { api } from '../lib/apiClient.js';
@@ -77,9 +78,9 @@ export function StudentSearchField({ onSelect, mapResults = (student) => [studen
         </p>
       )}
       {loading && (
-        <p role="status" className="text-sm text-[#64748B]">
+        <LoadingIndicator inline className="text-sm text-[#64748B]">
           Đang tìm sinh viên…
-        </p>
+        </LoadingIndicator>
       )}
       {rows.length > 0 && (
         <div className="overflow-x-auto rounded-xl border border-[#E2E8F0]">

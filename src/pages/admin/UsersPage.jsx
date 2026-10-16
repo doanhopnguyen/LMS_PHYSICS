@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { DataTable as SharedDataTable } from '../../components/DataTable.jsx';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
@@ -22,7 +23,7 @@ function UserProfileModal({ user, profile, loading, error, onClose }) {
   return (
     <UserModal title={`Hồ sơ · ${user.username}`} onClose={onClose}>
       {loading ? (
-        <p role="status">Đang tải hồ sơ…</p>
+        <LoadingIndicator>Đang tải hồ sơ…</LoadingIndicator>
       ) : error ? (
         <p className="text-primary" role="alert">
           {error}
@@ -480,7 +481,7 @@ export function UsersPage() {
       )}
       <Card className="mt-5 overflow-x-auto p-5">
         {resource.loading && !searchedUser ? (
-          <p role="status">Đang tải…</p>
+          <LoadingIndicator>Đang tải…</LoadingIndicator>
         ) : resource.error && !searchedUser ? (
           <p role="alert">
             {resource.error} <Button onClick={resource.reload}>Thử lại</Button>

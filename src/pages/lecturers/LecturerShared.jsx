@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { api, apiRequest } from '../../lib/apiClient.js';
 import { FileDownloadButton } from '../../components/FileDownloadButton.jsx';
@@ -57,9 +58,7 @@ export function Resource({ value, children, empty = 'Chọn bộ lọc để xem
   if (!value.enabled) return <Card className="mt-4 p-5">{empty}</Card>;
   if (value.loading)
     return (
-      <p className="p-5" role="status">
-        Đang tải dữ liệu…
-      </p>
+      <LoadingIndicator className="p-5">Đang tải dữ liệu…</LoadingIndicator>
     );
   if (value.error)
     return (

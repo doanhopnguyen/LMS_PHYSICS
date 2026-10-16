@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { PageContainer } from '../../components/PageContainer.jsx';
@@ -110,7 +111,7 @@ export function CourseDetailPage() {
         />
 
         {error && <Card className="mb-6 p-5 text-primary">{error}</Card>}
-        {loading && <Card className="p-6 text-center text-[#64748B]">Đang tải nội dung học phần…</Card>}
+        {loading && <LoadingIndicator className="p-6 text-center text-[#64748B]">Đang tải nội dung học phần…</LoadingIndicator>}
 
         {!loading && course && (
           <div className="space-y-6">

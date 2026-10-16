@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { api } from '../lib/apiClient.js';
 import { Button } from './Button.jsx';
@@ -30,9 +31,7 @@ export function CloPicker({ resource, value, onChange, disabled = false, subject
       {!subjectId ? (
         <p className="text-body-sm text-slate-500">Chọn học phần để xem CLO.</p>
       ) : resource.loading ? (
-        <p role="status" className="text-body-sm text-slate-500">
-          Đang tải CLO…
-        </p>
+        <LoadingIndicator inline className="text-body-sm text-slate-500">Đang tải CLO…</LoadingIndicator>
       ) : resource.error ? (
         <div role="alert" className="text-body-sm text-red-700">
           {resource.error}{' '}

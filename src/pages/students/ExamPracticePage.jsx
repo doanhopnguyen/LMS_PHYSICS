@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -254,7 +255,7 @@ function PracticeCenter() {
           ]}
         />
         {loading ? (
-          <p className="py-10 text-center text-[#64748B]">Đang tải kỳ thi…</p>
+          <LoadingIndicator className="py-10 text-center text-[#64748B]">Đang tải kỳ thi…</LoadingIndicator>
         ) : error && !examRows.length ? (
           <Card className="p-8 text-center">
             <p role="alert" className="text-primary">

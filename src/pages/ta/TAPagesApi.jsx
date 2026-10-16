@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { DashboardOverview } from '../../components/DashboardOverview.jsx';
@@ -37,7 +38,7 @@ const status = (value) => <StatusBadge status={value} />;
 const classUrl = (id) => `ta_class_support.html?classId=${encodeURIComponent(id)}`;
 
 function ClassList({ classes, loading, error, reload, actionLabel = 'Mở hỗ trợ' }) {
-  if (loading) return <p role="status">Đang tải lớp được phân công…</p>;
+  if (loading) return <LoadingIndicator>Đang tải lớp được phân công…</LoadingIndicator>;
   if (error)
     return (
       <p role="alert">

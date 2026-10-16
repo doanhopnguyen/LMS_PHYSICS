@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { AuthoringSection } from '../../components/AuthoringSection.jsx';
 import { AuthoringPanel } from '../../components/AuthoringPanel.jsx';
 import { navigate } from '../../lib/navigation.js';
@@ -51,9 +52,7 @@ const state = (value) => <StatusBadge status={value} />;
 function Resource({ resource, children }) {
   if (resource.loading)
     return (
-      <Card className="mt-5 p-6" role="status">
-        Đang tải dữ liệu…
-      </Card>
+      <LoadingIndicator className="mt-5 p-6">Đang tải dữ liệu…</LoadingIndicator>
     );
   if (resource.error)
     return (

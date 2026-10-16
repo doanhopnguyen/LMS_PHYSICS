@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { DetailToolbar } from '../../components/DetailToolbar.jsx';
@@ -84,9 +85,7 @@ export function LearningModulePage({ openInitialLesson = false }) {
       toolbar={<DetailToolbar title={title} backHref={backHref} backLabel="Về học phần" />}
     >
       {loading ? (
-        <div className="chapter-empty" role="status">
-          Đang tải học liệu…
-        </div>
+        <LoadingIndicator className="chapter-empty">Đang tải học liệu…</LoadingIndicator>
       ) : error ? (
         <div className="chapter-empty" role="alert">
           <h1>Không thể mở học liệu</h1>

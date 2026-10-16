@@ -25,7 +25,7 @@ const components = {
   },
 };
 
-export function MarkdownContent({ content = '' }) {
+export function MarkdownContent({ content = '', tocMode = 'inline' }) {
   const prefix = useId();
   const bodyRef = useRef(null);
   const tocRef = useRef(null);
@@ -73,23 +73,28 @@ export function MarkdownContent({ content = '' }) {
       toggleRef.current?.focus();
     };
     document.addEventListener('pointerdown', dismiss);
-    document.addEventListener('keydown', escape, true);
+    window.addEventListener('keydown', escape, true);
     return () => {
       document.removeEventListener('pointerdown', dismiss);
-      document.removeEventListener('keydown', escape, true);
+      window.removeEventListener('keydown', escape, true);
     };
   }, [tocOpen]);
   const headings = outline.content === content ? outline.headings : [];
   const firstLevel = Math.min(...headings.map((heading) => heading.level));
   return (
-    <div className={`markdown-content${headings.length ? ' markdown-content--outlined' : ''}`}>
+    <div
+      className={`markdown-content${headings.length ? ' markdown-content--outlined' : ''}${tocMode === 'fixed' ? ' markdown-content--fixed-toc' : ''}`}
+    >
       {headings.length > 0 && (
-        <div className="markdown-toc" ref={tocRef}>
+        <div className={`markdown-toc${tocMode === 'fixed' ? ' markdown-toc--fixed' : ''}`} ref={tocRef}>
           <div className="markdown-toc__floating">
             <button
               type="button"
               ref={toggleRef}
               className="markdown-toc__toggle"
+              data-fixed-corners={tocMode === 'fixed' ? true : undefined}
+              aria-label={tocOpen ? 'Đóng mục lục' : 'Mở mục lục'}
+              title="Mục lục"
               aria-expanded={tocOpen}
               aria-controls={`${prefix}-toc`}
               onClick={() => setTocOpen((value) => !value)}
@@ -97,7 +102,7 @@ export function MarkdownContent({ content = '' }) {
               <span className="material-symbols-outlined" aria-hidden="true">
                 toc
               </span>
-              Mục lục
+              <span className="markdown-toc__toggle-label">Mục lục</span>
               <span className="material-symbols-outlined" aria-hidden="true">
                 {tocOpen ? 'expand_less' : 'expand_more'}
               </span>

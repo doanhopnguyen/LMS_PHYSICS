@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { AppShell } from '../../components/AppShell.jsx';
 import { ExperimentSubmissionList, ExperimentSubmissionGrader } from '../../components/ExperimentGrading.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -26,9 +27,9 @@ const dateTime = (entry) => {
 function ResourceTable({ resource, loadingLabel, emptyLabel, columns, renderRow }) {
   if (resource.loading)
     return (
-      <Card className="mt-5 p-5" role="status">
+      <LoadingIndicator className="mt-5 p-5">
         {loadingLabel}
-      </Card>
+      </LoadingIndicator>
     );
   if (resource.error)
     return (

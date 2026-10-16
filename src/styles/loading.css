@@ -1,0 +1,97 @@
+.ptit-loading {
+  box-sizing: border-box;
+  font-family: 'Be Vietnam Pro', Inter, system-ui, sans-serif;
+  --loading-size: 64px;
+  --loading-ring: 3px;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px 16px;
+  color: #64748b;
+  text-align: center;
+  animation: ptit-loading-enter 180ms ease-out both;
+}
+.ptit-loading__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--loading-size);
+  height: var(--loading-size);
+  border-radius: 50%;
+  background: radial-gradient(circle, white 55%, #fff1f2 100%);
+}
+.ptit-loading__mark::before,
+.ptit-loading__mark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: var(--loading-ring) solid #fee2e2;
+  border-radius: 50%;
+}
+.ptit-loading__mark::after {
+  border-color: #e52220 transparent transparent #e52220;
+  animation: ptit-loading-orbit 1s linear infinite;
+}
+.ptit-loading__mark > img {
+  display: block;
+  width: 40%;
+  height: 52%;
+  object-fit: contain;
+}
+.ptit-loading__label {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.ptit-loading--small {
+  --loading-size: 28px;
+  --loading-ring: 2px;
+}
+.ptit-loading--tiny {
+  --loading-size: 20px;
+  --loading-ring: 2px;
+}
+.ptit-loading--large {
+  --loading-size: 88px;
+}
+.ptit-loading--inline {
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0;
+  color: inherit;
+  text-align: start;
+  vertical-align: middle;
+}
+.ptit-loading--page {
+  position: fixed;
+  inset: 0;
+  min-height: 100dvh;
+  background: radial-gradient(ellipse at center, #fff7f6, white 65%);
+}
+@keyframes ptit-loading-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ptit-loading-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptit-loading,
+  .ptit-loading__mark::after {
+    animation: none;
+  }
+}

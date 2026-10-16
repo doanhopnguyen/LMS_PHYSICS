@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React from 'react';
 import { useFileSource } from '../hooks/useFileSource.js';
 
@@ -5,9 +6,7 @@ export function FileImage({ src, alt, ...props }) {
   const source = useFileSource({ fileUrl: src });
   if (source.loading)
     return (
-      <span role="status" className="text-body-sm text-slate-500">
-        Đang tải ảnh…
-      </span>
+      <LoadingIndicator inline className="text-body-sm text-slate-500">Đang tải ảnh…</LoadingIndicator>
     );
   if (source.error)
     return (

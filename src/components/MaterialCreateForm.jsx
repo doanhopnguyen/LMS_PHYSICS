@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import { SelectField as SharedSelectField } from './SelectField.jsx';
 import { FormField as SharedFormField } from './FormField.jsx';
 import { Form, SubmitButton } from './Form.jsx';
@@ -138,7 +139,7 @@ export function MaterialCreateForm() {
         <Card className="mt-5 p-6">
           <h2 className="font-semibold">Học liệu trong chủ đề</h2>
           {materials.loading ? (
-            <p role="status">Đang tải…</p>
+            <LoadingIndicator>Đang tải…</LoadingIndicator>
           ) : materials.error ? (
             <p role="alert">
               {materials.error} <Button onClick={materials.reload}>Thử lại</Button>

@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useRef, useState } from 'react';
 import { Card } from './Card.jsx';
 import { Button } from './Button.jsx';
@@ -85,7 +86,7 @@ export function ExperimentSubmissionList({ classes, classId: selectedClass, onSe
       {requireClass && !classId ? (
         <p className="text-slate-500">Chọn lớp để xem bài nộp.</p>
       ) : submissions.loading ? (
-        <p role="status">Đang tải bài nộp…</p>
+        <LoadingIndicator>Đang tải bài nộp…</LoadingIndicator>
       ) : submissions.error ? null : !rows.length ? (
         <p className="text-slate-500">Chưa có bài nộp phù hợp.</p>
       ) : (
@@ -214,9 +215,7 @@ export function ExperimentSubmissionGrader({ submissionId, canConfirm = false, o
       <AuthAlert error>{error}</AuthAlert>
       <AuthAlert>{notice}</AuthAlert>
       {summary.loading || detail.loading ? (
-        <Card className="p-6" role="status">
-          Đang tải bài nộp và rubric…
-        </Card>
+        <LoadingIndicator className="p-6">Đang tải bài nộp và rubric…</LoadingIndicator>
       ) : summary.error || detail.error ? (
         <Card className="p-6">
           <p role="alert" className="text-primary">

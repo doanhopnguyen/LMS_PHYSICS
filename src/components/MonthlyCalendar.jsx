@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useMemo, useRef, useState } from 'react';
 import { Card } from './Card.jsx';
 import { Button } from './Button.jsx';
@@ -270,7 +271,7 @@ export function MonthlyCalendar({
       </div>
       <div className="monthly-calendar__feedback" aria-live="polite">
         {loading ? (
-          <p role="status">Đang tải lịch sự kiện…</p>
+          <LoadingIndicator>Đang tải lịch sự kiện…</LoadingIndicator>
         ) : error ? (
           <p role="alert">
             {error}{' '}

@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
 import { PaginatedList } from '../../components/Pagination.jsx';
 import React, { useEffect, useState } from 'react';
@@ -138,7 +139,7 @@ export function VirtualLabPage() {
           description="Chọn học phần để mở mô phỏng, đọc hướng dẫn và lập báo cáo thực hành."
         />
         {loading ? (
-          <p className="py-10 text-center text-body-md text-[#64748B]">Đang tải danh sách thí nghiệm…</p>
+          <LoadingIndicator className="py-10 text-center text-body-md text-[#64748B]">Đang tải danh sách thí nghiệm…</LoadingIndicator>
         ) : error ? (
           <Card className="p-8 text-center">
             <p role="alert" className="text-primary">

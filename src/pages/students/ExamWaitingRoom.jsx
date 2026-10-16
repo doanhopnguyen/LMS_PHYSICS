@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -123,9 +124,7 @@ export function ExamWaitingRoom({ examId, workspace = 'exam' }) {
         />
         <AuthAlert error>{error}</AuthAlert>
         {loading ? (
-          <Card className="p-6" role="status">
-            Đang tải thông tin bài thi…
-          </Card>
+          <LoadingIndicator className="p-6">Đang tải thông tin bài thi…</LoadingIndicator>
         ) : exam ? (
           <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
             <Card className="min-w-0 space-y-5 p-5 md:p-6 lg:col-span-2">

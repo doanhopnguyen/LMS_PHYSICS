@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React from 'react';
 import { labelOf } from '../../lib/lecturerUtils.js';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
@@ -127,9 +128,7 @@ export function AdminDashboardPage() {
       }
     >
       {loading ? (
-        <Card className="mt-6 p-8" role="status">
-          Đang tải dữ liệu dashboard…
-        </Card>
+        <LoadingIndicator className="mt-6 p-8">Đang tải dữ liệu dashboard…</LoadingIndicator>
       ) : error ? (
         <Card className="mt-6 p-8" role="alert">
           <p>{error}</p>

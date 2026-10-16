@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -29,9 +30,7 @@ export function useCollection(path) {
 export function ResourceState({ resource, children }) {
   if (resource.loading)
     return (
-      <p role="status" className="py-8 text-center text-slate-500">
-        Đang tải…
-      </p>
+      <LoadingIndicator className="py-8 text-center text-slate-500">Đang tải…</LoadingIndicator>
     );
   if (resource.error)
     return (

@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { Button } from './Button.jsx';
 import { Card } from './Card.jsx';
@@ -85,9 +86,7 @@ export function StudentExperimentHistory({ assignmentId, refreshKey = 0, recentS
           </SelectField>
         )}
         {loading ? (
-          <p role="status" className="py-4 text-slate-500">
-            Đang tải lịch sử bài nộp…
-          </p>
+          <LoadingIndicator className="py-4 text-slate-500">Đang tải lịch sử bài nộp…</LoadingIndicator>
         ) : error ? (
           <p role="alert" className="py-4 text-primary">
             {error}

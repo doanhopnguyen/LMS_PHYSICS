@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -230,7 +231,7 @@ export function LearningResultsPage() {
           }
         />
         {loading ? (
-          <Card className="p-8 text-center text-[#64748B]">Đang tải kết quả học tập…</Card>
+          <LoadingIndicator className="p-8 text-center text-[#64748B]">Đang tải kết quả học tập…</LoadingIndicator>
         ) : error && !classes.length ? (
           <Card className="p-8 text-center">
             <p role="alert" className="text-primary">

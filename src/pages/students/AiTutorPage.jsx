@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { SelectField } from '../../components/SelectField.jsx';
 import { FormField } from '../../components/FormField.jsx';
@@ -202,9 +203,7 @@ export function AiTutorPage() {
             />
           </div>
           {history.loading ? (
-            <p role="status" className="mt-3 text-body-sm text-slate-500">
-              Đang tải…
-            </p>
+            <LoadingIndicator className="mt-3 text-body-sm text-slate-500">Đang tải…</LoadingIndicator>
           ) : history.error ? (
             <p role="alert" className="mt-3 text-body-sm text-primary">
               Không thể tải lịch sử. Bấm tải lại để thử.
@@ -381,9 +380,9 @@ export function AiTutorPage() {
               </div>
             ))}
             {busy && (
-              <p role="status" className="text-body-sm text-slate-500">
+              <LoadingIndicator inline className="text-body-sm text-slate-500">
                 {sending ? 'AI đang trả lời…' : 'Đang tải hội thoại…'}
-              </p>
+              </LoadingIndicator>
             )}
           </div>
           <div className="shrink-0 border-t border-slate-200 p-3 md:p-4">

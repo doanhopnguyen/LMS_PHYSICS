@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { FormDialog as SharedFormDialog } from '../../components/FormDialog.jsx';
 import { DataTable as SharedDataTable } from '../../components/DataTable.jsx';
 import { SelectField as SharedSelectField } from '../../components/SelectField.jsx';
@@ -195,9 +196,7 @@ export function OperationsPage() {
               </Card>
             )}
             {resource.loading ? (
-              <p className="mt-5" role="status">
-                Đang tải…
-              </p>
+              <LoadingIndicator className="mt-5">Đang tải…</LoadingIndicator>
             ) : resource.error ? (
               <p className="mt-5 text-primary" role="alert">
                 {resource.error} <Button onClick={resource.reload}>Thử lại</Button>

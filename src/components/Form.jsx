@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Button } from './Button.jsx';
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 
 // Keep native form semantics: callers retain validation, FormData and API handlers.
 export const Form = forwardRef(function Form({ className = '', busy = false, children, ...props }, ref) {
@@ -16,7 +17,7 @@ export const SubmitButton = forwardRef(function SubmitButton(
 ) {
   return (
     <Button ref={ref} {...props} type="submit" className={`form-submit ${className}`} disabled={disabled || busy}>
-      {busy ? 'Đang lưu…' : children}
+      {busy ? <LoadingIndicator inline>Đang lưu…</LoadingIndicator> : children}
     </Button>
   );
 });

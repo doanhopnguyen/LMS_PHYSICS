@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { MarkdownContent } from '../../components/MarkdownContent.jsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MaterialFilePreview } from '../../components/MaterialFilePreview.jsx';
@@ -138,7 +139,7 @@ export function InteractiveLessonPage() {
     >
       {loading ? (
         <div className="chapter-empty">
-          <p>Đang tải bài học…</p>
+          <LoadingIndicator>Đang tải bài học…</LoadingIndicator>
         </div>
       ) : error && !topic ? (
         <div className="chapter-empty">
@@ -227,6 +228,7 @@ export function InteractiveLessonPage() {
                       {(material.contentText || !(material.fileUrl || material.downloadUrl || material.url)) &&
                         (material.type === 'MARKDOWN' ? (
                           <MarkdownContent
+                            tocMode="fixed"
                             content={
                               material.contentText || 'Giảng viên chưa cập nhật nội dung văn bản cho học liệu này.'
                             }

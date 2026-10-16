@@ -1,3 +1,4 @@
+import { LoadingIndicator } from './LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { FormDialog } from './FormDialog.jsx';
 import { DataTable } from './DataTable.jsx';
@@ -60,9 +61,7 @@ export function ExamHistoryDialog({ exam, onClose }) {
   return (
     <FormDialog title={`Lịch sử bài thi · ${exam.title || 'Đề thi'}`} onClose={onClose} wide>
       {loading ? (
-        <p role="status" className="py-8 text-center text-[#64748B]">
-          Đang tải lịch sử bài thi…
-        </p>
+        <LoadingIndicator className="py-8 text-center text-[#64748B]">Đang tải lịch sử bài thi…</LoadingIndicator>
       ) : error ? (
         <div className="py-6 text-center">
           <p role="alert" className="text-primary">

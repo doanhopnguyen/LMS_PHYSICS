@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Card } from '../../components/Card.jsx';
@@ -109,7 +110,7 @@ export function ExamResultsPage() {
           }
         />
         {loading ? (
-          <Card className="p-8 text-center text-[#64748B]">Đang tải kết quả bài làm…</Card>
+          <LoadingIndicator className="p-8 text-center text-[#64748B]">Đang tải kết quả bài làm…</LoadingIndicator>
         ) : error ? (
           <Card className="p-8 text-center">
             <p role="alert" className="text-primary">

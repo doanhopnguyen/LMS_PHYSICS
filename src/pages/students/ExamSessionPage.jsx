@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import { FormField as SharedFormField } from '../../components/FormField.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
@@ -144,7 +145,7 @@ function ExamSelection() {
           description="Chọn đề kiểm tra để bắt đầu hoặc tiếp tục làm bài."
         />
         {loading ? (
-          <p className="py-10 text-center text-[#64748B]">Đang tải đề kiểm tra…</p>
+          <LoadingIndicator className="py-10 text-center text-[#64748B]">Đang tải đề kiểm tra…</LoadingIndicator>
         ) : error ? (
           <Card className="p-8 text-center">
             <p role="alert" className="text-primary">
@@ -548,7 +549,7 @@ export function AttemptSession({ examId, attemptId, takeMode: requestedTakeMode,
     >
       <PageContainer>
         {loading ? (
-          <p className="py-10 text-center text-[#64748B]">Đang tải phiên kiểm tra…</p>
+          <LoadingIndicator className="py-10 text-center text-[#64748B]">Đang tải phiên kiểm tra…</LoadingIndicator>
         ) : error ? (
           <Card className="p-8 text-center">
             <p role="alert" className="text-primary">

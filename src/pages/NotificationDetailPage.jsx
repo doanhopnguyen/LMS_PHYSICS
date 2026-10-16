@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../components/AppShell.jsx';
 import { PageContainer } from '../components/PageContainer.jsx';
@@ -83,9 +84,7 @@ export function NotificationDetailPage() {
           Quay lại
         </Button>
         {loading ? (
-          <Card className="p-6" role="status">
-            Đang tải thông báo…
-          </Card>
+          <LoadingIndicator className="p-6">Đang tải thông báo…</LoadingIndicator>
         ) : error ? (
           <Card className="p-6">
             <AuthAlert error>{error}</AuthAlert>

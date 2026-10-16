@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -119,7 +120,7 @@ export function StudentEvidencePage() {
           description="Xem lịch sử nộp báo cáo, điểm số, nhận xét và minh chứng thí nghiệm của bạn."
         />
         <StudentExperimentHistory refreshKey={historyVersion} />
-        {loading && <p className="py-10 text-center text-body-md text-[#64748B]">Đang tải minh chứng…</p>}
+        {loading && <LoadingIndicator className="py-10 text-center text-body-md text-[#64748B]">Đang tải minh chứng…</LoadingIndicator>}
         {error && (
           <p role="alert" className="py-10 text-center text-body-md text-primary">
             {error}

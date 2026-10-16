@@ -1,3 +1,4 @@
+import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
 import React, { useEffect, useState } from 'react';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
@@ -152,7 +153,7 @@ export function AdminMaterialsPage({ embedded = false }) {
           </Button>
         </div>
         {resource.loading ? (
-          <p role="status">Đang tải học liệu…</p>
+          <LoadingIndicator>Đang tải học liệu…</LoadingIndicator>
         ) : resource.error ? (
           <p role="alert">
             {resource.error}{' '}
