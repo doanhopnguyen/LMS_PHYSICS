@@ -10,8 +10,12 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { api } from '../../lib/apiClient.js';
 import { loadClassMaterialProgress } from '../../lib/classMaterialProgress.js';
+import { readAcademicScope } from '../../lib/academicScope.js';
 
 export function MyCoursesPage() {
+  const { semester, classId } = readAcademicScope();
+  const matchesScope = (item) =>
+    (!semester || String(item.semesterId) === semester) && (classId === 'ALL' || String(item.classId) === classId);
   const [classes, setClasses] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,11 +24,15 @@ export function MyCoursesPage() {
   const [scheduleError, setScheduleError] = useState('');
 
   useEffect(() => {
+    let alive = true;
     setLoading(true);
+    setError('');
     api.students
       .myClasses()
       .then(async (data) => {
-        const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
+        const list = (Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : []).filter(
+          matchesScope
+        );
         const withProgress = await Promise.all(
           list.map(async (item) => {
             const progressRows = await loadClassMaterialProgress(item.classId);
@@ -38,28 +46,48 @@ export function MyCoursesPage() {
             };
           })
         );
-        setClasses(withProgress);
+        if (alive) setClasses(withProgress);
       })
-      .catch((err) => setError(err.message || 'Không thể tải danh sách lớp học.'))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch((err) => {
+        if (alive) setError(err.message || 'Không thể tải danh sách lớp học.');
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [semester, classId]);
 
   useEffect(() => {
+    let alive = true;
+    setScheduleLoading(true);
+    setScheduleError('');
     api.students
       .mySchedule()
       .then((data) => {
+        if (!alive) return;
         const list = Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : data?.data || [];
         setSchedules(
-          [...list].sort(
-            (left, right) =>
-              (left.dayOfWeek || 9) - (right.dayOfWeek || 9) ||
-              String(left.startTime || '').localeCompare(String(right.startTime || ''))
-          )
+          list
+            .filter(matchesScope)
+            .sort(
+              (left, right) =>
+                (left.dayOfWeek || 9) - (right.dayOfWeek || 9) ||
+                String(left.startTime || '').localeCompare(String(right.startTime || ''))
+            )
         );
       })
-      .catch((err) => setScheduleError(err.message || 'Không thể tải thời khóa biểu.'))
-      .finally(() => setScheduleLoading(false));
-  }, []);
+      .catch((err) => {
+        if (alive) setScheduleError(err.message || 'Không thể tải thời khóa biểu.');
+      })
+      .finally(() => {
+        if (alive) setScheduleLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [semester, classId]);
 
   const CLASS_ICONS = ['auto_stories', 'science', 'calculate', 'psychology'];
   const CLASS_ACCENTS = ['#E52220', '#15803D', '#B45309', '#7C3AED'];
@@ -73,10 +101,18 @@ export function MyCoursesPage() {
     >
       <PageContainer>
         <PageTitle title="Học phần của tôi" description="Tổng quan tiến độ các học phần bạn đang theo học." />
-        {loading && <LoadingIndicator className="text-body-md text-[#64748B] py-10 text-center">Đang tải danh sách lớp học...</LoadingIndicator>}
+        {loading && (
+          <LoadingIndicator className="text-body-md text-[#64748B] py-10 text-center">
+            Đang tải danh sách lớp học...
+          </LoadingIndicator>
+        )}
         {error && <p className="text-body-md text-primary py-10 text-center">{error}</p>}
         {!loading && !error && classes.length === 0 && (
-          <p className="text-body-md text-[#64748B] py-10 text-center">Bạn chưa đăng ký lớp học nào.</p>
+          <p className="text-body-md text-[#64748B] py-10 text-center">
+            {semester || classId !== 'ALL'
+              ? 'Không có học phần trong phạm vi đã chọn.'
+              : 'Bạn chưa đăng ký lớp học nào.'}
+          </p>
         )}
         {!loading && !error && classes.length > 0 && (
           <PaginatedList className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -125,10 +161,12 @@ export function MyCoursesPage() {
             })}
           </PaginatedList>
         )}
-        <Card className="p-6">
+        <Card className="p-6" aria-label="Thời khóa biểu">
           <h2 className="text-headline-md font-bold">Thời khóa biểu</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-            {scheduleLoading && <LoadingIndicator className="text-body-sm text-[#64748B]">Đang tải thời khóa biểu…</LoadingIndicator>}
+            {scheduleLoading && (
+              <LoadingIndicator className="text-body-sm text-[#64748B]">Đang tải thời khóa biểu…</LoadingIndicator>
+            )}
             {!scheduleLoading && scheduleError && (
               <p role="alert" className="text-body-sm text-primary">
                 {scheduleError}
@@ -158,7 +196,11 @@ export function MyCoursesPage() {
                 </Card>
               ))}
             {!scheduleLoading && !scheduleError && !schedules.length && (
-              <p className="text-body-sm text-[#64748B]">Chưa có thời khóa biểu được công bố.</p>
+              <p className="text-body-sm text-[#64748B]">
+                {semester || classId !== 'ALL'
+                  ? 'Không có lịch học trong phạm vi đã chọn.'
+                  : 'Chưa có thời khóa biểu được công bố.'}
+              </p>
             )}
           </div>
         </Card>

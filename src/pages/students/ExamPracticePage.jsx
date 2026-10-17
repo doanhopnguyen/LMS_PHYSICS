@@ -17,6 +17,9 @@ import { attemptScore, formatAttemptScore } from '../../lib/examScoring.js';
 import { navigate } from '../../lib/navigation.js';
 import { AttemptSession } from './ExamSessionPage.jsx';
 import { studentExamAvailability } from '../../lib/studentExamAvailability.js';
+import { Tabs } from '../../components/Tabs.jsx';
+import { AdaptivePracticePanel } from '../../components/AdaptivePracticePanel.jsx';
+import { AdaptivePracticeSession } from './AdaptivePracticeSession.jsx';
 
 const rowsOf = (value) =>
   Array.isArray(value)
@@ -45,6 +48,8 @@ const examProgress = (exam, latest, active) => {
 
 export function ExamPracticePage() {
   const params = new URLSearchParams(window.location.search);
+  const practiceSessionId = params.get('practiceSessionId');
+  if (practiceSessionId) return <AdaptivePracticeSession key={practiceSessionId} sessionId={practiceSessionId} />;
   const examId = params.get('examId');
   if (examId && params.get('mode') === 'waiting')
     return <ExamWaitingRoom key={examId} examId={examId} workspace="practice" />;
@@ -54,7 +59,7 @@ export function ExamPracticePage() {
   return <PracticeCenter />;
 }
 
-function PracticeCenter() {
+function TeacherPracticePanel() {
   const [examRows, setExamRows] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +81,13 @@ function PracticeCenter() {
       setLoading(true);
       setError('');
       try {
-        const classRows = rowsOf(await api.students.myClasses());
+        const scope = new URLSearchParams(window.location.search);
+        const scoped = scope.get('semester') || (scope.get('class') && scope.get('class') !== 'ALL');
+        const classRows = rowsOf(await api.students.myClasses()).filter(
+          (item) =>
+            (!scope.get('semester') || String(item.semesterId) === scope.get('semester')) &&
+            (!scope.get('class') || scope.get('class') === 'ALL' || String(item.classId) === scope.get('class'))
+        );
         const grouped = await Promise.all(
           classRows.map(async (classItem) => ({
             classItem,
@@ -84,7 +95,9 @@ function PracticeCenter() {
             progress: rowsOf(await api.students.myProgress(classItem.classId).catch(() => [])),
           }))
         );
-        const transfers = rowsOf(await api.exams.myTransferredExams().catch(() => []));
+        const transfers = rowsOf(await api.exams.myTransferredExams().catch(() => [])).filter(
+          (exam) => !scoped || classRows.some((item) => String(item.classId) === String(exam.classId))
+        );
         const classById = new Map(classRows.map((item) => [String(item.classId), item]));
         const unique = new Map();
         [
@@ -192,188 +205,209 @@ function PracticeCenter() {
   };
 
   return (
+    <div className="space-y-6">
+      <AuthAlert>{notice}</AuthAlert>
+      <MetricGrid
+        items={[
+          {
+            label: 'Đề luyện tập',
+            value: examRows.length,
+            detail: 'Theo lớp học và đề được chuyển',
+            icon: 'quiz',
+            tone: 'warning',
+          },
+          {
+            label: 'Lượt đã nộp',
+            value: completedAttempts.length,
+            detail: 'Từ lịch sử làm bài',
+            icon: 'task_alt',
+            tone: 'success',
+          },
+          {
+            label: 'Điểm trung bình',
+            value: averageScore,
+            detail: scored.length ? `${scored.length} lượt có điểm · thang 10` : 'Chưa có điểm hợp lệ',
+            icon: 'emoji_events',
+            tone: 'primary',
+          },
+          {
+            label: 'Đề đang làm',
+            value: examRows.filter(hasActiveAttempt).length,
+            detail: 'Các đề có thể tiếp tục làm',
+            icon: 'pending_actions',
+            tone: 'warning',
+          },
+        ]}
+      />
+      {loading ? (
+        <LoadingIndicator className="py-10 text-center text-[#64748B]">Đang tải kỳ thi…</LoadingIndicator>
+      ) : error && !examRows.length ? (
+        <Card className="p-8 text-center">
+          <p role="alert" className="text-primary">
+            {error}
+          </p>
+          <Button className="mt-4" onClick={() => setReloadKey((value) => value + 1)}>
+            Thử lại
+          </Button>
+        </Card>
+      ) : (
+        <>
+          {error && (
+            <p role="alert" className="text-primary">
+              {error}
+            </p>
+          )}
+          <p className="mt-5 text-body-sm text-[#64748B]">
+            Các đề dưới đây dành riêng cho ôn luyện. Hiển thị {displayedExamRows.length} đề.
+          </p>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {displayedExamRows.map((exam, index) => {
+              const latest = exam.attempts?.[0];
+              const availability = studentExamAvailability(exam, now);
+              const policy = exam.policy;
+              return (
+                <StatCard
+                  key={exam.examId}
+                  label={exam.title || 'Đề không có tiêu đề'}
+                  value="Ôn luyện"
+                  detail={examTypeText(exam.examType)}
+                  icon="quiz"
+                  ribbonLabel={exam.classLabel || 'Đề kiểm tra'}
+                  ribbonPosition="bottom"
+                  accentColor={['#E52220', '#0284C7', '#7C3AED'][index % 3]}
+                  footer={
+                    <>
+                      <div className="flex items-center justify-between gap-3 text-body-sm">
+                        <span className="truncate text-[#64748B]">{exam.classLabel}</span>
+                        <StatusBadge tone={availability.tone}>{availability.statusLabel}</StatusBadge>
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-body-sm text-[#64748B]">
+                        <span>{exam.totalQuestions ?? '—'} câu hỏi</span>
+                        <span>{exam.durationMinutes ? `${exam.durationMinutes} phút` : '—'}</span>
+                        {policy && (
+                          <span>
+                            Lượt: {policy.usedAttempts ?? 0}/{policy.maxAttempts ?? '—'}
+                          </span>
+                        )}
+                        {latest?.status === 'GRADED' && (
+                          <span>Điểm: {formatAttemptScore(latest, exam.scoringQuestions)}</span>
+                        )}
+                        {latest?.attemptNumber && <span>Lần làm: {latest.attemptNumber}</span>}
+                      </div>
+                      {availability.reason && <p className="mt-2 text-body-sm text-[#B45309]">{availability.reason}</p>}
+                      <Button
+                        className="mt-3 w-full"
+                        icon={availability.canOpen ? 'play_arrow' : 'lock'}
+                        disabled={Boolean(startingId) || !availability.canOpen}
+                        onClick={() => openExam(exam)}
+                      >
+                        {startingId === exam.examId ? 'Đang mở…' : availability.actionLabel}
+                      </Button>
+                      {availability.canWait && (
+                        <Button
+                          variant="secondary"
+                          icon="hourglass_top"
+                          className="mt-2 w-full"
+                          onClick={() =>
+                            navigate(`exam_practice_center.html?examId=${encodeURIComponent(exam.examId)}&mode=waiting`)
+                          }
+                        >
+                          Vào sảnh chờ
+                        </Button>
+                      )}
+                      <Button
+                        variant="secondary"
+                        className="mt-2 w-full"
+                        icon="history"
+                        onClick={() => setHistoryExam(exam)}
+                      >
+                        Lịch sử bài thi
+                      </Button>
+                    </>
+                  }
+                />
+              );
+            })}
+          </div>
+          {!displayedExamRows.length && (
+            <Card className="p-10 text-center text-[#64748B]">Chưa có đề ôn luyện phù hợp.</Card>
+          )}
+        </>
+      )}
+      {historyExam && <ExamHistoryDialog exam={historyExam} onClose={() => setHistoryExam(null)} />}
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-headline-md font-bold">Tiến độ theo học phần</h2>
+            <p className="mt-1 text-body-sm text-[#64748B]">
+              Theo dõi tiến độ học liệu trong các học phần trước khi luyện đề.
+            </p>
+          </div>
+          <a href="my_courses.html" className="text-body-sm font-semibold text-primary">
+            Xem học phần
+          </a>
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {classes.slice(0, 3).map((item) => {
+            const values = item.progressRows.map((progressItem) => Number(progressItem.progressPercent || 0));
+            const value = values.length ? values.reduce((sum, current) => sum + current, 0) / values.length : 0;
+            return (
+              <Card as="div" key={item.classId} className="p-4">
+                <strong>{item.subjectName || item.subjectCode || item.classCode}</strong>
+                <ProgressBar value={value} className="mt-3" />
+                <span className="mt-2 block text-body-sm text-[#64748B]">{Math.round(value)}% tiến độ chủ đề</span>
+              </Card>
+            );
+          })}
+          {!classes.length && <p className="text-body-sm text-[#64748B]">Chưa có học phần để thống kê tiến độ.</p>}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function PracticeCenter() {
+  const params = new URLSearchParams(window.location.search);
+  const activeTab =
+    params.get('tab') === 'suggestions' || (!params.has('tab') && params.has('recommendClassId'))
+      ? 'suggestions'
+      : 'teacher';
+  const changeTab = (tab) => {
+    const query = new URLSearchParams(window.location.search);
+    query.set('tab', tab);
+    navigate(`exam_practice_center.html?${query}`);
+  };
+  return (
     <AppShell
       currentPage="exam_practice_center.html"
       title="Trung tâm ôn luyện · PTIT Physics 1"
       breadcrumbs={['Ôn luyện']}
       current="Trung tâm ôn luyện"
-      filterActions={
-        <Button
-          variant="secondary"
-          icon="refresh"
-          onClick={() => setReloadKey((value) => value + 1)}
-          disabled={loading}
-        >
-          Tải lại
-        </Button>
-      }
     >
       <PageContainer>
         <PageTitle
           eyebrow="LUYỆN TẬP CÁ NHÂN"
           title="Trung tâm ôn luyện"
-          description="Chọn đề luyện tập, theo dõi kết quả và tiếp tục ôn tập."
+          description="Luyện đề của giảng viên hoặc củng cố kiến thức từ những câu đã trả lời sai."
         />
-        <AuthAlert>{notice}</AuthAlert>
-        <MetricGrid
+        <Tabs
+          activeId={activeTab}
+          onChange={changeTab}
           items={[
-            {
-              label: 'Đề luyện tập',
-              value: examRows.length,
-              detail: 'Theo lớp học và đề được chuyển',
-              icon: 'quiz',
-              tone: 'warning',
-            },
-            {
-              label: 'Lượt đã nộp',
-              value: completedAttempts.length,
-              detail: 'Từ lịch sử làm bài',
-              icon: 'task_alt',
-              tone: 'success',
-            },
-            {
-              label: 'Điểm trung bình',
-              value: averageScore,
-              detail: scored.length ? `${scored.length} lượt có điểm · thang 10` : 'Chưa có điểm hợp lệ',
-              icon: 'emoji_events',
-              tone: 'primary',
-            },
-            {
-              label: 'Đề đang làm',
-              value: examRows.filter(hasActiveAttempt).length,
-              detail: 'Các đề có thể tiếp tục làm',
-              icon: 'pending_actions',
-              tone: 'warning',
-            },
+            { id: 'teacher', label: 'Đề luyện của giảng viên' },
+            { id: 'suggestions', label: 'Gợi ý luyện tập' },
           ]}
-        />
-        {loading ? (
-          <LoadingIndicator className="py-10 text-center text-[#64748B]">Đang tải kỳ thi…</LoadingIndicator>
-        ) : error && !examRows.length ? (
-          <Card className="p-8 text-center">
-            <p role="alert" className="text-primary">
-              {error}
-            </p>
-            <Button className="mt-4" onClick={() => setReloadKey((value) => value + 1)}>
-              Thử lại
-            </Button>
-          </Card>
-        ) : (
-          <>
-            {error && (
-              <p role="alert" className="text-primary">
-                {error}
-              </p>
-            )}
-            <p className="mt-5 text-body-sm text-[#64748B]">
-              Các đề dưới đây dành riêng cho ôn luyện. Hiển thị {displayedExamRows.length} đề.
-            </p>
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-              {displayedExamRows.map((exam, index) => {
-                const latest = exam.attempts?.[0];
-                const availability = studentExamAvailability(exam, now);
-                const policy = exam.policy;
-                return (
-                  <StatCard
-                    key={exam.examId}
-                    label={exam.title || 'Đề không có tiêu đề'}
-                    value="Ôn luyện"
-                    detail={examTypeText(exam.examType)}
-                    icon="quiz"
-                    ribbonLabel={exam.classLabel || 'Đề kiểm tra'}
-                    ribbonPosition="bottom"
-                    accentColor={['#E52220', '#0284C7', '#7C3AED'][index % 3]}
-                    footer={
-                      <>
-                        <div className="flex items-center justify-between gap-3 text-body-sm">
-                          <span className="truncate text-[#64748B]">{exam.classLabel}</span>
-                          <StatusBadge tone={availability.tone}>{availability.statusLabel}</StatusBadge>
-                        </div>
-                        <div className="mt-2 grid grid-cols-2 gap-2 text-body-sm text-[#64748B]">
-                          <span>{exam.totalQuestions ?? '—'} câu hỏi</span>
-                          <span>{exam.durationMinutes ? `${exam.durationMinutes} phút` : '—'}</span>
-                          {policy && (
-                            <span>
-                              Lượt: {policy.usedAttempts ?? 0}/{policy.maxAttempts ?? '—'}
-                            </span>
-                          )}
-                          {latest?.status === 'GRADED' && (
-                            <span>Điểm: {formatAttemptScore(latest, exam.scoringQuestions)}</span>
-                          )}
-                          {latest?.attemptNumber && <span>Lần làm: {latest.attemptNumber}</span>}
-                        </div>
-                        {availability.reason && (
-                          <p className="mt-2 text-body-sm text-[#B45309]">{availability.reason}</p>
-                        )}
-                        <Button
-                          className="mt-3 w-full"
-                          icon={availability.canOpen ? 'play_arrow' : 'lock'}
-                          disabled={Boolean(startingId) || !availability.canOpen}
-                          onClick={() => openExam(exam)}
-                        >
-                          {startingId === exam.examId ? 'Đang mở…' : availability.actionLabel}
-                        </Button>
-                        {availability.canWait && (
-                          <Button
-                            variant="secondary"
-                            icon="hourglass_top"
-                            className="mt-2 w-full"
-                            onClick={() =>
-                              navigate(
-                                `exam_practice_center.html?examId=${encodeURIComponent(exam.examId)}&mode=waiting`
-                              )
-                            }
-                          >
-                            Vào sảnh chờ
-                          </Button>
-                        )}
-                        <Button
-                          variant="secondary"
-                          className="mt-2 w-full"
-                          icon="history"
-                          onClick={() => setHistoryExam(exam)}
-                        >
-                          Lịch sử bài thi
-                        </Button>
-                      </>
-                    }
-                  />
-                );
-              })}
-            </div>
-            {!displayedExamRows.length && (
-              <Card className="p-10 text-center text-[#64748B]">Chưa có đề ôn luyện phù hợp.</Card>
-            )}
-          </>
-        )}
-        {historyExam && <ExamHistoryDialog exam={historyExam} onClose={() => setHistoryExam(null)} />}
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-headline-md font-bold">Tiến độ theo học phần</h2>
-              <p className="mt-1 text-body-sm text-[#64748B]">
-                Theo dõi tiến độ học liệu trong các học phần trước khi luyện đề.
-              </p>
-            </div>
-            <a href="my_courses.html" className="text-body-sm font-semibold text-primary">
-              Xem học phần
-            </a>
-          </div>
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
-            {classes.slice(0, 3).map((item) => {
-              const values = item.progressRows.map((progressItem) => Number(progressItem.progressPercent || 0));
-              const value = values.length ? values.reduce((sum, current) => sum + current, 0) / values.length : 0;
-              return (
-                <Card as="div" key={item.classId} className="p-4">
-                  <strong>{item.subjectName || item.subjectCode || item.classCode}</strong>
-                  <ProgressBar value={value} className="mt-3" />
-                  <span className="mt-2 block text-body-sm text-[#64748B]">{Math.round(value)}% tiến độ chủ đề</span>
-                </Card>
-              );
-            })}
-            {!classes.length && <p className="text-body-sm text-[#64748B]">Chưa có học phần để thống kê tiến độ.</p>}
-          </div>
-        </Card>
+        >
+          {(tab) => (
+            <section
+              role="tabpanel"
+              aria-label={tab === 'teacher' ? 'Đề luyện của giảng viên' : 'Gợi ý luyện tập'}
+              className="pt-6"
+            >
+              {tab === 'teacher' ? <TeacherPracticePanel /> : <AdaptivePracticePanel />}
+            </section>
+          )}
+        </Tabs>
       </PageContainer>
     </AppShell>
   );

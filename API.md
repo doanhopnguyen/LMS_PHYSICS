@@ -387,6 +387,25 @@ Quy tắc tạo/cập nhật và làm bài theo loại câu hỏi:
 
 Máy chủ đối chiếu đáp án, chuẩn hóa văn bản trả lời ngắn (Unicode, khoảng trắng, chữ hoa/thường), cộng trọng số và quy đổi điểm. `totalScore` giữ điểm trọng số; `maxScore` là tổng trọng số; `scoreOnTen` là điểm thang 10 do BE tính và chỉ có giá trị khi đã chấm. Chi tiết câu trả lời cũng có `scoreOnTen`, theo quyền xem đáp án hiện có. FE gửi đáp án, gọi `autosave` trước `submit` và hiển thị điểm API trả về.
 
+### Gợi ý luyện tập cá nhân
+
+Đối chiếu `StudentPracticeController`, các DTO `PracticeSession*`, `WeakTopicDTO` và `PracticeRecommendationServiceImpl` của BE. Tất cả đường dẫn sau có tiền tố `/api/v1/student`, dành cho `STUDENT` / `ADMIN` và kiểm tra quyền với lớp hoặc phiên luyện ở BE.
+
+| Thao tác | Endpoint | Dữ liệu |
+| --- | --- | --- |
+| Chủ đề cần ôn | `GET /classes/{classId}/weak-topics` | Mảng `WeakTopicDTO`: `topicId`, `topicName`, `chapterName`, `totalAnswered`, `correctCount`, `wrongCount`, `accuracyRate`, `hasEnoughData`, `weaknessLevel`, `recommendation` |
+| Tạo bài gợi ý | `POST /classes/{classId}/practice-recommendations` | `{questionCount: 10, topicId?: "uuid", allowExpandedSubjectTopics: false}`; số câu từ 1–50 |
+| Tiếp tục bài luyện | `GET /practice-sessions/{sessionId}` | `PracticeSessionDTO`, gồm `classId`, `status`, `questions`, `deficiencyNotice`, `expansionReason` |
+| Lưu câu trả lời | `POST /practice-sessions/{sessionId}/answers` | `{questionId, selectedOptionIds, answerText}`; thành công trả HTTP 200 không có body |
+| Nộp bài | `POST /practice-sessions/{sessionId}/submit` | `PracticeSessionResultDTO` |
+| Xem kết quả đã nộp | `GET /practice-sessions/{sessionId}/results` | `totalQuestions`, `correctCount`, `wrongCount`, `totalScore`, `accuracyRate`, `questions`, `updatedWeakTopics` |
+
+Các API này trả DTO trực tiếp, không bọc `{data: ...}`. `accuracyRate` là tỷ lệ 0–1. `weaknessLevel` nhận `INSUFFICIENT_DATA`, `NEEDS_PRACTICE`, `IMPROVING`, `GOOD`; FE dùng phân loại của BE, không tự đặt ngưỡng đánh giá. Phiên có trạng thái `IN_PROGRESS` hoặc `COMPLETED`.
+
+BE phân tích lịch sử trả lời của bài kiểm tra không phải FINAL và các phiên luyện đã hoàn tất trong học phần. Khi tạo bài, BE ưu tiên chủ đề cần củng cố, lấy câu mới rồi câu từng làm sai (`isReviewed=true`), loại câu trong đề FINAL và chỉ mở rộng sang chủ đề khác nếu `allowExpandedSubjectTopics=true`. Số câu thực tế có thể thấp hơn yêu cầu; FE hiển thị thông báo BE trả về. Khi chưa có đủ lịch sử, FE hiển thị “Chưa đủ dữ liệu” và vẫn cho bắt đầu bài luyện nếu có chủ đề.
+
+FE dùng `exam_practice_center.html?practiceSessionId=...` cho làm bài và xem kết quả. Trước khi nộp, FE chờ các lần lưu đang chạy và lưu đáp án mới nhất, tối đa 4 request đồng thời; lỗi lưu chặn việc gọi nộp bài. BE chấm điểm, cập nhật chủ đề cần ôn và quyết định có trả đáp án/lời giải theo cấu hình lớp hay không. Bộ nhớ trình duyệt chỉ lưu mã phiên gần nhất theo tài khoản và lớp, không lưu đáp án chuẩn hay kết quả chấm.
+
 ### Chuẩn đầu ra học phần (CLO)
 
 Đối chiếu OpenAPI tại `http://localhost:8080/v3/api-docs` ngày 14/10/2026. Các đường dẫn dưới đây dùng tiền tố `/api/v1`.

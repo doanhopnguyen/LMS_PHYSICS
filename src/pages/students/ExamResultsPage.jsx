@@ -11,6 +11,9 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
 import { formatAttemptScore, attemptScore } from '../../lib/examScoring.js';
+import { Button } from '../../components/Button.jsx';
+import { navigate } from '../../lib/navigation.js';
+import { practiceHomeHref } from '../../lib/adaptivePractice.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
@@ -160,6 +163,10 @@ export function ExamResultsPage() {
                 },
               ]}
             />
+            {graded && exam?.classId && <Card className="flex flex-wrap items-center justify-between gap-4 p-6">
+              <div className="min-w-0 flex-1"><h2 className="text-headline-sm font-bold">Ôn tập theo kết quả của bạn</h2><p className="mt-2 text-body-sm text-slate-500">Xem các chủ đề cần củng cố và luyện câu hỏi phù hợp với lịch sử trả lời của bạn.</p></div>
+              <Button icon="psychology" onClick={() => navigate(practiceHomeHref(exam.classId))}>Xem gợi ý luyện tập</Button>
+            </Card>}
             <Card className="p-6">
               <SectionHeader
                 title="Câu trả lời đã lưu"

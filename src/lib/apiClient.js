@@ -143,6 +143,14 @@ const fileReader = createFileReader({
 });
 
 export const api = {
+  practice: {
+    weakTopics: (classId) => apiRequest(`/api/v1/student/classes/${encodeURIComponent(classId)}/weak-topics`),
+    create: (classId, body) => apiRequest(`/api/v1/student/classes/${encodeURIComponent(classId)}/practice-recommendations`, { method: 'POST', body }),
+    get: (sessionId) => apiRequest(`/api/v1/student/practice-sessions/${encodeURIComponent(sessionId)}`),
+    saveAnswer: (sessionId, body) => apiRequest(`/api/v1/student/practice-sessions/${encodeURIComponent(sessionId)}/answers`, { method: 'POST', body }),
+    submit: (sessionId) => apiRequest(`/api/v1/student/practice-sessions/${encodeURIComponent(sessionId)}/submit`, { method: 'POST' }),
+    results: (sessionId) => apiRequest(`/api/v1/student/practice-sessions/${encodeURIComponent(sessionId)}/results`),
+  },
   // ─── Auth ────────────────────────────────────────────────────────────────────
   auth: {
     signin: (credentials) => apiRequest('/api/v1/users/signin', { method: 'POST', body: credentials, auth: false }),

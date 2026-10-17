@@ -1,0 +1,1 @@
+import{j as a}from"./index-Dpmciqr7.js";import{D as e}from"./DashboardCalendar-Do2O_hNy.js";function t({role:s,children:r}){return a.jsxs("div",{className:"dashboard-overview",children:[a.jsx("section",{className:"dashboard-overview__stats","aria-label":"Thống kê tổng quan",children:r}),a.jsx(e,{role:s})]})}export{t as D};

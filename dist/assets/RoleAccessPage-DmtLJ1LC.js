@@ -1,1 +1,0 @@
-import{j as o}from"./index-BzDyWQsj.js";import{ErrorPage as t}from"./ErrorPage-DHdFEMEz.js";import"./Button-CVPHIOGv.js";import"./navigation-9gkwnIIg.js";import"./useDocumentMeta-qBABC5bv.js";function a({session:r}){return o.jsx(t,{status:403,session:r})}export{a as RoleAccessPage};
