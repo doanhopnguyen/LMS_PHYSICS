@@ -4,14 +4,35 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   base: './',
+  optimizeDeps: {
+    // The app's dependencies are known. Avoid crawling temporary UI fixtures and
+    // browser profiles on a cold start, or rediscovering dependencies per route.
+    noDiscovery: true,
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'react-markdown',
+      'remark-gfm',
+    ],
+    holdUntilCrawlEnd: false,
+  },
   server: {
     port: 5173,
     host: '0.0.0.0',
+    watch: {
+      ignored: ['**/.tmp-*/**', '**/.codegraph/**', '**/docs/**', '**/Images/**'],
+    },
+    warmup: {
+      clientFiles: ['./src/main.jsx', './src/pages/LoginPage.jsx', './src/styles/base.css'],
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:8080',
         changeOrigin: true,
       },
     },
-  }
+  },
 });

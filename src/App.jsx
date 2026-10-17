@@ -6,133 +6,149 @@ import { getCleanRoute, getPageFile } from './lib/routes.js';
 import { LoadingIndicator } from './components/LoadingIndicator.jsx';
 import { canAccess, getDemoSession } from './lib/demoSession.js';
 
-const LecturerExperimentGradingPage = lazy(() =>
+// Load workspace styles alongside its page code. Public auth pages can render
+// without compiling the utilities and styles for every workspace on cold start.
+let workspaceStyles;
+function lazyPage(loader) {
+  return lazy(async () => {
+    workspaceStyles ||= Promise.all([
+      import('./styles.css'),
+      import('./styles/header.css'),
+      import('./styles/action-menu.css'),
+      import('./styles/tables.css'),
+    ]).catch((error) => { workspaceStyles = undefined; throw error; });
+    const [page] = await Promise.all([loader(), workspaceStyles]);
+    return page;
+  });
+}
+
+const LecturerExperimentGradingPage = lazyPage(() =>
   import('./pages/lecturers/LecturerExperimentGrading.jsx').then((module) => ({
     default: module.LecturerExperimentGradingPage,
   }))
 );
 const LoginPage = lazy(() => import('./pages/LoginPage.jsx').then((module) => ({ default: module.LoginPage })));
-const AccountPage = lazy(() => import('./pages/AccountPage.jsx').then((module) => ({ default: module.AccountPage })));
-const NotificationDetailPage = lazy(() =>
+const AccountPage = lazyPage(() => import('./pages/AccountPage.jsx').then((module) => ({ default: module.AccountPage })));
+const NotificationDetailPage = lazyPage(() =>
   import('./pages/NotificationDetailPage.jsx').then((module) => ({ default: module.NotificationDetailPage }))
 );
-const OperationsPage = lazy(() =>
+const OperationsPage = lazyPage(() =>
   import('./pages/admin/OperationsPage.jsx').then((module) => ({ default: module.OperationsPage }))
 );
-const UsersPage = lazy(() => import('./pages/admin/UsersPage.jsx').then((module) => ({ default: module.UsersPage })));
-const DashboardPage = lazy(() =>
+const UsersPage = lazyPage(() => import('./pages/admin/UsersPage.jsx').then((module) => ({ default: module.UsersPage })));
+const DashboardPage = lazyPage(() =>
   import('./pages/students/DashboardPage.jsx').then((module) => ({ default: module.DashboardPage }))
 );
-const CourseDetailPage = lazy(() =>
+const CourseDetailPage = lazyPage(() =>
   import('./pages/students/CourseDetailPage.jsx').then((module) => ({ default: module.CourseDetailPage }))
 );
-const LearningModulePage = lazy(() =>
+const LearningModulePage = lazyPage(() =>
   import('./pages/students/LearningModulePage.jsx').then((module) => ({ default: module.LearningModulePage }))
 );
-const ExamPracticePage = lazy(() =>
+const ExamPracticePage = lazyPage(() =>
   import('./pages/students/ExamPracticePage.jsx').then((module) => ({ default: module.ExamPracticePage }))
 );
-const ExamResultsPage = lazy(() =>
+const ExamResultsPage = lazyPage(() =>
   import('./pages/students/ExamResultsPage.jsx').then((module) => ({ default: module.ExamResultsPage }))
 );
-const LabReportPage = lazy(() =>
+const LabReportPage = lazyPage(() =>
   import('./pages/students/LabReportPage.jsx').then((module) => ({ default: module.LabReportPage }))
 );
-const LearningResultsPage = lazy(() =>
+const LearningResultsPage = lazyPage(() =>
   import('./pages/students/LearningResultsPage.jsx').then((module) => ({ default: module.LearningResultsPage }))
 );
-const MyCoursesPage = lazy(() =>
+const MyCoursesPage = lazyPage(() =>
   import('./pages/students/MyCoursesPage.jsx').then((module) => ({ default: module.MyCoursesPage }))
 );
-const VirtualLabPage = lazy(() =>
+const VirtualLabPage = lazyPage(() =>
   import('./pages/students/VirtualLabPage.jsx').then((module) => ({ default: module.VirtualLabPage }))
 );
-const VoiceCitationsPage = lazy(() =>
+const VoiceCitationsPage = lazyPage(() =>
   import('./pages/students/VoiceCitationsPage.jsx').then((module) => ({ default: module.VoiceCitationsPage }))
 );
-const WorkspacePage = lazy(() =>
+const WorkspacePage = lazyPage(() =>
   import('./pages/students/WorkspacePage.jsx').then((module) => ({ default: module.WorkspacePage }))
 );
-const AiTutorPage = lazy(() =>
+const AiTutorPage = lazyPage(() =>
   import('./pages/students/AiTutorPage.jsx').then((module) => ({ default: module.AiTutorPage }))
 );
-const DocumentViewerPage = lazy(() =>
+const DocumentViewerPage = lazyPage(() =>
   import('./pages/students/DocumentViewerPage.jsx').then((module) => ({ default: module.DocumentViewerPage }))
 );
-const ExamSessionPage = lazy(() =>
+const ExamSessionPage = lazyPage(() =>
   import('./pages/students/ExamSessionPage.jsx').then((module) => ({ default: module.ExamSessionPage }))
 );
-const InteractiveLessonPage = lazy(() =>
+const InteractiveLessonPage = lazyPage(() =>
   import('./pages/students/InteractiveLessonPage.jsx').then((module) => ({ default: module.InteractiveLessonPage }))
 );
-const MobileExperiencePage = lazy(() =>
+const MobileExperiencePage = lazyPage(() =>
   import('./pages/students/MobileExperiencePage.jsx').then((module) => ({ default: module.MobileExperiencePage }))
 );
-const LecturerAssessmentApiPage = lazy(() =>
+const LecturerAssessmentApiPage = lazyPage(() =>
   import('./pages/lecturers/LecturerApiWorkspace.jsx').then((module) => ({ default: module.LecturerAssessmentApiPage }))
 );
-const LecturerMatrixCreatePage = lazy(() =>
+const LecturerMatrixCreatePage = lazyPage(() =>
   import('./pages/lecturers/LecturerApiWorkspace.jsx').then((module) => ({ default: module.LecturerMatrixCreatePage }))
 );
-const LecturerDashboardApiPage = lazy(() =>
+const LecturerDashboardApiPage = lazyPage(() =>
   import('./pages/lecturers/LecturerApiWorkspace.jsx').then((module) => ({ default: module.LecturerDashboardApiPage }))
 );
-const LecturerExperimentsApiPage = lazy(() =>
+const LecturerExperimentsApiPage = lazyPage(() =>
   import('./pages/lecturers/LecturerApiWorkspace.jsx').then((module) => ({
     default: module.LecturerExperimentsApiPage,
   }))
 );
-const LecturerGradingApiPage = lazy(() =>
+const LecturerGradingApiPage = lazyPage(() =>
   import('./pages/lecturers/LecturerApiWorkspace.jsx').then((module) => ({ default: module.LecturerGradingApiPage }))
 );
-const LecturerAuthoringApiPage = lazy(() =>
+const LecturerAuthoringApiPage = lazyPage(() =>
   import('./pages/lecturers/LecturerContent.jsx').then((module) => ({ default: module.LecturerAuthoringApiPage }))
 );
-const LecturerQuestionWorkspace = lazy(() =>
+const LecturerQuestionWorkspace = lazyPage(() =>
   import('./pages/lecturers/LecturerQuestionWorkspace.jsx').then((module) => ({
     default: module.LecturerQuestionWorkspace,
   }))
 );
-const LecturerClassesApiPage = lazy(() =>
+const LecturerClassesApiPage = lazyPage(() =>
   import('./pages/lecturers/LecturerClasses.jsx').then((module) => ({ default: module.LecturerClassesApiPage }))
 );
-const LecturerClassDetail = lazy(() =>
+const LecturerClassDetail = lazyPage(() =>
   import('./pages/lecturers/LecturerClasses.jsx').then((module) => ({ default: module.LecturerClassDetail }))
 );
-const AdminDashboardPage = lazy(() =>
+const AdminDashboardPage = lazyPage(() =>
   import('./pages/admin/AdminPages.jsx').then((module) => ({ default: module.AdminDashboardPage }))
 );
-const AdminSemestersPage = lazy(() =>
+const AdminSemestersPage = lazyPage(() =>
   import('./pages/admin/AdminAcademicManagement.jsx').then((module) => ({ default: module.AdminSemestersPage }))
 );
-const AdminSubjectsPage = lazy(() =>
+const AdminSubjectsPage = lazyPage(() =>
   import('./pages/admin/AdminAcademicManagement.jsx').then((module) => ({ default: module.AdminSubjectsPage }))
 );
-const AdminSubjectDetailPage = lazy(() =>
+const AdminSubjectDetailPage = lazyPage(() =>
   import('./pages/admin/AdminAcademicManagement.jsx').then((module) => ({ default: module.AdminSubjectDetailPage }))
 );
-const AdminClassesPage = lazy(() =>
+const AdminClassesPage = lazyPage(() =>
   import('./pages/admin/AdminClassManagement.jsx').then((module) => ({ default: module.AdminClassesPage }))
 );
-const AdminClassDetailPage = lazy(() =>
+const AdminClassDetailPage = lazyPage(() =>
   import('./pages/admin/AdminClassManagement.jsx').then((module) => ({ default: module.AdminClassDetailPage }))
 );
-const AdminClassCreatePage = lazy(() =>
+const AdminClassCreatePage = lazyPage(() =>
   import('./pages/admin/AdminClassManagement.jsx').then((module) => ({ default: module.AdminClassCreatePage }))
 );
-const AdminAnalyticsPage = lazy(() =>
+const AdminAnalyticsPage = lazyPage(() =>
   import('./pages/admin/AdminAnalyticsPage.jsx').then((module) => ({ default: module.AdminAnalyticsPage }))
 );
-const AdminQuestionsApiPage = lazy(() =>
+const AdminQuestionsApiPage = lazyPage(() =>
   import('./pages/admin/AdminQuestionsApiPage.jsx').then((module) => ({ default: module.AdminQuestionsApiPage }))
 );
-const AdminContentReviewPage = lazy(() =>
+const AdminContentReviewPage = lazyPage(() =>
   import('./pages/admin/AdminContentReviewPage.jsx').then((module) => ({ default: module.AdminContentReviewPage }))
 );
-const AdminAssessmentsPage = lazy(() =>
+const AdminAssessmentsPage = lazyPage(() =>
   import('./pages/admin/AdminAssessmentsPage.jsx').then((module) => ({ default: module.AdminAssessmentsPage }))
 );
-const StudentEvidencePage = lazy(() =>
+const StudentEvidencePage = lazyPage(() =>
   import('./pages/students/StudentEvidencePage.jsx').then((module) => ({ default: module.StudentEvidencePage }))
 );
 const RegisterPage = lazy(() =>
@@ -141,19 +157,19 @@ const RegisterPage = lazy(() =>
 const ResetPasswordPage = lazy(() =>
   import('./pages/ResetPasswordPage.jsx').then((module) => ({ default: module.ResetPasswordPage }))
 );
-const TADashboardApiPage = lazy(() =>
+const TADashboardApiPage = lazyPage(() =>
   import('./pages/ta/TAPagesApi.jsx').then((module) => ({ default: module.TADashboardApiPage }))
 );
-const TAWorkQueueApiPage = lazy(() =>
+const TAWorkQueueApiPage = lazyPage(() =>
   import('./pages/ta/TAPagesApi.jsx').then((module) => ({ default: module.TAWorkQueueApiPage }))
 );
-const TAClassSupportTabsPage = lazy(() =>
+const TAClassSupportTabsPage = lazyPage(() =>
   import('./pages/ta/TAClassSupportTabsPage.jsx').then((module) => ({ default: module.TAClassSupportTabsPage }))
 );
-const RoleAccessPage = lazy(() =>
+const RoleAccessPage = lazyPage(() =>
   import('./pages/RoleAccessPage.jsx').then((module) => ({ default: module.RoleAccessPage }))
 );
-const ErrorPage = lazy(() => import('./pages/ErrorPage.jsx').then((module) => ({ default: module.ErrorPage })));
+const ErrorPage = lazyPage(() => import('./pages/ErrorPage.jsx').then((module) => ({ default: module.ErrorPage })));
 
 const pageComponents = {
   'login.html': LoginPage,
