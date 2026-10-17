@@ -27,9 +27,13 @@ npm run build
 - `docs/`: tài liệu và bằng chứng kiểm tra được chủ động lưu lại.
 - `artifacts/`: ảnh chụp và báo cáo mới do công cụ kiểm tra sinh ra, không đưa vào Git.
 - `.tmp-tools/`: script dùng một lần; các thư mục `.tmp-*` khác chứa dữ liệu tạm và hồ sơ trình duyệt, không đưa vào Git.
-- `dist/`: bản build tạo bởi `npm run build`, không đưa vào Git. Triển khai bằng nội dung thư mục này sau khi build.
+- `dist/`: bản build tạo bởi `npm run build`, được lưu trong Git theo quy trình của dự án. Chạy build lại trước khi cập nhật bản triển khai.
 
 Các file `.env` và `.env.*` là cấu hình cục bộ; chỉ `.env.example` được lưu trong Git. `.gitignore` cũng loại trừ dependency, log, cache và kết quả kiểm tra. Không dùng `git add -f` cho các file sinh tự động.
+
+Ảnh dùng trong giao diện lấy từ `public/`; Vite sao chép chúng vào `dist/` khi build. `Images/` chứa ảnh tham khảo thiết kế, không phải thư mục ảnh phục vụ ứng dụng. Không trỏ mã nguồn vào `dist/` hoặc dùng URL có tiền tố `/public/`.
+
+Chạy `npm run check:assets` để kiểm tra ảnh gốc được Git theo dõi và liệt kê ảnh chưa có tham chiếu trực tiếp. Sau khi build, chạy `npm run check:assets -- --build` để đối chiếu từng file gốc với bản trong `dist/`. Ảnh chưa có tham chiếu cần được xem xét trước khi xóa.
 
 ## Kết nối backend API
 

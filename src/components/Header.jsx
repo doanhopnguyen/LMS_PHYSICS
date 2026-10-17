@@ -61,7 +61,7 @@ export function Header({ onMenuClick, homeHref = 'dashboard.html', showBackButto
         )}
         <a className="floating-brand" href={home} aria-label="PTIT Physics LMS - Trang chủ">
           <span className="floating-brand-mark">
-            <img src="ptitwhite.png" alt="Logo PTIT" />
+            <img src={`${import.meta.env.BASE_URL}ptitwhite.png`} alt="Logo PTIT" />
           </span>
           <span className="floating-brand-copy">
             <strong>HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG</strong>

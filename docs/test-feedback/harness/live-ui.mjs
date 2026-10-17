@@ -28,8 +28,8 @@ async function login(user){
 async function api(path,token){return (await (await fetch(be+path,{headers:{Authorization:'Bearer '+token}})).json()).data;}
 async function probe(id,description,check,action){try{const actual=await action();const passed=check(actual);results.push({id,description,passed,actual});console.log(`${passed?'PASS':'FAIL'} ${id}: ${JSON.stringify(actual)}`);}catch(e){results.push({id,description,passed:false,error:e.message});console.log(`ERROR ${id}: ${e.message}`);}}
 async function setValue(selector,value){await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));})()`);await pause(50);}
-async function screenshot(name){const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile('docs/test-feedback/'+name+'.png',Buffer.from(r.data,'base64'));}
-await mkdir('docs/test-feedback',{recursive:true});
+async function screenshot(name){const r=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile('artifacts/test-feedback/'+name+'.png',Buffer.from(r.data,'base64'));}
+await mkdir('artifacts/test-feedback',{recursive:true});
 await send('Page.enable');await send('Runtime.enable');await send('Network.enable');
 await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
 await navigate('login');
