@@ -8,16 +8,23 @@ Các thành phần dùng chung nằm trong `src/components` và `src/styles`: `A
 
 ## Chạy dự án
 
+Yêu cầu Node.js 22 LTS và npm. Sau khi clone repository, chạy tại thư mục có `package.json`:
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
+
+Mặc định frontend chạy tại `http://localhost:5173`, gọi backend ở `http://localhost:8080`. Nếu cần đổi địa chỉ, sao chép `.env.example` thành `.env.local` rồi chỉnh các biến tương ứng. Không cần có sẵn `dist/`, `node_modules/` hoặc file tạm để cài đặt và build. Các chức năng đăng nhập, lấy dữ liệu và lưu thay đổi cần backend đang chạy.
 
 Build production:
 
 ```bash
 npm run build
+npm run preview
 ```
+
+Triển khai toàn bộ nội dung `dist/` được tạo sau khi build, gồm `index.html`, `assets/` và ảnh. Máy chủ cần trả `index.html` cho các đường dẫn giao diện như `/admin_classes` khi truy cập trực tiếp. Cấu hình chuyển tiếp `/api` tới backend hoặc đặt `VITE_API_BASE_URL` trước khi build; proxy phát triển của Vite không thay thế cấu hình máy chủ production.
 
 ## Tổ chức mã nguồn và file sinh tự động
 
@@ -27,7 +34,7 @@ npm run build
 - `docs/`: tài liệu và bằng chứng kiểm tra được chủ động lưu lại.
 - `artifacts/`: ảnh chụp và báo cáo mới do công cụ kiểm tra sinh ra, không đưa vào Git.
 - `.tmp-tools/`: script dùng một lần; các thư mục `.tmp-*` khác chứa dữ liệu tạm và hồ sơ trình duyệt, không đưa vào Git.
-- `dist/`: bản build tạo bởi `npm run build`, được lưu trong Git theo quy trình của dự án. Chạy build lại trước khi cập nhật bản triển khai.
+- `dist/`: bản build tạo bởi `npm run build`, không lưu trong Git. Chạy build sau khi clone và khi cập nhật bản triển khai.
 
 Các file `.env` và `.env.*` là cấu hình cục bộ; chỉ `.env.example` được lưu trong Git. `.gitignore` cũng loại trừ dependency, log, cache và kết quả kiểm tra. Không dùng `git add -f` cho các file sinh tự động.
 
