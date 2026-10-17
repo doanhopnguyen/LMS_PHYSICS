@@ -9,6 +9,7 @@ export function FormDialog({
   reader = false,
   compact = false,
   expandable = false,
+  onOpenPage,
   children,
   dialogRole = 'dialog',
   describedBy,
@@ -77,6 +78,11 @@ export function FormDialog({
             {title}
           </h2>
           <div className="flex shrink-0 items-center gap-1">
+            {onOpenPage && (
+              <Button variant="ghost" icon="web_asset" disabled={busy} onClick={onOpenPage}>
+                Xem toàn trang
+              </Button>
+            )}
             {expandable && (
               <Button
                 variant="ghost"

@@ -261,38 +261,37 @@ export function UsersPage() {
     >
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
-      <Card className="mt-5 p-5">
-        <Form className="flex flex-wrap items-end gap-3" onSubmit={findUser}>
-          <SharedFormField
-            name="username"
-            autoComplete="off"
-            placeholder="Nhập tên đăng nhập"
-            className="block w-full"
-            label={<>Tìm theo tên đăng nhập</>}
-            wrapperClassName="w-full sm:w-auto sm:min-w-56 sm:flex-1"
-          />
-          <SubmitButton type="submit" disabled={busy} icon="search">
-            Tìm kiếm
-          </SubmitButton>
-          {searchedUser && (
-            <Button type="button" variant="secondary" disabled={busy} onClick={() => setSearchedUser(null)}>
-              Xóa lọc
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={busy}
-            onClick={() => setImportOpen(true)}
-            icon="upload_file"
-          >
-            Nhập Excel
+      <Form className="mt-5 flex flex-wrap items-center gap-3" onSubmit={findUser}>
+        <SharedFormField
+          name="username"
+          autoComplete="off"
+          placeholder="Nhập tên đăng nhập"
+          inlineLabel
+          className="block w-full"
+          label={<>Tìm theo tên đăng nhập</>}
+          wrapperClassName="!flex !items-center !gap-3 min-w-0 w-full lg:w-auto lg:flex-1 [&_.form-field__label]:shrink-0 [&_.form-field__control]:min-w-0 [&_.form-field__control]:flex-1"
+        />
+        <SubmitButton type="submit" disabled={busy} icon="search">
+          Tìm kiếm
+        </SubmitButton>
+        {searchedUser && (
+          <Button type="button" variant="secondary" disabled={busy} onClick={() => setSearchedUser(null)}>
+            Xóa lọc
           </Button>
-          <Button type="button" disabled={busy} onClick={() => setCreating(true)}>
-            Tạo tài khoản
-          </Button>
-        </Form>
-      </Card>
+        )}
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={busy}
+          onClick={() => setImportOpen(true)}
+          icon="upload_file"
+        >
+          Nhập Excel
+        </Button>
+        <Button type="button" disabled={busy} onClick={() => setCreating(true)}>
+          Tạo tài khoản
+        </Button>
+      </Form>
       {importOpen && (
         <UserModal busy={busy} title="Nhập tài khoản sinh viên từ Excel" onClose={() => !busy && setImportOpen(false)}>
           <p className="text-body-sm text-[#64748B]">
@@ -520,7 +519,7 @@ export function UsersPage() {
                       {user.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
                     </StatusBadge>
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 whitespace-nowrap !min-w-28">
                     <ActionMenu
                       label={`Thao tác với ${user.username}`}
                       disabled={busy}
@@ -560,7 +559,7 @@ export function UsersPage() {
                 <>
                   <tr>
                     {['Tên đăng nhập', 'Email', 'Vai trò', 'Trạng thái', 'Thao tác'].map((label) => (
-                      <th className="p-3" key={label}>
+                      <th className="p-3 whitespace-nowrap last:!min-w-28" key={label}>
                         {label}
                       </th>
                     ))}

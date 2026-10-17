@@ -259,7 +259,8 @@ try {
     await wait(`document.querySelector('.adaptive-result-summary')`);
     assert.equal(await evaluate(`testCalls.some(c=>c.path.endsWith('/results'))`), true);
     assert.equal(await evaluate(`testCalls.some(c=>c.path.endsWith('/submit'))`), false);
-    await evaluate(`document.querySelector('.adaptive-session__toolbar button').click()`);
+    assert.equal(await evaluate(`Boolean(document.querySelector('.adaptive-session__toolbar'))`), false);
+    await evaluate(`document.querySelector('.header-back-button').click()`);
     await wait(`document.querySelector('[role=tab][aria-selected=true]')?.textContent==='Gợi ý luyện tập'`);
     await send('Page.reload');
     await wait(`document.querySelector('[role=tab][aria-selected=true]')?.textContent==='Gợi ý luyện tập'`);

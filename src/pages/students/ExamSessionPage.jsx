@@ -13,6 +13,7 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
 import { navigate } from '../../lib/navigation.js';
+import { examBackHref, examListHref, examResultsHref } from '../../lib/examNavigation.js';
 import { studentExamAvailability } from '../../lib/studentExamAvailability.js';
 import { ExamHistoryDialog } from '../../components/ExamHistoryDialog.jsx';
 import { ExamWaitingRoom } from './ExamWaitingRoom.jsx';
@@ -136,20 +137,7 @@ function ExamSelection() {
     }
   };
   return (
-    <AppShell
-      currentPage="exam_session.html"
-      title="Kiểm tra · PTIT Physics LMS"
-      filterActions={
-        <Button
-          variant="secondary"
-          icon="refresh"
-          disabled={loading}
-          onClick={() => setReloadKey((value) => value + 1)}
-        >
-          Tải lại
-        </Button>
-      }
-    >
+    <AppShell currentPage="exam_session.html" title="Kiểm tra · PTIT Physics LMS">
       <PageContainer>
         <PageTitle
           eyebrow="KIỂM TRA"
@@ -163,6 +151,9 @@ function ExamSelection() {
             <p role="alert" className="text-primary">
               {error}
             </p>
+            <Button className="mt-4" variant="secondary" onClick={() => setReloadKey((value) => value + 1)}>
+              Thử lại
+            </Button>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -245,8 +236,10 @@ function ExamSelection() {
 export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
   const practiceWorkspace = workspace === 'practice';
   const sessionPage = practiceWorkspace ? 'exam_practice_center.html' : 'exam_session.html';
-  const listPage = sessionPage;
-  const previousPage = useRef(window.history.state?.ptitPrevious);
+  const listPage = examListHref(workspace);
+  const previousPage = useRef(
+    new URLSearchParams(window.location.search).get('returnTo') || window.history.state?.ptitPrevious
+  );
   const openingAttempt = useRef(null);
   const [exam, setExam] = useState(null);
   const [policy, setPolicy] = useState(null);
@@ -288,7 +281,11 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
         if (finished(existingAttempt)) {
           canLeaveAttempt.current = true;
           navigate(
-            `exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attemptData.attemptId)}`
+            examResultsHref(
+              examId,
+              attemptData.attemptId,
+              practiceWorkspace || examData.examType === 'PRACTICE' ? 'practice' : 'exam'
+            )
           );
           return;
         }
@@ -324,7 +321,7 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
   useEffect(() => {
     if (!practiceWorkspace && exam?.examType === 'PRACTICE') {
       navigate(
-        `exam_practice_center.html?examId=${encodeURIComponent(examId)}${attemptId ? `&attemptId=${encodeURIComponent(attemptId)}` : ''}${takeMode ? '&mode=take' : ''}`
+        `exam_practice_center.html?examId=${encodeURIComponent(examId)}${attemptId ? `&attemptId=${encodeURIComponent(attemptId)}` : ''}${takeMode ? '&mode=take' : ''}&returnTo=${encodeURIComponent(examBackHref(previousPage.current, 'practice', window.location.origin))}`
       );
     }
   }, [attemptId, exam?.examType, examId, practiceWorkspace, takeMode]);
@@ -461,7 +458,11 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
       if (completed?.attemptId) {
         canLeaveAttempt.current = true;
         navigate(
-          `exam_results.html?examId=${encodeURIComponent(examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`
+          examResultsHref(
+            examId,
+            attempt.attemptId,
+            practiceWorkspace || exam?.examType === 'PRACTICE' ? 'practice' : 'exam'
+          )
         );
       }
     } catch (submitError) {
@@ -488,17 +489,13 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
     if (attempt && !finished(attempt) && !window.confirm('Về trang trước? Các câu trả lời đã lưu vẫn được giữ lại.'))
       return;
     canLeaveAttempt.current = true;
-    let destination = listPage;
-    if (
-      typeof previousPage.current === 'string' &&
-      previousPage.current.startsWith('/') &&
-      !previousPage.current.startsWith('//')
-    ) {
-      const previous = new URL(previousPage.current, window.location.origin);
-      if (previous.origin === window.location.origin && previous.searchParams.get('examId') !== examId)
-        destination = `${previous.pathname}${previous.search}${previous.hash}`;
-    }
-    navigate(destination);
+    navigate(
+      examBackHref(
+        previousPage.current,
+        practiceWorkspace || exam?.examType === 'PRACTICE' ? 'practice' : 'exam',
+        window.location.origin
+      )
+    );
   };
   const title = exam?.title || 'Phiên kiểm tra';
   const isCompleted = finished(attempt);
@@ -555,9 +552,6 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
             <p role="alert" className="text-primary">
               {error}
             </p>
-            <a href={listPage} className="mt-4 inline-block">
-              <Button>Quay lại danh sách đề</Button>
-            </a>
           </Card>
         ) : (
           <ExamTakingWorkspace

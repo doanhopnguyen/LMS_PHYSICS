@@ -206,16 +206,6 @@ export function LearningResultsPage() {
       title="Kết quả học tập · PTIT Physics 1"
       breadcrumbs={['Kết quả học tập']}
       current="Phân tích năng lực"
-      filterActions={
-        <Button
-          variant="secondary"
-          icon="refresh"
-          onClick={() => setReloadKey((value) => value + 1)}
-          disabled={loading}
-        >
-          Tải lại
-        </Button>
-      }
     >
       <PageContainer>
         <PageTitle

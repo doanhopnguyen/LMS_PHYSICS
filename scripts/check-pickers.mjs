@@ -1,8 +1,37 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
 
 const origin = process.env.UI_ORIGIN || 'http://127.0.0.1:5188';
-const targets = await (await fetch('http://127.0.0.1:9339/json')).json();
+const profile = path.resolve('.tmp-picker-check', `chrome-${process.pid}`);
+await mkdir(profile, { recursive: true });
+const browser = spawn(
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  [
+    '--headless=new',
+    '--no-sandbox',
+    '--disable-gpu',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--remote-debugging-port=9339',
+    `--user-data-dir=${profile}`,
+    'about:blank',
+  ],
+  { windowsHide: true, stdio: 'ignore' }
+);
+let targets;
+for (let attempt = 0; attempt < 80; attempt++) {
+  try {
+    targets = await (await fetch('http://127.0.0.1:9339/json')).json();
+    if (targets.some((target) => target.type === 'page')) break;
+  } catch {}
+  await new Promise((resolve) => setTimeout(resolve, 100));
+}
+assert.ok(
+  targets?.some((target) => target.type === 'page'),
+  'Browser did not start'
+);
 const socket = new WebSocket(targets.find((target) => target.type === 'page').webSocketDebuggerUrl);
 await new Promise((resolve) => socket.addEventListener('open', resolve, { once: true }));
 let sequence = 0;
@@ -84,6 +113,35 @@ try {
   })()`);
   await pause();
   errors.length = 0;
+  for (const name of ['date', 'datetime', 'time', 'month']) {
+    assert.equal(
+      await evaluate(`document.querySelector('label[for="${name}-trigger"]').control.id`),
+      `${name}-trigger`
+    );
+    const point = await evaluate(
+      `(()=>{const rect=document.querySelector('label[for="${name}-trigger"] .form-field__label').getBoundingClientRect();return {x:rect.left+rect.width/2,y:rect.top+rect.height/2}})()`
+    );
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...point });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point });
+    await pause();
+    assert.equal(
+      await evaluate(`document.querySelectorAll('.date-picker-panel').length`),
+      1,
+      'Label should open one custom picker'
+    );
+    assert.equal(await evaluate(`document.activeElement?.classList.contains('picker-native')`), false);
+    await key('Escape');
+    assert.equal(
+      await evaluate(
+        `(()=>{const event=new MouseEvent('click',{bubbles:true,cancelable:true});document.getElementById('${name}').dispatchEvent(event);return event.defaultPrevented})()`
+      ),
+      true,
+      'Native calendar activation must be canceled'
+    );
+    await pause();
+    assert.equal(await evaluate(`document.querySelectorAll('.date-picker-panel').length`), 1);
+    await key('Escape');
+  }
   await click('#date + button');
   assert.equal(await evaluate(`document.querySelector('[data-day="2026-10-01"]').disabled`), true);
   assert.equal(await evaluate(`document.querySelector('[data-day="2026-10-04"]').disabled`), true);
@@ -116,9 +174,14 @@ try {
   );
   await click('#time + button');
   await evaluate(`document.querySelector('.date-picker-time-fields input').focus()`);
-  await send('Input.dispatchKeyEvent', {type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
-  await send('Input.dispatchKeyEvent', {type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
-  assert.equal(await evaluate(`document.activeElement===document.querySelector('.date-picker-time-fields label:nth-child(2) input')`),true);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+  assert.equal(
+    await evaluate(
+      `document.activeElement===document.querySelector('.date-picker-time-fields label:nth-child(2) input')`
+    ),
+    true
+  );
   assert.ok(await evaluate(`!!document.querySelector('.picker-popover')`));
   await change('.date-picker-time-fields input', '21');
   await click('.date-picker-time > button');
@@ -156,7 +219,7 @@ try {
   assert.equal(await evaluate(`!!document.querySelector('.picker-popover')`), false);
   await key('Escape');
   assert.equal(await evaluate(`!!document.querySelector('.form-dialog')`), false);
-  await mkdir('docs/test-feedback/pickers-screenshots', { recursive: true });
+  await mkdir('artifacts/test-feedback/pickers-screenshots', { recursive: true });
   for (const width of [1280, 390, 320]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
     for (const name of ['date', 'role']) {
@@ -167,7 +230,7 @@ try {
       assert.ok(geometry.left >= 0 && geometry.right <= geometry.width, JSON.stringify(geometry));
       const capture = await send('Page.captureScreenshot', { format: 'png' });
       await writeFile(
-        'docs/test-feedback/pickers-screenshots/' + name + '-' + width + '.png',
+        'artifacts/test-feedback/pickers-screenshots/' + name + '-' + width + '.png',
         Buffer.from(capture.data, 'base64')
       );
       await key('Escape');
@@ -178,5 +241,7 @@ try {
     'PASS: single date, bounds/disabled dates, arrows, Escape, controlled updates, FormData, time/datetime/month, select, reset, modal and 1280/390/320px popovers.'
   );
 } finally {
+  await send('Browser.close').catch(() => {});
   socket.close();
+  browser.kill();
 }

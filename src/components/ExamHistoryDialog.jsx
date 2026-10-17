@@ -7,6 +7,7 @@ import { StatusBadge } from './StatusBadge.jsx';
 import { api } from '../lib/apiClient.js';
 import { formatAttemptScore } from '../lib/examScoring.js';
 import { isFinishedAttempt } from '../lib/studentExamAvailability.js';
+import { examResultsHref } from '../lib/examNavigation.js';
 
 const formatDate = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
 
@@ -93,7 +94,11 @@ export function ExamHistoryDialog({ exam, onClose }) {
                 {isFinishedAttempt(attempt) && attempt.attemptId && (
                   <a
                     className="font-semibold text-primary hover:underline"
-                    href={`exam_results.html?examId=${encodeURIComponent(exam.examId)}&attemptId=${encodeURIComponent(attempt.attemptId)}`}
+                    href={examResultsHref(
+                      exam.examId,
+                      attempt.attemptId,
+                      exam.examType === 'PRACTICE' ? 'practice' : 'exam'
+                    )}
                   >
                     Xem kết quả
                   </a>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TabAction } from '../../components/TabAction.jsx';
 import { Card } from '../../components/Card.jsx';
 import { Button } from '../../components/Button.jsx';
 import { FormField } from '../../components/FormField.jsx';
@@ -12,12 +13,13 @@ import { useCloCatalog } from '../../components/CloPicker.jsx';
 import { api } from '../../lib/apiClient.js';
 import { matches, PagedCards, ResourceState, SearchToolbar } from './AdminManagementShared.jsx';
 
-export function AdminClosManager({ subjectId, subjectActive }) {
+export function AdminClosManager({ subjectId, subjectActive, tabActionTarget = null }) {
   const resource = useCloCatalog([subjectId]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [modal, setModal] = useState(null);
   const [removeTarget, setRemoveTarget] = useState(null);
+  const [viewTarget, setViewTarget] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -26,7 +28,7 @@ export function AdminClosManager({ subjectId, subjectActive }) {
       (clo) => matches(search, clo.cloCode, clo.description) && (status === '' || String(clo.isActive) === status)
     )
     .sort((a, b) => a.orderIndex - b.orderIndex);
-  async function run(action) {
+  async function run(action, successMessage = 'Đã lưu thay đổi CLO.') {
     if (busy) return;
     setBusy(true);
     setError('');
@@ -36,9 +38,24 @@ export function AdminClosManager({ subjectId, subjectActive }) {
       resource.reload();
       setModal(null);
       setRemoveTarget(null);
-      setMessage('Đã lưu thay đổi CLO.');
+      setViewTarget(null);
+      setMessage(successMessage);
     } catch (e) {
       setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function openClo(clo, mode) {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const latest = await api.clos.get(clo.cloId);
+      if (mode === 'view') setViewTarget(latest);
+      else setModal(latest);
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
       setBusy(false);
     }
@@ -50,19 +67,30 @@ export function AdminClosManager({ subjectId, subjectActive }) {
       setError('Nhập mã CLO và mô tả chuẩn đầu ra.');
       return;
     }
+    if (!Number.isInteger(Number(values.orderIndex))) {
+      setError('Thứ tự hiển thị phải là số nguyên.');
+      return;
+    }
+    if (resource.data.some((clo) => clo.cloId !== modal.cloId && clo.cloCode === values.cloCode.trim())) {
+      setError('Mã CLO đã tồn tại trong học phần này. Vui lòng nhập mã khác.');
+      return;
+    }
     const body = {
       cloCode: values.cloCode.trim(),
       description: values.description.trim(),
       orderIndex: Number(values.orderIndex),
       isActive: values.isActive === 'true',
     };
-    run(() => (modal.cloId ? api.clos.update(modal.cloId, body) : api.clos.create(subjectId, body)));
+    run(
+      () => (modal.cloId ? api.clos.update(modal.cloId, body) : api.clos.create(subjectId, body)),
+      modal.cloId ? 'Đã cập nhật CLO.' : 'Đã tạo CLO mới.'
+    );
   }
   return (
     <>
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{!modal && !removeTarget && error}</AuthAlert>
-      <div className="mb-4 flex justify-end">
+      <TabAction target={tabActionTarget} className="mb-4 flex justify-end">
         <Button
           icon="add"
           disabled={busy || !subjectActive}
@@ -73,11 +101,11 @@ export function AdminClosManager({ subjectId, subjectActive }) {
         >
           Tạo mới CLO
         </Button>
-      </div>
+      </TabAction>
       {subjectActive === false && (
         <p className="mb-4 text-body-sm text-slate-500">Kích hoạt học phần để tạo mới CLO.</p>
       )}
-      <SearchToolbar search={search} onSearch={setSearch}>
+      <SearchToolbar search={search} onSearch={setSearch} bare searchClassName="min-w-0 w-full sm:w-[400px]">
         <SelectField label="Trạng thái" value={status} onChange={(event) => setStatus(event.target.value)}>
           <option value="">Tất cả</option>
           <option value="true">Đang hoạt động</option>
@@ -96,16 +124,18 @@ export function AdminClosManager({ subjectId, subjectActive }) {
                   label={`Thao tác với ${clo.cloCode}`}
                   disabled={busy}
                   items={[
+                    { label: 'Xem chi tiết', onSelect: () => openClo(clo, 'view') },
                     {
                       label: 'Chỉnh sửa',
-                      onSelect: () => {
-                        setError('');
-                        setModal(clo);
-                      },
+                      onSelect: () => openClo(clo, 'edit'),
                     },
                     {
                       label: clo.isActive ? 'Ngừng hoạt động' : 'Kích hoạt',
-                      onSelect: () => run(() => api.clos.toggleStatus(clo.cloId, !clo.isActive)),
+                      onSelect: () =>
+                        run(
+                          () => api.clos.toggleStatus(clo.cloId, !clo.isActive),
+                          clo.isActive ? 'Đã ngừng hoạt động CLO.' : 'Đã kích hoạt CLO.'
+                        ),
                     },
                     {
                       label: 'Xóa',
@@ -129,9 +159,36 @@ export function AdminClosManager({ subjectId, subjectActive }) {
           )}
         />
       </ResourceState>
+      {viewTarget && (
+        <FormDialog title={`Chi tiết ${viewTarget.cloCode}`} expandable onClose={() => setViewTarget(null)}>
+          <dl className="grid gap-4 text-body-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-slate-500">Mã CLO</dt>
+              <dd className="mt-1 font-semibold">{viewTarget.cloCode}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Trạng thái</dt>
+              <dd className="mt-1">{viewTarget.isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Thứ tự hiển thị</dt>
+              <dd className="mt-1">{viewTarget.orderIndex}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Câu hỏi liên kết</dt>
+              <dd className="mt-1">{viewTarget.questionCount ?? 0}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-slate-500">Mô tả chuẩn đầu ra</dt>
+              <dd className="mt-1 whitespace-pre-wrap break-words">{viewTarget.description}</dd>
+            </div>
+          </dl>
+        </FormDialog>
+      )}
       {modal && (
         <FormDialog
           title={modal.cloId ? 'Chỉnh sửa CLO' : 'Tạo mới CLO'}
+          expandable
           busy={busy}
           onClose={() => !busy && setModal(null)}
         >
@@ -187,12 +244,27 @@ export function AdminClosManager({ subjectId, subjectActive }) {
               {error}
             </p>
           )}
-          <p className="mb-4">Xóa {removeTarget.cloCode}? CLO đang gắn với câu hỏi sẽ không thể xóa.</p>
+          <p className="mb-4">
+            {removeTarget.questionCount > 0
+              ? `${removeTarget.cloCode} đang liên kết với ${removeTarget.questionCount} câu hỏi nên không thể xóa. Bạn có thể ngừng hoạt động CLO này để không sử dụng cho câu hỏi mới.`
+              : `Xóa ${removeTarget.cloCode} khỏi học phần? Thao tác này không thể hoàn tác.`}
+          </p>
           <div className="flex justify-end gap-3">
             <Button variant="secondary" disabled={busy} onClick={() => setRemoveTarget(null)}>
               Hủy
             </Button>
-            <Button disabled={busy} onClick={() => run(() => api.clos.remove(removeTarget.cloId))}>
+            {removeTarget.questionCount > 0 && removeTarget.isActive && (
+              <Button
+                disabled={busy}
+                onClick={() => run(() => api.clos.toggleStatus(removeTarget.cloId, false), 'Đã ngừng hoạt động CLO.')}
+              >
+                Ngừng hoạt động
+              </Button>
+            )}
+            <Button
+              disabled={busy || removeTarget.questionCount > 0}
+              onClick={() => run(() => api.clos.remove(removeTarget.cloId), 'Đã xóa CLO khỏi học phần.')}
+            >
               Xóa CLO
             </Button>
           </div>

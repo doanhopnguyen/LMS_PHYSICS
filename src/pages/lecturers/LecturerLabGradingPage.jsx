@@ -219,11 +219,6 @@ export function LecturerLabGradingPage() {
         <Card className="p-10 text-center">
           <span className="material-symbols-outlined text-4xl text-[#94A3B8]">search_off</span>
           <h2 className="mt-3 text-headline-sm font-bold">Không tìm thấy báo cáo</h2>
-          <a href="lecturer_labs.html">
-            <Button variant="secondary" className="mt-5">
-              Quay lại danh sách
-            </Button>
-          </a>
         </Card>
       </LecturerPageShell>
     );

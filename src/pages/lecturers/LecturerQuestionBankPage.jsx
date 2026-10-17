@@ -155,6 +155,7 @@ function QuestionFormModal({ question, questions, approvedMaterials, onClose, on
       title={<>{question ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'}</>}
       onClose={onClose}
       wide
+      expandable
       contentClassName="p-0"
     >
       {!question && (

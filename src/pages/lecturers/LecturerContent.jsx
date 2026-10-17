@@ -218,17 +218,27 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
         required
         defaultValue={initial.content || ''}
       />
-      <QuestionTypePicker value={type} disabled={busy} onChange={(nextType) => {
-        setType(nextType);
-        setOptions(initialAnswerOptions({}, nextType));
-        setError('');
-      }} />
+      <QuestionTypePicker
+        value={type}
+        disabled={busy}
+        onChange={(nextType) => {
+          setType(nextType);
+          setOptions(initialAnswerOptions({}, nextType));
+          setError('');
+        }}
+      />
       <div className="grid gap-4 md:grid-cols-2">
         <QuestionLevelFields initial={initial} disabled={busy} />
       </div>
       <CloPicker resource={clos} subjectId={subjectId} value={cloIds} onChange={setCloIds} disabled={busy} />
-      <QuestionAnswerEditor type={type} options={options} onOptionsChange={setOptions}
-        acceptedAnswers={acceptedAnswers} onAcceptedAnswersChange={setAcceptedAnswers} disabled={busy} />
+      <QuestionAnswerEditor
+        type={type}
+        options={options}
+        onOptionsChange={setOptions}
+        acceptedAnswers={acceptedAnswers}
+        onAcceptedAnswersChange={setAcceptedAnswers}
+        disabled={busy}
+      />
       <QuestionMediaField initialUrl={initial.mediaUrl || ''} disabled={busy} onPendingChange={setMediaPending} />
       {error && (
         <p role="alert" className="text-red-700">
@@ -246,7 +256,11 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
             Lưu bản nháp
           </SubmitButton>
         )}
-        <SubmitButton name="intent" value="submit" disabled={busy || mediaPending || clos.loading || Boolean(clos.error)}>
+        <SubmitButton
+          name="intent"
+          value="submit"
+          disabled={busy || mediaPending || clos.loading || Boolean(clos.error)}
+        >
           {initial.approvalStatus === 'PENDING' ? 'Lưu cập nhật' : 'Lưu và gửi duyệt'}
         </SubmitButton>
       </div>
@@ -316,12 +330,7 @@ export function LecturerAuthoringApiPage({
     return found?.topicName || row.topicName || '—';
   };
   const hasActiveFilters = Boolean(
-    search.trim() ||
-      validTopic ||
-      cloFilter ||
-      typeFilter ||
-      difficulty ||
-      (!bankMode && status)
+    search.trim() || validTopic || cloFilter || typeFilter || difficulty || (!bankMode && status)
   );
   const resetAllFilters = () => {
     setSearch('');
@@ -695,17 +704,7 @@ export function LecturerAuthoringApiPage({
                             </button>
                           )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            variant="secondary"
-                            icon="refresh"
-                            disabled={action.busy || displayedResource.loading}
-                            onClick={() => displayedResource.reload()}
-                          >
-                            Làm mới
-                          </Button>
-                          {!actionsTarget && authoringActions}
-                        </div>
+                        <div className="flex flex-wrap items-center gap-2">{!actionsTarget && authoringActions}</div>
                       </div>
                       <DataTable
                         paginate={false}
@@ -724,24 +723,42 @@ export function LecturerAuthoringApiPage({
                               <th scope="col" className="px-3 py-3 font-semibold text-left">
                                 Nội dung
                               </th>
-                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[140px]">
+                              <th
+                                scope="col"
+                                className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[140px]"
+                              >
                                 Chủ đề
                               </th>
-                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[110px]">
+                              <th
+                                scope="col"
+                                className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[110px]"
+                              >
                                 CLO
                               </th>
-                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[120px]">
+                              <th
+                                scope="col"
+                                className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[120px]"
+                              >
                                 Loại
                               </th>
-                              <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[110px]">
+                              <th
+                                scope="col"
+                                className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[110px]"
+                              >
                                 Độ khó
                               </th>
                               {!bankMode && (
-                                <th scope="col" className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[130px]">
+                                <th
+                                  scope="col"
+                                  className="px-3 py-3 font-semibold text-left whitespace-nowrap min-w-[130px]"
+                                >
                                   Trạng thái
                                 </th>
                               )}
-                              <th scope="col" className="px-3 py-3 font-semibold text-center whitespace-nowrap w-[90px]">
+                              <th
+                                scope="col"
+                                className="px-3 py-3 font-semibold text-center whitespace-nowrap w-[90px]"
+                              >
                                 Thao tác
                               </th>
                             </tr>
@@ -887,18 +904,14 @@ export function LecturerAuthoringApiPage({
                             <td className="max-w-md p-3 font-medium">
                               <p className="line-clamp-2">{row.content || '—'}</p>
                             </td>
-                            <td className="p-3 whitespace-nowrap text-slate-600">
-                              {topicNameOf(row)}
-                            </td>
+                            <td className="p-3 whitespace-nowrap text-slate-600">{topicNameOf(row)}</td>
                             <td className="p-3">
                               <CloLabels ids={row.cloIds} rows={catalogue.data} />
                             </td>
                             <td className="p-3 whitespace-nowrap">
                               {labelFor(questionTypes, row.type || row.questionType)}
                             </td>
-                            <td className="p-3 whitespace-nowrap">
-                              {labelFor(difficulties, row.difficultyLevel)}
-                            </td>
+                            <td className="p-3 whitespace-nowrap">{labelFor(difficulties, row.difficultyLevel)}</td>
                             {!bankMode && (
                               <td className="p-3 whitespace-nowrap">
                                 <StatusBadge status={row.approvalStatus} />
@@ -926,7 +939,8 @@ export function LecturerAuthoringApiPage({
                                           displayedResource.reload
                                         ),
                                     },
-                                  !bankMode && canManage(row) && { label: 'Xóa', danger: true, onSelect: () => remove(row) },
+                                  !bankMode &&
+                                    canManage(row) && { label: 'Xóa', danger: true, onSelect: () => remove(row) },
                                 ]}
                               />
                             </td>
@@ -1138,7 +1152,9 @@ export function LecturerAuthoringApiPage({
                   {materialMode ? modal.row.contentText || modal.row.sourceCitation : modal.row.content}
                 </p>
               )}
-              {(modal.row.fileId || modal.row.fileUrl) && <FileLink url={modal.row.fileUrl} fileId={modal.row.fileId} />}
+              {(modal.row.fileId || modal.row.fileUrl) && (
+                <FileLink url={modal.row.fileUrl} fileId={modal.row.fileId} />
+              )}
               {modal.row.mediaUrl && <FileLink url={modal.row.mediaUrl}>Xem hình ảnh</FileLink>}
               {!materialMode && <CloLabels ids={modal.row.cloIds} rows={catalogue.data} />}
               {modal.row.rejectionReason && (

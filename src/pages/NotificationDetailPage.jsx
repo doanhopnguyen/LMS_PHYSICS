@@ -12,7 +12,6 @@ import { lecturerNavigation, lecturerUtilityNavigation } from '../data/lecturerD
 import { adminNavigation } from '../data/adminData.js';
 import { taNavigation, taUtilityNavigation } from '../data/taNavigation.js';
 import { getDemoSession } from '../lib/demoSession.js';
-import { goBack } from '../lib/navigation.js';
 import { api } from '../lib/apiClient.js';
 import { findOwnNotification } from '../lib/notificationDetails.js';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -80,9 +79,6 @@ export function NotificationDetailPage() {
     >
       <PageContainer>
         <PageTitle title="Chi tiết thông báo" />
-        <Button variant="secondary" icon="arrow_back" onClick={() => goBack(session?.home || 'dashboard.html')}>
-          Quay lại
-        </Button>
         {loading ? (
           <LoadingIndicator className="p-6">Đang tải thông báo…</LoadingIndicator>
         ) : error ? (

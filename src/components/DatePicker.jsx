@@ -143,6 +143,12 @@ export const DatePicker = forwardRef(function DatePicker(
         tabIndex={-1}
         className={`${className} picker-native`}
         aria-hidden="true"
+        onClick={(event) => {
+          // A label or programmatic activation must never open the browser calendar.
+          event.preventDefault();
+          picker.triggerRef.current?.focus({ preventScroll: true });
+          open();
+        }}
         onFocus={(event) => {
           props.onFocus?.(event);
           picker.triggerRef.current?.focus();
@@ -154,6 +160,7 @@ export const DatePicker = forwardRef(function DatePicker(
         }}
       />
       <button
+        id={`${fieldId}-trigger`}
         ref={picker.triggerRef}
         type="button"
         disabled={disabled}
@@ -166,7 +173,11 @@ export const DatePicker = forwardRef(function DatePicker(
         aria-describedby={props['aria-describedby']}
         aria-invalid={props['aria-invalid']}
         aria-required={props.required || undefined}
-        onClick={() => (picker.open ? picker.close() : open())}
+        onClick={(event) => {
+          event.preventDefault();
+          if (picker.open) picker.close();
+          else open();
+        }}
         onKeyDown={(event) => {
           if (event.key === 'ArrowDown') {
             event.preventDefault();

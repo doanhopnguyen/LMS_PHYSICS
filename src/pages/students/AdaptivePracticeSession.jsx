@@ -171,6 +171,7 @@ export function AdaptivePracticeSession({ sessionId }) {
       showAcademicFilters={false}
       showChatLauncher={false}
       showChrome={Boolean(result)}
+      backHref={result ? practiceHomeHref(session?.classId) : undefined}
       footer={Boolean(result)}
       contentClass={result ? '' : 'exam-taking-page'}
       toolbar={
@@ -206,12 +207,6 @@ export function AdaptivePracticeSession({ sessionId }) {
               title={result ? 'Kết quả bài luyện' : 'Củng cố từng câu, vững từng chủ đề'}
               description="Bài luyện được gợi ý từ lịch sử trả lời của bạn."
             />
-            <div className="adaptive-session__toolbar">
-              <Button variant="secondary" icon="arrow_back" disabled={busy} onClick={leave}>
-                Về gợi ý ôn tập
-              </Button>
-              <span>{result ? 'Đã hoàn thành' : 'Câu trả lời được tự động lưu'}</span>
-            </div>
           </>
         )}
         {error && (

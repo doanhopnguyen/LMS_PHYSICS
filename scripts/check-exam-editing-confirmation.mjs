@@ -15,7 +15,7 @@ const browser = spawn(
     '--no-first-run',
     '--no-default-browser-check',
     '--remote-debugging-port=9387',
-    `--user-data-dir=${path.join(directory, 'chrome')}`,
+    `--user-data-dir=${path.join(directory, `chrome-editing-${process.pid}`)}`,
     'about:blank',
   ],
   { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] }
@@ -99,20 +99,91 @@ try {
     );
     await pause(100);
   };
+  const openMenu = async (selector) => {
+    await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
+    await wait(`!!document.querySelector('[role=menuitem]')`);
+  };
+  const bankMenu = 'section[aria-label="Ngân hàng câu hỏi"] button[aria-haspopup="menu"]';
   const openSource = async (query = 'classId=c1') => {
     await go('lecturer_assessments.html?' + query);
     await wait(`[...document.querySelectorAll('button')].some(b=>b.textContent==='Đề nguồn')`);
     await evaluate(`[...document.querySelectorAll('button')].find(b=>b.textContent==='Đề nguồn').click()`);
     await wait(
-      `[...document.querySelectorAll('[role=dialog] button')].some(b=>b.textContent.includes('Sửa thông tin đề')&&!b.disabled)`
+      `Array.from(document.querySelectorAll('[role=dialog] .tabs-actions button')).some(button=>button.textContent.includes('Sửa thông tin đề'))`
     );
   };
   await send('Page.addScriptToEvaluateOnNewDocument', {
     source: await readFile('scripts/fixtures/exam-distribution-api.js', 'utf8'),
   });
+  await go('lecturer_exam_create?classId=c1');
+  await wait(
+    `document.querySelector('input[name=title]') && !document.querySelector('form.authoring-grouped-form button[type=submit]').disabled`
+  );
+  assert.equal(await evaluate(`document.body.textContent.includes('Giao thêm cho lớp cùng môn')`), false);
+  await set('input[name=title]', 'Đề cho một lớp');
+  await set('input[name=durationMinutes]', '30');
+  await set('input[name=startTime]', new Date(Date.now() + 86400000).toISOString().slice(0, 16));
+  await set('input[name=endTime]', new Date(Date.now() + 90000000).toISOString().slice(0, 16));
+  await evaluate(`document.querySelector('form.authoring-grouped-form').requestSubmit()`);
+  await wait(`testCalls.some(c=>c.path==='/api/v1/exams' && c.method==='POST')`);
+  await wait(`!document.querySelector('input[name=title]')`);
+  assert.equal(await evaluate(`document.body.textContent.includes('Các lớp đã nhận đề')`), false);
+  assert.equal(await evaluate(`document.querySelectorAll('[role=tab]').length`), 4);
+  assert.equal(
+    await evaluate(`document.querySelector('[role=tab][aria-selected=true]').textContent.trim()`),
+    'Câu hỏi trong đề'
+  );
+  assert.deepEqual(
+    await evaluate(`testCalls.filter(c=>c.path==='/api/v1/exams' && c.method==='POST').map(c=>c.body.classId)`),
+    ['c1']
+  );
+  console.log('PASS: exam creation omits extra-class controls and creates only for the selected class');
+  for (const width of [1440, 390]) {
+    await send('Emulation.setDeviceMetricsOverride', {
+      width,
+      height: 1000,
+      deviceScaleFactor: 1,
+      mobile: width === 390,
+    });
+    for (const tab of ['Tổng quan', 'Câu hỏi trong đề', 'Bài làm', 'Danh sách sinh viên']) {
+      await evaluate(
+        `Array.from(document.querySelectorAll('[role=tab]')).find(button=>button.textContent.trim()===${JSON.stringify(tab)}).click()`
+      );
+      await pause(150);
+      assert.equal(await evaluate(`document.querySelector('[role=tab][aria-selected=true]').textContent.trim()`), tab);
+      if (width === 1440) {
+        assert.equal(await evaluate(`(()=>{const tabs=document.querySelector('[role=tablist]').getBoundingClientRect();const actions=document.querySelector('.tabs-actions').getBoundingClientRect();return Math.abs((tabs.top+tabs.height/2)-(actions.top+actions.height/2))<2})()`), true);
+      }
+      if (tab === 'Tổng quan') {
+        await wait(`Array.from(document.querySelectorAll('dd')).some(item=>item.textContent==='30 phút')`);
+        assert.equal(await evaluate(`document.querySelector('dl').textContent.includes('Chưa thiết lập')`), false);
+      }
+      if (tab === 'Câu hỏi trong đề') {
+        assert.equal(await evaluate(`!!document.querySelector('section[aria-label="Câu hỏi trong đề"]') && !!document.querySelector('section[aria-label="Ngân hàng câu hỏi"]')`), true);
+        assert.equal(await evaluate(`(()=>{const a=document.querySelector('section[aria-label="Câu hỏi trong đề"]').getBoundingClientRect();const b=document.querySelector('section[aria-label="Ngân hàng câu hỏi"]').getBoundingClientRect();return ${width}===1440 ? Math.abs(a.top-b.top)<2 && b.left>a.left : b.top>a.top})()`), true);
+        await wait(`!!document.querySelector(${JSON.stringify(bankMenu)})`);
+        await openMenu(bankMenu);
+        assert.equal(await evaluate(`document.querySelectorAll('[role=menu]').length`), 1);
+        assert.equal(await evaluate(`(()=>{const rect=document.querySelector('[role=menu]').getBoundingClientRect();return rect.left>=0 && rect.right<=innerWidth && rect.top>=0 && rect.bottom<=innerHeight})()`), true);
+        await evaluate(`document.querySelector('[role=menu]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
+        await wait(`!document.querySelector('[role=menu]')`);
+      }
+      assert.equal(await evaluate(`document.documentElement.scrollWidth<=innerWidth+1`), true);
+      await screenshot(
+        'exam-management-' +
+          width +
+          '-' +
+          ['Tổng quan', 'Câu hỏi trong đề', 'Bài làm', 'Danh sách sinh viên'].indexOf(tab)
+      );
+    }
+  }
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await openSource('classId=c1&classCatalogError=true&missingClass=true');
   await click('Sửa thông tin đề');
   await wait(`document.querySelector('input[name=startTime]')`);
+  await evaluate(`Array.from(document.querySelectorAll('[role=dialog] button[aria-label="Mở rộng toàn màn hình"]')).at(-1).click()`);
+  assert.equal(await evaluate(`!!document.querySelector('.form-dialog--expanded input[name=startTime]')`), true);
+  await evaluate(`document.querySelector('.form-dialog--expanded button[aria-label="Thu nhỏ"]').click()`);
   assert.equal(
     await evaluate(`document.querySelector('form.authoring-grouped-form button[type=submit]').disabled`),
     false
@@ -161,31 +232,38 @@ try {
   );
 
   await openSource();
-  await wait(`[...document.querySelectorAll('[role=dialog] button')].some(b=>b.textContent.includes('Thêm vào đề'))`);
-  await click('Thêm vào đề');
-  await wait(`document.querySelector('[role=alertdialog]')`);
-  assert.equal(await evaluate(`testCalls.filter(c=>c.method==='POST').length`), 0);
-  assert.ok(
-    await evaluate(
-      `document.querySelector('[role=alertdialog]').textContent.includes('Câu hỏi cần xác nhận trước khi thêm')`
-    )
-  );
-  await screenshot('confirm-question');
   await evaluate(
-    `[...document.querySelectorAll('[role=alertdialog] button')].find(b=>b.textContent.includes('Quay lại')).click()`
+    `Array.from(document.querySelectorAll('[role=dialog] [role=tab]')).find(button=>button.textContent.trim()==='Câu hỏi trong đề').click()`
   );
-  await wait(`!document.querySelector('[role=alertdialog]')`);
-  assert.equal(await evaluate(`testCalls.filter(c=>c.method==='POST').length`), 0);
-  await click('Thêm vào đề');
-  await wait(`document.querySelector('[role=alertdialog]')`);
-  await evaluate(`window.testFailAdd=true`);
-  await click('OK, thêm vào đề');
-  await wait(`document.querySelector('[role=alertdialog] [role=alert]')`);
+  await wait(`!!document.querySelector(${JSON.stringify(bankMenu)})`);
+  for (const panel of ['Câu hỏi trong đề', 'Ngân hàng câu hỏi']) {
+    await openMenu(`section[aria-label="${panel}"] button[aria-haspopup="menu"]`);
+    await click('Xem chi tiết');
+    await wait(`Array.from(document.querySelectorAll('[role=dialog]')).at(-1)?.textContent.includes('Question explanation from API')`);
+    assert.equal(await evaluate(`Array.from(document.querySelectorAll('[role=dialog]')).at(-1).textContent.includes(${JSON.stringify(panel === 'Câu hỏi trong đề' ? 'Correct option from API' : '9.8')})`), true);
+    await evaluate(`Array.from(document.querySelectorAll('[role=dialog]')).at(-1).querySelector('button[aria-label="Mở rộng toàn màn hình"]').click()`);
+    assert.equal(await evaluate(`!!document.querySelector('.form-dialog--expanded')`), true);
+    await evaluate(`Array.from(document.querySelectorAll('[role=dialog]')).at(-1).querySelector('button[aria-label="Đóng"]').click()`);
+    await wait(`document.querySelectorAll('[role=dialog]').length===1`);
+  }
   assert.equal(await evaluate(`testQuestions.source.length`), 2);
+  console.log('PASS question details from exam and bank show API answers and explanations without changing the exam');
+  await evaluate(`window.testFailAdd=true`);
+  await openMenu(bankMenu);
+  await click('Thêm vào đề');
+  await wait(`document.querySelector('[role=dialog] [role=alert]')`);
+  assert.equal(await evaluate(`Boolean(document.querySelector('[role=alertdialog]'))`), false);
+  assert.equal(await evaluate(`testQuestions.source.length`), 2);
+  await evaluate(`window.testFailAdd=false`);
+  await openMenu(bankMenu);
   await evaluate(
-    `window.testFailAdd=false;(()=>{const b=[...document.querySelectorAll('[role=alertdialog] button')].find(b=>b.textContent.includes('OK, thêm vào đề'));b.click();b.click()})()`
+    `(()=>{const button=Array.from(document.querySelectorAll('[role=menuitem]')).find(item=>item.textContent.includes('Thêm vào đề'));button.click();button.click()})()`
   );
-  await wait(`!document.querySelector('[role=alertdialog]')&&testQuestions.source.length===3`);
+  await wait(`testQuestions.source.length===3`);
+  await wait(
+    `!document.querySelector(${JSON.stringify(bankMenu)})`
+  );
+  assert.equal(await evaluate(`Boolean(document.querySelector('[role=alertdialog]'))`), false);
   assert.deepEqual(
     await evaluate(
       `testQuestions.source.find(q=>q.questionId==='q3')&&({questionId:testQuestions.source.at(-1).questionId,orderIndex:testQuestions.source.at(-1).orderIndex,scoreWeight:testQuestions.source.at(-1).scoreWeight})`
@@ -193,7 +271,7 @@ try {
     { questionId: 'q3', orderIndex: 3, scoreWeight: 1 }
   );
   assert.equal(await evaluate(`testCalls.filter(c=>c.method==='POST').length`), 2);
-  console.log('PASS no mutation before OK, cancel, inline failure, retry and double-click guard');
+  console.log('PASS direct add without confirmation, inline failure, retry and double-click guard');
   const before = await evaluate(`testCalls.filter(c=>c.method==='POST').length`);
   await click('Sinh theo ma trận');
   await wait(`document.querySelector('[role=alertdialog]')`);
@@ -205,6 +283,72 @@ try {
     1
   );
   console.log('PASS matrix generation requires explicit confirmation');
+  await evaluate(`Array.from(document.querySelectorAll('[role=dialog] [role=tab]')).find(button=>button.textContent.trim()==='Tổng quan').click()`);
+  await click('Xem toàn trang');
+  await wait(`new URLSearchParams(location.search).get('view')==='page' && !document.querySelector('[role=dialog]') && document.querySelector('dl')`);
+  assert.equal(await evaluate(`new URLSearchParams(location.search).get('examId')`), 'source');
+  assert.equal(await evaluate(`document.querySelector('[role=tab][aria-selected=true]').textContent.trim()`), 'Tổng quan');
+  await send('Page.reload');
+  await wait(`document.querySelector('dl') && !document.querySelector('[role=dialog]')`);
+  assert.equal(await evaluate(`document.querySelector('[role=tab][aria-selected=true]').textContent.trim()`), 'Tổng quan');
+  console.log('PASS open management as a page preserves exam and selected tab after reload');
+  await wait(`document.querySelector('.app-header h1')?.textContent.trim()==='Đề nguồn'`);
+  assert.equal(await evaluate(`!!document.querySelector('.authoring-page__heading')`), false);
+  for (const scenario of ['taken', 'error', 'loading']) {
+    await go('lecturer_assessments.html?classId=c1');
+    await wait(`Array.from(document.querySelectorAll('button')).some(button=>button.textContent==='Đề nguồn')`);
+    await evaluate(`window.testSourceHasAttempts=${scenario === 'taken'};window.testFailAttempts=${scenario === 'error'};window.testHoldAttempts=${scenario === 'loading'};Array.from(document.querySelectorAll('button')).find(button=>button.textContent==='Đề nguồn').click()`);
+    await wait(`Array.from(document.querySelectorAll('[role=dialog] .tabs-actions button')).some(button=>button.textContent.includes('Sửa thông tin đề') && button.classList.contains('!text-red-700'))`);
+    if (scenario === 'loading') await wait(`typeof window.finishAttemptCheck==='function'`);
+    await click('Sửa thông tin đề');
+    const reason = scenario === 'taken' ? '1 lượt làm' : scenario === 'error' ? 'Không tải được danh sách lượt làm' : 'Đang kiểm tra lượt làm';
+    await wait(`Array.from(document.querySelectorAll('[role=alert]')).some(node=>node.textContent.includes(${JSON.stringify(reason)}))`);
+    assert.equal(await evaluate(`!!document.querySelector('input[name=title]')`), false);
+    if (scenario === 'taken') {
+      assert.equal(await evaluate(`(()=>{const toast=document.querySelector('.auth-alert--dismissible');const rect=toast.getBoundingClientRect();return getComputedStyle(toast).position==='fixed' && innerWidth-rect.right<=24 && rect.width<=420})()`), true);
+      await wait(`!document.querySelector('.auth-alert--dismissible')`);
+      await click('Sửa thông tin đề');
+      await wait(`!!document.querySelector('.auth-alert--dismissible')`);
+      await evaluate(`document.querySelector('.auth-alert--dismissible button[aria-label="Đóng thông báo"]').click()`);
+      await wait(`!document.querySelector('.auth-alert--dismissible')`);
+    }
+    if (scenario === 'error') {
+      await evaluate(`window.testFailAttempts=false`);
+      await click('Kiểm tra lại');
+    }
+    if (scenario === 'loading') await evaluate(`window.testHoldAttempts=false;window.finishAttemptCheck()`);
+    if (scenario !== 'taken') {
+      await wait(`Array.from(document.querySelectorAll('[role=dialog] .tabs-actions button')).some(button=>button.textContent.includes('Sửa thông tin đề') && !button.classList.contains('!text-red-700'))`);
+      await click('Sửa thông tin đề');
+      await wait(`document.querySelector('input[name=title]')`);
+    }
+  }
+  console.log('PASS editing explains existing attempts, load failure and pending checks; retry restores editing');
+  await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `localStorage.setItem('ptit-physics-demo-session', JSON.stringify({ role: 'ADMIN', userId: 'admin' }));`,
+  });
+  await go('admin_assessments.html?view=page&examId=source&classId=c1&examTab=questions&largeBank=true');
+  await wait(`document.querySelector('.app-header h1')?.textContent.trim()==='Đề nguồn' && document.querySelector('section[aria-label="Ngân hàng câu hỏi"]')`);
+  assert.equal(await evaluate(`document.querySelectorAll('[role=tab]').length`), 4);
+  assert.equal(await evaluate(`!!document.querySelector('.authoring-page__heading')`), false);
+  await wait(`document.querySelector('.exam-question-panel--bank ol')?.children.length===10`);
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.exam-question-panel')).backgroundColor !== getComputedStyle(document.querySelector('.exam-question-panel--bank')).backgroundColor`), true);
+  const checkPinnedFilters = async () => {
+    const before = await evaluate(`document.querySelector('.exam-question-panel__filters').getBoundingClientRect().top`);
+    await evaluate(`(()=>{const list=document.querySelector('.exam-question-panel--bank .exam-question-panel__list');list.scrollTop=0;list.scrollTop=list.scrollHeight;list.dispatchEvent(new Event('scroll',{bubbles:true}))})()`);
+    await pause(100);
+    assert.equal(await evaluate(`document.querySelector('.exam-question-panel--bank .exam-question-panel__list').scrollTop>0`), true);
+    assert.equal(await evaluate(`document.querySelector('.exam-question-panel__filters').getBoundingClientRect().top`), before);
+    assert.equal(await evaluate(`(()=>{const filters=document.querySelector('.exam-question-panel__filters').getBoundingClientRect();const panel=document.querySelector('.exam-question-panel--bank').getBoundingClientRect();return Math.abs(filters.bottom-panel.bottom)<2})()`), true);
+  };
+  await checkPinnedFilters();
+  await screenshot('simple-admin-exam-desktop');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 1000, deviceScaleFactor: 1, mobile: true });
+  await pause(150);
+  await checkPinnedFilters();
+  assert.equal(await evaluate(`document.documentElement.scrollWidth<=innerWidth+1`), true);
+  await screenshot('simple-admin-exam-mobile');
+  console.log('PASS management page uses exam title, distinct column colors and pinned bank filters during scrolling on desktop/mobile');
   assert.deepEqual(errors, []);
 } finally {
   if (socket) {

@@ -15,7 +15,7 @@ const browser = spawn(
     '--no-first-run',
     '--no-default-browser-check',
     '--remote-debugging-port=9405',
-    `--user-data-dir=${path.join(directory, 'chrome')}`,
+    `--user-data-dir=${path.join(directory, `chrome-${process.pid}`)}`,
     'about:blank',
   ],
   { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] }
@@ -98,11 +98,11 @@ try {
       localStorage.setItem('ptit-physics-demo-session',JSON.stringify({role:'STUDENT'}));
       localStorage.setItem('ptit-physics-access-token','isolated-test-token');
       window.confirm=()=>true;
-      history.replaceState({ptitPrevious:'/dashboard'},'',location.href);
+      history.replaceState({ptitPrevious:new URLSearchParams(location.search).get('previous')||'/dashboard'},'',location.href);
       window.testCalls=[];
       const scenario=new URLSearchParams(location.search).get('scenario');
       let hasAttempt=scenario!=='new'&&scenario!=='denied'&&scenario!=='future';
-      const practice=location.pathname.includes('practice');
+      const practice=location.pathname.includes('practice')||scenario==='practice-result'||scenario==='redirect-practice';
       const exam={examId:'exam1',title:'Bài kiểm tra Cơ học',examType:practice?'PRACTICE':'QUIZ',totalQuestions:3,durationMinutes:30,isPublished:true,startTime:new Date(Date.now()-3600000).toISOString(),endTime:new Date(Date.now()+7200000).toISOString()};
       const attempt={attemptId:'attempt1',examId:'exam1',attemptNumber:1,status:'IN_PROGRESS',startedAt:new Date().toISOString()};
       if(scenario==='completed'){attempt.status='SUBMITTED';attempt.submittedAt=new Date().toISOString();}
@@ -192,6 +192,18 @@ try {
         true
       );
       results.push({ route, width, saved: true, submitted: true });
+      const expectedBack = route.includes('practice') ? 'Về trung tâm ôn luyện' : 'Về danh sách bài kiểm tra';
+      await wait(
+        `document.querySelector('.detail-toolbar-back')?.getAttribute('aria-label')===${JSON.stringify(expectedBack)}`
+      );
+      assert.equal(
+        await evaluate(`new URLSearchParams(location.search).get('workspace')`),
+        route.includes('practice') ? 'practice' : 'exam'
+      );
+      await evaluate(`document.querySelector('.detail-toolbar-back').click()`);
+      await wait(
+        `location.pathname===${JSON.stringify('/' + route.replace('.html', ''))}&&!new URLSearchParams(location.search).has('examId')`
+      );
     }
   }
   for (const route of ['exam_session.html', 'exam_practice_center.html']) {
@@ -217,6 +229,32 @@ try {
     await wait(`document.querySelector('[role=timer]')?.getAttribute('aria-label')==='Đếm ngược đến giờ thi'`);
     assert.equal(await evaluate(`testCalls.some(c=>c.path.endsWith('/attempts')&&c.method==='POST')`), false);
   }
+  const previousResult = '/exam_results?examId=exam1&attemptId=old&workspace=practice&class=c1#review';
+  for (const route of ['exam_session.html', 'exam_practice_center.html']) {
+    await go(`${route}?examId=exam1&attemptId=attempt1&mode=take&previous=${encodeURIComponent(previousResult)}`);
+    await wait(`document.querySelectorAll('.exam-taking-question-grid button').length===3`);
+    await evaluate(`document.querySelector('.detail-toolbar-back').click()`);
+    await wait(`location.pathname==='/exam_results'&&new URLSearchParams(location.search).get('attemptId')==='old'`);
+    assert.equal(await evaluate(`location.hash`), '#review');
+  }
+  await go(
+    `exam_session?examId=exam1&attemptId=attempt1&mode=take&scenario=redirect-practice&previous=${encodeURIComponent(previousResult)}`
+  );
+  await wait(
+    `location.pathname==='/exam_practice_center'&&Boolean(new URLSearchParams(location.search).get('returnTo'))`
+  );
+  await wait(`document.querySelectorAll('.exam-taking-question-grid button').length===3`);
+  await evaluate(`document.querySelector('.detail-toolbar-back').click()`);
+  await wait(`location.pathname==='/exam_results'&&new URLSearchParams(location.search).get('attemptId')==='old'`);
+  await go('exam_results?attemptId=attempt1&scenario=practice-result');
+  await wait(`document.querySelector('.detail-toolbar-back')?.getAttribute('aria-label')==='Về trung tâm ôn luyện'`);
+  await send('Page.reload');
+  await wait(`document.querySelector('.detail-toolbar-back')?.getAttribute('aria-label')==='Về trung tâm ôn luyện'`);
+  await evaluate(`document.querySelector('.detail-toolbar-back').click()`);
+  await wait(`location.pathname==='/exam_practice_center'&&!new URLSearchParams(location.search).has('examId')`);
+  console.log(
+    'PASS: return to same-exam practice results, preserve origin through redirect, and infer practice workspace after reload'
+  );
   for (const width of [1440, 768, 390]) {
     await send('Emulation.setDeviceMetricsOverride', {
       width,

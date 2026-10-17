@@ -69,27 +69,35 @@ function AcademicList({ subject = false }) {
       matches(search, item[`${type}Name`], item[`${type}Code`], item.academicYear) &&
       (status === '' || String(subject ? item.isActive : item.isCurrent) === status)
   );
-  return (
-    <AdminPageShell
-      currentPage={subject ? 'admin_subjects.html' : 'admin_academics.html'}
-      title={`Quản trị ${name}`}
-      actions={
-        <Button icon="add" onClick={() => setModal({ type: `create-${type}` })}>
-          Tạo mới {name}
-        </Button>
-      }
+  const createAction = (
+    <Button
+      icon="add"
+      className="shrink-0 whitespace-nowrap"
+      disabled={busy}
+      onClick={() => setModal({ type: `create-${type}` })}
     >
+      Tạo mới {name}
+    </Button>
+  );
+  return (
+    <AdminPageShell currentPage={subject ? 'admin_subjects.html' : 'admin_academics.html'} title={`Quản trị ${name}`}>
       <AuthAlert>{message}</AuthAlert>
       <AuthAlert error>{error}</AuthAlert>
       {modal && (
         <AcademicForm modal={modal} busy={busy} error={error} onClose={() => !busy && setModal(null)} onSubmit={save} />
       )}
-      <SearchToolbar search={search} onSearch={setSearch}>
+      <SearchToolbar
+        search={search}
+        onSearch={setSearch}
+        bare
+        searchClassName="!flex !items-center !gap-3 min-w-0 w-full sm:w-[400px] [&_.form-field__label]:shrink-0 [&_.form-field__control]:min-w-0 [&_.form-field__control]:flex-1"
+      >
         <SelectField label="Trạng thái" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Tất cả</option>
           <option value="true">{subject ? 'Đang hoạt động' : 'Hiện hành'}</option>
           <option value="false">{subject ? 'Tạm ngưng' : 'Không hiện hành'}</option>
         </SelectField>
+        <div className="ml-auto shrink-0">{createAction}</div>
       </SearchToolbar>
       <ResourceState resource={resource}>
         <PagedCards
@@ -166,7 +174,10 @@ export function AdminSubjectsPage() {
 export function AdminSubjectDetailPage() {
   const subjectId = param('subjectId');
   const subject = useApiData(subjectId ? `/api/v1/subjects/${subjectId}` : null);
-  const [tab, setTab] = useState('classes');
+  const [tab, setTab] = useState(() =>
+    ['classes', 'curriculum', 'clos', 'bank', 'matrix'].includes(param('tab')) ? param('tab') : 'classes'
+  );
+  const [tabActionTarget, setTabActionTarget] = useState(null);
   return (
     <AdminPageShell
       currentPage="admin_subjects.html"
@@ -186,19 +197,24 @@ export function AdminSubjectDetailPage() {
           ]}
           activeId={tab}
           onChange={setTab}
+          actions={<div ref={setTabActionTarget} className="flex flex-wrap items-center justify-end gap-2" />}
         >
           {(active) => (
             <div className="mt-5">
               {active === 'classes' ? (
-                <ClassCards subjectId={subjectId} />
+                <ClassCards subjectId={subjectId} tabActionTarget={tabActionTarget} />
               ) : active === 'curriculum' ? (
-                <AdminCurriculumTree subjectId={subjectId} />
+                <AdminCurriculumTree subjectId={subjectId} tabActionTarget={tabActionTarget} />
               ) : active === 'clos' ? (
-                <AdminClosManager subjectId={subjectId} subjectActive={subject.data?.isActive === true} />
+                <AdminClosManager
+                  subjectId={subjectId}
+                  subjectActive={subject.data?.isActive}
+                  tabActionTarget={tabActionTarget}
+                />
               ) : active === 'bank' ? (
-                <AdminQuestionsApiPage embedded scopedSubjectId={subjectId} />
+                <AdminQuestionsApiPage embedded scopedSubjectId={subjectId} tabActionTarget={tabActionTarget} />
               ) : (
-                <MatrixManager classes={[]} scopedSubjectId={subjectId} />
+                <MatrixManager classes={[]} scopedSubjectId={subjectId} tabActionTarget={tabActionTarget} />
               )}
             </div>
           )}

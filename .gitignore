@@ -1,3 +1,25 @@
+# Dependencies and generated builds
 node_modules/
-.tmp-*/
-.tmp-*.png
+/dist/
+/.vite/
+
+# Local checks, browser profiles, screenshots and reports
+.tmp-*
+/artifacts/
+/coverage/
+/test-results/
+/playwright-report/
+*.log
+*.tsbuildinfo
+
+# Local environment; keep the shared example
+.env
+.env.*
+!.env.example
+
+# Operating system and editor temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

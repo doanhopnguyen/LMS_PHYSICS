@@ -153,12 +153,34 @@ window.fetch = async (input, options = {}) => {
         }
         data = testQuestions[id];
       }
-      if (part === 'attempts')
+      if (part === 'attempts') {
+        if (window.testHoldAttempts) await new Promise((resolve) => { window.finishAttemptCheck = resolve; });
+        if (window.testFailAttempts) return Response.json({ message: 'Attempt list unavailable' }, { status: 503 });
         data = id === 'source' && window.testSourceHasAttempts ? [{ attemptId: 'taken', status: 'SUBMITTED' }] : [];
+      }
       if (part === 'roster') data = { officialStudents: [], transferredStudents: [] };
       if (part === 'generate-questions' && method === 'POST') data = sourceQuestions.length;
     }
   }
   if (path === '/api/v1/questions') data = paged(testBankQuestions);
+  if (path === '/api/v1/questions' && location.search.includes('largeBank=true')) {
+    data = paged([...testBankQuestions, ...Array.from({ length: 18 }, (_, index) => ({
+      questionId: `bank-${index}`, content: `Bank question ${index + 1}`, approvalStatus: 'APPROVED', difficultyLevel: 'MEDIUM', questionType: 'MCQ_SINGLE',
+    }))]);
+  }
+  if (/^\/api\/v1\/questions\/[^/]+$/.test(path)) {
+    const question = testBankQuestions.find((item) => item.questionId === path.split('/').at(-1));
+    data = question ? {
+      ...question,
+      subjectId: 's1',
+      questionType: question.questionId === 'q3' ? 'SHORT_ANSWER' : 'MCQ_SINGLE',
+      options: question.questionId === 'q3' ? [] : [
+        { optionId: 'a', content: 'Correct option from API', isCorrect: true, explanation: 'Option explanation from API' },
+        { optionId: 'b', content: 'Incorrect option from API', isCorrect: false },
+      ],
+      acceptedAnswers: question.questionId === 'q3' ? ['9.8', '9,8'] : [],
+      explanation: 'Question explanation from API',
+    } : null;
+  }
   return Response.json({ status: 200, data });
 };

@@ -1,4 +1,5 @@
 import { QuestionLevelFields } from '../../components/QuestionLevelFields.jsx';
+import { TabAction } from '../../components/TabAction.jsx';
 import { difficultyLevels as difficulties } from '../../lib/questionLevels.js';
 import { QuestionTypePicker, QuestionAnswerEditor } from '../../components/QuestionAnswerEditor.jsx';
 import { initialAnswerOptions, validateQuestionAnswers, questionAnswerPayload } from '../../lib/questionTypes.js';
@@ -78,7 +79,13 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError
     });
   };
   return (
-    <FormDialog title={initial?.questionId ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'} busy={busy} wide onClose={onClose}>
+    <FormDialog
+      title={initial?.questionId ? 'Chỉnh sửa câu hỏi' : 'Tạo câu hỏi'}
+      busy={busy}
+      wide
+      expandable
+      onClose={onClose}
+    >
       <AuthAlert error>{requestError || topics.error}</AuthAlert>
       <Form className="grid gap-4" onSubmit={submit} busy={busy}>
         <div className="grid gap-4 md:grid-cols-2">
@@ -115,13 +122,16 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError
               </option>
             ))}
           </SelectField>
-
         </div>
-        <QuestionTypePicker value={type} disabled={busy} onChange={(nextType) => {
-          setType(nextType);
-          setOptions(initialAnswerOptions({}, nextType));
-          setError('');
-        }} />
+        <QuestionTypePicker
+          value={type}
+          disabled={busy}
+          onChange={(nextType) => {
+            setType(nextType);
+            setOptions(initialAnswerOptions({}, nextType));
+            setError('');
+          }}
+        />
         <SharedFormField
           name="content"
           required
@@ -137,8 +147,14 @@ function QuestionEditor({ initial, subjects, busy, onClose, onSave, requestError
         </div>
         <QuestionMediaField initialUrl={initial?.mediaUrl || ''} disabled={busy} onPendingChange={setMediaPending} />
         <CloPicker subjectId={subjectId} resource={clos} value={cloIds} onChange={setCloIds} disabled={busy} />
-        <QuestionAnswerEditor type={type} options={options} onOptionsChange={setOptions}
-          acceptedAnswers={acceptedAnswers} onAcceptedAnswersChange={setAcceptedAnswers} disabled={busy} />
+        <QuestionAnswerEditor
+          type={type}
+          options={options}
+          onOptionsChange={setOptions}
+          acceptedAnswers={acceptedAnswers}
+          onAcceptedAnswersChange={setAcceptedAnswers}
+          disabled={busy}
+        />
         {error && (
           <p role="alert" className="text-red-700">
             {error}
@@ -182,7 +198,12 @@ function QuestionCloDialog({ question, busy, error, onClose, onSave }) {
   );
 }
 
-export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', reviewOnly = false }) {
+export function AdminQuestionsApiPage({
+  embedded = false,
+  scopedSubjectId = '',
+  reviewOnly = false,
+  tabActionTarget = null,
+}) {
   const Shell = embedded ? React.Fragment : AdminPageShell;
   const [subjectId, setSubjectId] = useState(scopedSubjectId);
   const [topicId, setTopicId] = useState('');
@@ -214,12 +235,12 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
   }, [difficulty, page, subjectId, topicId]);
   const hasActiveFilters = Boolean(
     search.trim() ||
-      subjectId ||
-      topicId ||
-      cloFilter ||
-      typeFilter ||
-      difficulty ||
-      (reviewOnly ? approvalFilter !== 'PENDING' : approvalFilter)
+    subjectId ||
+    topicId ||
+    cloFilter ||
+    typeFilter ||
+    difficulty ||
+    (reviewOnly ? approvalFilter !== 'PENDING' : approvalFilter)
   );
   const resetAllFilters = () => {
     setSearch('');
@@ -658,14 +679,6 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              icon="refresh"
-              disabled={busy || questionResource.loading}
-              onClick={reload}
-            >
-              Làm mới
-            </Button>
             {!reviewOnly && (
               <>
                 <Button variant="secondary" disabled={busy} onClick={downloadTemplate}>
@@ -674,18 +687,20 @@ export function AdminQuestionsApiPage({ embedded = false, scopedSubjectId = '', 
                 <Button variant="secondary" disabled={busy} onClick={() => setImporting(true)} icon="upload_file">
                   Nhập Excel
                 </Button>
-                <Button
-                  disabled={busy || Boolean(pendingCreation)}
-                  onClick={() => {
-                    setError('');
-                    setEditor(subjectId ? { subjectId } : {});
-                  }}
-                  icon="add"
-                >
-                  Tạo câu hỏi
-                </Button>
               </>
             )}
+            <TabAction target={tabActionTarget}>
+              <Button
+                disabled={busy || Boolean(pendingCreation)}
+                onClick={() => {
+                  setError('');
+                  setEditor(subjectId ? { subjectId, ...(topicId ? { topicId } : {}) } : {});
+                }}
+                icon="add"
+              >
+                Tạo câu hỏi
+              </Button>
+            </TabAction>
           </div>
         </div>
         {questionResource.loading ? (

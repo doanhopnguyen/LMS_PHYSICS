@@ -130,7 +130,7 @@ try {
   await evaluate('window.monthlyLoading(false)');
   await pause();
   await click('.monthly-calendar__controls button[aria-label="Tháng trước"]');
-  await mkdir('docs/test-feedback/monthly-calendar-screenshots', { recursive: true });
+  await mkdir('artifacts/test-feedback/monthly-calendar-screenshots', { recursive: true });
   for (const width of [1440, 768, 390, 320]) {
     await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
     assert.equal(await evaluate(`document.documentElement.scrollWidth>innerWidth`), false);
@@ -142,7 +142,7 @@ try {
     );
     const screenshot = await send('Page.captureScreenshot', { format: 'png' });
     await writeFile(
-      'docs/test-feedback/monthly-calendar-screenshots/calendar-' + width + '.png',
+      'artifacts/test-feedback/monthly-calendar-screenshots/calendar-' + width + '.png',
       Buffer.from(screenshot.data, 'base64')
     );
     await click('.monthly-day[data-date="2026-10-03"] .monthly-event');
@@ -152,7 +152,7 @@ try {
     assert.equal(fits, true);
     const modal = await send('Page.captureScreenshot', { format: 'png' });
     await writeFile(
-      'docs/test-feedback/monthly-calendar-screenshots/modal-' + width + '.png',
+      'artifacts/test-feedback/monthly-calendar-screenshots/modal-' + width + '.png',
       Buffer.from(modal.data, 'base64')
     );
     await evaluate(

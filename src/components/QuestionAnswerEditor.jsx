@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { Button } from './Button.jsx';
 import { questionTypes, isTextQuestion, questionInstruction } from '../lib/questionTypes.js';
 import '../styles/question-types.css';
@@ -40,6 +40,12 @@ export function QuestionAnswerEditor({
   const name = useId();
   const text = isTextQuestion(type);
   const binary = type === 'TRUE_FALSE';
+  const [previewText, setPreviewText] = useState('');
+  const [previewOptions, setPreviewOptions] = useState([]);
+  useEffect(() => {
+    setPreviewText('');
+    setPreviewOptions([]);
+  }, [type]);
   const update = (index, patch) =>
     onOptionsChange(
       options.map((row, i) =>
@@ -129,12 +135,36 @@ export function QuestionAnswerEditor({
       <details className="question-answer-preview">
         <summary>Xem trước phần trả lời của sinh viên</summary>
         <p>{questionInstruction(type)}</p>
+        <p>Bạn có thể nhập hoặc chọn thử tại đây. Câu trả lời thử không được lưu vào đáp án chuẩn.</p>
         {text ? (
-          <input placeholder="Nhập câu trả lời…" disabled aria-label="Xem trước câu trả lời ngắn" />
+          <input
+            type="text"
+            placeholder="Nhập câu trả lời…"
+            value={previewText}
+            onChange={(event) => setPreviewText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.preventDefault();
+            }}
+            aria-label="Xem trước câu trả lời ngắn"
+            autoComplete="off"
+          />
         ) : (
           options.map((row, index) => (
             <label key={index}>
-              <input type={type === 'MCQ_MULTI' ? 'checkbox' : 'radio'} disabled />
+              <input
+                type={type === 'MCQ_MULTI' ? 'checkbox' : 'radio'}
+                name={`${name}-preview`}
+                checked={previewOptions.includes(index)}
+                onChange={() =>
+                  setPreviewOptions((current) =>
+                    type === 'MCQ_MULTI'
+                      ? current.includes(index)
+                        ? current.filter((value) => value !== index)
+                        : [...current, index]
+                      : [index]
+                  )
+                }
+              />
               {row.content || `Lựa chọn ${String.fromCharCode(65 + index)}`}
             </label>
           ))

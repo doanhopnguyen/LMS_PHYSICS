@@ -104,9 +104,6 @@ export function StudentEvidencePage() {
       title="Minh chứng thí nghiệm · PTIT Physics 1"
       filterActions={
         <>
-          <Button variant="secondary" icon="refresh" onClick={reload} disabled={loading}>
-            Tải lại
-          </Button>
           <a href="virtual_lab.html">
             <Button icon="science">Mở danh sách lab</Button>
           </a>
@@ -120,7 +117,11 @@ export function StudentEvidencePage() {
           description="Xem lịch sử nộp báo cáo, điểm số, nhận xét và minh chứng thí nghiệm của bạn."
         />
         <StudentExperimentHistory refreshKey={historyVersion} />
-        {loading && <LoadingIndicator className="py-10 text-center text-body-md text-[#64748B]">Đang tải minh chứng…</LoadingIndicator>}
+        {loading && (
+          <LoadingIndicator className="py-10 text-center text-body-md text-[#64748B]">
+            Đang tải minh chứng…
+          </LoadingIndicator>
+        )}
         {error && (
           <p role="alert" className="py-10 text-center text-body-md text-primary">
             {error}

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { AdminPageShell } from '../../components/AdminPageShell.jsx';
 import { Card } from '../../components/Card.jsx';
+import { DataTable } from '../../components/DataTable.jsx';
 import { StatCard } from '../../components/StatCard.jsx';
 import { Button } from '../../components/Button.jsx';
 import { FormField } from '../../components/FormField.jsx';
@@ -11,6 +12,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { Tabs } from '../../components/Tabs.jsx';
+import { TabAction } from '../../components/TabAction.jsx';
 import { AuthAlert } from '../../components/AuthLayout.jsx';
 import { StudentSearchField } from '../../components/StudentSearchField.jsx';
 import { useApiData } from '../../hooks/useApiData.js';
@@ -19,6 +21,13 @@ import { navigate } from '../../lib/navigation.js';
 import { matches, param, PagedCards, ResourceState, SearchToolbar, useCollection } from './AdminManagementShared.jsx';
 
 const statuses = { DRAFT: 'Bản nháp', ACTIVE: 'Đang mở', COMPLETED: 'Hoàn thành', ARCHIVED: 'Lưu trữ' };
+const statusActions = {
+  DRAFT: 'Chuyển về bản nháp',
+  ACTIVE: 'Mở lớp học',
+  COMPLETED: 'Đánh dấu hoàn thành lớp',
+  ARCHIVED: 'Lưu trữ lớp',
+};
+const nextClassStatus = { DRAFT: 'ACTIVE', ACTIVE: 'COMPLETED', COMPLETED: 'ARCHIVED' };
 const enrollmentStatuses = { ACTIVE: 'Đang học', DROPPED: 'Ngừng học', COMPLETED: 'Hoàn thành' };
 function useInstructors() {
   // The users endpoint supports pagination only; role/status must be filtered locally.
@@ -33,11 +42,15 @@ function Options({ rows, id, name }) {
   ));
 }
 
-export function ClassCards({ subjectId = '', semesterId = '' }) {
+export function ClassCards({ subjectId = '', semesterId = '', tabActionTarget = null }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [semesterFilter, setSemesterFilter] = useState(semesterId);
   const [subjectFilter, setSubjectFilter] = useState(subjectId);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const statusPending = useRef(false);
+  const [statusError, setStatusError] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
   const semesters = useCollection('/api/v1/semesters');
   const subjects = useCollection('/api/v1/subjects');
   const query = new URLSearchParams();
@@ -45,25 +58,40 @@ export function ClassCards({ subjectId = '', semesterId = '' }) {
   if (semesterFilter) query.set('semesterId', semesterFilter);
   if (status) query.set('status', status);
   const resource = useCollection(`/api/v1/classes?${query}`);
+  async function changeClassStatus(row, nextStatus) {
+    if (statusPending.current || row.status === nextStatus) return;
+    statusPending.current = true;
+    setStatusBusy(true);
+    setStatusError('');
+    setStatusMessage('');
+    try {
+      await apiRequest(`/api/v1/classes/${encodeURIComponent(row.classId)}/status`, {
+        method: 'PUT',
+        body: { status: nextStatus },
+      });
+      setStatusMessage(`Đã chuyển lớp ${row.classCode} sang trạng thái ${statuses[nextStatus].toLowerCase()}.`);
+      resource.reload();
+    } catch (error) {
+      setStatusError(error.message);
+    } finally {
+      statusPending.current = false;
+      setStatusBusy(false);
+    }
+  }
   const rows = resource.data.filter((row) =>
     matches(search, row.classCode, subjects.data.find((s) => s.subjectId === row.subjectId)?.subjectName)
   );
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button
-          icon="add"
-          onClick={() =>
-            navigate(
-              `admin_class_create.html?${new URLSearchParams({ subjectId: subjectFilter, semesterId: semesterFilter })}`
-            )
-          }
-        >
-          Tạo mới lớp
-        </Button>
-      </div>
       <AuthAlert error>{subjects.error || semesters.error}</AuthAlert>
-      <SearchToolbar search={search} onSearch={setSearch}>
+      <AuthAlert error>{statusError}</AuthAlert>
+      <AuthAlert>{statusMessage}</AuthAlert>
+      <SearchToolbar
+        search={search}
+        onSearch={setSearch}
+        bare
+        searchClassName="!flex !items-center !gap-3 min-w-0 w-full sm:w-[400px] [&_.form-field__label]:shrink-0 [&_.form-field__control]:min-w-0 [&_.form-field__control]:flex-1"
+      >
         {!semesterId && (
           <SelectField label="Học kỳ" value={semesterFilter} onChange={(e) => setSemesterFilter(e.target.value)}>
             <option value="">Tất cả học kỳ</option>
@@ -84,6 +112,18 @@ export function ClassCards({ subjectId = '', semesterId = '' }) {
             </option>
           ))}
         </SelectField>
+        <TabAction target={tabActionTarget} className="ml-auto shrink-0">
+          <Button
+            icon="add"
+            onClick={() =>
+              navigate(
+                `admin_class_create.html?${new URLSearchParams({ subjectId: subjectFilter, semesterId: semesterFilter })}`
+              )
+            }
+          >
+            Tạo mới lớp
+          </Button>
+        </TabAction>
       </SearchToolbar>
       <ResourceState resource={resource}>
         <PagedCards
@@ -112,6 +152,26 @@ export function ClassCards({ subjectId = '', semesterId = '' }) {
                   <p className="mt-1 text-sm text-slate-500">
                     {semesters.data.find((s) => s.semesterId === row.semesterId)?.semesterName || 'Học kỳ'}
                   </p>
+                  <div className="relative z-20 mt-3 flex justify-end">
+                    <ActionMenu
+                      label={`Chức năng lớp ${row.classCode}`}
+                      disabled={statusBusy || resource.loading}
+                      items={[
+                        {
+                          label: 'Thông tin lớp',
+                          onSelect: () => navigate(`admin_class_detail.html?classId=${row.classId}`),
+                        },
+                        {
+                          label: 'Danh sách sinh viên',
+                          onSelect: () => navigate(`admin_class_detail.html?classId=${row.classId}&tab=students`),
+                        },
+                        nextClassStatus[row.status] && {
+                          label: statusActions[nextClassStatus[row.status]],
+                          onSelect: () => changeClassStatus(row, nextClassStatus[row.status]),
+                        },
+                      ]}
+                    />
+                  </div>
                 </>
               }
             />
@@ -240,9 +300,6 @@ export function AdminClassCreatePage() {
             <strong>Sinh viên</strong> rồi nhấn <strong>Thêm sinh viên</strong>.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button icon="school" onClick={() => navigate('admin_classes.html')}>
-              Về danh sách lớp
-            </Button>
             <Button
               variant="secondary"
               icon="arrow_forward"
@@ -348,7 +405,7 @@ export function AdminClassCreatePage() {
 export function AdminClassDetailPage() {
   const classId = param('classId');
   const resource = useApiData(classId ? `/api/v1/classes/${classId}` : null);
-  const [tab, setTab] = useState('info');
+  const [tab, setTab] = useState(() => param('tab') === 'students' ? 'students' : 'info');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [modal, setModal] = useState(null);
@@ -363,6 +420,9 @@ export function AdminClassDetailPage() {
   const staff = useCollection(classId ? `/api/v1/classes/${classId}/staff` : null);
   const teachers = useInstructors();
   const row = resource.data;
+  const filteredStudents = students.data.filter((student) =>
+    matches(search, student.fullName, student.username, student.studentCode)
+  );
   const semester = useApiData(row?.semesterId ? `/api/v1/semesters/${row.semesterId}` : null);
   const subject = useApiData(row?.subjectId ? `/api/v1/subjects/${row.subjectId}` : null);
   async function run(action, success = 'Đã lưu thay đổi.') {
@@ -404,6 +464,18 @@ export function AdminClassDetailPage() {
           <Tabs
             activeId={tab}
             onChange={setTab}
+            actions={tab === 'students' ? (
+              <Button
+                icon="person_add"
+                disabled={busy}
+                onClick={() => {
+                  setError('');
+                  setModal('students');
+                }}
+              >
+                Thêm sinh viên
+              </Button>
+            ) : null}
             items={[
               { id: 'info', label: 'Thông tin lớp' },
               { id: 'students', label: 'Sinh viên' },
@@ -424,9 +496,9 @@ export function AdminClassDetailPage() {
                       label="Trạng thái lớp"
                       disabled={busy}
                       items={Object.entries(statuses)
-                        .filter(([value]) => value !== row.status)
-                        .map(([value, name]) => ({
-                          label: name,
+                        .filter(([value]) => value === nextClassStatus[row.status])
+                        .map(([value]) => ({
+                          label: statusActions[value],
                           onSelect: () =>
                             run(() =>
                               apiRequest(`/api/v1/classes/${classId}/status`, {
@@ -464,19 +536,13 @@ export function AdminClassDetailPage() {
                 </Card>
               ) : (
                 <div className="mt-5">
-                  <div className="mb-4 flex justify-end">
-                    <Button
-                      icon="person_add"
-                      onClick={() => {
-                        setError('');
-                        setModal('students');
-                      }}
-                    >
-                      Thêm sinh viên
-                    </Button>
-                  </div>
-                  <SearchToolbar search={search} onSearch={setSearch}>
-                    <SelectField label="Trạng thái ghi danh" value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <SearchToolbar
+                    search={search}
+                    onSearch={setSearch}
+                    bare
+                    searchClassName="min-w-0 w-full sm:w-[400px]"
+                  >
+                    <SelectField label="Trạng thái" value={status} onChange={(e) => setStatus(e.target.value)}>
                       <option value="">Tất cả</option>
                       {Object.entries(enrollmentStatuses).map(([id, name]) => (
                         <option key={id} value={id}>
@@ -486,21 +552,26 @@ export function AdminClassDetailPage() {
                     </SelectField>
                   </SearchToolbar>
                   <ResourceState resource={students}>
-                    <PagedCards
-                      rows={students.data.filter((s) => matches(search, s.fullName, s.username, s.studentCode))}
-                      resetKey={search + status}
-                      grid={false}
-                      render={(s) => (
-                        <Card
-                          key={s.enrollmentId || s.studentId}
-                          className="flex items-center justify-between gap-3 p-4"
-                        >
-                          <div>
-                            <strong>{s.fullName || s.username}</strong>
-                            <p className="text-sm text-slate-500">
-                              {s.studentCode || s.username} · {enrollmentStatuses[s.status]}
-                            </p>
-                          </div>
+                    {!filteredStudents.length ? (
+                      <div className="py-10 text-center text-body-md text-slate-500" role="status">
+                        {search || status ? 'Không có sinh viên phù hợp với bộ lọc.' : 'Lớp chưa có sinh viên.'}
+                      </div>
+                    ) : (
+                    <DataTable
+                      rows={filteredStudents}
+                      columns={['STT', 'Mã sinh viên', 'Họ và tên', 'Tên đăng nhập', 'Trạng thái', 'Thao tác']}
+                      renderRow={(s, index) => (
+                        <tr key={s.enrollmentId || s.studentId}>
+                          <td className="px-3 py-3 text-slate-500">{index + 1}</td>
+                          <td className="px-3 py-3">{s.studentCode || '—'}</td>
+                          <td className="px-3 py-3 font-semibold">{s.fullName || s.username || '—'}</td>
+                          <td className="px-3 py-3">{s.username || '—'}</td>
+                          <td className="px-3 py-3">
+                            <StatusBadge tone={s.status === 'ACTIVE' ? 'success' : s.status === 'COMPLETED' ? 'info' : 'neutral'}>
+                              {enrollmentStatuses[s.status] || s.status || '—'}
+                            </StatusBadge>
+                          </td>
+                          <td className="px-3 py-3">
                           <ActionMenu
                             label={`Thao tác với ${s.fullName || s.username}`}
                             disabled={busy}
@@ -522,9 +593,11 @@ export function AdminClassDetailPage() {
                               },
                             ]}
                           />
-                        </Card>
+                          </td>
+                        </tr>
                       )}
                     />
+                    )}
                   </ResourceState>
                 </div>
               )

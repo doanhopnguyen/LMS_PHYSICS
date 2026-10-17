@@ -27,7 +27,7 @@ export function AuthLayout({ title, description, children }) {
   );
 }
 
-export function AuthAlert({ error, children }) {
+export function AuthAlert({ error, children, onClose, actions }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
     setVisible(true);
@@ -37,14 +37,32 @@ export function AuthAlert({ error, children }) {
   if (!children || !visible) return null;
   return createPortal(
     <p
-      className={`form-alert form-alert--${error ? 'error' : 'success'} auth-alert`}
+      className={`form-alert form-alert--${error ? 'error' : 'success'} auth-alert${onClose ? ' auth-alert--dismissible' : ''}`}
       role={error ? 'alert' : 'status'}
       aria-atomic="true"
     >
       <span className="material-symbols-outlined" aria-hidden="true">
         {error ? 'error' : 'check_circle'}
       </span>
-      <span>{children}</span>
+      <span className="auth-alert__content">
+        {children}
+        {actions && <span className="mt-2 flex flex-wrap gap-2">{actions}</span>}
+      </span>
+      {onClose && (
+        <button
+          type="button"
+          aria-label="Đóng thông báo"
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-red-100 focus-visible:outline focus-visible:outline-2"
+          onClick={() => {
+            setVisible(false);
+            onClose();
+          }}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            close
+          </span>
+        </button>
+      )}
     </p>,
     document.body
   );

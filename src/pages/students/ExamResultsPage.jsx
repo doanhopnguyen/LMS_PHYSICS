@@ -14,6 +14,8 @@ import { formatAttemptScore, attemptScore } from '../../lib/examScoring.js';
 import { Button } from '../../components/Button.jsx';
 import { navigate } from '../../lib/navigation.js';
 import { practiceHomeHref } from '../../lib/adaptivePractice.js';
+import { DetailToolbar } from '../../components/DetailToolbar.jsx';
+import { examListHref } from '../../lib/examNavigation.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
@@ -56,8 +58,9 @@ export function ExamResultsPage() {
       try {
         const attemptData = await api.exams.getAttempt(attemptId);
         if (!attemptData?.attemptId) throw new Error('Không tìm thấy lượt làm bài của bạn.');
+        const resolvedExamId = examId || attemptData.examId;
         const [examData, progressData, questionData] = await Promise.all([
-          examId ? api.exams.get(examId).catch(() => null) : Promise.resolve(null),
+          resolvedExamId ? api.exams.get(resolvedExamId).catch(() => null) : Promise.resolve(null),
           api.exams.attemptProgress(attemptId).catch(() => null),
           rowsOf(attemptData?.questions).length
             ? Promise.resolve(attemptData.questions)
@@ -88,9 +91,20 @@ export function ExamResultsPage() {
   const submitted = Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
   const graded = attempt?.status === 'GRADED' && attempt?.totalScore !== null && attempt?.totalScore !== undefined;
   const canShowAutoScore = graded && attemptScore(attempt) !== null;
+  const practiceWorkspace = params.get('workspace') === 'practice' || exam?.examType === 'PRACTICE';
 
   return (
-    <AppShell currentPage="exam_results.html" title={`${title} · PTIT Physics LMS`}>
+    <AppShell
+      currentPage="exam_results.html"
+      title={`${title} · PTIT Physics LMS`}
+      toolbar={
+        <DetailToolbar
+          title={title}
+          backHref={examListHref(practiceWorkspace ? 'practice' : 'exam')}
+          backLabel={practiceWorkspace ? 'Về trung tâm ôn luyện' : 'Về danh sách bài kiểm tra'}
+        />
+      }
+    >
       <PageContainer>
         <PageTitle
           eyebrow={canShowAutoScore ? 'KẾT QUẢ BÀI THI' : 'BÀI LÀM ĐÃ NỘP'}
@@ -129,7 +143,11 @@ export function ExamResultsPage() {
                   {submitted ? 'Đã nộp bài' : attempt?.status ? labelOf(attempt.status) : 'Đang cập nhật'}
                 </StatusBadge>
               </div>
-              {canShowAutoScore && <p className="mt-3 text-body-sm text-[#64748B]">Điểm được máy chủ chấm theo đáp án chuẩn, trọng số từng câu và quy đổi về thang 10.</p>}
+              {canShowAutoScore && (
+                <p className="mt-3 text-body-sm text-[#64748B]">
+                  Điểm được máy chủ chấm theo đáp án chuẩn, trọng số từng câu và quy đổi về thang 10.
+                </p>
+              )}
             </Card>
             <MetricGrid
               items={[
@@ -163,10 +181,19 @@ export function ExamResultsPage() {
                 },
               ]}
             />
-            {graded && exam?.classId && <Card className="flex flex-wrap items-center justify-between gap-4 p-6">
-              <div className="min-w-0 flex-1"><h2 className="text-headline-sm font-bold">Ôn tập theo kết quả của bạn</h2><p className="mt-2 text-body-sm text-slate-500">Xem các chủ đề cần củng cố và luyện câu hỏi phù hợp với lịch sử trả lời của bạn.</p></div>
-              <Button icon="psychology" onClick={() => navigate(practiceHomeHref(exam.classId))}>Xem gợi ý luyện tập</Button>
-            </Card>}
+            {graded && exam?.classId && (
+              <Card className="flex flex-wrap items-center justify-between gap-4 p-6">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-headline-sm font-bold">Ôn tập theo kết quả của bạn</h2>
+                  <p className="mt-2 text-body-sm text-slate-500">
+                    Xem các chủ đề cần củng cố và luyện câu hỏi phù hợp với lịch sử trả lời của bạn.
+                  </p>
+                </div>
+                <Button icon="psychology" onClick={() => navigate(practiceHomeHref(exam.classId))}>
+                  Xem gợi ý luyện tập
+                </Button>
+              </Card>
+            )}
             <Card className="p-6">
               <SectionHeader
                 title="Câu trả lời đã lưu"

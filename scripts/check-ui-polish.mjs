@@ -127,8 +127,8 @@ try {
       const page={file,width,states:[{state:'initial',...await inspect()}]};
       const screenshot = async (suffix) => {
         if (!process.env.AUDIT_SCREENSHOTS || ![1280,390].includes(width)) return;
-        await mkdir('docs/test-feedback/ui-polish-screenshots', { recursive: true });
-        const path='docs/test-feedback/ui-polish-screenshots/'+file.replace('.html','')+'-'+width+'-'+suffix+'.png';
+        await mkdir('artifacts/test-feedback/ui-polish-screenshots', { recursive: true });
+        const path='artifacts/test-feedback/ui-polish-screenshots/'+file.replace('.html','')+'-'+width+'-'+suffix+'.png';
         const capture=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
         await writeFile(path,Buffer.from(capture.data,'base64'));
         report.snapshots.push(path);
@@ -176,8 +176,8 @@ try {
       console.log(width,file,'states='+page.states.length,'issues='+issueCount);
     }
   }
-  await mkdir('docs/test-feedback',{recursive:true});
-  const path='docs/test-feedback/ui-polish-'+report.phase+'.json';
+  await mkdir('artifacts/test-feedback',{recursive:true});
+  const path='artifacts/test-feedback/ui-polish-'+report.phase+'.json';
   await writeFile(path,JSON.stringify(report,null,2));
   console.log('Saved',path,'pages='+report.pages.length,'runtimeErrors='+report.runtimeErrors.length);
   if(report.runtimeErrors.length || (report.phase !== 'before' && report.layoutIssues.length)) process.exitCode=1;

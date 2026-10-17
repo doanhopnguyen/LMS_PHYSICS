@@ -31,6 +31,8 @@
 .row-action-menu > button:hover, .row-action-menu > button:focus-visible { background: #f1f5f9; }
 .row-action-menu > button.is-danger { color: #c41e1a; }
 .row-action-menu > button.is-danger:hover { background: #fff1f2; }
+.row-action-menu > button:disabled { cursor: not-allowed; opacity: .5; }
+.row-action-menu > button:disabled:hover { background: transparent; }
 .row-action-trigger:focus-visible, .row-action-menu > button:focus-visible { outline: 2px solid #e52220; outline-offset: 1px; }
 .academic-filter-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
 @media (max-width: 480px) {

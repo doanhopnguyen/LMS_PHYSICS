@@ -1,12 +1,27 @@
 import React, { forwardRef, useId } from 'react';
 import { DatePicker } from './DatePicker.jsx';
 export const FormField = forwardRef(function FormField(
-  { label, multiline = false, bare = false, wrapperClassName = '', className = '', id, hint, error, ...props },
+  {
+    label,
+    multiline = false,
+    bare = false,
+    inlineLabel = false,
+    wrapperClassName = '',
+    className = '',
+    id,
+    hint,
+    error,
+    ...props
+  },
   ref
 ) {
   const generatedId = useId();
   const fieldId = id || generatedId;
-  const Tag = multiline ? 'textarea' : ['date', 'datetime-local', 'time', 'month'].includes(props.type) ? DatePicker : 'input';
+  const Tag = multiline
+    ? 'textarea'
+    : ['date', 'datetime-local', 'time', 'month'].includes(props.type)
+      ? DatePicker
+      : 'input';
   const temporal = ['date', 'datetime-local', 'time', 'month', 'week'].includes(props.type) ? props.type : '';
   const control = (
     <Tag
@@ -22,8 +37,8 @@ export const FormField = forwardRef(function FormField(
   if (bare) return control;
   return (
     <label
-      htmlFor={fieldId}
-      className={`form-field ${temporal ? `form-field--temporal form-field--${temporal}` : ''} grid min-w-0 gap-1 text-body-md font-normal ${wrapperClassName}`}
+      htmlFor={Tag === DatePicker ? `${fieldId}-trigger` : fieldId}
+      className={`form-field ${inlineLabel ? 'form-field--inline-label' : ''} ${temporal ? `form-field--temporal form-field--${temporal}` : ''} grid min-w-0 gap-1 text-body-md font-normal ${wrapperClassName}`}
     >
       {label && <span className="form-field__label">{label}</span>}
       {control}

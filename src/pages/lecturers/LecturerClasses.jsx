@@ -93,54 +93,54 @@ export function LecturerDashboardApiPage() {
       <div className="space-y-6">
         <UnifiedDashboardBanner role="LECTURER" />
         <Tabs
-        items={[{ id: 'overview', label: 'Tổng quan' }]}
-        actions={
-          <SelectField
-            label="Lớp học"
-            value={classId || 'ALL'}
-            onChange={(event) => select(event.target.value === 'ALL' ? '' : event.target.value)}
-          >
-            <option value="ALL">Tất cả lớp</option>
-            {rows.map((item) => (
-              <option key={item.classId} value={item.classId}>
-                {displayName(item)}
-              </option>
-            ))}
-          </SelectField>
-        }
-      >
-        {() => (
-          <>
-            <DashboardOverview role="INSTRUCTOR">
-              <Snapshot resource={snapshot} overview />
-            </DashboardOverview>
-            <div className="my-4 flex flex-wrap items-center gap-4">
-              <Resource value={students}>
-                {(data) => (
-                  <p>
-                    Sinh viên của lớp: <strong>{data?.totalElements ?? itemsOf(data).length}</strong>
-                  </p>
+          items={[{ id: 'overview', label: 'Tổng quan' }]}
+          actions={
+            <SelectField
+              label="Lớp học"
+              value={classId || 'ALL'}
+              onChange={(event) => select(event.target.value === 'ALL' ? '' : event.target.value)}
+            >
+              <option value="ALL">Tất cả lớp</option>
+              {rows.map((item) => (
+                <option key={item.classId} value={item.classId}>
+                  {displayName(item)}
+                </option>
+              ))}
+            </SelectField>
+          }
+        >
+          {() => (
+            <>
+              <DashboardOverview role="INSTRUCTOR">
+                <Snapshot resource={snapshot} overview />
+              </DashboardOverview>
+              <div className="my-4 flex flex-wrap items-center gap-4">
+                <Resource value={students}>
+                  {(data) => (
+                    <p>
+                      Sinh viên của lớp: <strong>{data?.totalElements ?? itemsOf(data).length}</strong>
+                    </p>
+                  )}
+                </Resource>
+                {classId && (
+                  <a
+                    className="font-semibold text-primary"
+                    href={`lecturer_course_detail.html?classId=${idPath(classId)}`}
+                  >
+                    Quản lý lớp →
+                  </a>
                 )}
-              </Resource>
+              </div>
               {classId && (
-                <a
-                  className="font-semibold text-primary"
-                  href={`lecturer_course_detail.html?classId=${idPath(classId)}`}
-                >
-                  Quản lý lớp →
-                </a>
+                <ClassObservation
+                  classId={classId}
+                  subjectId={rows.find((c) => c.classId === classId)?.subjectId}
+                  tabs={['progress', 'activity', 'evidence']}
+                />
               )}
-            </div>
-            {classId && (
-              <ClassObservation
-                classId={classId}
-                subjectId={rows.find((c) => c.classId === classId)?.subjectId}
-                tabs={['progress', 'activity', 'evidence']}
-              />
-            )}
-          </>
-        )}
-      </Tabs>
+            </>
+          )}
+        </Tabs>
       </div>
     </LecturerPageShell>
   );
@@ -763,23 +763,7 @@ export function ClassObservation({ classId, subjectId, studentId, tabs = ['progr
   const topics = useResource(subjectId ? `/api/v1/subjects/${idPath(subjectId)}/topics` : null, true);
   const person = (id) => displayName(itemsOf(students.data).find((s) => (s.studentId || s.userId) === id));
   return (
-    <Tabs
-      items={tabs.map((id) => ({ id, label: observationLabels[id] }))}
-      activeId={tab}
-      onChange={setTab}
-      actions={
-        <Button
-          variant="secondary"
-          onClick={() => {
-            resource.reload();
-            students.reload();
-            topics.reload();
-          }}
-        >
-          Làm mới
-        </Button>
-      }
-    >
+    <Tabs items={tabs.map((id) => ({ id, label: observationLabels[id] }))} activeId={tab} onChange={setTab}>
       {() => (
         <Resource value={resource}>
           {(data) =>
@@ -811,7 +795,9 @@ export function ClassObservation({ classId, subjectId, studentId, tabs = ['progr
                     ? [
                         person(row.studentId),
                         labelOf(row.sourceType),
-                        <FileLink url={row.fileUrl} fileId={row.fileId}>Xem minh chứng</FileLink>,
+                        <FileLink url={row.fileUrl} fileId={row.fileId}>
+                          Xem minh chứng
+                        </FileLink>,
                         dateText(row.createdAt),
                       ]
                     : [person(row.userId), labelOf(row.actionType), labelOf(row.objectType), dateText(row.createdAt)]

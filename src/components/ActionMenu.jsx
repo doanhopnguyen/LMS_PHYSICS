@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-export function ActionMenu({ label, items, disabled = false }) {
+export function ActionMenu({ label, items, disabled = false, icon = 'more_vert' }) {
   const id = useId();
   const trigger = useRef(null);
   const panel = useRef(null);
@@ -34,7 +34,8 @@ export function ActionMenu({ label, items, disabled = false }) {
   }, [open]);
 
   useEffect(() => {
-    if (open && position) panel.current?.querySelector('[role="menuitem"]')?.focus({ preventScroll: true });
+    if (open && position)
+      panel.current?.querySelector('[role="menuitem"]:not(:disabled)')?.focus({ preventScroll: true });
   }, [open, position]);
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export function ActionMenu({ label, items, disabled = false }) {
       event.stopPropagation();
       close(true);
     }
-    const buttons = [...panel.current.querySelectorAll('[role="menuitem"]')];
+    const buttons = [...panel.current.querySelectorAll('[role="menuitem"]:not(:disabled)')];
     const index = buttons.indexOf(document.activeElement);
     if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
       event.preventDefault();
@@ -95,6 +96,7 @@ export function ActionMenu({ label, items, disabled = false }) {
         type="button"
         className="row-action-trigger"
         aria-label={label}
+        title={label}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
@@ -108,7 +110,7 @@ export function ActionMenu({ label, items, disabled = false }) {
         }}
       >
         <span className="material-symbols-outlined" aria-hidden="true">
-          more_vert
+          {icon}
         </span>
       </button>
       {open &&
@@ -128,6 +130,8 @@ export function ActionMenu({ label, items, disabled = false }) {
                 type="button"
                 role="menuitem"
                 className={item.danger ? 'is-danger' : ''}
+                disabled={item.disabled}
+                title={item.title}
                 onClick={() => {
                   close(true);
                   item.onSelect();

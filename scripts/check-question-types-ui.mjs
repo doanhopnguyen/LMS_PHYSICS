@@ -15,7 +15,7 @@ const browser = spawn(
     '--no-first-run',
     '--no-default-browser-check',
     '--remote-debugging-port=9471',
-    `--user-data-dir=${path.join(directory, 'chrome')}`,
+    `--user-data-dir=${path.join(directory, `chrome-${process.pid}`)}`,
     'about:blank',
   ],
   { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] }
@@ -141,10 +141,14 @@ try {
     );
     await pause(40);
   };
-  for (const role of ['admin', 'lecturer']) {
+  for (const role of ['admin', 'review', 'lecturer']) {
     for (const type of ['MCQ_SINGLE', 'MCQ_MULTI', 'SHORT_ANSWER', 'TRUE_FALSE']) {
       await go(
-        role === 'admin' ? 'admin_questions' : 'lecturer_question_bank?subjectId=s1&topicId=t1&tab=contributions'
+        role === 'admin'
+          ? 'admin_questions'
+          : role === 'review'
+            ? 'admin_materials'
+            : 'lecturer_question_bank?subjectId=s1&topicId=t1&tab=contributions'
       );
       await wait(
         `[...document.querySelectorAll('button')].some(e=>e.textContent.trim().replace(/^add\s*/, '')==='Tạo câu hỏi')`
@@ -153,7 +157,7 @@ try {
         `[...document.querySelectorAll('button')].find(e=>e.textContent.trim().replace(/^add\s*/, '')==='Tạo câu hỏi').click()`
       );
       await wait(`!!document.querySelector('.question-type-picker')`);
-      if (role === 'admin') {
+      if (role !== 'lecturer') {
         await set('[role=dialog] select[name=subjectId]', 's1');
         await wait(`document.querySelector('[role=dialog] select[name=topicId] option[value=t1]')`);
         await set('[role=dialog] select[name=topicId]', 't1');
@@ -177,8 +181,21 @@ try {
       );
       await set('[role=dialog] select[name=difficultyLevel]', difficulty);
       await set('[role=dialog] select[name=cognitiveLevel]', cognitive);
-      if (type === 'SHORT_ANSWER') await set('.question-answer-editor textarea', '9.8\n9,8');
-      else {
+      if (type === 'SHORT_ANSWER') {
+        await set('.question-answer-editor textarea', '9.8\n9,8');
+        await evaluate(`document.querySelector('[role=dialog] [aria-label="Mở rộng toàn màn hình"]').click()`);
+        assert.equal(
+          await evaluate(`document.querySelector('[role=dialog]').classList.contains('form-dialog--expanded')`),
+          true
+        );
+        assert.equal(await evaluate(`document.querySelector('.question-answer-editor textarea').value`), '9.8\n9,8');
+        await evaluate(`document.querySelector('[role=dialog] [aria-label="Thu nhỏ"]').click()`);
+        assert.equal(
+          await evaluate(`document.querySelector('[role=dialog]').classList.contains('form-dialog--expanded')`),
+          false
+        );
+        assert.equal(await evaluate(`document.querySelector('.question-answer-editor textarea').value`), '9.8\n9,8');
+      } else {
         const binary = type === 'TRUE_FALSE';
         if (!binary)
           for (let i = 0; i < 4; i++)
@@ -192,6 +209,26 @@ try {
         if (binary)
           assert.equal(await evaluate(`document.querySelectorAll('.question-answer-editor__option').length`), 2);
       }
+      await evaluate(`document.querySelector('.question-answer-preview summary').click()`);
+      assert.equal(
+        await evaluate(`document.querySelector('.question-answer-preview input').matches(':disabled')`),
+        false
+      );
+      if (type === 'SHORT_ANSWER') {
+        await set('.question-answer-preview input', 'Đáp án nhập thử');
+        assert.equal(
+          await evaluate(`document.querySelector('.question-answer-preview input').value`),
+          'Đáp án nhập thử'
+        );
+        assert.equal(await evaluate(`document.querySelector('.question-answer-editor textarea').value`), '9.8\n9,8');
+      } else {
+        await evaluate(`Array.from(document.querySelectorAll('.question-answer-preview input')).at(-1).click()`);
+        assert.equal(
+          await evaluate(`Array.from(document.querySelectorAll('.question-answer-preview input')).at(-1).checked`),
+          true
+        );
+      }
+      assert.equal(await evaluate(`testCalls.some(c=>c.path==='/api/v1/questions'&&c.method==='POST')`), false);
       await screenshot(`author-${role}-${type}`);
       await evaluate(
         `document.querySelector('[role=dialog] button[type=submit]${role === 'lecturer' ? '[value=submit]' : ''}').click()`

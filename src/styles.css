@@ -554,6 +554,10 @@
   padding-top: 12px;
 }
 
+.stat-card__footer:has(.row-action-trigger) {
+  z-index: 20;
+}
+
 .stat-card__chart > .mt-3 {
   margin-top: 0;
 }

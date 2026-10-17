@@ -29,9 +29,7 @@ export function useCollection(path) {
 }
 export function ResourceState({ resource, children }) {
   if (resource.loading)
-    return (
-      <LoadingIndicator className="py-8 text-center text-slate-500">Đang tải…</LoadingIndicator>
-    );
+    return <LoadingIndicator className="py-8 text-center text-slate-500">Đang tải…</LoadingIndicator>;
   if (resource.error)
     return (
       <div role="alert" className="py-6 text-red-700">
@@ -43,19 +41,33 @@ export function ResourceState({ resource, children }) {
     );
   return children;
 }
-export function SearchToolbar({ search, onSearch, children }) {
+export function SearchToolbar({
+  search,
+  onSearch,
+  children,
+  searchClassName = 'min-w-0 flex-1 basis-64',
+  bare = false,
+}) {
+  const Container = bare ? 'div' : Card;
   return (
-    <Card className="sticky top-20 z-10 mb-5 flex flex-wrap items-end gap-4 rounded-2xl p-4 shadow-sm">
+    <Container
+      className={
+        bare
+          ? 'mb-5 flex flex-wrap items-center gap-4'
+          : 'sticky top-20 z-10 mb-5 flex flex-wrap items-center gap-4 rounded-2xl p-4 shadow-sm'
+      }
+    >
       <FormField
         label="Tìm kiếm"
+        inlineLabel
         type="search"
         placeholder="Tìm theo tên hoặc mã…"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
-        wrapperClassName="min-w-0 flex-1 basis-64"
+        wrapperClassName={searchClassName}
       />
       {children}
-    </Card>
+    </Container>
   );
 }
 export function PagedCards({ rows, render, resetKey = '', grid = true, compactPagination = false }) {

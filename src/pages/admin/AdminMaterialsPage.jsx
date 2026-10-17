@@ -94,6 +94,7 @@ export function AdminMaterialsPage({ embedded = false }) {
         <div className="filter-grid">
           <FormField
             label="Tìm học liệu"
+            inlineLabel
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tiêu đề, học phần, chủ đề"
@@ -148,9 +149,6 @@ export function AdminMaterialsPage({ embedded = false }) {
           <h2 className="text-title-lg font-medium">
             Danh sách học liệu{!resource.loading && !resource.error ? ` (${rows.length})` : ''}
           </h2>
-          <Button variant="secondary" disabled={busy || resource.loading} onClick={reload} icon="refresh">
-            Làm mới
-          </Button>
         </div>
         {resource.loading ? (
           <LoadingIndicator>Đang tải học liệu…</LoadingIndicator>
@@ -245,7 +243,9 @@ export function AdminMaterialsPage({ embedded = false }) {
                   </p>
                 )}
               </div>
-              {(detail.fileId || safeUrl(detail.fileUrl) || (detail.type === 'VIDEO' && materialVideoSource(detail))) && (
+              {(detail.fileId ||
+                safeUrl(detail.fileUrl) ||
+                (detail.type === 'VIDEO' && materialVideoSource(detail))) && (
                 <Button
                   variant="secondary"
                   aria-expanded={previewOpen}

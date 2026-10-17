@@ -121,11 +121,6 @@ export function AdminDashboardPage() {
       title="Tổng quan vận hành"
       description="Theo dõi dữ liệu tài khoản, học kỳ và vận hành từ hệ thống thực tế."
       pageTitleInHeader={false}
-      actions={
-        <Button variant="secondary" icon="refresh" disabled={loading} onClick={reload}>
-          Làm mới dữ liệu
-        </Button>
-      }
     >
       {loading ? (
         <LoadingIndicator className="mt-6 p-8">Đang tải dữ liệu dashboard…</LoadingIndicator>

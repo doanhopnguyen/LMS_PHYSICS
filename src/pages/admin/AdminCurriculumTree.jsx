@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/Card.jsx';
 import { ResizablePanels } from '../../components/ResizablePanels.jsx';
+import { TabAction } from '../../components/TabAction.jsx';
 import { Button as EditableButton } from '../../components/Button.jsx';
 import { FormField } from '../../components/FormField.jsx';
 import { SelectField } from '../../components/SelectField.jsx';
@@ -65,7 +66,7 @@ function useCurriculum(subjectId, classId) {
   return { ...state, reload: () => setVersion((value) => value + 1) };
 }
 
-export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false }) {
+export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false, tabActionTarget = null }) {
   const resource = useCurriculum(subjectId, classId);
   const Button = readOnly ? () => null : EditableButton;
   const ActionMenu = readOnly ? () => null : EditableActionMenu;
@@ -454,15 +455,17 @@ export function AdminCurriculumTree({ subjectId, classId = '', readOnly = false 
                 }}
               />
             </nav>
-            <Button
-              variant="ghost"
-              icon="add"
-              disabled={busy}
-              className="mt-3 shrink-0 self-start"
-              onClick={() => open('chapter')}
-            >
-              Tạo mới chương
-            </Button>
+            <TabAction target={tabActionTarget}>
+              <Button
+                variant={tabActionTarget ? 'primary' : 'ghost'}
+                icon="add"
+                disabled={busy}
+                className={tabActionTarget ? 'shrink-0 whitespace-nowrap' : 'mt-3 shrink-0 self-start'}
+                onClick={() => open('chapter')}
+              >
+                Tạo mới chương
+              </Button>
+            </TabAction>
             <Card as="div" className="curriculum-tree-search p-2 shadow-lg">
               <span className="material-symbols-outlined shrink-0 text-slate-500" aria-hidden="true">
                 search

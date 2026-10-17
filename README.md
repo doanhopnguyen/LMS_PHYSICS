@@ -19,6 +19,18 @@ Build production:
 npm run build
 ```
 
+## Tổ chức mã nguồn và file sinh tự động
+
+- `src/`: mã nguồn giao diện và các thành phần dùng chung.
+- `public/`, `Images/`: tài nguyên gốc của dự án, được lưu trong Git.
+- `scripts/`: các công cụ kiểm tra có thể chạy lại; dữ liệu giả lập nằm trong `scripts/fixtures/`.
+- `docs/`: tài liệu và bằng chứng kiểm tra được chủ động lưu lại.
+- `artifacts/`: ảnh chụp và báo cáo mới do công cụ kiểm tra sinh ra, không đưa vào Git.
+- `.tmp-tools/`: script dùng một lần; các thư mục `.tmp-*` khác chứa dữ liệu tạm và hồ sơ trình duyệt, không đưa vào Git.
+- `dist/`: bản build tạo bởi `npm run build`, không đưa vào Git. Triển khai bằng nội dung thư mục này sau khi build.
+
+Các file `.env` và `.env.*` là cấu hình cục bộ; chỉ `.env.example` được lưu trong Git. `.gitignore` cũng loại trừ dependency, log, cache và kết quả kiểm tra. Không dùng `git add -f` cho các file sinh tự động.
+
 ## Kết nối backend API
 
 Các trang mới: `/lecturer_question_import` (Excel), `/lecturer_material_create` (Markdown/tệp), `/account` (hồ sơ và mật khẩu). Quản trị người dùng và cấu hình/nhật ký đã gọi API thật. Chi tiết phạm vi và các màn còn dùng dữ liệu mẫu: [docs/FEATURE_ALIGNMENT.md](docs/FEATURE_ALIGNMENT.md).
