@@ -1,1 +1,0 @@
-import{j as a}from"./index-DFvnA3TD.js";import{D as e}from"./DashboardCalendar-DUd9Ju_p.js";function t({role:s,children:r}){return a.jsxs("div",{className:"dashboard-overview",children:[a.jsx("section",{className:"dashboard-overview__stats","aria-label":"Thống kê tổng quan",children:r}),a.jsx(e,{role:s})]})}export{t as D};
