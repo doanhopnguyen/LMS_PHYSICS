@@ -1,0 +1,1 @@
+import{j as s}from"./index-DFvnA3TD.js";import{S as o}from"./StatCard-3Dn6-kCN.js";function l({items:i,columns:a=4}){return s.jsx("div",{className:`grid grid-cols-1 sm:grid-cols-2 ${a===4?"lg:grid-cols-4":""} gap-4`,children:i.map(r=>s.jsx(o,{...r},r.label))})}export{l as M};
