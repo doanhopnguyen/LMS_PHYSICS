@@ -170,9 +170,9 @@ try {
         await wait(`document.querySelectorAll('.exam-taking-option[data-selected="true"]').length===${index + 1}`);
       }
       await evaluate(`document.querySelectorAll('.exam-taking-question-grid button')[2].click();true`);
-      await wait(`document.querySelector('textarea')`);
+      await wait(`document.querySelector('.question-response__text input')`);
       await evaluate(
-        `(()=>{const e=document.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,'9.8');e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new FocusEvent('focusout',{bubbles:true}));})()`
+        `(()=>{const e=document.querySelector('.question-response__text input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'9.8');e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new FocusEvent('focusout',{bubbles:true}));})()`
       );
       await wait(`testCalls.some(c=>c.path.endsWith('/answers')&&c.body.answerText==='9.8')`);
       await evaluate(`document.querySelectorAll('.exam-taking-view-toggle button')[1].click();true`);

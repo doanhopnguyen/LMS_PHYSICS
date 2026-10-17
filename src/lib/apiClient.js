@@ -72,8 +72,31 @@ async function refreshAccessToken() {
   return refreshing;
 }
 
+// Share only concurrent JSON reads. Completed responses are never cached, so
+// reloads after edits still fetch fresh data. Abortable requests stay independent.
+const pendingReads = new Map();
+
+export function apiRequest(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  if (method !== 'GET' || options.signal || options.responseType || options.body !== undefined || options.formData) {
+    return performApiRequest(path, options);
+  }
+  const headers = new Headers(options.headers || {});
+  const key = JSON.stringify([
+    makeUrl(path, options.query),
+    options.auth === false ? null : tokenStore.getAccessToken(),
+    [...headers.entries()],
+    options.retry !== false,
+  ]);
+  if (!pendingReads.has(key)) {
+    const request = performApiRequest(path, options).finally(() => pendingReads.delete(key));
+    pendingReads.set(key, request);
+  }
+  return pendingReads.get(key);
+}
+
 /** Calls the documented { status, message, data } API envelope and returns data. */
-export async function apiRequest(path, options = {}) {
+async function performApiRequest(path, options = {}) {
   const { method = 'GET', query, body, formData, auth = true, retry = true, headers = {} } = options;
   const requestHeaders = { ...headers };
   const accessToken = auth && tokenStore.getAccessToken();
@@ -94,7 +117,7 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (response.status === 401 && auth && retry && await refreshAccessToken()) {
-    return apiRequest(path, { ...options, retry: false });
+    return performApiRequest(path, { ...options, retry: false });
   }
   if (response.ok && options.responseType === 'blob') return response.blob();
   const payload = response.status === 204 ? null : await response.json().catch(() => null);

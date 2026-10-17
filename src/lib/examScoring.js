@@ -31,9 +31,14 @@ export function rawScoreFromTen(value, maxScore) {
   return Math.min(maxScore, roundScore((score * maxScore) / 10));
 }
 export function attemptScore(attempt, questions = attempt?.questions) {
+  if (attempt && Object.hasOwn(attempt, 'scoreOnTen')) {
+    const score = finiteScore(attempt.scoreOnTen);
+    return attempt.status === 'GRADED' && score !== null && score >= 0 && score <= 10 ? score : null;
+  }
   return attempt?.status === 'GRADED' ? tenPointScore(attempt.totalScore, attemptMaxScore(attempt, questions)) : null;
 }
 export function attemptMaxScore(attempt, questions) {
+  if (attempt && Object.hasOwn(attempt, 'maxScore')) return finiteScore(attempt.maxScore);
   const snapshot = attempt?.questions?.length ? attempt.questions : questions;
   return examMaxScore(snapshot, attempt?.totalQuestions);
 }

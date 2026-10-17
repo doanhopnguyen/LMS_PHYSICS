@@ -21,7 +21,7 @@
 | Staff lớp | `INSTRUCTOR`, `TA` |
 | Lesson | `THEORY`, `LAB`, `EXERCISE`, `EXAM` |
 | Material | `PDF`, `VIDEO`, `SLIDE`, `TEXT`, `OTHER`, `MARKDOWN` |
-| Question | `MCQ_SINGLE`, `MCQ_MULTI`, `TRUE_FALSE`, `SHORT_ANSWER` |
+| Question | `MCQ_SINGLE`, `MCQ_MULTI`, `TRUE_FALSE`, `SHORT_ANSWER`; `FILL_BLANK` tương thích câu điền đáp án cũ |
 | Difficulty | `EASY`, `MEDIUM`, `HARD` |
 | Exam | `PRACTICE`, `QUIZ`, `MIDTERM`, `FINAL` |
 | Attempt | `IN_PROGRESS`, `SUBMITTED`, `GRADED` |
@@ -130,7 +130,7 @@
 | GET/POST | `/questions/import-excel/template`, `/questions/import-excel` | ADMIN, INSTRUCTOR | POST multipart `file`, `subjectId`, `topicId` bắt buộc. |
 
 ```json
-{"subjectId":"uuid","topicId":"uuid","questionType":"MCQ_SINGLE","content":"...","mediaUrl":null,"difficultyLevel":"EASY","cognitiveLevel":"UNDERSTAND","options":[{"content":"...","isCorrect":true,"orderIndex":1,"explanation":"..."}]}
+{"subjectId":"uuid","topicId":"uuid","questionType":"MCQ_SINGLE","content":"...","mediaUrl":null,"difficultyLevel":"EASY","cognitiveLevel":"THONG_HIEU","options":[{"content":"...","isCorrect":true,"orderIndex":1,"explanation":"..."}]}
 ```
 
 `subjectId`, `topicId`, `questionType`, `content`, `difficultyLevel` bắt buộc; option nếu có bắt buộc `content`, `isCorrect`.
@@ -333,12 +333,12 @@ Lỗi trả:
 {
   "questionId":"uuid", "subjectId":"uuid", "topicId":"uuid", "questionType":"MCQ_SINGLE",
   "content":"Vật 2 kg chịu lực 10 N. Gia tốc là?", "mediaUrl":null,
-  "difficultyLevel":"EASY", "cognitiveLevel":"UNDERSTAND", "approvalStatus":"APPROVED",
+  "difficultyLevel":"EASY", "cognitiveLevel":"THONG_HIEU", "approvalStatus":"APPROVED",
   "options":[{"optionId":"uuid", "content":"5 m/s²", "isCorrect":true, "orderIndex":1, "explanation":"a=F/m"}]
 }
 
 // POST /questions, PUT /questions/{questionId}
-{ "subjectId":"uuid", "topicId":"uuid", "questionType":"MCQ_SINGLE", "content":"...", "mediaUrl":null, "difficultyLevel":"EASY", "cognitiveLevel":"UNDERSTAND", "options":[{"content":"A", "isCorrect":true, "orderIndex":1, "explanation":""}] }
+{ "subjectId":"uuid", "topicId":"uuid", "questionType":"MCQ_SINGLE", "content":"...", "mediaUrl":null, "difficultyLevel":"EASY", "cognitiveLevel":"THONG_HIEU", "options":[{"content":"A", "isCorrect":true, "orderIndex":1, "explanation":""}] }
 ```
 
 ### Kỳ thi và làm bài
@@ -354,7 +354,7 @@ Lỗi trả:
 { "questionId":"uuid", "scoreWeight":0.5, "orderIndex":1 }
 
 // ExamAttemptDTO response: start, detail, submit
-{ "attemptId":"uuid", "examId":"uuid", "studentId":"uuid", "attemptNumber":1, "startedAt":"2026-10-01T01:00:00Z", "submittedAt":null, "status":"IN_PROGRESS", "totalScore":0 }
+{ "attemptId":"uuid", "examId":"uuid", "studentId":"uuid", "attemptNumber":1, "startedAt":"2026-10-01T01:00:00Z", "submittedAt":null, "status":"IN_PROGRESS", "totalScore":0, "maxScore":20, "scoreOnTen":null }
 
 // POST /exams/attempts/{attemptId}/answers
 { "questionId":"uuid", "selectedOptionIds":["uuid-option"], "answerText":null }
@@ -373,6 +373,19 @@ Lỗi trả:
 // GET /exams/{examId}/attempt-policy — data
 { "examId":"uuid", "maxAttempts":3, "usedAttempts":1, "hasInProgressAttempt":true, "inProgressAttemptId":"uuid", "canStart":false, "reason":"..." }
 ```
+
+Quy tắc tạo/cập nhật và làm bài theo loại câu hỏi:
+
+`difficultyLevel` nhận đúng enum BE: `EASY` (Dễ), `MEDIUM` (Trung bình), `HARD` (Khó). `cognitiveLevel` là chuỗi tùy chọn; giao diện dùng các mã chuẩn của luồng nhập Excel BE: `NHAN_BIET` (Nhận biết), `THONG_HIEU` (Thông hiểu), `VAN_DUNG` (Vận dụng), `VAN_DUNG_CAO` (Vận dụng cao). Chưa phân loại gửi `null`.
+
+| Loại | Đáp án chuẩn khi tạo | Câu trả lời của sinh viên |
+| --- | --- | --- |
+| `MCQ_SINGLE` | Ít nhất 2 `options`, đúng 1 lựa chọn có `isCorrect=true` | `selectedOptionIds` có tối đa 1 phần tử |
+| `MCQ_MULTI` | Ít nhất 2 lựa chọn đúng, nội dung các lựa chọn khác nhau | `selectedOptionIds`; phải chọn đủ và không chọn thừa để nhận điểm |
+| `TRUE_FALSE` | Một mệnh đề, 2 lựa chọn `Đúng` / `Sai`, đúng 1 lựa chọn đúng | `selectedOptionIds` có tối đa 1 phần tử |
+| `SHORT_ANSWER` / `FILL_BLANK` | `acceptedAnswers` chứa ít nhất 1 chuỗi không trống, `options: []` | `answerText`, `selectedOptionIds: []` |
+
+Máy chủ đối chiếu đáp án, chuẩn hóa văn bản trả lời ngắn (Unicode, khoảng trắng, chữ hoa/thường), cộng trọng số và quy đổi điểm. `totalScore` giữ điểm trọng số; `maxScore` là tổng trọng số; `scoreOnTen` là điểm thang 10 do BE tính và chỉ có giá trị khi đã chấm. Chi tiết câu trả lời cũng có `scoreOnTen`, theo quyền xem đáp án hiện có. FE gửi đáp án, gọi `autosave` trước `submit` và hiển thị điểm API trả về.
 
 ### Chuẩn đầu ra học phần (CLO)
 

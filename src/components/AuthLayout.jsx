@@ -7,7 +7,7 @@ export function AuthLayout({ title, description, children }) {
   return (
     <main
       className="login-page"
-      style={{ '--login-background-image': `url("${import.meta.env.BASE_URL}background_login.jpg")` }}
+      style={{ '--login-background-image': `url("${import.meta.env.BASE_URL}background_login.webp")` }}
     >
       <div className="login-layout">
         <header className="login-brand">

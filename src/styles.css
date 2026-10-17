@@ -1642,7 +1642,7 @@ button {
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.28);
   background-color: #bb1010;
-  background-image: url('/footer.png');
+  background-image: url('/footer.webp');
   background-position: center bottom;
   background-size: cover;
   box-shadow: 0 -1px 20px rgba(127, 29, 29, 0.17);

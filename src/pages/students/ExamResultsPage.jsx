@@ -10,13 +10,7 @@ import { SectionHeader } from '../../components/SectionHeader.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { api } from '../../lib/apiClient.js';
 import { labelOf } from '../../lib/lecturerUtils.js';
-import {
-  examMaxScore,
-  tenPointScore,
-  formatAttemptScore,
-  attemptMaxScore,
-  examScoringSummary,
-} from '../../lib/examScoring.js';
+import { formatAttemptScore, attemptScore } from '../../lib/examScoring.js';
 
 const rowsOf = (value) => (Array.isArray(value) ? value : value?.content || value?.data || []);
 const dateText = (value) => (value ? new Date(value).toLocaleString('vi-VN') : '—');
@@ -57,10 +51,7 @@ export function ExamResultsPage() {
       setLoading(true);
       setError('');
       try {
-        const ownAttempts = examId ? rowsOf(await api.exams.myAttempts(examId)) : [];
-        const attemptData =
-          ownAttempts.find((item) => item.attemptId === attemptId) ||
-          (examId ? await api.exams.myAttempt(examId) : null);
+        const attemptData = await api.exams.getAttempt(attemptId);
         if (!attemptData?.attemptId) throw new Error('Không tìm thấy lượt làm bài của bạn.');
         const [examData, progressData, questionData] = await Promise.all([
           examId ? api.exams.get(examId).catch(() => null) : Promise.resolve(null),
@@ -93,9 +84,7 @@ export function ExamResultsPage() {
     questions.filter((question) => (question.selectedOptionIds || []).length || question.answerText).length;
   const submitted = Boolean(attempt?.submittedAt) || ['SUBMITTED', 'GRADED', 'COMPLETED'].includes(attempt?.status);
   const graded = attempt?.status === 'GRADED' && attempt?.totalScore !== null && attempt?.totalScore !== undefined;
-  const maxScore = attemptMaxScore(attempt, questions);
-  const scoringInfo = examScoringSummary(exam, questions);
-  const canShowAutoScore = graded && maxScore !== null;
+  const canShowAutoScore = graded && attemptScore(attempt) !== null;
 
   return (
     <AppShell currentPage="exam_results.html" title={`${title} · PTIT Physics LMS`}>
@@ -137,7 +126,7 @@ export function ExamResultsPage() {
                   {submitted ? 'Đã nộp bài' : attempt?.status ? labelOf(attempt.status) : 'Đang cập nhật'}
                 </StatusBadge>
               </div>
-              {canShowAutoScore && <p className="mt-3 text-body-sm text-[#64748B]">{scoringInfo.description}</p>}
+              {canShowAutoScore && <p className="mt-3 text-body-sm text-[#64748B]">Điểm được máy chủ chấm theo đáp án chuẩn, trọng số từng câu và quy đổi về thang 10.</p>}
             </Card>
             <MetricGrid
               items={[
@@ -202,7 +191,7 @@ export function ExamResultsPage() {
                         >
                           {hasCorrectness
                             ? question.isCorrect
-                              ? `Đúng${question.score != null ? ` · ${tenPointScore(question.score, examMaxScore(questions)) ?? '—'} điểm` : ''}`
+                              ? `Đúng${question.scoreOnTen != null ? ` · ${question.scoreOnTen ?? '—'} điểm` : ''}`
                               : 'Sai'
                             : answered
                               ? 'Đã trả lời'

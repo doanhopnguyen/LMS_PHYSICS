@@ -1,3 +1,7 @@
+import { QuestionLevelFields } from '../../components/QuestionLevelFields.jsx';
+import { difficultyLevels as difficulties } from '../../lib/questionLevels.js';
+import { QuestionTypePicker, QuestionAnswerEditor } from '../../components/QuestionAnswerEditor.jsx';
+import { initialAnswerOptions, validateQuestionAnswers, questionAnswerPayload } from '../../lib/questionTypes.js';
 import { Form, SubmitButton } from '../../components/Form.jsx';
 import { QuestionMediaField } from '../../components/QuestionMediaField.jsx';
 import React, { useEffect, useRef, useState } from 'react';
@@ -5,7 +9,7 @@ import { createPortal } from 'react-dom';
 import { api } from '../../lib/apiClient.js';
 import { ActionMenu } from '../../components/ActionMenu.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
-import { queryPath, validateOptions, loadAllPages } from '../../lib/lecturerUtils.js';
+import { queryPath, loadAllPages } from '../../lib/lecturerUtils.js';
 import { apiRequest } from '../../lib/apiClient.js';
 import { getDemoSession } from '../../lib/demoSession.js';
 import { useTeachingScope } from './LecturerTeachingScope.jsx';
@@ -46,11 +50,7 @@ const questionTypes = [
   ['TRUE_FALSE', 'Đúng / Sai'],
   ['SHORT_ANSWER', 'Trả lời ngắn'],
 ];
-const difficulties = [
-  ['EASY', 'Dễ'],
-  ['MEDIUM', 'Trung bình'],
-  ['HARD', 'Khó'],
-];
+
 const labelFor = (options, value) => options.find(([id]) => id === value)?.[1] || labelOf(value);
 
 function useAllMaterials(enabled, subjectsData, subjectFilter) {
@@ -171,15 +171,8 @@ export function MaterialEditorForm({ initial = {}, onSubmit, busy }) {
 function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
   const [mediaPending, setMediaPending] = useState(false);
   const [type, setType] = useState(initial.questionType || 'MCQ_SINGLE');
-  const [options, setOptions] = useState(() =>
-    Array.isArray(initial.options) && initial.options.length
-      ? initial.options.map((o) => ({
-          content: o.content || '',
-          isCorrect: Boolean(o.isCorrect),
-          explanation: o.explanation || '',
-        }))
-      : Array.from({ length: 2 }, () => ({ content: '', isCorrect: false, explanation: '' }))
-  );
+  const [options, setOptions] = useState(() => initialAnswerOptions(initial));
+  const [acceptedAnswers, setAcceptedAnswers] = useState((initial.acceptedAnswers || []).join('\n'));
   const [error, setError] = useState('');
   const [cloIds, setCloIds] = useState(initial.cloIds || []);
   const clos = useCloCatalog([subjectId]);
@@ -188,16 +181,6 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
     if (previousSubject.current !== subjectId) setCloIds([]);
     previousSubject.current = subjectId;
   }, [subjectId]);
-  const update = (index, patch) =>
-    setOptions((rows) =>
-      rows.map((row, i) =>
-        i === index
-          ? { ...row, ...patch }
-          : type === 'MCQ_SINGLE' && patch.isCorrect
-            ? { ...row, isCorrect: false }
-            : row
-      )
-    );
   return (
     <Form
       className="grid gap-4"
@@ -205,16 +188,7 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
         e.preventDefault();
         if (busy || mediaPending) return;
         const values = Object.fromEntries(new FormData(e.currentTarget));
-        const acceptedAnswers = String(values.acceptedAnswers || '')
-          .split('\n')
-          .map((value) => value.trim())
-          .filter(Boolean);
-        const message =
-          type === 'FILL_BLANK'
-            ? !acceptedAnswers.length
-              ? 'Nhập ít nhất một đáp án được chấp nhận.'
-              : ''
-            : validateOptions(type, options);
+        const message = validateQuestionAnswers(type, options, acceptedAnswers);
         setError(message);
         if (message) return;
         const cloError = validateCloIds(cloIds, clos.data, subjectId);
@@ -229,12 +203,10 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
           content: values.content.trim(),
           mediaUrl: api.files.persistedUrl(values.mediaUrl.trim()),
           difficultyLevel: values.difficultyLevel,
-          cognitiveLevel: values.cognitiveLevel,
+          cognitiveLevel: values.cognitiveLevel || null,
           cloIds,
           approvalStatus: e.nativeEvent.submitter?.value === 'submit' ? 'PENDING' : 'DRAFT',
-          options:
-            type === 'FILL_BLANK' ? [] : options.map((o, i) => ({ ...o, content: o.content.trim(), orderIndex: i })),
-          ...(type === 'FILL_BLANK' ? { acceptedAnswers } : {}),
+          ...questionAnswerPayload(type, options, acceptedAnswers),
         });
       }}
     >
@@ -246,82 +218,17 @@ function QuestionForm({ initial = {}, subjectId, topicId, onSave, busy }) {
         required
         defaultValue={initial.content || ''}
       />
-      <SelectField
-        label="Loại câu hỏi"
-        value={type}
-        onChange={(e) => {
-          setType(e.target.value);
-          setOptions((rows) => rows.map((o) => ({ ...o, isCorrect: false })));
-        }}
-      >
-        <option value="MCQ_SINGLE">Một đáp án</option>
-        <option value="FILL_BLANK">Điền đáp án</option>
-      </SelectField>
-      <SelectField label="Độ khó" name="difficultyLevel" defaultValue={initial.difficultyLevel || 'EASY'}>
-        {['EASY', 'MEDIUM', 'HARD'].map((v) => (
-          <option key={v} value={v}>
-            {labelOf(v)}
-          </option>
-        ))}
-      </SelectField>
-      <Field
-        label="Mức nhận thức (theo quy ước môn học)"
-        name="cognitiveLevel"
-        defaultValue={initial.cognitiveLevel || ''}
-      />
+      <QuestionTypePicker value={type} disabled={busy} onChange={(nextType) => {
+        setType(nextType);
+        setOptions(initialAnswerOptions({}, nextType));
+        setError('');
+      }} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <QuestionLevelFields initial={initial} disabled={busy} />
+      </div>
       <CloPicker resource={clos} subjectId={subjectId} value={cloIds} onChange={setCloIds} disabled={busy} />
-      {type === 'FILL_BLANK' ? (
-        <Field
-          multiline
-          name="acceptedAnswers"
-          label="Đáp án chấp nhận (mỗi dòng một đáp án)"
-          required
-          defaultValue={(initial.acceptedAnswers || []).join('\n')}
-        />
-      ) : (
-        <>
-          <fieldset className="grid gap-3">
-            <legend className="mb-2 font-semibold">Đáp án — đánh dấu đáp án đúng</legend>
-            {options.map((o, i) => (
-              <div className="rounded-xl border p-3" key={i}>
-                <label className="flex items-center gap-2">
-                  <input
-                    type={type === 'MCQ_SINGLE' ? 'radio' : 'checkbox'}
-                    name={`correct${type === 'MCQ_SINGLE' ? '' : i}`}
-                    checked={o.isCorrect}
-                    onChange={(e) => update(i, { isCorrect: e.target.checked })}
-                  />
-                  Đáp án {i + 1} đúng
-                </label>
-                <Field
-                  label={`Nội dung đáp án ${i + 1} *`}
-                  required
-                  value={o.content}
-                  onChange={(e) => update(i, { content: e.target.value })}
-                />
-                <Field
-                  label="Giải thích"
-                  value={o.explanation}
-                  onChange={(e) => update(i, { explanation: e.target.value })}
-                />
-                <Button
-                  variant="secondary"
-                  disabled={options.length <= 2}
-                  onClick={() => setOptions((rows) => rows.filter((_, index) => index !== i))}
-                >
-                  Xóa đáp án
-                </Button>
-              </div>
-            ))}
-          </fieldset>
-          <Button
-            variant="secondary"
-            onClick={() => setOptions((rows) => [...rows, { content: '', isCorrect: false, explanation: '' }])}
-          >
-            Thêm đáp án
-          </Button>
-        </>
-      )}
+      <QuestionAnswerEditor type={type} options={options} onOptionsChange={setOptions}
+        acceptedAnswers={acceptedAnswers} onAcceptedAnswersChange={setAcceptedAnswers} disabled={busy} />
       <QuestionMediaField initialUrl={initial.mediaUrl || ''} disabled={busy} onPendingChange={setMediaPending} />
       {error && (
         <p role="alert" className="text-red-700">

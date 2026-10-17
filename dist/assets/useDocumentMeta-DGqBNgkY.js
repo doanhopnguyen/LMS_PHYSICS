@@ -1,0 +1,1 @@
+import{r as c}from"./index-DLxQw6WY.js";function u({title:o,bodyClass:e=""}){c.useEffect(()=>{const s=document.body.className;return document.body.className=e,o&&(document.title=o),window.scrollTo(0,0),()=>{document.body.className=s}},[o,e])}export{u};

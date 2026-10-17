@@ -1,5 +1,6 @@
 import { LoadingIndicator } from '../../components/LoadingIndicator.jsx';
-import { FormField as SharedFormField } from '../../components/FormField.jsx';
+import { QuestionResponse } from '../../components/QuestionResponse.jsx';
+import { answerPayload, isTextQuestion } from '../../lib/questionTypes.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Button } from '../../components/Button.jsx';
@@ -246,7 +247,10 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
   const [questions, setQuestions] = useState([]);
   const [allQuestions, setAllQuestions] = useState([]);
   const [progress, setProgress] = useState(null);
-  const [savingQuestion, setSavingQuestion] = useState('');
+  const [savingQuestions, setSavingQuestions] = useState([]);
+  const answerDrafts = useRef(new Map());
+  const answerSaves = useRef(new Map());
+  const submissionStarted = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [layout, setLayout] = useState('single');
   const [activeQuestion, setActiveQuestion] = useState(0);
@@ -423,39 +427,46 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
       document.removeEventListener('click', blockLink, true);
     };
   }, [attempt?.attemptId, takeMode, attempt?.status, attempt?.submittedAt]);
-  const saveAnswer = async (question, patch) => {
-    if (!attempt?.attemptId) return;
-    setSavingQuestion(question.questionId);
+  const updateAnswer = (question, patch) => {
+    if (submissionStarted.current) return;
+    const latest = { ...question, ...answerDrafts.current.get(question.questionId) };
+    const next = { ...latest, ...(typeof patch === 'function' ? patch(latest) : patch) };
+    const body = answerPayload(next);
+    answerDrafts.current.set(question.questionId, body);
+    setAllQuestions((rows) => rows.map((row) => row.questionId === question.questionId ? { ...row, ...body } : row));
+    if (!isTextQuestion(question.questionType)) saveAnswer(next);
+  };
+  const saveAnswer = (question) => {
+    if (!attempt?.attemptId || submissionStarted.current) return;
+    const id = question.questionId;
+    const body = answerDrafts.current.get(id) || answerPayload(question);
+    setSavingQuestions((ids) => [...new Set([...ids, id])]);
     setError('');
-    const body = {
-      questionId: question.questionId,
-      selectedOptionIds: patch.selectedOptionIds || [],
-      answerText: patch.answerText || null,
-    };
-    try {
+    const previous = answerSaves.current.get(id) || Promise.resolve();
+    const task = previous.catch(() => {}).then(async () => {
       await api.exams.saveAnswer(attempt.attemptId, body);
-      setQuestions((rows) => rows.map((row) => (row.questionId === question.questionId ? { ...row, ...body } : row)));
-      setAllQuestions((rows) =>
-        rows.map((row) => (row.questionId === question.questionId ? { ...row, ...body } : row))
-      );
-      setProgress(await api.exams.attemptProgress(attempt.attemptId));
-    } catch (saveError) {
-      setError(saveError?.message || 'Không thể lưu câu trả lời.');
-    } finally {
-      setSavingQuestion('');
-    }
+      const updated = await api.exams.attemptProgress(attempt.attemptId);
+      setProgress(updated);
+    }).catch((saveError) => {
+      setError(saveError?.message || 'Không thể lưu câu trả lời. Bài làm vẫn được giữ trên trang để gửi lại khi nộp.');
+    }).finally(() => {
+      if (answerSaves.current.get(id) === task) {
+        answerSaves.current.delete(id);
+        setSavingQuestions((ids) => ids.filter((value) => value !== id));
+      }
+    });
+    answerSaves.current.set(id, task);
+    return task;
   };
   const submitAttempt = async ({ automatic = false } = {}) => {
-    if (!attempt?.attemptId || (!automatic && !window.confirm('Nộp bài và kết thúc lượt làm này?'))) return;
+    if (submissionStarted.current || !attempt?.attemptId || (!automatic && !window.confirm('Nộp bài và kết thúc lượt làm này?'))) return;
+    submissionStarted.current = true;
     setSubmitting(true);
     setError('');
     try {
+      await Promise.all([...answerSaves.current.values()]);
       await api.exams.autosave(attempt.attemptId, {
-        answers: allQuestions.map((item) => ({
-          questionId: item.questionId,
-          selectedOptionIds: item.selectedOptionIds || [],
-          answerText: item.answerText || null,
-        })),
+        answers: allQuestions.map((item) => answerDrafts.current.get(item.questionId) || answerPayload(item)),
       });
       const result = await api.exams.submit(attempt.attemptId);
       const actual = await api.exams.getAttempt(attempt.attemptId).catch(() => null);
@@ -470,6 +481,7 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
     } catch (submitError) {
       setError(submitError?.message || 'Không thể nộp bài.');
     } finally {
+      submissionStarted.current = false;
       setSubmitting(false);
     }
   };
@@ -608,48 +620,8 @@ export function AttemptSession({ examId, attemptId, workspace = 'exam' }) {
                             className="mt-3 max-h-64 rounded-lg"
                           />
                         )}
-                        {['SHORT_ANSWER'].includes(question.questionType) ? (
-                          <SharedFormField
-                            defaultValue={question.answerText || ''}
-                            onBlur={(event) =>
-                              saveAnswer(question, {
-                                answerText: event.target.value,
-                              })
-                            }
-                            className="mt-4 w-full"
-                            rows={3}
-                            placeholder="Nhập câu trả lời"
-                            disabled={savingQuestion === question.questionId}
-                            bare
-                            multiline
-                          />
-                        ) : (
-                          <div className="mt-4 space-y-2">
-                            {(question.options || []).map((option) => {
-                              const checked = (question.selectedOptionIds || []).includes(option.optionId);
-                              return (
-                                <label key={option.optionId} className="exam-taking-option" data-selected={checked}>
-                                  <input
-                                    type={question.questionType === 'MCQ_MULTI' ? 'checkbox' : 'radio'}
-                                    name={`question-${question.questionId}`}
-                                    checked={checked}
-                                    disabled={savingQuestion === question.questionId}
-                                    onChange={() => {
-                                      const ids =
-                                        question.questionType === 'MCQ_MULTI'
-                                          ? checked
-                                            ? (question.selectedOptionIds || []).filter((id) => id !== option.optionId)
-                                            : [...(question.selectedOptionIds || []), option.optionId]
-                                          : [option.optionId];
-                                      saveAnswer(question, { selectedOptionIds: ids });
-                                    }}
-                                  />
-                                  {option.content}
-                                </label>
-                              );
-                            })}
-                          </div>
-                        )}
+                        <QuestionResponse question={question} disabled={submitting} saving={savingQuestions.includes(question.questionId)}
+                          onChange={(patch) => updateAnswer(question, patch)} onSave={() => saveAnswer(question)} />
                       </Card>
                     ))}
                   </div>
